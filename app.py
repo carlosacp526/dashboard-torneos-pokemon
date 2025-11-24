@@ -127,8 +127,8 @@ df = normalize_columns(df)
 df = ensure_fields(df)
 
 # Mostrar preview
-st.subheader("Vista previa del dataset")
-st.dataframe(df.head(200))
+# st.subheader("Vista previa del dataset")
+# st.dataframe(df.head(200))
 
 # Estadísticas generales
 st.subheader("Estadísticas generales")
