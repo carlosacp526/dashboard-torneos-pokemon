@@ -630,6 +630,86 @@ with tab_champ[6]:
 st.markdown("---")
 
 
+# ========== NUEVA SECCIÓN: CAMPEONES ==========
+st.header("🏆 Ranking Elo")
+
+tab_champ = st.tabs(["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre","Octubre"])
+
+with tab_champ[0]:
+    st.subheader("🥇 Marzo 2025")
+    try:
+        st.image("Marzo25.png", use_container_width=True)
+        st.caption("Rank Elo Marzo 25")
+    except:
+        st.info("Coloca la imagen 'Marzo25.png' en la carpeta del proyecto")
+
+with tab_champ[1]:
+    st.subheader("🥇 Marzo 2025")
+    try:
+        st.image("Abril25.png", use_container_width=True)
+        st.caption("Rank Elo Abril 25")
+    except:
+        st.info("Coloca la imagen 'Abril25.png' en la carpeta del proyecto")
+
+
+with tab_champ[2]:
+    st.subheader("🥇 Mayo 2025")
+    try:
+        st.image("Mayo25.png", use_container_width=True)
+        st.caption("Rank Elo Mayo 25")
+    except:
+        st.info("Coloca la imagen 'Mayo25.png' en la carpeta del proyecto")
+
+
+
+with tab_champ[3]:
+    st.subheader("🥇 Junio 2025")
+    try:
+        st.image("Junio25.png", use_container_width=True)
+        st.caption("Rank Elo Junio 25")
+    except:
+        st.info("Coloca la imagen 'Junio25.png' en la carpeta del proyecto")
+
+
+
+with tab_champ[4]:
+    st.subheader("🥇 Julio 2025")
+    try:
+        st.image("Julio25.png", use_container_width=True)
+        st.caption("Rank Elo Julio 25")
+    except:
+        st.info("Coloca la imagen 'Julio25.png' en la carpeta del proyecto")
+
+
+
+
+with tab_champ[5]:
+    st.subheader("🥇 Agosto 2025")
+    try:
+        st.image("Agosto25.png", use_container_width=True)
+        st.caption("Rank Elo Agosto 25")
+    except:
+        st.info("Coloca la imagen 'Agosto25.png' en la carpeta del proyecto")
+
+
+with tab_champ[6]:
+    st.subheader("🥇 Septiembre 2025")
+    try:
+        st.image("Septiembre25.png", use_container_width=True)
+        st.caption("Rank Elo Septiembre 25")
+    except:
+        st.info("Coloca la imagen 'Septiembre25.png' en la carpeta del proyecto")
+
+
+with tab_champ[7]:
+    st.subheader("🥇 Octubre 2025")
+    try:
+        st.image("Octubre25.png", use_container_width=True)
+        st.caption("Rank Elo Octubre 25")
+    except:
+        st.info("Coloca la imagen 'Octubre25.png' en la carpeta del proyecto")
+
+st.markdown("---")
 
 
 
