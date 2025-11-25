@@ -7464,61 +7464,150 @@ A25;Chonarthas;A25;TORNEO;01/10/2025;Completed;Semifinal;Replay;VGC;51
 Saperoko10;A25;Saperoko10;TORNEO;01/10/2025;Completed;Final;Replay;VGC;51
 Saperoko10;A25;Saperoko10;TORNEO;01/10/2025;Completed;Final;Replay;VGC;51
 Saperoko10;A25;Saperoko10;TORNEO;01/10/2025;Completed;Final;Replay;VGC;51
-Car10seduard0;David Wong;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Car10seduard0;David Wong;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Car10seduard0;David Wong;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-HaoSigismondi;Mar;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-HaoSigismondi;Mar;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-HaoSigismondi;Mar;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-A25;Lautaro;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-A25;Lautaro;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-A25;Lautaro;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Bloody Cheese;Edgardvgc2189;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Bloody Cheese;Edgardvgc2189;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Bloody Cheese;Edgardvgc2189;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-ShinkaHMA;Saga;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-ShinkaHMA;Saga;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-ShinkaHMA;Saga;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Draco axel;Moirix;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Draco axel;Moirix;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Draco axel;Moirix;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Matías Canales;SasoriVzla7;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Matías Canales;SasoriVzla7;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Matías Canales;SasoriVzla7;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Davarv;Rainer;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Davarv;Rainer;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Davarv;Rainer;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-JaLax;Wiwi;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-JaLax;Wiwi;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-JaLax;Wiwi;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-D'AllFather;Okari958;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-D'AllFather;Okari958;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-D'AllFather;Okari958;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Blazing;Puchamon03;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Blazing;Puchamon03;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Blazing;Puchamon03;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Fabricio19jr;Sebastián Solari;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Fabricio19jr;Sebastián Solari;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Fabricio19jr;Sebastián Solari;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Fur4nko;The.Ultracheese;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Fur4nko;The.Ultracheese;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Fur4nko;The.Ultracheese;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Angelowos;Maskwolf;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Angelowos;Maskwolf;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Angelowos;Maskwolf;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Angelowos;Maskwolf;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Jhos;Nigga Chan;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Jhos;Nigga Chan;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Jhos;Nigga Chan;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Chonarthas;Sammy Sweet;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Chonarthas;Sammy Sweet;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Chonarthas;Sammy Sweet;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Hydreigon_chelas;Joscake;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Hydreigon_chelas;Joscake;;TORNEO;;;RONDA SUIZA 1;;VGC;56
-Hydreigon_chelas;Joscake;;TORNEO;;;RONDA SUIZA 1;;VGC;56
+Car10seduard0;David Wong;Car10seduard0;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Car10seduard0;David Wong;Car10seduard0;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Car10seduard0;David Wong;Car10seduard0;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Mar;HaoSigismondi;Mar;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+HaoSigismondi;Mar;HaoSigismondi;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+HaoSigismondi;Mar;HaoSigismondi;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+A25;Lautaro;A25;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+A25;Lautaro;A25;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+A25;Lautaro;A25;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Bloody Cheese;Edgardvgc2189;Bloody Cheese;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Bloody Cheese;Edgardvgc2189;Bloody Cheese;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Bloody Cheese;Edgardvgc2189;Bloody Cheese;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+ShinkaHMA;Saga;ShinkaHMA;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+ShinkaHMA;Saga;ShinkaHMA;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+ShinkaHMA;Saga;ShinkaHMA;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Moirix;Draco axel;Moirix;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Draco axel;Moirix;Draco axel;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Draco axel;Moirix;Draco axel;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+SasoriVzla7;Matías Canales;SasoriVzla7;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+SasoriVzla7;Matías Canales;SasoriVzla7;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+SasoriVzla7;Matías Canales;SasoriVzla7;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Davarv;Rainer;Davarv;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Rainer;Davarv;Rainer;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Davarv;Rainer;Davarv;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Wiwi;JaLax;Wiwi;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Wiwi;JaLax;Wiwi;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Wiwi;JaLax;Wiwi;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+D'AllFather;Okari958;D'AllFather;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+D'AllFather;Okari958;D'AllFather;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+D'AllFather;Okari958;D'AllFather;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Blazing;Puchamon03;Blazing;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Puchamon03;Blazing;Puchamon03;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Puchamon03;Blazing;Puchamon03;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Sebastián Solari;Fabricio19jr;Sebastián Solari;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Sebastián Solari;Fabricio19jr;Sebastián Solari;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Sebastián Solari;Fabricio19jr;Sebastián Solari;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+The.Ultracheese;Fur4nko;The.Ultracheese;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Fur4nko;The.Ultracheese;Fur4nko;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+The.Ultracheese;Fur4nko;The.Ultracheese;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Angelowos;Maskwolf;Angelowos;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Angelowos;Maskwolf;Angelowos;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Angelowos;Maskwolf;Angelowos;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Nigga Chan;Jhos;Nigga Chan;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Jhos;Nigga Chan;Jhos;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Jhos;Nigga Chan;Jhos;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Sammy Sweet;Chonarthas;Sammy Sweet;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Sammy Sweet;Chonarthas;Sammy Sweet;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Sammy Sweet;Chonarthas;Sammy Sweet;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Hydreigon_chelas;Joscake;Hydreigon_chelas;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Hydreigon_chelas;Joscake;Hydreigon_chelas;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Hydreigon_chelas;Joscake;Hydreigon_chelas;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
 Bamdara;Saperoko10;Bamdara;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
 Bamdara;Saperoko10;Bamdara;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
 Bamdara;Saperoko10;Bamdara;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
 Jeremith047;walk over (w.o);Jeremith047;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
 Jeremith047;walk over (w.o);Jeremith047;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
 Jeremith047;walk over (w.o);Jeremith047;TORNEO;;Completed;RONDA SUIZA 1;Replay;VGC;56
+Car10seduard0;Jeremith047;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Car10seduard0;Jeremith047;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Car10seduard0;Jeremith047;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+A25;Edgardvgc2189;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+A25;Edgardvgc2189;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+A25;Edgardvgc2189;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+ShinkaHMA;SasoriVzla7;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+ShinkaHMA;SasoriVzla7;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+ShinkaHMA;SasoriVzla7;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+D'AllFather;Wiwi;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+D'AllFather;Wiwi;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+D'AllFather;Wiwi;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Angelowos;Sebastián Solari;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Angelowos;Sebastián Solari;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Angelowos;Sebastián Solari;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Hydreigon_chelas;Sammy Sweet;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Hydreigon_chelas;Sammy Sweet;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Hydreigon_chelas;Sammy Sweet;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Bamdara;HaoSigismondi;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Bamdara;HaoSigismondi;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Bamdara;HaoSigismondi;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Draco axel;The.Ultracheese;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Draco axel;The.Ultracheese;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Draco axel;The.Ultracheese;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Davarv;Puchamon03;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Davarv;Puchamon03;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Davarv;Puchamon03;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Joscake;David Wong;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Joscake;David Wong;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Joscake;David Wong;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+MaskWolf;Chonarthas;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+MaskWolf;Chonarthas;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+MaskWolf;Chonarthas;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Okari958;Fabricio19jr;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Okari958;Fabricio19jr;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Okari958;Fabricio19jr;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Saga;JaLax;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Saga;JaLax;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Saga;JaLax;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Lautaro;Matías Canales;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Lautaro;Matías Canales;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Lautaro;Matías Canales;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Bloody Cheese;Rainer;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Bloody Cheese;Rainer;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Bloody Cheese;Rainer;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Jhos;Mar;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Jhos;Mar;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Jhos;Mar;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Nigga Chan;Moirix;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Nigga Chan;Moirix;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Nigga Chan;Moirix;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Blazing;Fur4nko;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Blazing;Fur4nko;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+Blazing;Fur4nko;;TORNEO;;;RONDA SUIZA 2;;VGC;56
+ZapeohDev;D'AllFather;ZapeohDev;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+ZapeohDev;D'AllFather;ZapeohDev;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+ZapeohDev;D'AllFather;ZapeohDev;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Draco axel;The.Ultracheese;Draco axel;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Draco axel;The.Ultracheese;Draco axel;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+The.Ultracheese;Draco axel;The.Ultracheese;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Dino agente;Juanssss;Dino agente;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Dino agente;Juanssss;Dino agente;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Dino agente;Juanssss;Dino agente;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Mr.Shadowdusk;Alonso26ca;Mr.Shadowdusk;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Mr.Shadowdusk;Alonso26ca;Mr.Shadowdusk;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Mr.Shadowdusk;Alonso26ca;Mr.Shadowdusk;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Akaru;Kazaheta;Akaru;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Akaru;Kazaheta;Akaru;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Akaru;Kazaheta;Akaru;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Chescor;A25;Chescor;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+A25;Chescor;A25;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+Chescor;A25;Chescor;LIGA;01/11/2025;Completed;PSS T5 J8;Replay;DUBERS;8
+The.Ultracheese;Juanssss;The.Ultracheese;LIGA;01/11/2025;Completed;PSS T5 J9;Replay;VGC;9
+The.Ultracheese;Juanssss;The.Ultracheese;LIGA;01/11/2025;Completed;PSS T5 J9;Replay;VGC;9
+The.Ultracheese;Juanssss;The.Ultracheese;LIGA;01/11/2025;Completed;PSS T5 J9;Replay;VGC;9
+A25;Akaru;;LIGA;;;PSS T5 J9;;VGC;9
+A25;Akaru;;LIGA;;;PSS T5 J9;;VGC;9
+A25;Akaru;;LIGA;;;PSS T5 J9;;VGC;9
+Chescor;D'AllFather;;LIGA;;;PSS T5 J9;;VGC;9
+Chescor;D'AllFather;;LIGA;;;PSS T5 J9;;VGC;9
+Chescor;D'AllFather;;LIGA;;;PSS T5 J9;;VGC;9
+Mr.Shadowdusk;Dino agente;;LIGA;;;PSS T5 J9;;VGC;9
+Mr.Shadowdusk;Dino agente;;LIGA;;;PSS T5 J9;;VGC;9
+Mr.Shadowdusk;Dino agente;;LIGA;;;PSS T5 J9;;VGC;9
+Draco axel;Alonso26ca;;LIGA;;;PSS T5 J9;;VGC;9
+Draco axel;Alonso26ca;;LIGA;;;PSS T5 J9;;VGC;9
+Draco axel;Alonso26ca;;LIGA;;;PSS T5 J9;;VGC;9
+Kazaheta;ZapeohDev;;LIGA;;;PSS T5 J9;;VGC;9
+Kazaheta;ZapeohDev;;LIGA;;;PSS T5 J9;;VGC;9
+Kazaheta;ZapeohDev;;LIGA;;;PSS T5 J9;;VGC;9
