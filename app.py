@@ -157,7 +157,7 @@ col4.metric("Eventos detectadas", len(leagues))
 # Agrega estas secciones después de los gráficos existentes en tu app.py
 
 # ========== GRÁFICOS ADICIONALES ==========
-
+# ========== GRÁFICOS ADICIONALES ==========
 # 1. Evolución temporal de partidas
 st.subheader("📈 Evolución temporal de partidas")
 if not df.empty and 'date' in df.columns:
@@ -172,37 +172,51 @@ if not df.empty and 'date' in df.columns:
     fig_temporal.update_layout(xaxis_title='Mes', yaxis_title='Cantidad de partidas')
     st.plotly_chart(fig_temporal, use_container_width=True)
 
-# 2. Distribución de partidas por Tier
-st.subheader("🎯 Distribución de partidas por Tier")
-tier_counts = df['Tier'].value_counts().reset_index()
-tier_counts.columns = ['Tier', 'Cantidad']
+# 2. Distribución de partidas - En pestañas
+st.subheader("🎯 Distribución de partidas")
 
-col1, col2 = st.columns(2)
-with col1:
-    fig_tier_pie = px.pie(tier_counts, values='Cantidad', names='Tier',
-                          title='Distribución por Tier (Circular)')
-    st.plotly_chart(fig_tier_pie, use_container_width=True)
+tab1, tab2, tab3 = st.tabs(["📊 Por Tier", "🎮 Por Formato", "🏅 Eventos Populares"])
 
-with col2:
+with tab1:
+    # Gráfico de barras por Tier
+    tier_counts = df['Tier'].value_counts().reset_index()
+    tier_counts.columns = ['Tier', 'Cantidad']
+    
     fig_tier_bar = px.bar(tier_counts, x='Tier', y='Cantidad',
                          title='Partidas por Tier',
                          color='Cantidad',
                          color_continuous_scale='viridis')
+    fig_tier_bar.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_tier_bar, use_container_width=True)
 
+with tab2:
+    # Gráfico de barras por Formato
+    if 'Formato' in df.columns:
+        formato_counts = df['Formato'].value_counts().reset_index()
+        formato_counts.columns = ['Formato', 'Cantidad']
+        
+        fig_formato_bar = px.bar(formato_counts, x='Formato', y='Cantidad',
+                             title='Partidas por Formato',
+                             color='Cantidad',
+                             color_continuous_scale='plasma')
+        fig_formato_bar.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig_formato_bar, use_container_width=True)
+    else:
+        st.info("No se encontró la columna 'Formato' en el dataset")
+
+with tab3:
+    # Eventos/Ligas más populares
+    league_counts = df['league'].value_counts().head(10).reset_index()
+    league_counts.columns = ['Evento', 'Partidas']
+
+    fig_leagues = px.bar(league_counts, x='Evento', y='Partidas',
+                        title='Top 10 Eventos por cantidad de partidas',
+                        color='Partidas',
+                        color_continuous_scale='sunset')
+    fig_leagues.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig_leagues, use_container_width=True)
 
 
-# 8. Eventos/Ligas más populares
-st.subheader("🏅 Eventos más populares")
-league_counts = df['league'].value_counts().head(10).reset_index()
-league_counts.columns = ['Evento', 'Partidas']
-
-fig_leagues = px.bar(league_counts, x='Evento', y='Partidas',
-                    title='Top 10 Eventos por cantidad de partidas',
-                    color='Partidas',
-                    color_continuous_scale='plasma')
-fig_leagues.update_layout(xaxis_tickangle=-45)
-st.plotly_chart(fig_leagues, use_container_width=True)
 
 
 
@@ -370,6 +384,8 @@ else:
 
 ########################################################
 
+########################################################
+
 # Perfil de jugador
 st.subheader("Perfil del jugador")
 player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
@@ -381,7 +397,7 @@ if player_query:
     st.write(f"**Partidas encontradas:** {len(player_matches)}")
     
     # Crear pestañas para organizar la información del jugador
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Historial de Partidas", "📊 Estadísticas Generales", "🏆 Por Evento", "🎯 Por Tier"])
+    tab1, tab2, tab3, tab4 ,tab5 = st.tabs(["📋 Historial de Partidas", "📊 Estadísticas Generales", "🏆 Por Evento", "🎯 Por Tier" ,"🎯 Por Tier Agrupado"])
     
     with tab1:
         st.subheader("Historial de partidas")
@@ -520,9 +536,59 @@ if player_query:
                 st.info("No hay estadísticas por tier disponibles.")
         else:
             st.info("No se encontraron tiers para este jugador.")
+
+    with tab5:
+        st.subheader("Estadísticas por Tier Agrupado")
+        
+        # Calcular stats por cada tier
+        tiers_jugador = player_matches['Formato'].dropna().unique()
+        
+        if len(tiers_jugador) > 0:
+            stats_por_tier = []
+            
+            for tier in tiers_jugador:
+                tier_df = player_matches[player_matches['Formato'] == tier]
+                tier_stats = compute_player_stats(tier_df)
+                
+                if not tier_stats.empty:
+                    jugador_tier = tier_stats[tier_stats['Jugador'].str.contains(player_query, case=False)]
+                    if not jugador_tier.empty:
+                        stats_por_tier.append({
+                            'TierAgrupado': tier,
+                            'Partidas': int(jugador_tier['Partidas'].iloc[0]),
+                            'Victorias': int(jugador_tier['Victorias'].iloc[0]),
+                            'Derrotas': int(jugador_tier['Derrotas'].iloc[0]),
+                            'Winrate%': jugador_tier['Winrate%'].iloc[0]
+                        })
+            
+            if stats_por_tier:
+                df_tiers = pd.DataFrame(stats_por_tier)
+                df_tiers = df_tiers.sort_values('Winrate%', ascending=False)
+                
+                # Mostrar tabla
+                st.dataframe(df_tiers, use_container_width=True)
+                
+                # Gráfico de barras por tier
+                fig_tiers = px.bar(
+                    df_tiers, 
+                    x='TierAgrupado', 
+                    y='Winrate%',
+                    title=f'Winrate por Formato - {player_query}',
+                    color='Winrate%',
+                    color_continuous_scale='RdYlGn',
+                    text='Winrate%'
+                )
+                fig_tiers.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                fig_tiers.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig_tiers, use_container_width=True)
+            else:
+                st.info("No hay estadísticas por tier Agrupado disponibles.")
+        else:
+            st.info("No se encontraron tiers Agrupado para este jugador.")
+
+
 else:
     st.info("Escribe el nombre (o parte) de un jugador para ver su historial y estadísticas.")
-
 ##################################################################
 
 
