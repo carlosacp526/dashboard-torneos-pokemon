@@ -412,6 +412,9 @@ else:
 ########################################################
 
 # Perfil de jugador
+########################################################
+
+# Perfil de jugador
 st.subheader("Perfil del jugador")
 
 player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
@@ -445,25 +448,38 @@ if player_query:
     col_img, col_info = st.columns([1, 3])
     
     with col_img:
-        # Intentar cargar la imagen del jugador
-        # Las imágenes deben estar en una carpeta "jugadores" con formato: jugadores/nombre_jugador.png
-        imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.png"
-        try:
-            st.image(imagen_path, width=200, caption=player_query)
-        except:
-           
-            try:
-               imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpeg"    
-               st.image(imagen_path, width=200, caption=player_query)
-           
-            except:           
+        # Intentar cargar la imagen del jugador con múltiples opciones de ruta
+        import os
+        
+        # Normalizar nombre del jugador para buscar archivo
+        nombre_archivo = player_query.lower().replace(' ', '_')
+        
+        # Intentar diferentes rutas y extensiones
+        rutas_posibles = [
+            f"jugadores/{nombre_archivo}.png",
+            f"jugadores/{nombre_archivo}.jpg",
+            f"jugadores/{nombre_archivo}.jpeg",
+            f"./jugadores/{nombre_archivo}.png",
+            f"./jugadores/{nombre_archivo}.jpg",
+            nombre_archivo + ".png",
+            nombre_archivo + ".jpg"
+        ]
+        
+        imagen_encontrada = False
+        for ruta in rutas_posibles:
+            if os.path.exists(ruta):
                 try:
-                    imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpg"    
-                    st.image(imagen_path, width=200, caption=player_query)
+                    st.image(ruta, width=200, caption=player_query)
+                    imagen_encontrada = True
+                    break
                 except:
-                    # Si no existe la imagen, mostrar un placeholder
-                    st.info("📷 Imagen no disponible")
-                    st.caption(f"Agrega: {imagen_path}")
+                    continue
+        
+        if not imagen_encontrada:
+            # Si no existe la imagen, mostrar un placeholder
+            st.info("📷 Sin imagen")
+            st.caption("Agrega:")
+            st.caption(f"`{nombre_archivo}.png`")
     
     with col_info:
         st.write(f"### {player_query}")
