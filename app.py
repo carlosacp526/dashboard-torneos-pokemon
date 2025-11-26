@@ -415,6 +415,7 @@ else:
 ########################################################
 
 # Perfil de jugador
+# Perfil de jugador
 st.subheader("Perfil del jugador")
 
 player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
@@ -433,7 +434,7 @@ if player_query:
             df['winner'].str.lower() == player_query.lower()
         )
     else:
-        # BÚSQUEDA PARCIAL (la que ya tenías)
+        # BÚSQUEDA PARCIAL
         mask = (
             df['player1'].str.contains(player_query, case=False, na=False)
         ) | (
@@ -448,38 +449,74 @@ if player_query:
     col_img, col_info = st.columns([1, 3])
     
     with col_img:
-        # Intentar cargar la imagen del jugador con múltiples opciones de ruta
         import os
+        from pathlib import Path
         
-        # Normalizar nombre del jugador para buscar archivo
-        nombre_archivo = player_query.lower().replace(' ', '_')
+        # Normalizar nombre del jugador
+        nombre_normalizado = player_query.strip()
         
-        # Intentar diferentes rutas y extensiones
-        rutas_posibles = [
-            f"dashboard-torneos-pokemon/jugadores/{nombre_archivo}.png",
-            f"dashboard-torneos-pokemon/jugadores/{nombre_archivo}.jpg",
-            f"dashboard-torneos-pokemon/jugadores/{nombre_archivo}.jpeg",
-            f"./jugadores/{nombre_archivo}.png",
-            f"./jugadores/{nombre_archivo}.jpg",
-            nombre_archivo + ".png",
-            nombre_archivo + ".jpg"
+        # Lista de posibles nombres de archivo (probar con diferentes variaciones)
+        posibles_nombres = [
+            nombre_normalizado,  # Nombre exacto
+            nombre_normalizado.replace(' ', ''),  # Sin espacios
+            nombre_normalizado.lower(),  # Minúsculas
+            nombre_normalizado.lower().replace(' ', ''),  # Minúsculas sin espacios
         ]
         
-        imagen_encontrada = False
-        for ruta in rutas_posibles:
-            if os.path.exists(ruta):
-                try:
-                    st.image(ruta, width=200, caption=player_query)
-                    imagen_encontrada = True
-                    break
-                except:
-                    continue
+        # Extensiones a probar
+        extensiones = ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']
         
-        if not imagen_encontrada:
-            # Si no existe la imagen, mostrar un placeholder
+        imagen_encontrada = False
+        imagen_path = None
+        
+        # Intentar encontrar la imagen
+        for nombre in posibles_nombres:
+            for ext in extensiones:
+                archivo = f"{nombre}{ext}"
+                
+                # Probar diferentes rutas
+                rutas = [
+                    f"jugadores/{archivo}",
+                    f"./jugadores/{archivo}",
+                    Path("jugadores") / archivo,
+                ]
+                
+                for ruta in rutas:
+                    ruta_str = str(ruta)
+                    if os.path.exists(ruta_str):
+                        imagen_path = ruta_str
+                        imagen_encontrada = True
+                        break
+                
+                if imagen_encontrada:
+                    break
+            
+            if imagen_encontrada:
+                break
+        
+        # Mostrar imagen o placeholder
+        if imagen_encontrada and imagen_path:
+            try:
+                st.image(imagen_path, width=200, caption=player_query)
+            except Exception as e:
+                st.error(f"Error al cargar: {e}")
+                st.info("📷 Sin imagen")
+        else:
             st.info("📷 Sin imagen")
-            st.caption("Agrega:")
-            st.caption(f"`{nombre_archivo}.png`")
+            
+            # Mostrar debug info
+            with st.expander("🔍 Debug - Ver archivos disponibles"):
+                if os.path.exists('jugadores'):
+                    archivos = os.listdir('jugadores')
+                    st.write("Archivos en jugadores/:")
+                    for arch in sorted(archivos):
+                        st.text(f"  - {arch}")
+                    
+                    st.write(f"\nBuscando: {nombre_normalizado}")
+                    st.write(f"Variaciones probadas: {posibles_nombres}")
+                else:
+                    st.error("La carpeta 'jugadores/' no existe")
+                    st.write(f"Directorio actual: {os.getcwd()}")
     
     with col_info:
         st.write(f"### {player_query}")
@@ -497,6 +534,8 @@ if player_query:
                 col4.metric("📊 Winrate", f"{jugador_stats_quick['Winrate%'].iloc[0]}%")
     
     st.markdown("---")
+    
+    # ... resto del código continúa igual ...
     
     # Crear pestañas para organizar la información del jugador
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
