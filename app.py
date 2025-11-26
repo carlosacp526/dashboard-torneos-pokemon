@@ -1265,12 +1265,11 @@ else:
 
 
 
-
 LOGOS_LIGAS = {
-    "PES": "logo_pes.PNG",
-    "PSS": "logo_pss.PNG",
-    "PJS": "logo_pjs.PNG",
-    "PMS": "logo_pms.PNG",
+    "PES": "logo_pes.png",
+    "PSS": "logo_pss.png",
+    "PJS": "logo_pjs.png",
+    "PMS": "logo_pms.png",
     "PLS": "logo_pls.png",
     # Agrega más ligas según las tengas
 }
@@ -1504,7 +1503,6 @@ def generar_tabla_temporada(df_base, liga_temporada_filtro):
     
     total_jugadores = len(tabla)
     tabla['ZONA'] = tabla['RANK'].apply(lambda x: asignar_zona(x, total_jugadores,liga_temporada_filtro))
-    
     if liga_temporada_filtro in ('PJST1', 'PJST2', 'PJST3', 'PJST4', 'PJST5','PEST1', 'PEST2',  'PSST1', 'PSST2', 'PSST3', 'PSST4', 'PSST5','PMST1', 'PMST2', 'PMST3'): 
         tabla["JORNADAS"]=tabla["JORNADAS"]/3
         tabla["JORNADAS"]=tabla["JORNADAS"].apply(lambda x:int(x))
@@ -1513,6 +1511,8 @@ def generar_tabla_temporada(df_base, liga_temporada_filtro):
 
     if   liga_temporada_filtro in ('PLST1'): 
         tabla["JORNADAS"]=[7,7,6,6,5,5,5,5,5,5,5,5]
+
+
 
     tabla_final = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'ZONA', 'JORNADAS', 'Victorias']].copy()
     
@@ -1566,6 +1566,65 @@ import os
 #         else:
 #             st.text(f"❌ {liga}: No encontrado")
 
+def obtener_banner(liga):
+    """
+    Obtiene la ruta del logo de la liga
+    """
+    import os
+    
+    if liga in LOGOS_LIGAS:
+        ruta = LOGOS_LIGAS[liga]
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no existe logo específico, intentar buscar por nombre
+    posibles_rutas = [
+        f"banner_{liga.lower()}.png",
+        f"banner_{liga}.png",
+        f"{liga}.png",
+        f"banner/{liga.lower()}.png",
+        f"banner/banner_{liga.lower()}.png",
+        f"banner_{liga.lower()}.PNG",
+        f"banner_{liga}.PNG",
+        f"{liga}.PNG",
+        f"banner/{liga.lower()}.PNG",
+        f"banner/banner_{liga.lower()}.PNG",
+        f"banner_{liga.lower()}.jpeg",
+        f"banner_{liga}.jpeg",
+        f"{liga}.jpeg",
+        f"banner/{liga.lower()}.jpeg",
+        f"banner/banner_{liga.lower()}.jpeg",
+        f"banner_{liga.lower()}.jpg",
+        f"banner_{liga}.jpg",
+        f"{liga}.jpg",
+        f"banner/{liga.lower()}.jpg",
+        f"banner/banner_{liga.lower()}.jpg",
+    ]
+    
+
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no encuentra ninguno, devolver logo por defecto
+    if os.path.exists("Logo.png"):
+        return "Logo.png"
+    
+    return None
+
+
+# st.markdown("**Logos detectados:**")
+# for liga_t in ligas_temporadas:
+#     logo_path = obtener_banner(liga_t)
+#     if logo_path:
+#         col1, col2 = st.columns([3, 1])
+#         col1.text(f"✅ {liga_t}: {logo_path}")
+#         col2.image(logo_path, width=50)
+#     else:
+#         st.text(f"❌ {liga_t}: No encontrado")
+
+
+
 # Crear pestañas por liga
 tabs_ligas = st.tabs(ligas)
 
@@ -1611,11 +1670,12 @@ for idx, liga in enumerate(ligas):
                         # Mostrar encabezado con logo de la liga
                         col_logo, col_titulo = st.columns([1, 3])
                         
-                        # with col_logo:
-                        #     if logo_liga:
-                        #         st.image(logo_liga, width=100)
-                        #     else:
-                        #         st.write("🏆")
+                        with col_logo:
+                            logo_baner = obtener_banner(temporada)
+                            if logo_baner:
+                                st.image(logo_baner, width=500)
+                            else:
+                                st.write("🏆")
                         
                         with col_titulo:
                             st.markdown(f"### TABLA DE POSICIONES")
@@ -1745,6 +1805,7 @@ for idx, liga in enumerate(ligas):
                         )
 
 st.markdown("---")
+
 
 
 
