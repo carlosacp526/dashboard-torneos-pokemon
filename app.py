@@ -410,7 +410,7 @@ else:
 ########################################################
 
 ########################################################
-# Perfil de jugador
+#  Perfil de jugador
 st.subheader("Perfil del jugador")
 
 player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
@@ -443,14 +443,15 @@ if player_query:
 
     
     # Crear pestañas para organizar la información del jugador
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "📋 Historial de Partidas", 
         "📊 Estadísticas Generales", 
         "🏆 Por Evento", 
         "🎯 Por Tier",
         "🎮 Por Formato",
         "📅 Winrate por Mes",
-        "📆 Winrate por Año"
+        "📆 Winrate por Año",
+        "⚔️ Por Rival"
     ])
     
     with tab1:
@@ -751,6 +752,109 @@ if player_query:
                 st.info("No se encontraron datos de años para este jugador.")
         else:
             st.info("No hay información de fechas disponible.")
+
+    with tab8:
+        st.subheader("Estadísticas por Rival (mínimo 4 partidas)")
+        
+        # Identificar rivales
+        rivales_dict = {}
+        
+        for _, row in player_matches.iterrows():
+            p1 = str(row['player1']).strip()
+            p2 = str(row['player2']).strip()
+            winner = str(row['winner']).strip() if pd.notna(row['winner']) else ""
+            
+            # Identificar quién es el rival
+            if exact_search:
+                is_p1 = p1.lower() == player_query.lower()
+                is_p2 = p2.lower() == player_query.lower()
+            else:
+                is_p1 = player_query.lower() in p1.lower()
+                is_p2 = player_query.lower() in p2.lower()
+            
+            rival = None
+            player_won = False
+            
+            if is_p1 and not is_p2:
+                rival = p2
+                player_won = (winner.lower() == p1.lower()) if winner else False
+            elif is_p2 and not is_p1:
+                rival = p1
+                player_won = (winner.lower() == p2.lower()) if winner else False
+            
+            # Solo contar si hay un winner válido y rival identificado
+            if rival and rival != "nan" and rival != "" and winner and winner != "nan":
+                if rival not in rivales_dict:
+                    rivales_dict[rival] = {'partidas': 0, 'victorias': 0, 'derrotas': 0}
+                
+                rivales_dict[rival]['partidas'] += 1
+                if player_won:
+                    rivales_dict[rival]['victorias'] += 1
+                else:
+                    rivales_dict[rival]['derrotas'] += 1
+        
+        # Filtrar rivales con al menos 4 partidas
+        stats_por_rival = []
+        for rival, stats in rivales_dict.items():
+            if stats['partidas'] >= 4:
+                winrate = (stats['victorias'] / stats['partidas'] * 100) if stats['partidas'] > 0 else 0
+                stats_por_rival.append({
+                    'Rival': rival,
+                    'Partidas': stats['partidas'],
+                    'Victorias': stats['victorias'],
+                    'Derrotas': stats['derrotas'],
+                    'Winrate%': round(winrate, 2)
+                })
+        
+        if stats_por_rival:
+            df_rivales = pd.DataFrame(stats_por_rival)
+            df_rivales = df_rivales.sort_values('Winrate%', ascending=False).reset_index(drop=True)
+            
+            # Mostrar métricas
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Rivales frecuentes", len(df_rivales))
+            col2.metric("Mejor winrate", f"{df_rivales['Winrate%'].max():.1f}%")
+            col3.metric("Peor winrate", f"{df_rivales['Winrate%'].min():.1f}%")
+            
+            st.markdown("---")
+            
+            # Mostrar tabla
+            st.dataframe(df_rivales, use_container_width=True)
+            
+            # Gráfico de barras por rival (top 15)
+            df_rivales_top = df_rivales.head(15)
+            fig_rivales = px.bar(
+                df_rivales_top, 
+                x='Rival', 
+                y='Winrate%',
+                title=f'Winrate vs Rivales Frecuentes (Top 15) - {player_query}',
+                color='Winrate%',
+                color_continuous_scale='RdYlGn',
+                text='Winrate%',
+                hover_data=['Partidas', 'Victorias', 'Derrotas']
+            )
+            fig_rivales.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+            fig_rivales.update_layout(xaxis_tickangle=-45)
+            fig_rivales.add_hline(y=50, line_dash="dash", line_color="gray", 
+                                 annotation_text="50% Winrate")
+            st.plotly_chart(fig_rivales, use_container_width=True)
+            
+            # Gráfico de dispersión: Partidas vs Winrate
+            fig_scatter = px.scatter(
+                df_rivales,
+                x='Partidas',
+                y='Winrate%',
+                size='Victorias',
+                color='Winrate%',
+                hover_data=['Rival', 'Victorias', 'Derrotas'],
+                title=f'Relación entre Partidas jugadas y Winrate vs Rivales - {player_query}',
+                color_continuous_scale='RdYlGn'
+            )
+            fig_scatter.add_hline(y=50, line_dash="dash", line_color="gray")
+            st.plotly_chart(fig_scatter, use_container_width=True)
+            
+        else:
+            st.info("No se encontraron rivales con al menos 3 partidas.")
 
 else:
     st.info("Escribe el nombre (o parte) de un jugador para ver su historial y estadísticas.")
