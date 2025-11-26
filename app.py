@@ -160,20 +160,45 @@ col4.metric("Eventos detectadas", len(leagues))
 # ========== GRÁFICOS ADICIONALES ==========
 # 1. Evolución temporal de partidas
 st.subheader("📈 Evolución temporal de partidas")
+
 if not df.empty and 'date' in df.columns:
-    # Agrupar por mes
-    df_temp = df.copy()
-    df_temp['mes'] = df_temp['date'].dt.to_period('M').astype(str)
-    partidas_por_mes = df_temp.groupby('mes').size().reset_index(name='Cantidad')
     
-    fig_temporal = px.line(partidas_por_mes, x='mes', y='Cantidad', 
-                          title='Partidas jugadas por Año',
-                          markers=True)
-    fig_temporal.update_layout(xaxis_title='Mes', yaxis_title='Cantidad de partidas')
-    st.plotly_chart(fig_temporal, use_container_width=True)
+    tab1, tab2 = st.tabs(["📅 Por Mes", "📆 Por Año"])
+    
+    with tab1:
+        # Agrupar por mes
+        df_temp = df.copy()
+        df_temp['mes'] = df_temp['date'].dt.to_period('M').astype(str)
+        partidas_por_mes = df_temp.groupby('mes').size().reset_index(name='Cantidad')
+        
+        fig_temporal_mes = px.line(partidas_por_mes, x='mes', y='Cantidad', 
+                              title='Partidas jugadas por Mes',
+                              markers=True)
+        fig_temporal_mes.update_layout(xaxis_title='Mes', yaxis_title='Cantidad de partidas')
+        st.plotly_chart(fig_temporal_mes, use_container_width=True)
+    
+    with tab2:
+        # Agrupar por año
+        df_temp_year = df.copy()
+        df_temp_year['año'] = df_temp_year['date'].dt.year
+        partidas_por_año = df_temp_year.groupby('año').size().reset_index(name='Cantidad')
+        
+        fig_temporal_año = px.bar(partidas_por_año, x='año', y='Cantidad', 
+                              title='Partidas jugadas por Año',
+                              color='Cantidad',
+                              color_continuous_scale='blues',
+                              text='Cantidad')
+        fig_temporal_año.update_traces(texttemplate='%{text}', textposition='outside')
+        fig_temporal_año.update_layout(xaxis_title='Año', yaxis_title='Cantidad de partidas')
+        st.plotly_chart(fig_temporal_año, use_container_width=True)
+
+
 
 # 2. Distribución de partidas - En pestañas
 st.subheader("🎯 Distribución de partidas")
+
+
+
 
 tab1, tab2, tab3 = st.tabs(["📊 Por Tier", "🎮 Por Formato", "🏅 Eventos Populares"])
 
@@ -385,7 +410,6 @@ else:
 ########################################################
 
 ########################################################
-
 # Perfil de jugador
 st.subheader("Perfil del jugador")
 
@@ -417,8 +441,17 @@ if player_query:
     player_matches = df[mask].copy()
     st.write(f"**Partidas encontradas:** {len(player_matches)}")
 
+    
     # Crear pestañas para organizar la información del jugador
-    tab1, tab2, tab3, tab4 ,tab5 = st.tabs(["📋 Historial de Partidas", "📊 Estadísticas Generales", "🏆 Por Evento", "🎯 Por Tier" ,"🎯 Por Tier Agrupado"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "📋 Historial de Partidas", 
+        "📊 Estadísticas Generales", 
+        "🏆 Por Evento", 
+        "🎯 Por Tier",
+        "🎮 Por Formato",
+        "📅 Winrate por Mes",
+        "📆 Winrate por Año"
+    ])
     
     with tab1:
         st.subheader("Historial de partidas")
@@ -559,54 +592,165 @@ if player_query:
             st.info("No se encontraron tiers para este jugador.")
 
     with tab5:
-        st.subheader("Estadísticas por Tier Agrupado")
+        st.subheader("Estadísticas por Formato")
         
-        # Calcular stats por cada tier
-        tiers_jugador = player_matches['Formato'].dropna().unique()
+        # Calcular stats por cada formato
+        formatos_jugador = player_matches['Formato'].dropna().unique()
         
-        if len(tiers_jugador) > 0:
-            stats_por_tier = []
+        if len(formatos_jugador) > 0:
+            stats_por_formato = []
             
-            for tier in tiers_jugador:
-                tier_df = player_matches[player_matches['Formato'] == tier]
-                tier_stats = compute_player_stats(tier_df)
+            for formato in formatos_jugador:
+                formato_df = player_matches[player_matches['Formato'] == formato]
+                formato_stats = compute_player_stats(formato_df)
                 
-                if not tier_stats.empty:
-                    jugador_tier = tier_stats[tier_stats['Jugador'].str.contains(player_query, case=False)]
-                    if not jugador_tier.empty:
-                        stats_por_tier.append({
-                            'TierAgrupado': tier,
-                            'Partidas': int(jugador_tier['Partidas'].iloc[0]),
-                            'Victorias': int(jugador_tier['Victorias'].iloc[0]),
-                            'Derrotas': int(jugador_tier['Derrotas'].iloc[0]),
-                            'Winrate%': jugador_tier['Winrate%'].iloc[0]
+                if not formato_stats.empty:
+                    jugador_formato = formato_stats[formato_stats['Jugador'].str.contains(player_query, case=False)]
+                    if not jugador_formato.empty:
+                        stats_por_formato.append({
+                            'Formato': formato,
+                            'Partidas': int(jugador_formato['Partidas'].iloc[0]),
+                            'Victorias': int(jugador_formato['Victorias'].iloc[0]),
+                            'Derrotas': int(jugador_formato['Derrotas'].iloc[0]),
+                            'Winrate%': jugador_formato['Winrate%'].iloc[0]
                         })
             
-            if stats_por_tier:
-                df_tiers = pd.DataFrame(stats_por_tier)
-                df_tiers = df_tiers.sort_values('Winrate%', ascending=False)
+            if stats_por_formato:
+                df_formatos = pd.DataFrame(stats_por_formato)
+                df_formatos = df_formatos.sort_values('Winrate%', ascending=False)
                 
                 # Mostrar tabla
-                st.dataframe(df_tiers, use_container_width=True)
+                st.dataframe(df_formatos, use_container_width=True)
                 
-                # Gráfico de barras por tier
-                fig_tiers = px.bar(
-                    df_tiers, 
-                    x='TierAgrupado', 
+                # Gráfico de barras por formato
+                fig_formatos = px.bar(
+                    df_formatos, 
+                    x='Formato', 
                     y='Winrate%',
                     title=f'Winrate por Formato - {player_query}',
                     color='Winrate%',
                     color_continuous_scale='RdYlGn',
                     text='Winrate%'
                 )
-                fig_tiers.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-                fig_tiers.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_tiers, use_container_width=True)
+                fig_formatos.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                fig_formatos.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig_formatos, use_container_width=True)
             else:
-                st.info("No hay estadísticas por tier Agrupado disponibles.")
+                st.info("No hay estadísticas por formato disponibles.")
         else:
-            st.info("No se encontraron tiers Agrupado para este jugador.")
+            st.info("No se encontraron formatos para este jugador.")
 
+    with tab6:
+        st.subheader("Winrate por Mes")
+        
+        if 'date' in player_matches.columns and not player_matches.empty:
+            # Crear columna de mes
+            player_matches_copy = player_matches.copy()
+            player_matches_copy['mes'] = player_matches_copy['date'].dt.to_period('M').astype(str)
+            
+            # Calcular stats por mes
+            meses = player_matches_copy['mes'].dropna().unique()
+            
+            if len(meses) > 0:
+                stats_por_mes = []
+                
+                for mes in sorted(meses):
+                    mes_df = player_matches_copy[player_matches_copy['mes'] == mes]
+                    mes_stats = compute_player_stats(mes_df)
+                    
+                    if not mes_stats.empty:
+                        jugador_mes = mes_stats[mes_stats['Jugador'].str.contains(player_query, case=False)]
+                        if not jugador_mes.empty:
+                            stats_por_mes.append({
+                                'Mes': mes,
+                                'Partidas': int(jugador_mes['Partidas'].iloc[0]),
+                                'Victorias': int(jugador_mes['Victorias'].iloc[0]),
+                                'Derrotas': int(jugador_mes['Derrotas'].iloc[0]),
+                                'Winrate%': jugador_mes['Winrate%'].iloc[0]
+                            })
+                
+                if stats_por_mes:
+                    df_meses = pd.DataFrame(stats_por_mes)
+                    
+                    # Mostrar tabla
+                    st.dataframe(df_meses, use_container_width=True)
+                    
+                    # Gráfico de líneas con winrate por mes
+                    fig_meses = px.line(
+                        df_meses, 
+                        x='Mes', 
+                        y='Winrate%',
+                        title=f'Evolución del Winrate por Mes - {player_query}',
+                        markers=True,
+                        text='Winrate%'
+                    )
+                    fig_meses.update_traces(texttemplate='%{text:.1f}%', textposition='top center')
+                    fig_meses.update_layout(xaxis_tickangle=-45)
+                    fig_meses.add_hline(y=50, line_dash="dash", line_color="gray", 
+                                       annotation_text="50% Winrate")
+                    st.plotly_chart(fig_meses, use_container_width=True)
+                else:
+                    st.info("No hay estadísticas por mes disponibles.")
+            else:
+                st.info("No se encontraron datos de meses para este jugador.")
+        else:
+            st.info("No hay información de fechas disponible.")
+
+    with tab7:
+        st.subheader("Winrate por Año")
+        
+        if 'date' in player_matches.columns and not player_matches.empty:
+            # Crear columna de año
+            player_matches_copy = player_matches.copy()
+            player_matches_copy['año'] = player_matches_copy['date'].dt.year
+            
+            # Calcular stats por año
+            años = player_matches_copy['año'].dropna().unique()
+            
+            if len(años) > 0:
+                stats_por_año = []
+                
+                for año in sorted(años):
+                    año_df = player_matches_copy[player_matches_copy['año'] == año]
+                    año_stats = compute_player_stats(año_df)
+                    
+                    if not año_stats.empty:
+                        jugador_año = año_stats[año_stats['Jugador'].str.contains(player_query, case=False)]
+                        if not jugador_año.empty:
+                            stats_por_año.append({
+                                'Año': int(año),
+                                'Partidas': int(jugador_año['Partidas'].iloc[0]),
+                                'Victorias': int(jugador_año['Victorias'].iloc[0]),
+                                'Derrotas': int(jugador_año['Derrotas'].iloc[0]),
+                                'Winrate%': jugador_año['Winrate%'].iloc[0]
+                            })
+                
+                if stats_por_año:
+                    df_años = pd.DataFrame(stats_por_año)
+                    
+                    # Mostrar tabla
+                    st.dataframe(df_años, use_container_width=True)
+                    
+                    # Gráfico de barras con winrate por año
+                    fig_años = px.bar(
+                        df_años, 
+                        x='Año', 
+                        y='Winrate%',
+                        title=f'Winrate por Año - {player_query}',
+                        color='Winrate%',
+                        color_continuous_scale='RdYlGn',
+                        text='Winrate%'
+                    )
+                    fig_años.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                    fig_años.add_hline(y=50, line_dash="dash", line_color="gray", 
+                                      annotation_text="50% Winrate")
+                    st.plotly_chart(fig_años, use_container_width=True)
+                else:
+                    st.info("No hay estadísticas por año disponibles.")
+            else:
+                st.info("No se encontraron datos de años para este jugador.")
+        else:
+            st.info("No hay información de fechas disponible.")
 
 else:
     st.info("Escribe el nombre (o parte) de un jugador para ver su historial y estadísticas.")
