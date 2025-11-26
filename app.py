@@ -458,9 +458,10 @@ if player_query:
         # Lista de posibles nombres de archivo (probar con diferentes variaciones)
         posibles_nombres = [
             nombre_normalizado,  # Nombre exacto
-            nombre_normalizado.replace(' ', ''),  # Sin espacios
+            nombre_normalizado.replace(' ', ' '),  # Sin espacios
             nombre_normalizado.lower(),  # Minúsculas
-            nombre_normalizado.lower().replace(' ', ''),  # Minúsculas sin espacios
+            nombre_normalizado.lower().replace(' ', ''),  # Minúsculas sin espacios,
+            nombre_normalizado.replace(' ', '_'),  # Sin espacios
         ]
         
         # Extensiones a probar
