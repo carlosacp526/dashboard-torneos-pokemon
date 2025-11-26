@@ -1268,7 +1268,7 @@ else:
 
 LOGOS_LIGAS = {
     "PES": "logo_pes.PNG",
-    "PSS": "logo_pss.png",
+    "PSS": "logo_pss.PNG",
     "PJS": "logo_pjs.PNG",
     "PMS": "logo_pms.PNG",
     "PLS": "logo_pls.png",
