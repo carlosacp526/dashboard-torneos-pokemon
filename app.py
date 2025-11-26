@@ -1813,6 +1813,38 @@ st.markdown("---")
 
 
 
+import streamlit as st
+import os
+
+# Carpeta donde están las portadas
+CARPETA_IMAGENES = "bannertorneos"
+
+# Extensiones permitidas
+EXTS = [".png", ".jpg", ".jpeg",".PNG",".JPEG",".JPG"]
+
+# Cargar archivos de imagen
+imagenes = [
+    img for img in os.listdir(CARPETA_IMAGENES)
+    if os.path.splitext(img)[1].lower() in EXTS
+]
+
+# Ordenar por número de torneo si el nombre empieza con "TORNEO "
+def extraer_numero(nombre):
+    try:
+        return int(nombre.split()[1].split(".")[0])
+    except:
+        return 9999
+
+imagenes = sorted(imagenes, key=extraer_numero)
+
+# Crear una pestaña por torneo
+tabs = st.tabs([os.path.splitext(img)[0] for img in imagenes])
+
+# Mostrar cada imagen en su pestaña
+for tab, img in zip(tabs, imagenes):
+    with tab:
+        st.image(os.path.join(CARPETA_IMAGENES, img), use_container_width=True)
+        st.caption(img)
 
 
 
