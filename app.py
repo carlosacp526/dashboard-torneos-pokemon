@@ -130,7 +130,7 @@ else:
 if df.empty:
     st.info("Sube tu CSV o coloca el archivo 'batallas vencidas y perdidas.csv' en la misma carpeta que app.py.")
     st.stop()
-
+df_liga=df[df.league=="LIGA"]
 # Normalizar y preparar
 df = normalize_columns(df)
 df = ensure_fields(df)
