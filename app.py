@@ -505,19 +505,19 @@ if player_query:
         else:
             st.info("📷 Sin imagen")
             
-            # Mostrar debug info
-            with st.expander("🔍 Debug - Ver archivos disponibles"):
-                if os.path.exists('jugadores'):
-                    archivos = os.listdir('jugadores')
-                    st.write("Archivos en jugadores/:")
-                    for arch in sorted(archivos):
-                        st.text(f"  - {arch}")
+            # # Mostrar debug info
+            # with st.expander("🔍 Debug - Ver archivos disponibles"):
+            #     if os.path.exists('jugadores'):
+            #         archivos = os.listdir('jugadores')
+            #         st.write("Archivos en jugadores/:")
+            #         for arch in sorted(archivos):
+            #             st.text(f"  - {arch}")
                     
-                    st.write(f"\nBuscando: {nombre_normalizado}")
-                    st.write(f"Variaciones probadas: {posibles_nombres}")
-                else:
-                    st.error("La carpeta 'jugadores/' no existe")
-                    st.write(f"Directorio actual: {os.getcwd()}")
+            #         st.write(f"\nBuscando: {nombre_normalizado}")
+            #         st.write(f"Variaciones probadas: {posibles_nombres}")
+            #     else:
+            #         st.error("La carpeta 'jugadores/' no existe")
+            #         st.write(f"Directorio actual: {os.getcwd()}")
     
     with col_info:
         st.write(f"### {player_query}")
