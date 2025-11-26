@@ -410,7 +410,8 @@ else:
 ########################################################
 
 ########################################################
-#  Perfil de jugador
+
+# Perfil de jugador
 st.subheader("Perfil del jugador")
 
 player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
@@ -439,8 +440,47 @@ if player_query:
         )
         
     player_matches = df[mask].copy()
-    st.write(f"**Partidas encontradas:** {len(player_matches)}")
-
+    
+    # SECCIÓN DE ENCABEZADO CON IMAGEN
+    col_img, col_info = st.columns([1, 3])
+    
+    with col_img:
+        # Intentar cargar la imagen del jugador
+        # Las imágenes deben estar en una carpeta "jugadores" con formato: jugadores/nombre_jugador.png
+        imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.png"
+        try:
+            st.image(imagen_path, width=200, caption=player_query)
+        except:
+           
+            try:
+               imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpeg"    
+               st.image(imagen_path, width=200, caption=player_query)
+           
+            except:           
+                try:
+                    imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpg"    
+                    st.image(imagen_path, width=200, caption=player_query)
+                except:
+                    # Si no existe la imagen, mostrar un placeholder
+                    st.info("📷 Imagen no disponible")
+                    st.caption(f"Agrega: {imagen_path}")
+    
+    with col_info:
+        st.write(f"### {player_query}")
+        st.write(f"**Partidas encontradas:** {len(player_matches)}")
+        
+        # Mostrar métricas rápidas
+        p_stats_quick = compute_player_stats(player_matches)
+        if not p_stats_quick.empty:
+            jugador_stats_quick = p_stats_quick[p_stats_quick['Jugador'].str.contains(player_query, case=False)]
+            if not jugador_stats_quick.empty:
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("🎮 Partidas", int(jugador_stats_quick['Partidas'].iloc[0]))
+                col2.metric("✅ Victorias", int(jugador_stats_quick['Victorias'].iloc[0]))
+                col3.metric("❌ Derrotas", int(jugador_stats_quick['Derrotas'].iloc[0]))
+                col4.metric("📊 Winrate", f"{jugador_stats_quick['Winrate%'].iloc[0]}%")
+    
+    st.markdown("---")
     
     # Crear pestañas para organizar la información del jugador
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -469,15 +509,6 @@ if player_query:
             jugador_stats = p_stats[p_stats['Jugador'].str.contains(player_query, case=False)]
             
             if not jugador_stats.empty:
-                # Mostrar métricas principales
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Partidas", int(jugador_stats['Partidas'].iloc[0]))
-                col2.metric("Victorias", int(jugador_stats['Victorias'].iloc[0]))
-                col3.metric("Derrotas", int(jugador_stats['Derrotas'].iloc[0]))
-                col4.metric("Winrate", f"{jugador_stats['Winrate%'].iloc[0]}%")
-                
-                st.markdown("---")
-                
                 # Gráfico de victorias vs derrotas
                 wins = int(jugador_stats['Victorias'].iloc[0])
                 losses = int(jugador_stats['Derrotas'].iloc[0])
@@ -854,10 +885,12 @@ if player_query:
             st.plotly_chart(fig_scatter, use_container_width=True)
             
         else:
-            st.info("No se encontraron rivales con al menos 3 partidas.")
+            st.info("No se encontraron rivales con al menos 4 partidas.")
 
 else:
     st.info("Escribe el nombre (o parte) de un jugador para ver su historial y estadísticas.")
+
+
 ##################################################################
 
 
