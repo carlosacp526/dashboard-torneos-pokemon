@@ -456,9 +456,9 @@ if player_query:
         
         # Intentar diferentes rutas y extensiones
         rutas_posibles = [
-            f"jugadores/{nombre_archivo}.png",
-            f"jugadores/{nombre_archivo}.jpg",
-            f"jugadores/{nombre_archivo}.jpeg",
+            f"dashboard-torneos-pokemon/jugadores/{nombre_archivo}.png",
+            f"dashboard-torneos-pokemon/jugadores/{nombre_archivo}.jpg",
+            f"dashboard-torneos-pokemon/jugadores/{nombre_archivo}.jpeg",
             f"./jugadores/{nombre_archivo}.png",
             f"./jugadores/{nombre_archivo}.jpg",
             nombre_archivo + ".png",
