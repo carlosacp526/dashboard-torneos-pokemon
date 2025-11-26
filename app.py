@@ -141,14 +141,26 @@ df = ensure_fields(df)
 
 # Estadísticas generales
 st.subheader("Estadísticas generales")
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4 ,col5,col6,col7,col8= st.columns(8)
 col1.metric("Total partidas", len(df))
 completed_mask = df['status'].fillna('').str.lower().isin(['completed','done','finished','vencida','terminada','win','won']) | df['winner'].notna()
 col2.metric("Partidas completadas (aprox.)", int(completed_mask.sum()))
 col3.metric("Jugadores únicos", int(pd.unique(df[['player1','player2']].values.ravel('K')).size))
 # ligas
 leagues = df['league'].fillna('Sin liga').unique().tolist()
-col4.metric("Eventos detectadas", len(leagues))
+col4.metric("Eventos detectados", len(leagues))
+
+
+
+t1=df[df.league=="TORNEO"].N_Torneo.nunique()
+l1=df[df.league=="LIGA"]["Ligas_categoria"].nunique()
+a1=df[df.league=="ASCENSO"].N_Torneo.nunique()
+c1=df[df.league=="CYPHER"].N_Torneo.nunique()
+
+col5.metric("Eventos TORNEO", t1)
+col6.metric("Eventos LIGA", l1)
+col7.metric("Eventos ASCENSO", a1)
+col8.metric("Eventos CYPHER", c1)
 
 
 
@@ -174,6 +186,8 @@ if not df.empty and 'date' in df.columns:
         fig_temporal_mes = px.line(partidas_por_mes, x='mes', y='Cantidad', 
                               title='Partidas jugadas por Mes',
                               markers=True)
+        y_max = partidas_por_mes['Cantidad'].max() + 50
+        fig_temporal_mes.update_yaxes(range=[0, y_max])
         fig_temporal_mes.update_layout(xaxis_title='Mes', yaxis_title='Cantidad de partidas')
         st.plotly_chart(fig_temporal_mes, use_container_width=True)
     
@@ -188,6 +202,9 @@ if not df.empty and 'date' in df.columns:
                               color='Cantidad',
                               color_continuous_scale='blues',
                               text='Cantidad')
+        
+        y_max = partidas_por_año['Cantidad'].max() + 500
+        fig_temporal_año.update_yaxes(range=[0, y_max])
         fig_temporal_año.update_traces(texttemplate='%{text}', textposition='outside')
         fig_temporal_año.update_layout(xaxis_title='Año', yaxis_title='Cantidad de partidas')
         st.plotly_chart(fig_temporal_año, use_container_width=True)
