@@ -1505,6 +1505,15 @@ def generar_tabla_temporada(df_base, liga_temporada_filtro):
     total_jugadores = len(tabla)
     tabla['ZONA'] = tabla['RANK'].apply(lambda x: asignar_zona(x, total_jugadores,liga_temporada_filtro))
     
+    if liga_temporada_filtro in ('PJST1', 'PJST2', 'PJST3', 'PJST4', 'PJST5','PEST1', 'PEST2',  'PSST1', 'PSST2', 'PSST3', 'PSST4', 'PSST5','PMST1', 'PMST2', 'PMST3'): 
+        tabla["JORNADAS"]=tabla["JORNADAS"]/3
+        tabla["JORNADAS"]=tabla["JORNADAS"].apply(lambda x:int(x))
+    if   liga_temporada_filtro in ('PMST4', 'PMST5', 'PMST6'): 
+        tabla["JORNADAS"]=5
+
+    if   liga_temporada_filtro in ('PLST1'): 
+        tabla["JORNADAS"]=[7,7,6,6,5,5,5,5,5,5,5,5]
+
     tabla_final = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'ZONA', 'JORNADAS', 'Victorias']].copy()
     
     return tabla_final
