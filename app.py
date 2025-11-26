@@ -1638,13 +1638,13 @@ for idx, liga in enumerate(ligas):
                         )
                         
                         # Leyenda
-                        st.markdown("""
-                        **Leyenda de Zonas:**
-                        - 🥇 **Líder**: 1er lugar
-                        - 🥈🥉 **Ascenso**: 2do y 3er lugar
-                        - 🔻 **Descenso**: Últimos 3 lugares
-                        - ⚪ **Normal**: Resto de posiciones
-                        """)
+                        # st.markdown("""
+                        # **Leyenda de Zonas:**
+                        # - 🥇 **Líder**: 1er lugar
+                        # - 🥈🥉 **Ascenso**: 2do y 3er lugar
+                        # - 🔻 **Descenso**: Últimos 3 lugares
+                        # - ⚪ **Normal**: Resto de posiciones
+                        # """)
                         
                         st.markdown("---")
                         
