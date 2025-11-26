@@ -388,14 +388,35 @@ else:
 
 # Perfil de jugador
 st.subheader("Perfil del jugador")
-player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
 
+player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
+exact_search = st.checkbox("Búsqueda exacta")
+
+# Perfil de jugador
 if player_query:
-    # buscar coincidencias
-    mask = df['player1'].str.contains(player_query, case=False, na=False) | df['player2'].str.contains(player_query, case=False, na=False) | df['winner'].str.contains(player_query, case=False, na=False)
+
+    if exact_search:
+        # BÚSQUEDA EXACTA
+        mask = (
+            df['player1'].str.lower() == player_query.lower()
+        ) | (
+            df['player2'].str.lower() == player_query.lower()
+        ) | (
+            df['winner'].str.lower() == player_query.lower()
+        )
+    else:
+        # BÚSQUEDA PARCIAL (la que ya tenías)
+        mask = (
+            df['player1'].str.contains(player_query, case=False, na=False)
+        ) | (
+            df['player2'].str.contains(player_query, case=False, na=False)
+        ) | (
+            df['winner'].str.contains(player_query, case=False, na=False)
+        )
+        
     player_matches = df[mask].copy()
     st.write(f"**Partidas encontradas:** {len(player_matches)}")
-    
+
     # Crear pestañas para organizar la información del jugador
     tab1, tab2, tab3, tab4 ,tab5 = st.tabs(["📋 Historial de Partidas", "📊 Estadísticas Generales", "🏆 Por Evento", "🎯 Por Tier" ,"🎯 Por Tier Agrupado"])
     
