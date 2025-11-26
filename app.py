@@ -1266,6 +1266,481 @@ else:
 
 
 
+LOGOS_LIGAS = {
+    "PES": "logo_pes.png",
+    "PSS": "logo_pss.png",
+    "PJS": "logo_pjs.png",
+    "PMS": "logo_pms.png",
+    "PLS": "logo_pls.png",
+    # Agrega más ligas según las tengas
+}
+
+def obtener_logo_liga(liga):
+    """
+    Obtiene la ruta del logo de la liga
+    """
+    import os
+    
+    if liga in LOGOS_LIGAS:
+        ruta = LOGOS_LIGAS[liga]
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no existe logo específico, intentar buscar por nombre
+    posibles_rutas = [
+        f"logo_{liga.lower()}.png",
+        f"Logo_{liga}.png",
+        f"{liga}.png",
+        f"logos/{liga.lower()}.png",
+        f"logos/logo_{liga.lower()}.png",
+    ]
+    
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no encuentra ninguno, devolver logo por defecto
+    if os.path.exists("Logo.png"):
+        return "Logo.png"
+    
+    return None
+
+# ========== PREPARACIÓN DE DATOS PARA TABLAS DE LIGA ==========
+
+# Crear df_liga desde df principal
+
+
+# Crear Liga_Temporada desde la columna round
+df_liga["Liga_Temporada"] = df_liga["round"].apply(lambda x: str(x).split(" ")[0] + str(x).split(" ")[1] if pd.notna(x) and len(str(x).split(" ")) > 1 else "")
+
+# Filtrar solo registros con Liga_Temporada válida
+df_liga = df_liga[df_liga["Liga_Temporada"] != ""].copy()
+
+# Contar victorias y derrotas por jugador y liga/temporada
+Ganador = df_liga.groupby(["Liga_Temporada", "winner"])["N_Torneo"].count().reset_index()
+Ganador.columns = ["Liga_Temporada", "Participante", "Victorias"]
+
+# Contar partidas como player1
+Partidas_P1 = df_liga.groupby(["Liga_Temporada", "player1"])["N_Torneo"].count().reset_index()
+Partidas_P1.columns = ["Liga_Temporada", "Participante", "Partidas_P1"]
+
+# Contar partidas como player2
+Partidas_P2 = df_liga.groupby(["Liga_Temporada", "player2"])["N_Torneo"].count().reset_index()
+Partidas_P2.columns = ["Liga_Temporada", "Participante", "Partidas_P2"]
+
+# Preparar datos de pokémons sobrevivientes y vencidos para ganadores
+df_liga_ganador = df_liga[["Liga_Temporada", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+df_liga_ganador.columns = ["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
+
+# Preparar datos para perdedores
+df_liga_perdedor = df_liga[["Liga_Temporada", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+
+# Identificar al perdedor
+df_liga_perdedor["Participante"] = df_liga_perdedor.apply(
+    lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
+    axis=1
+)
+
+# Para el perdedor, invertir los pokémons sobrevivientes
+df_liga_perdedor["pokes_sobrevivientes"] = 6 - df_liga_perdedor["pokemons Sob"]
+df_liga_perdedor["poke_vencidos"] = df_liga_perdedor["pokemon vencidos"] - 6
+
+df_liga_perdedor = df_liga_perdedor[["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
+
+# Concatenar datos de ganadores y perdedores
+data = pd.concat([df_liga_perdedor, df_liga_ganador])
+data = data.groupby(["Liga_Temporada", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
+
+# Crear base completa
+base_p1 = df_liga[["Liga_Temporada", "player1"]].copy()
+base_p1.columns = ["Liga_Temporada", "Participante"]
+
+base_p2 = df_liga[["Liga_Temporada", "player2"]].copy()
+base_p2.columns = ["Liga_Temporada", "Participante"]
+
+base = pd.concat([base_p1, base_p2], ignore_index=True).drop_duplicates()
+
+# Merge con victorias
+base = pd.merge(base, Ganador, how="left", on=["Liga_Temporada", "Participante"])
+base["Victorias"] = base["Victorias"].fillna(0).astype(int)
+
+# Merge con partidas
+base = pd.merge(base, Partidas_P1, how="left", on=["Liga_Temporada", "Participante"])
+base = pd.merge(base, Partidas_P2, how="left", on=["Liga_Temporada", "Participante"])
+base["Partidas_P1"] = base["Partidas_P1"].fillna(0)
+base["Partidas_P2"] = base["Partidas_P2"].fillna(0)
+base["Juegos"] = (base["Partidas_P1"] + base["Partidas_P2"]).astype(int)
+base["Derrotas"] = base["Juegos"] - base["Victorias"]
+
+# Merge con datos de pokémons
+base = pd.merge(base, data, how="left", on=["Liga_Temporada", "Participante"])
+base["pokes_sobrevivientes"] = base["pokes_sobrevivientes"].fillna(0)
+base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
+
+# Eliminar columnas temporales
+base = base.drop(columns=["Partidas_P1", "Partidas_P2"])
+
+# Calcular score final
+def score_final(data):
+    data_final_ = data.copy()
+    data_final_["% victorias"] = data_final_["Victorias"] / data_final_["Juegos"]
+    data_final_["% Derrotas"] = data_final_["Derrotas"] / data_final_["Juegos"]
+    data_final_["Total de Pkm"] = data_final_["Juegos"] * 6
+    data_final_["% SOB"] = data_final_["pokes_sobrevivientes"] / data_final_["Total de Pkm"]
+    data_final_["puntaje traducido"] = (data_final_["% victorias"] - data_final_["% Derrotas"]) * 4
+    data_final_["% Pkm derrotados"] = data_final_["poke_vencidos"] / data_final_["Total de Pkm"]
+    data_final_["Bonificación de Grupo"] = 3.5
+    data_final_["Desempeño"] = data_final_["% Pkm derrotados"] * 0.7 + data_final_["% victorias"] * 0.1 + 0.1 + 0.1 * data_final_["% SOB"]
+    data_final_["score_completo"] = 100 * (data_final_["puntaje traducido"] / 4 * 0.25 + data_final_["% Pkm derrotados"] * 0.35 + data_final_["Desempeño"] * 0.25 + 0.05 + 0.1 * data_final_["% SOB"])
+    data_final_["score_completo"] =data_final_["score_completo"] .apply(lambda x: round(x,2))
+    return data_final_
+
+base2 = score_final(base)
+
+# ========== FUNCIONES PARA GENERAR TABLAS ==========
+
+def asignar_zona(rank, total_jugadores,liga_temporada_filtro):
+    """
+    Asigna zona según la posición en la tabla
+    """
+    if liga_temporada_filtro in ( 'PJST3', 'PJST4', 'PJST5','PEST1', 'PEST2', 'PSST3', 'PSST4', 'PSST5'):
+            if rank == 1:
+                return "Líder"
+            elif rank in [2, 3]:
+                return "Ascenso"
+            elif rank > total_jugadores - 3:
+                return "Descenso"
+            else:
+                return ""
+    if liga_temporada_filtro in ( 'PMST4', 'PMST5', 'PMST6'):
+            if rank == 1:
+                return "Líder"
+           
+            elif rank > total_jugadores - 3:
+                return "Descenso"
+            else:
+                return ""
+
+    if liga_temporada_filtro in (   'PMST1', 'PMST2', 'PMST3'):
+            if rank == 1:
+                return "Líder"
+            elif rank in [8]:
+                return "Play off"                        
+            elif rank > total_jugadores - 2:
+                return "Descenso"
+            else:
+                return ""          
+    
+    if liga_temporada_filtro in ('PJST1', 'PJST2'):
+            if rank == 1:
+                return "Líder"
+            elif rank in [2]:
+                return "Ascenso"
+                        
+            elif rank > total_jugadores - 2:
+                return "Descenso"
+            else:
+                return ""
+    if liga_temporada_filtro in (  'PSST1'):
+            if rank == 1:
+                return "Líder"
+            elif rank in [2]:
+                return "Ascenso"
+            elif rank in [3,8]:
+                return "Play off"                        
+            elif rank > total_jugadores - 2:
+                return "Descenso"
+            else:
+                return ""     
+            
+    if liga_temporada_filtro in (   'PSST2'):
+            if rank == 1:
+                return "Líder"
+            elif rank in [2]:
+                return "Ascenso"
+            elif rank in [8]:
+                return "Play off"                        
+            elif rank > total_jugadores - 2:
+                return "Descenso"
+            else:
+                return ""            
+    if liga_temporada_filtro in ('PLST1'):
+            if rank == 1:
+                return "Líder"
+            else:
+                return ""
+
+def generar_tabla_temporada(df_base, liga_temporada_filtro):
+    """
+    Genera tabla de posiciones para una temporada específica
+    """
+    if 'Liga_Temporada' not in df_base.columns:
+        return None
+    
+    df_fase = df_base[df_base['Liga_Temporada'] == liga_temporada_filtro].copy()
+    
+    if df_fase.empty:
+        return None
+    
+    tabla = df_fase[['Participante', 'Victorias', 'score_completo', 'Juegos']].copy()
+    
+    tabla['PUNTOS'] = tabla['Victorias'] 
+    
+    tabla = tabla.rename(columns={
+      
+        'Participante': 'AKA',
+        'score_completo': 'SCORE',
+        'Juegos': 'JORNADAS'
+    })
+    
+    tabla['SCORE'] = tabla['SCORE'].round(2)
+    
+    tabla = tabla.sort_values(
+        ['Victorias', 'SCORE'], 
+        ascending=[False, False]
+    ).reset_index(drop=True)
+    
+    tabla['RANK'] = range(1, len(tabla) + 1)
+    
+    total_jugadores = len(tabla)
+    tabla['ZONA'] = tabla['RANK'].apply(lambda x: asignar_zona(x, total_jugadores,liga_temporada_filtro))
+    
+    tabla_final = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'ZONA', 'JORNADAS', 'Victorias']].copy()
+    
+    return tabla_final
+
+# ========== UI DE TABLAS DE POSICIONES ==========
+
+st.header("📊 Tablas de Posiciones por Liga y Temporada")
+
+if base2.empty:
+    st.error("⚠️ No hay datos disponibles para mostrar tablas de posiciones")
+    st.stop()
+
+columnas_necesarias = ['Participante', 'Liga_Temporada', 'Victorias', 'score_completo']
+columnas_faltantes = [col for col in columnas_necesarias if col not in base2.columns]
+
+if columnas_faltantes:
+    st.error(f"⚠️ Faltan columnas en base2: {', '.join(columnas_faltantes)}")
+    st.stop()
+
+ligas_temporadas = sorted(base2['Liga_Temporada'].dropna().unique())
+ligas_temporadas=['PJST1', 'PJST2', 'PJST3', 'PJST4', 'PJST5','PEST1', 'PEST2',  'PSST1', 'PSST2', 'PSST3', 'PSST4', 'PSST5','PMST1', 'PMST2', 'PMST3', 'PMST4', 'PMST5', 'PMST6', 'PLST1']
+if len(ligas_temporadas) == 0:
+    st.warning("No se encontraron datos de ligas y temporadas")
+    st.stop()
+
+ligas = sorted(list(set([lt.rstrip('T0123456789') for lt in ligas_temporadas])))
+ligas=['PJS', 'PES', 'PSS',  'PMS','PLS']
+# Mostrar información de logos disponibles
+import os
+# st.info(f"Ligas detectadas: {', '.join(ligas)}")
+# with st.expander("🎨 Configuración de logos"):
+#     st.markdown("**Estructura de carpetas recomendada:**")
+#     st.code("""
+#     tu_proyecto/
+#     ├── logo_pes.png
+#     ├── logo_pss.png
+#     ├── logo_pjs.png
+#     ├── logo_pms.png
+#     ├── logo_pls.png
+#     └── app.py
+#     """)
+    
+#     st.markdown("**Logos detectados:**")
+#     for liga in ligas:
+#         logo_path = obtener_logo_liga(liga)
+#         if logo_path:
+#             col1, col2 = st.columns([3, 1])
+#             col1.text(f"✅ {liga}: {logo_path}")
+#             col2.image(logo_path, width=50)
+#         else:
+#             st.text(f"❌ {liga}: No encontrado")
+
+# Crear pestañas por liga
+tabs_ligas = st.tabs(ligas)
+
+for idx, liga in enumerate(ligas):
+    with tabs_ligas[idx]:
+        # Obtener logo de la liga
+        logo_liga = obtener_logo_liga(liga)
+        
+        # Header de la liga con logo
+        col_header_logo, col_header_titulo = st.columns([1, 4])
+        
+        with col_header_logo:
+            if logo_liga:
+                st.image(logo_liga, width=120)
+            else:
+                st.write("🏆")
+        
+        with col_header_titulo:
+            st.markdown(f"# Liga {liga}")
+            st.markdown("---")
+        
+        # Filtrar temporadas de esta liga
+        temporadas_liga = sorted([
+            lt for lt in ligas_temporadas 
+            if lt.startswith(liga)
+        ])
+        
+        if len(temporadas_liga) == 0:
+            st.info(f"No hay temporadas disponibles para la liga {liga}")
+        else:
+            # Crear pestañas por temporada
+            nombres_temporadas = [f"Temporada {temp.replace(liga, '').lstrip('T')}" for temp in temporadas_liga]
+            tabs_temporadas = st.tabs(nombres_temporadas)
+            
+            for idx_temp, temporada in enumerate(temporadas_liga):
+                with tabs_temporadas[idx_temp]:
+                    # Generar tabla de posiciones
+                    tabla = generar_tabla_temporada(base2, temporada)
+                    
+                    if tabla is None or tabla.empty:
+                        st.info(f"No hay datos disponibles para {temporada}")
+                    else:
+                        # Mostrar encabezado con logo de la liga
+                        col_logo, col_titulo = st.columns([1, 3])
+                        
+                        # with col_logo:
+                        #     if logo_liga:
+                        #         st.image(logo_liga, width=100)
+                        #     else:
+                        #         st.write("🏆")
+                        
+                        with col_titulo:
+                            st.markdown(f"### TABLA DE POSICIONES")
+                            st.markdown(f"**{temporada}**")
+                        
+                        st.markdown("---")
+                        
+                        # Función para aplicar colores
+                        def highlight_ranks(row):
+                            if row['RANK'] == 1:
+                                return ['background-color: #FFD700; font-weight: bold; color: #000'] * len(row)
+                            elif row['RANK'] == 2:
+                                return ['background-color: #C0C0C0; font-weight: bold; color: #000'] * len(row)
+                            elif row['RANK'] == 3:
+                                return ['background-color: #CD7F32; font-weight: bold; color: #000'] * len(row)
+                            elif row['ZONA'] == 'Descenso':
+                                return ['background-color: #E74C3C; color: white; font-weight: bold'] * len(row)
+                            else:
+                                return ['background-color: #34495E; color: white'] * len(row)
+                        
+                        # Mostrar tabla
+                        tabla_display = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'ZONA', 'JORNADAS']].copy()
+                        
+                        st.dataframe(
+                            tabla_display.style.apply(highlight_ranks, axis=1),
+                            use_container_width=True,
+                            hide_index=True,
+                            height=min(600, len(tabla) * 40 + 100)
+                        )
+                        
+                        # Leyenda
+                        st.markdown("""
+                        **Leyenda de Zonas:**
+                        - 🥇 **Líder**: 1er lugar
+                        - 🥈🥉 **Ascenso**: 2do y 3er lugar
+                        - 🔻 **Descenso**: Últimos 3 lugares
+                        - ⚪ **Normal**: Resto de posiciones
+                        """)
+                        
+                        st.markdown("---")
+                        
+                        # Métricas
+                        col1, col2, col3, col4 = st.columns(4)
+                        col1.metric("👥 Jugadores", len(tabla))
+                        col2.metric("🏆 Líder", tabla.iloc[0]['AKA'])
+                        col3.metric("⚔️ Victorias", int(tabla.iloc[0]['Victorias']))
+                        col4.metric("📊 Score", f"{tabla.iloc[0]['SCORE']:.2f}")
+                        
+                        # Podio
+                        st.markdown("### 🏆 Podio")
+                        col_1, col_2, col_3 = st.columns(3)
+                        
+                        with col_1:
+                            if len(tabla) >= 1:
+                                st.markdown("#### 🥇 1er Lugar")
+                                st.markdown(f"**{tabla.iloc[0]['AKA']}**")
+                                st.metric("Victorias", int(tabla.iloc[0]['Victorias']))
+                                st.metric("Score", f"{tabla.iloc[0]['SCORE']:.2f}")
+                        
+                        with col_2:
+                            if len(tabla) >= 2:
+                                st.markdown("#### 🥈 2do Lugar")
+                                st.markdown(f"**{tabla.iloc[1]['AKA']}**")
+                                st.metric("Victorias", int(tabla.iloc[1]['Victorias']))
+                                st.metric("Score", f"{tabla.iloc[1]['SCORE']:.2f}")
+                        
+                        with col_3:
+                            if len(tabla) >= 3:
+                                st.markdown("#### 🥉 3er Lugar")
+                                st.markdown(f"**{tabla.iloc[2]['AKA']}**")
+                                st.metric("Victorias", int(tabla.iloc[2]['Victorias']))
+                                st.metric("Score", f"{tabla.iloc[2]['SCORE']:.2f}")
+                        
+                        # Gráficos
+                        st.markdown("---")
+                        
+                        col_graf1, col_graf2 = st.columns(2)
+                        
+                        with col_graf1:
+                            fig_victorias = px.bar(
+                                tabla.head(10),
+                                x='AKA',
+                                y='Victorias',
+                                title=f'Top 10 por Victorias - {temporada}',
+                                color='Victorias',
+                                color_continuous_scale='Greens',
+                                text='Victorias'
+                            )
+                            fig_victorias.update_traces(texttemplate='%{text}', textposition='outside')
+                            fig_victorias.update_layout(xaxis_tickangle=-45, showlegend=False)
+                            st.plotly_chart(fig_victorias, use_container_width=True)
+                        
+                        with col_graf2:
+                            fig_scores = px.bar(
+                                tabla.head(10),
+                                x='AKA',
+                                y='SCORE',
+                                title=f'Top 10 por Score - {temporada}',
+                                color='SCORE',
+                                color_continuous_scale='RdYlGn',
+                                text='SCORE'
+                            )
+                            fig_scores.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                            fig_scores.update_layout(xaxis_tickangle=-45, showlegend=False)
+                            st.plotly_chart(fig_scores, use_container_width=True)
+                        
+                        # Zona de descenso
+                        if len(tabla) > 3:
+                            st.markdown("---")
+                            st.markdown("### 🔻 Zona de Descenso")
+                            zona_descenso = tabla[tabla['ZONA'] == 'Descenso']
+                            if not zona_descenso.empty:
+                                st.dataframe(
+                                    zona_descenso[['RANK', 'AKA', 'Victorias', 'SCORE']],
+                                    use_container_width=True,
+                                    hide_index=True
+                                )
+                        
+                        # Descarga
+                        st.markdown("---")
+                        csv = tabla_display.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label=f"📥 Descargar tabla {temporada}",
+                            data=csv,
+                            file_name=f"tabla_posiciones_{liga}_{temporada}.csv",
+                            mime="text/csv"
+                        )
+
+st.markdown("---")
+
+
+
+
+
 st.caption("Dashboard creado para Poketubi — adapta el CSV a los encabezados sugeridos si necesitas más exactitud.")
 
 
