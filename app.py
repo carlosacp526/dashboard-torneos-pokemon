@@ -985,7 +985,7 @@ st.header("🌎 Mundial Pokémon")
 tab1, tab2 = st.tabs(["🏆 Ranking del Mundial","📊 Puntajes para el Mundial" ])
 
 with tab2:
-    st.image("PUNTAJES_MUNDIAL.png", use_container_width=True)
+    st.image("PUNTAJES_MUNDIAL.png", width=900)
     st.caption("Puntajes para clasificación al mundial")
 
 # with tab2:
@@ -1015,7 +1015,7 @@ tab_champ = st.tabs(["2021", "2022", "2023", "2024", "2025-I", "2025-II", "2025-
 with tab_champ[0]:
     st.subheader("🥇 Campeones 2021")
     try:
-        st.image("campeones_2021.png", use_container_width=True)
+        st.image("campeones_2021.png",  width=900)
         st.caption("Campeones del año 2021")
     except:
         st.info("Coloca la imagen 'campeones_2021.png' en la carpeta del proyecto")
@@ -1023,7 +1023,7 @@ with tab_champ[0]:
 with tab_champ[1]:
     st.subheader("🥇 Campeones 2022")
     try:
-        st.image("campeones_2022.png", use_container_width=True)
+        st.image("campeones_2022.png",  width=900)
         st.caption("Campeones del año 2022")
     except:
         st.info("Coloca la imagen 'campeones_2022.png' en la carpeta del proyecto")
@@ -1031,7 +1031,7 @@ with tab_champ[1]:
 with tab_champ[2]:
     st.subheader("🥇 Campeones 2023")
     try:
-        st.image("campeones_2023.png", use_container_width=True)
+        st.image("campeones_2023.png",  width=900)
         st.caption("Campeones del año 2023")
     except:
         st.info("Coloca la imagen 'campeones_2023.png' en la carpeta del proyecto")
@@ -1039,7 +1039,7 @@ with tab_champ[2]:
 with tab_champ[3]:
     st.subheader("🥇 Campeones 2024")
     try:
-        st.image("campeones_2024.png", use_container_width=True)
+        st.image("campeones_2024.png",  width=900)
         st.caption("Campeones del año 2024")
     except:
         st.info("Coloca la imagen 'campeones_2024.png' en la carpeta del proyecto")
@@ -1047,7 +1047,7 @@ with tab_champ[3]:
 with tab_champ[4]:
     st.subheader("🥇 Campeones 2025-I")
     try:
-        st.image("campeones_2025_I.png", use_container_width=True)
+        st.image("campeones_2025_I.png", width=900)
         st.caption("Campeones del primer trimestre 2025")
     except:
         st.info("Coloca la imagen 'campeones_2025_I.png' en la carpeta del proyecto")
@@ -1055,7 +1055,7 @@ with tab_champ[4]:
 with tab_champ[5]:
     st.subheader("🥇 Campeones 2025-II")
     try:
-        st.image("campeones_2025_II.png", use_container_width=True)
+        st.image("campeones_2025_II.png",  width=900)
         st.caption("Campeones del segundo trimestre 2025")
     except:
         st.info("Coloca la imagen 'campeones_2025_II.png' en la carpeta del proyecto")
@@ -1063,7 +1063,7 @@ with tab_champ[5]:
 with tab_champ[6]:
     st.subheader("🥇 Campeones 2025-III")
     try:
-        st.image("campeones_2025_III.png", use_container_width=True)
+        st.image("campeones_2025_III.png",  width=900)
         st.caption("Campeones del tercer trimestre 2025")
     except:
         st.info("Coloca la imagen 'campeones_2025_III.png' en la carpeta del proyecto")
@@ -1079,7 +1079,7 @@ tab_champ = st.tabs(["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Sept
 with tab_champ[0]:
     st.subheader("🥇 Marzo 2025")
     try:
-        st.image("Marzo25.png", use_container_width=True)
+        st.image("Marzo25.png",  width=900)
         st.caption("Rank Elo Marzo 25")
     except:
         st.info("Coloca la imagen 'Marzo25.png' en la carpeta del proyecto")
@@ -1087,7 +1087,7 @@ with tab_champ[0]:
 with tab_champ[1]:
     st.subheader("🥇 Marzo 2025")
     try:
-        st.image("Abril25.png", use_container_width=True)
+        st.image("Abril25.png",  width=900)
         st.caption("Rank Elo Abril 25")
     except:
         st.info("Coloca la imagen 'Abril25.png' en la carpeta del proyecto")
@@ -1096,7 +1096,7 @@ with tab_champ[1]:
 with tab_champ[2]:
     st.subheader("🥇 Mayo 2025")
     try:
-        st.image("Mayo25.png", use_container_width=True)
+        st.image("Mayo25.png",  width=900)
         st.caption("Rank Elo Mayo 25")
     except:
         st.info("Coloca la imagen 'Mayo25.png' en la carpeta del proyecto")
@@ -1106,7 +1106,7 @@ with tab_champ[2]:
 with tab_champ[3]:
     st.subheader("🥇 Junio 2025")
     try:
-        st.image("Junio25.png", use_container_width=True)
+        st.image("Junio25.png", width=900)
         st.caption("Rank Elo Junio 25")
     except:
         st.info("Coloca la imagen 'Junio25.png' en la carpeta del proyecto")
@@ -1116,7 +1116,7 @@ with tab_champ[3]:
 with tab_champ[4]:
     st.subheader("🥇 Julio 2025")
     try:
-        st.image("Julio25.png", use_container_width=True)
+        st.image("Julio25.png",  width=900)
         st.caption("Rank Elo Julio 25")
     except:
         st.info("Coloca la imagen 'Julio25.png' en la carpeta del proyecto")
@@ -1127,7 +1127,7 @@ with tab_champ[4]:
 with tab_champ[5]:
     st.subheader("🥇 Agosto 2025")
     try:
-        st.image("Agosto25.png", use_container_width=True)
+        st.image("Agosto25.png",  width=900)
         st.caption("Rank Elo Agosto 25")
     except:
         st.info("Coloca la imagen 'Agosto25.png' en la carpeta del proyecto")
@@ -1136,7 +1136,7 @@ with tab_champ[5]:
 with tab_champ[6]:
     st.subheader("🥇 Septiembre 2025")
     try:
-        st.image("Septiembre25.png", use_container_width=True)
+        st.image("Septiembre25.png",  width=900)
         st.caption("Rank Elo Septiembre 25")
     except:
         st.info("Coloca la imagen 'Septiembre25.png' en la carpeta del proyecto")
@@ -1145,7 +1145,7 @@ with tab_champ[6]:
 with tab_champ[7]:
     st.subheader("🥇 Octubre 2025")
     try:
-        st.image("Octubre25.png", use_container_width=True)
+        st.image("Octubre25.png",  width=900)
         st.caption("Rank Elo Octubre 25")
     except:
         st.info("Coloca la imagen 'Octubre25.png' en la carpeta del proyecto")
@@ -1843,7 +1843,7 @@ tabs = st.tabs([os.path.splitext(img)[0] for img in imagenes])
 # Mostrar cada imagen en su pestaña
 for tab, img in zip(tabs, imagenes):
     with tab:
-        st.image(os.path.join(CARPETA_IMAGENES, img), use_container_width=True)
+        st.image(os.path.join(CARPETA_IMAGENES, img),  width=900)
         st.caption(img)
 
 
