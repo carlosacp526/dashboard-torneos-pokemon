@@ -1822,40 +1822,371 @@ for idx, liga in enumerate(ligas):
 st.markdown("---")
 
 
-st.header("🌎 Logos Torneos")
-import streamlit as st
-import os
 
-# Carpeta donde están las portadas
-CARPETA_IMAGENES = "bannertorneos"
 
-# Extensiones permitidas
-EXTS = [".png", ".jpg", ".jpeg",".PNG",".JPEG",".JPG"]
 
-# Cargar archivos de imagen
-imagenes = [
-    img for img in os.listdir(CARPETA_IMAGENES)
-    if os.path.splitext(img)[1].lower() in EXTS
-]
 
-# Ordenar por número de torneo si el nombre empieza con "TORNEO "
-def extraer_numero(nombre):
-    try:
-        return int(nombre.split()[1].split(".")[0])
-    except:
-        return 9999
+# ========== PREPARACIÓN DE DATOS PARA TABLAS DE TORNEOS ==========
 
-imagenes = sorted(imagenes, key=extraer_numero)
+# Filtrar solo registros de torneos
+df_torneo = df[df.league == "TORNEO"].copy()
 
-# Crear una pestaña por torneo
-tabs = st.tabs([os.path.splitext(img)[0] for img in imagenes])
+# Crear Torneo_Temp desde la columna N_Torneo
+df_torneo["Torneo_Temp"] = df_torneo["N_Torneo"]
 
-# Mostrar cada imagen en su pestaña
-for tab, img in zip(tabs, imagenes):
-    with tab:
-        st.image(os.path.join(CARPETA_IMAGENES, img),  width=900)
-        st.caption(img)
+# Contar victorias por jugador y torneo
+Ganador_torneo = df_torneo.groupby(["Torneo_Temp", "winner"])["N_Torneo"].count().reset_index()
+Ganador_torneo.columns = ["Torneo_Temp", "Participante", "Victorias"]
 
+# Contar partidas como player1
+Partidas_P1_torneo = df_torneo.groupby(["Torneo_Temp", "player1"])["N_Torneo"].count().reset_index()
+Partidas_P1_torneo.columns = ["Torneo_Temp", "Participante", "Partidas_P1"]
+
+# Contar partidas como player2
+Partidas_P2_torneo = df_torneo.groupby(["Torneo_Temp", "player2"])["N_Torneo"].count().reset_index()
+Partidas_P2_torneo.columns = ["Torneo_Temp", "Participante", "Partidas_P2"]
+
+# Preparar datos de pokémons sobrevivientes y vencidos para ganadores
+df_torneo_ganador = df_torneo[["Torneo_Temp", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+df_torneo_ganador.columns = ["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
+
+# Preparar datos para perdedores
+df_torneo_perdedor = df_torneo[["Torneo_Temp", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+
+# Identificar al perdedor
+df_torneo_perdedor["Participante"] = df_torneo_perdedor.apply(
+    lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
+    axis=1
+)
+
+# Para el perdedor, invertir los pokémons sobrevivientes
+df_torneo_perdedor["pokes_sobrevivientes"] = 6 - df_torneo_perdedor["pokemons Sob"]
+df_torneo_perdedor["poke_vencidos"] = df_torneo_perdedor["pokemon vencidos"] - 6
+
+df_torneo_perdedor = df_torneo_perdedor[["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
+
+# Concatenar datos de ganadores y perdedores
+data_torneo = pd.concat([df_torneo_perdedor, df_torneo_ganador])
+data_torneo = data_torneo.groupby(["Torneo_Temp", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
+
+# Crear base completa
+base_p1_torneo = df_torneo[["Torneo_Temp", "player1"]].copy()
+base_p1_torneo.columns = ["Torneo_Temp", "Participante"]
+
+base_p2_torneo = df_torneo[["Torneo_Temp", "player2"]].copy()
+base_p2_torneo.columns = ["Torneo_Temp", "Participante"]
+
+base_torneo = pd.concat([base_p1_torneo, base_p2_torneo], ignore_index=True).drop_duplicates()
+
+# Merge con victorias
+base_torneo = pd.merge(base_torneo, Ganador_torneo, how="left", on=["Torneo_Temp", "Participante"])
+base_torneo["Victorias"] = base_torneo["Victorias"].fillna(0).astype(int)
+
+# Merge con partidas
+base_torneo = pd.merge(base_torneo, Partidas_P1_torneo, how="left", on=["Torneo_Temp", "Participante"])
+base_torneo = pd.merge(base_torneo, Partidas_P2_torneo, how="left", on=["Torneo_Temp", "Participante"])
+base_torneo["Partidas_P1"] = base_torneo["Partidas_P1"].fillna(0)
+base_torneo["Partidas_P2"] = base_torneo["Partidas_P2"].fillna(0)
+base_torneo["Juegos"] = (base_torneo["Partidas_P1"] + base_torneo["Partidas_P2"]).astype(int)
+base_torneo["Derrotas"] = base_torneo["Juegos"] - base_torneo["Victorias"]
+
+# Merge con datos de pokémons
+base_torneo = pd.merge(base_torneo, data_torneo, how="left", on=["Torneo_Temp", "Participante"])
+base_torneo["pokes_sobrevivientes"] = base_torneo["pokes_sobrevivientes"].fillna(0)
+base_torneo["poke_vencidos"] = base_torneo["poke_vencidos"].fillna(0)
+
+# Eliminar columnas temporales
+base_torneo = base_torneo.drop(columns=["Partidas_P1", "Partidas_P2"])
+
+# Aplicar función score_final (la misma que usaste para ligas)
+base_torneo_final = score_final(base_torneo)
+
+# ========== FUNCIONES PARA GENERAR TABLAS DE TORNEOS ==========
+
+def obtener_banner_torneo(num_torneo):
+    """
+    Obtiene la ruta del banner del torneo desde la carpeta bannertorneos
+    """
+    import os
+    
+    # Posibles formatos de nombre
+    posibles_rutas = [
+        f"bannertorneos/TORNEO {num_torneo}.png",
+        f"bannertorneos/TORNEO {num_torneo}.PNG",
+        f"bannertorneos/TORNEO {num_torneo}.jpg",
+        f"bannertorneos/TORNEO {num_torneo}.JPG",
+        f"bannertorneos/TORNEO {num_torneo}.jpeg",
+        f"bannertorneos/TORNEO {num_torneo}.JPEG",
+        f"bannertorneos/torneo{num_torneo}.png",
+        f"bannertorneos/torneo{num_torneo}.jpg",
+        f"bannertorneos/Torneo{num_torneo}.png",
+        f"bannertorneos/Torneo{num_torneo}.jpg",
+    ]
+    
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no encuentra, retornar None
+    return None
+
+def generar_tabla_torneo(df_base, torneo_num):
+    """
+    Genera tabla de posiciones para un torneo específico
+    """
+    if 'Torneo_Temp' not in df_base.columns:
+        return None
+    
+    df_torneo_filtrado = df_base[df_base['Torneo_Temp'] == torneo_num].copy()
+    
+    if df_torneo_filtrado.empty:
+        return None
+    
+    tabla = df_torneo_filtrado[['Participante', 'Victorias', 'score_completo', 'Juegos']].copy()
+    
+    tabla['PUNTOS'] = tabla['Victorias']
+    
+    tabla = tabla.rename(columns={
+        'Participante': 'AKA',
+        'score_completo': 'SCORE',
+        'Juegos': 'PARTIDAS'
+    })
+    
+    tabla['SCORE'] = tabla['SCORE'].round(2)
+    
+    tabla = tabla.sort_values(
+        ['Victorias', 'SCORE'], 
+        ascending=[False, False]
+    ).reset_index(drop=True)
+    
+    tabla['RANK'] = range(1, len(tabla) + 1)
+    
+    # Asignar posiciones especiales
+    def asignar_posicion_torneo(rank, total):
+        if rank == 1:
+            return "🥇 Campeón"
+        elif rank == 2:
+            return "🥈 Subcampeón"
+        elif rank == 3:
+            return "🥉 Tercer Lugar"
+        elif rank == 4:
+            return "4to Lugar"
+        else:
+            return ""
+    
+    total_jugadores = len(tabla)
+    tabla['POSICIÓN'] = tabla['RANK'].apply(lambda x: asignar_posicion_torneo(x, total_jugadores))
+    
+    tabla_final = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'POSICIÓN', 'PARTIDAS', 'Victorias']].copy()
+    
+    return tabla_final
+
+# ========== UI DE TABLAS DE TORNEOS ==========
+
+st.header("🏆 Tablas de Posiciones por Torneo")
+
+if base_torneo_final.empty:
+    st.error("⚠️ No hay datos disponibles para mostrar tablas de torneos")
+else:
+    # Obtener lista de torneos únicos y ordenarlos
+    torneos_disponibles = sorted(base_torneo_final['Torneo_Temp'].dropna().unique())
+    
+    if len(torneos_disponibles) == 0:
+        st.warning("No se encontraron datos de torneos")
+    else:
+        # Agrupar torneos en grupos de 10 para mejor organización
+        # Por ejemplo: Torneos 1-10, 11-20, etc.
+        
+        # Calcular cuántas pestañas principales necesitamos (grupos de 10)
+        max_torneo = max(torneos_disponibles)
+        grupos = []
+        for i in range(0, max_torneo, 10):
+            inicio = i + 1
+            fin = min(i + 10, max_torneo)
+            torneos_grupo = [t for t in torneos_disponibles if inicio <= t <= fin]
+            if torneos_grupo:
+                grupos.append((f"Torneos {inicio}-{fin}", torneos_grupo))
+        
+        # Crear pestañas principales por grupos
+        if len(grupos) <= 10:
+            # Si hay pocos grupos, mostrar todos en pestañas
+            tabs_grupos = st.tabs([nombre for nombre, _ in grupos])
+            
+            for idx_grupo, (nombre_grupo, torneos_grupo) in enumerate(grupos):
+                with tabs_grupos[idx_grupo]:
+                    # Crear sub-pestañas para cada torneo en el grupo
+                    nombres_torneos = [f"Torneo {t}" for t in torneos_grupo]
+                    tabs_torneos = st.tabs(nombres_torneos)
+                    
+                    for idx_torneo, num_torneo in enumerate(torneos_grupo):
+                        with tabs_torneos[idx_torneo]:
+                            # Generar tabla del torneo
+                            tabla = generar_tabla_torneo(base_torneo_final, num_torneo)
+                            
+                            if tabla is None or tabla.empty:
+                                st.info(f"No hay datos disponibles para el Torneo {num_torneo}")
+                            else:
+                                # Mostrar banner del torneo
+                                banner_torneo = obtener_banner_torneo(num_torneo)
+                                
+                                if banner_torneo:
+                                    st.image(banner_torneo, width=900)
+                                else:
+                                    st.markdown(f"### 🏆 TORNEO {num_torneo}")
+                                
+                                st.markdown("---")
+                                
+                                # Función para aplicar colores según posición
+                                def highlight_ranks_torneo(row):
+                                    if row['RANK'] == 1:
+                                        return ['background-color: #FFD700; font-weight: bold; color: #000'] * len(row)
+                                    elif row['RANK'] == 2:
+                                        return ['background-color: #C0C0C0; font-weight: bold; color: #000'] * len(row)
+                                    elif row['RANK'] == 3:
+                                        return ['background-color: #CD7F32; font-weight: bold; color: #000'] * len(row)
+                                    elif row['RANK'] == 4:
+                                        return ['background-color: #87CEEB; font-weight: bold; color: #000'] * len(row)
+                                    else:
+                                        return ['background-color: #34495E; color: white'] * len(row)
+                                
+                                # Mostrar tabla
+                                tabla_display = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'POSICIÓN', 'PARTIDAS']].copy()
+                                
+                                st.dataframe(
+                                    tabla_display.style.apply(highlight_ranks_torneo, axis=1),
+                                    use_container_width=True,
+                                    hide_index=True,
+                                    height=min(600, len(tabla) * 40 + 100)
+                                )
+                                
+                                st.markdown("---")
+                                
+                                # Métricas del torneo
+                                col1, col2, col3, col4 = st.columns(4)
+                                col1.metric("👥 Participantes", len(tabla))
+                                col2.metric("🏆 Campeón", tabla.iloc[0]['AKA'])
+                                col3.metric("⚔️ Victorias", int(tabla.iloc[0]['Victorias']))
+                                col4.metric("📊 Score", f"{tabla.iloc[0]['SCORE']:.2f}")
+                                
+                                # Podio del torneo
+                                st.markdown("### 🏆 Podio")
+                                col_1, col_2, col_3 = st.columns(3)
+                                
+                                with col_1:
+                                    if len(tabla) >= 1:
+                                        st.markdown("#### 🥇 Campeón")
+                                        st.markdown(f"**{tabla.iloc[0]['AKA']}**")
+                                        st.metric("Victorias", int(tabla.iloc[0]['Victorias']))
+                                        st.metric("Score", f"{tabla.iloc[0]['SCORE']:.2f}")
+                                
+                                with col_2:
+                                    if len(tabla) >= 2:
+                                        st.markdown("#### 🥈 Subcampeón")
+                                        st.markdown(f"**{tabla.iloc[1]['AKA']}**")
+                                        st.metric("Victorias", int(tabla.iloc[1]['Victorias']))
+                                        st.metric("Score", f"{tabla.iloc[1]['SCORE']:.2f}")
+                                
+                                with col_3:
+                                    if len(tabla) >= 3:
+                                        st.markdown("#### 🥉 Tercer Lugar")
+                                        st.markdown(f"**{tabla.iloc[2]['AKA']}**")
+                                        st.metric("Victorias", int(tabla.iloc[2]['Victorias']))
+                                        st.metric("Score", f"{tabla.iloc[2]['SCORE']:.2f}")
+                                
+                                # Gráficos
+                                st.markdown("---")
+                                
+                                col_graf1, col_graf2 = st.columns(2)
+                                
+                                with col_graf1:
+                                    fig_victorias = px.bar(
+                                        tabla.head(10),
+                                        x='AKA',
+                                        y='Victorias',
+                                        title=f'Top 10 por Victorias - Torneo {num_torneo}',
+                                        color='Victorias',
+                                        color_continuous_scale='Greens',
+                                        text='Victorias'
+                                    )
+                                    fig_victorias.update_traces(texttemplate='%{text}', textposition='outside')
+                                    fig_victorias.update_layout(xaxis_tickangle=-45, showlegend=False)
+                                    st.plotly_chart(fig_victorias, use_container_width=True)
+                                
+                                with col_graf2:
+                                    fig_scores = px.bar(
+                                        tabla.head(10),
+                                        x='AKA',
+                                        y='SCORE',
+                                        title=f'Top 10 por Score - Torneo {num_torneo}',
+                                        color='SCORE',
+                                        color_continuous_scale='RdYlGn',
+                                        text='SCORE'
+                                    )
+                                    fig_scores.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                                    fig_scores.update_layout(xaxis_tickangle=-45, showlegend=False)
+                                    st.plotly_chart(fig_scores, use_container_width=True)
+                                
+                                # Descarga
+                                st.markdown("---")
+                                csv = tabla_display.to_csv(index=False).encode('utf-8')
+                                st.download_button(
+                                    label=f"📥 Descargar tabla Torneo {num_torneo}",
+                                    data=csv,
+                                    file_name=f"tabla_posiciones_torneo_{num_torneo}.csv",
+                                    mime="text/csv"
+                                )
+        else:
+            # Si hay muchos torneos, usar selectbox en lugar de pestañas
+            st.info(f"Se encontraron {len(torneos_disponibles)} torneos. Use el selector para ver cada uno.")
+            
+            torneo_seleccionado = st.selectbox(
+                "Seleccione un torneo:",
+                options=torneos_disponibles,
+                format_func=lambda x: f"Torneo {x}"
+            )
+            
+            if torneo_seleccionado:
+                # Generar tabla del torneo seleccionado
+                tabla = generar_tabla_torneo(base_torneo_final, torneo_seleccionado)
+                
+                if tabla is None or tabla.empty:
+                    st.info(f"No hay datos disponibles para el Torneo {torneo_seleccionado}")
+                else:
+                    # Mostrar banner del torneo
+                    banner_torneo = obtener_banner_torneo(torneo_seleccionado)
+                    
+                    if banner_torneo:
+                        st.image(banner_torneo, width=900)
+                    else:
+                        st.markdown(f"### 🏆 TORNEO {torneo_seleccionado}")
+                    
+                    st.markdown("---")
+                    
+                    # Resto del código de visualización (igual que arriba)
+                    def highlight_ranks_torneo(row):
+                        if row['RANK'] == 1:
+                            return ['background-color: #FFD700; font-weight: bold; color: #000'] * len(row)
+                        elif row['RANK'] == 2:
+                            return ['background-color: #C0C0C0; font-weight: bold; color: #000'] * len(row)
+                        elif row['RANK'] == 3:
+                            return ['background-color: #CD7F32; font-weight: bold; color: #000'] * len(row)
+                        elif row['RANK'] == 4:
+                            return ['background-color: #87CEEB; font-weight: bold; color: #000'] * len(row)
+                        else:
+                            return ['background-color: #34495E; color: white'] * len(row)
+                    
+                    tabla_display = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'POSICIÓN', 'PARTIDAS']].copy()
+                    
+                    st.dataframe(
+                        tabla_display.style.apply(highlight_ranks_torneo, axis=1),
+                        use_container_width=True,
+                        hide_index=True,
+                        height=min(600, len(tabla) * 40 + 100)
+                    )
+                    
+                    # Métricas y gráficos (igual que en la versión con pestañas)
+
+st.markdown("---")
 
 
 st.caption("Dashboard creado para Poketubi — adapta el CSV a los encabezados sugeridos si necesitas más exactitud.")
