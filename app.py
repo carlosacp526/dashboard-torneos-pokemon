@@ -1407,12 +1407,22 @@ def asignar_zona(rank, total_jugadores,liga_temporada_filtro):
     """
     Asigna zona según la posición en la tabla
     """
-    if liga_temporada_filtro in ( 'PJST3', 'PJST4', 'PJST5','PEST1', 'PEST2', 'PSST3', 'PSST4', 'PSST5'):
+    if liga_temporada_filtro in ( 'PEST1', 'PEST2', 'PSST3', 'PSST4', 'PSST5'):
             if rank == 1:
                 return "Líder"
             elif rank in [2, 3]:
                 return "Ascenso"
             elif rank > total_jugadores - 3:
+                return "Descenso"
+            else:
+                return ""
+    
+    if liga_temporada_filtro in ( 'PJST3', 'PJST4', 'PJST5'):
+            if rank == 1:
+                return "Líder"
+            elif rank in [2, 3]:
+                return "Ascenso"
+            elif rank > total_jugadores - 2:
                 return "Descenso"
             else:
                 return ""
