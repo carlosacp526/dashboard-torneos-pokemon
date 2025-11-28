@@ -597,10 +597,10 @@ def obtener_logo_liga(liga):
     return None
 LOGOS_LIGAS = {
     "PES": "logo_pes.PNG",
-    "PSS": "logo_pss.png",
+    "PSS": "logo_pss.PNG",
     "PJS": "logo_pjs.PNG",
     "PMS": "logo_pms.PNG",
-    "PLS": "logo_pls.PNG",
+    "PLS": "logo_pls.png",
     # Agrega más ligas según las tengas
 }
 
