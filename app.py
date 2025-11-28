@@ -906,9 +906,32 @@ if player_query:
                 try:
                     imagen_path = f"jugadores/{player_query.replace(' ', '_')}.jpg"    
                     st.image(imagen_path, width=200, caption=player_query)
+
+
                 except:
-                    st.info("📷 Imagen no disponible")
-                    st.caption(f"Agrega: {imagen_path}")
+
+
+                            try:
+                                imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPG"    
+                                st.image(imagen_path, width=200, caption=player_query)
+
+
+                            except:
+
+                                   try:
+                                    imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPEG"    
+                                    st.image(imagen_path, width=200, caption=player_query)                                   
+                                   
+                                   
+ 
+                                   except:
+
+                                        try:
+                                           imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPEG"    
+                                           st.image(imagen_path, width=200, caption=player_query)                                   
+                                        except:                             
+                                           st.info("📷 Imagen no disponible")
+                                           st.caption(f"Agrega: {imagen_path}")
     
     with col_info:
         st.write(f"### {player_query}")
