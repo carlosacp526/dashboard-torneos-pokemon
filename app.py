@@ -1639,164 +1639,6 @@ with tab2:
 
 
 
-
-
-
-
-
-
-# ========== NUEVA SECCIÓN: CAMPEONES ==========
-st.header("🏆 Salón de la Fama - Campeones")
-
-tab_champ = st.tabs(["2021", "2022", "2023", "2024", "2025-I", "2025-II", "2025-III"])
-
-with tab_champ[0]:
-    st.subheader("🥇 Campeones 2021")
-    try:
-        st.image("campeones_2021.png",  width=900)
-        st.caption("Campeones del año 2021")
-    except:
-        st.info("Coloca la imagen 'campeones_2021.png' en la carpeta del proyecto")
-
-with tab_champ[1]:
-    st.subheader("🥇 Campeones 2022")
-    try:
-        st.image("campeones_2022.png",  width=900)
-        st.caption("Campeones del año 2022")
-    except:
-        st.info("Coloca la imagen 'campeones_2022.png' en la carpeta del proyecto")
-
-with tab_champ[2]:
-    st.subheader("🥇 Campeones 2023")
-    try:
-        st.image("campeones_2023.png",  width=900)
-        st.caption("Campeones del año 2023")
-    except:
-        st.info("Coloca la imagen 'campeones_2023.png' en la carpeta del proyecto")
-
-with tab_champ[3]:
-    st.subheader("🥇 Campeones 2024")
-    try:
-        st.image("campeones_2024.png",  width=900)
-        st.caption("Campeones del año 2024")
-    except:
-        st.info("Coloca la imagen 'campeones_2024.png' en la carpeta del proyecto")
-
-with tab_champ[4]:
-    st.subheader("🥇 Campeones 2025-I")
-    try:
-        st.image("campeones_2025_I.png", width=900)
-        st.caption("Campeones del primer trimestre 2025")
-    except:
-        st.info("Coloca la imagen 'campeones_2025_I.png' en la carpeta del proyecto")
-
-with tab_champ[5]:
-    st.subheader("🥇 Campeones 2025-II")
-    try:
-        st.image("campeones_2025_II.png",  width=900)
-        st.caption("Campeones del segundo trimestre 2025")
-    except:
-        st.info("Coloca la imagen 'campeones_2025_II.png' en la carpeta del proyecto")
-
-with tab_champ[6]:
-    st.subheader("🥇 Campeones 2025-III")
-    try:
-        st.image("campeones_2025_III.png",  width=900)
-        st.caption("Campeones del tercer trimestre 2025")
-    except:
-        st.info("Coloca la imagen 'campeones_2025_III.png' en la carpeta del proyecto")
-
-st.markdown("---")
-
-
-# ========== NUEVA SECCIÓN: CAMPEONES ==========
-st.header("🏆 Ranking Elo")
-
-tab_champ = st.tabs(["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre","Octubre"])
-
-with tab_champ[0]:
-    st.subheader("🥇 Marzo 2025")
-    try:
-        st.image("Marzo25.png",  width=900)
-        st.caption("Rank Elo Marzo 25")
-    except:
-        st.info("Coloca la imagen 'Marzo25.png' en la carpeta del proyecto")
-
-with tab_champ[1]:
-    st.subheader("🥇 Marzo 2025")
-    try:
-        st.image("Abril25.png",  width=900)
-        st.caption("Rank Elo Abril 25")
-    except:
-        st.info("Coloca la imagen 'Abril25.png' en la carpeta del proyecto")
-
-
-with tab_champ[2]:
-    st.subheader("🥇 Mayo 2025")
-    try:
-        st.image("Mayo25.png",  width=900)
-        st.caption("Rank Elo Mayo 25")
-    except:
-        st.info("Coloca la imagen 'Mayo25.png' en la carpeta del proyecto")
-
-
-
-with tab_champ[3]:
-    st.subheader("🥇 Junio 2025")
-    try:
-        st.image("Junio25.png", width=900)
-        st.caption("Rank Elo Junio 25")
-    except:
-        st.info("Coloca la imagen 'Junio25.png' en la carpeta del proyecto")
-
-
-
-with tab_champ[4]:
-    st.subheader("🥇 Julio 2025")
-    try:
-        st.image("Julio25.png",  width=900)
-        st.caption("Rank Elo Julio 25")
-    except:
-        st.info("Coloca la imagen 'Julio25.png' en la carpeta del proyecto")
-
-
-
-
-with tab_champ[5]:
-    st.subheader("🥇 Agosto 2025")
-    try:
-        st.image("Agosto25.png",  width=900)
-        st.caption("Rank Elo Agosto 25")
-    except:
-        st.info("Coloca la imagen 'Agosto25.png' en la carpeta del proyecto")
-
-
-with tab_champ[6]:
-    st.subheader("🥇 Septiembre 2025")
-    try:
-        st.image("Septiembre25.png",  width=900)
-        st.caption("Rank Elo Septiembre 25")
-    except:
-        st.info("Coloca la imagen 'Septiembre25.png' en la carpeta del proyecto")
-
-
-with tab_champ[7]:
-    st.subheader("🥇 Octubre 2025")
-    try:
-        st.image("Octubre25.png",  width=900)
-        st.caption("Rank Elo Octubre 25")
-    except:
-        st.info("Coloca la imagen 'Octubre25.png' en la carpeta del proyecto")
-
-st.markdown("---")
-
-
-
-
-
-
-
-
 with tab1:
 
     import pandas as pd 
@@ -1847,57 +1689,6 @@ with tab1:
 
 st.markdown("---")
 
-
-
-
-#### hisotrial de combates
-
-st.subheader("Historial de combates — Fechas")
-c1, c2, c3 = st.columns(3)
-date_min = df['date'].min()
-date_max = df['date'].max()
-
-if pd.notna(date_min) and pd.notna(date_max):
-    # Extraer años y meses disponibles
-    years = sorted(df['date'].dt.year.dropna().unique().astype(int))
-    months = {
-        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
-        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
-        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
-    }
-    
-    # Selectores de mes y año
-    start_year = c1.selectbox("Año desde", options=years, index=0)
-    start_month = c1.selectbox("Mes desde", options=list(months.keys()), 
-                               format_func=lambda x: months[x],
-                               index=0)
-    
-    end_year = c2.selectbox("Año hasta", options=years, index=len(years)-1)
-    end_month = c2.selectbox("Mes hasta", options=list(months.keys()), 
-                             format_func=lambda x: months[x],
-                             index=11)
-    
-    liga_filter = c3.selectbox("Liga (filtro)", options=["Todas"] + sorted(leagues))
-    
-    # Crear fechas de inicio y fin del periodo
-    start_date = pd.Timestamp(year=start_year, month=start_month, day=1)
-    # Último día del mes seleccionado
-    if end_month == 12:
-        end_date = pd.Timestamp(year=end_year, month=12, day=31)
-    else:
-        end_date = pd.Timestamp(year=end_year, month=end_month+1, day=1) - pd.Timedelta(days=1)
-    
-    # Aplicar filtros
-    hist_mask = pd.Series(True, index=df.index)
-    hist_mask &= (df['date'] >= start_date) & (df['date'] <= end_date)
-    if liga_filter != "Todas":
-        hist_mask &= df['league'].fillna('Sin liga') == liga_filter
-    
-    hist_df = df[hist_mask]
-    st.write(f"Partidas en rango ({months[start_month]} {start_year} - {months[end_month]} {end_year}): {len(hist_df)}")
-    st.dataframe(hist_df[['date','player1','player2','winner','league','round','status','replay']].sort_values(by='date', ascending=False).head(500))
-else:
-    st.info("No hay fechas válidas en el dataset; revisa la columna fecha.")
 
 
 
@@ -2825,6 +2616,213 @@ else:
                     # Métricas y gráficos (igual que en la versión con pestañas)
 
 st.markdown("---")
+
+
+
+
+
+
+
+
+# ========== NUEVA SECCIÓN: CAMPEONES ==========
+st.header("🏆 Salón de la Fama - Campeones")
+
+tab_champ = st.tabs(["2021", "2022", "2023", "2024", "2025-I", "2025-II", "2025-III"])
+
+with tab_champ[0]:
+    st.subheader("🥇 Campeones 2021")
+    try:
+        st.image("campeones_2021.png",  width=900)
+        st.caption("Campeones del año 2021")
+    except:
+        st.info("Coloca la imagen 'campeones_2021.png' en la carpeta del proyecto")
+
+with tab_champ[1]:
+    st.subheader("🥇 Campeones 2022")
+    try:
+        st.image("campeones_2022.png",  width=900)
+        st.caption("Campeones del año 2022")
+    except:
+        st.info("Coloca la imagen 'campeones_2022.png' en la carpeta del proyecto")
+
+with tab_champ[2]:
+    st.subheader("🥇 Campeones 2023")
+    try:
+        st.image("campeones_2023.png",  width=900)
+        st.caption("Campeones del año 2023")
+    except:
+        st.info("Coloca la imagen 'campeones_2023.png' en la carpeta del proyecto")
+
+with tab_champ[3]:
+    st.subheader("🥇 Campeones 2024")
+    try:
+        st.image("campeones_2024.png",  width=900)
+        st.caption("Campeones del año 2024")
+    except:
+        st.info("Coloca la imagen 'campeones_2024.png' en la carpeta del proyecto")
+
+with tab_champ[4]:
+    st.subheader("🥇 Campeones 2025-I")
+    try:
+        st.image("campeones_2025_I.png", width=900)
+        st.caption("Campeones del primer trimestre 2025")
+    except:
+        st.info("Coloca la imagen 'campeones_2025_I.png' en la carpeta del proyecto")
+
+with tab_champ[5]:
+    st.subheader("🥇 Campeones 2025-II")
+    try:
+        st.image("campeones_2025_II.png",  width=900)
+        st.caption("Campeones del segundo trimestre 2025")
+    except:
+        st.info("Coloca la imagen 'campeones_2025_II.png' en la carpeta del proyecto")
+
+with tab_champ[6]:
+    st.subheader("🥇 Campeones 2025-III")
+    try:
+        st.image("campeones_2025_III.png",  width=900)
+        st.caption("Campeones del tercer trimestre 2025")
+    except:
+        st.info("Coloca la imagen 'campeones_2025_III.png' en la carpeta del proyecto")
+
+st.markdown("---")
+
+
+# ========== NUEVA SECCIÓN: CAMPEONES ==========
+st.header("🏆 Ranking Elo")
+
+tab_champ = st.tabs(["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre","Octubre"])
+
+with tab_champ[0]:
+    st.subheader("🥇 Marzo 2025")
+    try:
+        st.image("Marzo25.png",  width=900)
+        st.caption("Rank Elo Marzo 25")
+    except:
+        st.info("Coloca la imagen 'Marzo25.png' en la carpeta del proyecto")
+
+with tab_champ[1]:
+    st.subheader("🥇 Marzo 2025")
+    try:
+        st.image("Abril25.png",  width=900)
+        st.caption("Rank Elo Abril 25")
+    except:
+        st.info("Coloca la imagen 'Abril25.png' en la carpeta del proyecto")
+
+
+with tab_champ[2]:
+    st.subheader("🥇 Mayo 2025")
+    try:
+        st.image("Mayo25.png",  width=900)
+        st.caption("Rank Elo Mayo 25")
+    except:
+        st.info("Coloca la imagen 'Mayo25.png' en la carpeta del proyecto")
+
+
+
+with tab_champ[3]:
+    st.subheader("🥇 Junio 2025")
+    try:
+        st.image("Junio25.png", width=900)
+        st.caption("Rank Elo Junio 25")
+    except:
+        st.info("Coloca la imagen 'Junio25.png' en la carpeta del proyecto")
+
+
+
+with tab_champ[4]:
+    st.subheader("🥇 Julio 2025")
+    try:
+        st.image("Julio25.png",  width=900)
+        st.caption("Rank Elo Julio 25")
+    except:
+        st.info("Coloca la imagen 'Julio25.png' en la carpeta del proyecto")
+
+
+
+
+with tab_champ[5]:
+    st.subheader("🥇 Agosto 2025")
+    try:
+        st.image("Agosto25.png",  width=900)
+        st.caption("Rank Elo Agosto 25")
+    except:
+        st.info("Coloca la imagen 'Agosto25.png' en la carpeta del proyecto")
+
+
+with tab_champ[6]:
+    st.subheader("🥇 Septiembre 2025")
+    try:
+        st.image("Septiembre25.png",  width=900)
+        st.caption("Rank Elo Septiembre 25")
+    except:
+        st.info("Coloca la imagen 'Septiembre25.png' en la carpeta del proyecto")
+
+
+with tab_champ[7]:
+    st.subheader("🥇 Octubre 2025")
+    try:
+        st.image("Octubre25.png",  width=900)
+        st.caption("Rank Elo Octubre 25")
+    except:
+        st.info("Coloca la imagen 'Octubre25.png' en la carpeta del proyecto")
+
+st.markdown("---")
+
+
+
+
+
+
+#### hisotrial de combates
+
+st.subheader("Historial de combates — Fechas")
+c1, c2, c3 = st.columns(3)
+date_min = df['date'].min()
+date_max = df['date'].max()
+
+if pd.notna(date_min) and pd.notna(date_max):
+    # Extraer años y meses disponibles
+    years = sorted(df['date'].dt.year.dropna().unique().astype(int))
+    months = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
+    
+    # Selectores de mes y año
+    start_year = c1.selectbox("Año desde", options=years, index=0)
+    start_month = c1.selectbox("Mes desde", options=list(months.keys()), 
+                               format_func=lambda x: months[x],
+                               index=0)
+    
+    end_year = c2.selectbox("Año hasta", options=years, index=len(years)-1)
+    end_month = c2.selectbox("Mes hasta", options=list(months.keys()), 
+                             format_func=lambda x: months[x],
+                             index=11)
+    
+    liga_filter = c3.selectbox("Liga (filtro)", options=["Todas"] + sorted(leagues))
+    
+    # Crear fechas de inicio y fin del periodo
+    start_date = pd.Timestamp(year=start_year, month=start_month, day=1)
+    # Último día del mes seleccionado
+    if end_month == 12:
+        end_date = pd.Timestamp(year=end_year, month=12, day=31)
+    else:
+        end_date = pd.Timestamp(year=end_year, month=end_month+1, day=1) - pd.Timedelta(days=1)
+    
+    # Aplicar filtros
+    hist_mask = pd.Series(True, index=df.index)
+    hist_mask &= (df['date'] >= start_date) & (df['date'] <= end_date)
+    if liga_filter != "Todas":
+        hist_mask &= df['league'].fillna('Sin liga') == liga_filter
+    
+    hist_df = df[hist_mask]
+    st.write(f"Partidas en rango ({months[start_month]} {start_year} - {months[end_month]} {end_year}): {len(hist_df)}")
+    st.dataframe(hist_df[['date','player1','player2','winner','league','round','status','replay']].sort_values(by='date', ascending=False).head(500))
+else:
+    st.info("No hay fechas válidas en el dataset; revisa la columna fecha.")
+
 
 
 st.caption("Dashboard creado para Poketubi — adapta el CSV a los encabezados sugeridos si necesitas más exactitud.")
