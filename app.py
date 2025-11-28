@@ -927,7 +927,7 @@ if player_query:
                                    except:
 
                                         try:
-                                           imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPEG"    
+                                           imagen_path = f"jugadores/{player_query.replace(' ', '_')}.PNG"    
                                            st.image(imagen_path, width=200, caption=player_query)                                   
                                         except:                             
                                            st.info("📷 Imagen no disponible")
