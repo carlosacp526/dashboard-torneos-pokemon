@@ -968,13 +968,18 @@ def obtener_logo_liga(liga):
     
     # Si no existe logo específico, intentar buscar por nombre
     posibles_rutas = [
-        f"logo_{liga.lower()}.png",
-        f"Logo_{liga}.png",
-        f"{liga}.png",
-        f"logos/{liga.lower()}.png",
-        f"logos/logo_{liga.lower()}.png",
-    ]
-    
+            f"logo_{liga.lower()}.png",
+            f"Logo_{liga}.png",
+            f"{liga}.png",
+            f"logos/{liga.lower()}.png",
+            f"logos/logo_{liga.lower()}.png",
+            f"logo_{liga.lower()}.PNG",
+            f"Logo_{liga}.PNG",
+            f"{liga}.PNG",
+            f"logos/{liga.lower()}.PNG",
+            f"logos/logo_{liga.lower()}.PNG",
+        ]
+        
     for ruta in posibles_rutas:
         if os.path.exists(ruta):
             return ruta
