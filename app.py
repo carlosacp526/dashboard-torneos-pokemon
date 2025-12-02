@@ -4029,7 +4029,7 @@ st.markdown('<div id="ranking-elo"></div>', unsafe_allow_html=True)
 # ========== NUEVA SECCIÓN: CAMPEONES ==========
 st.header("🏆 Ranking Elo")
 
-tab_champ = st.tabs(["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre","Octubre"])
+tab_champ = st.tabs(["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre","Octubre","Noviembre"])
 
 with tab_champ[0]:
     st.subheader("🥇 Marzo 2025")
@@ -4104,6 +4104,15 @@ with tab_champ[7]:
         st.caption("Rank Elo Octubre 25")
     except:
         st.info("Coloca la imagen 'Octubre25.png' en la carpeta del proyecto")
+
+
+with tab_champ[8]:
+    st.subheader("🥇 Noviembre 2025")
+    try:
+        st.image("Noviembre25.png",  width=900)
+        st.caption("Rank Elo Noviembre 25")
+    except:
+        st.info("Coloca la imagen 'Noviembre25.png' en la carpeta del proyecto")
 
 st.markdown("---")
 
