@@ -3167,7 +3167,256 @@ for idx, liga in enumerate(ligas):
                                         fig_jornada.update_traces(texttemplate='%{text}', textposition='outside')
                                         fig_jornada.update_layout(xaxis_tickangle=-45, showlegend=False)
                                         st.plotly_chart(fig_jornada, use_container_width=True)
+
+            # Enfrentamientos de la jornada
+                                        st.markdown("---")
+                                        st.markdown("### ⚔️ Enfrentamientos de la Jornada " + str(int(num_jornada)))
                                         
+                                        # Filtrar enfrentamientos de esta jornada
+                                        enfrentamientos = df_liga_jornada[
+                                            (df_liga_jornada['Liga_Temporada'] == temporada) & 
+                                            (df_liga_jornada['N_Jornada'] == num_jornada)
+                                        ].copy()
+                                        
+                                        if not enfrentamientos.empty:
+                                            # Crear tabla de enfrentamientos
+                                            enfrentamientos_display = enfrentamientos[[
+                                                'player1', 'player2', 'winner', 
+                                                'pokemons Sob', 'pokemon vencidos'
+                                            ]].copy()
+                                            
+                                            # Identificar al perdedor
+                                            enfrentamientos_display['Perdedor'] = enfrentamientos_display.apply(
+                                                lambda row: row['player2'] if row['winner'] == row['player1'] else row['player1'],
+                                                axis=1
+                                            )
+                                            
+                                            # Calcular pokémons del perdedor
+                                            enfrentamientos_display['Pokes_Perdedor'] = 6 - enfrentamientos_display['pokemons Sob']
+                                            
+                                            # Renombrar y reorganizar columnas
+                                            enfrentamientos_display = enfrentamientos_display.rename(columns={
+                                                'winner': 'Ganador',
+                                                'pokemons Sob': 'Pokes_Ganador'
+                                            })
+                                            
+                                            # Crear tabla final
+                                            tabla_enfrentamientos = enfrentamientos_display[[
+                                                'Ganador', 'Pokes_Ganador', 'Perdedor', 'Pokes_Perdedor'
+                                            ]].reset_index(drop=True)
+                                            
+                                            tabla_enfrentamientos['Resultado'] = (
+                                                tabla_enfrentamientos['Pokes_Ganador'].astype(str) + 
+                                                ' - ' + 
+                                                tabla_enfrentamientos['Pokes_Perdedor'].astype(str)
+                                            )
+                                            
+                                            # Agregar número de batalla
+                                            tabla_enfrentamientos.insert(0, 'Batalla', range(1, len(tabla_enfrentamientos) + 1))
+                                            
+                                            # Función para colorear ganadores
+                                            def highlight_enfrentamientos(row):
+                                                return [
+                                                    'background-color: #2ECC71; color: white; font-weight: bold',  # Batalla
+                                                    'background-color: #2ECC71; color: white; font-weight: bold',  # Ganador
+                                                    'background-color: #2ECC71; color: white; font-weight: bold',  # Pokes Ganador
+                                                    'background-color: #E74C3C; color: white',  # Perdedor
+                                                    'background-color: #E74C3C; color: white',  # Pokes Perdedor
+                                                    'background-color: #34495E; color: white; font-weight: bold'   # Resultado
+                                                ]
+                                            
+                                            st.dataframe(
+                                                tabla_enfrentamientos.style.apply(highlight_enfrentamientos, axis=1),
+                                                use_container_width=True,
+                                                hide_index=True,
+                                                height=min(400, len(tabla_enfrentamientos) * 40 + 100)
+                                            )
+                                            
+                                            # Métricas de la jornada
+                                            st.markdown("---")
+                                            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+                                            
+                                            total_batallas = len(tabla_enfrentamientos)
+                                            total_pokes_vencidos = enfrentamientos_display['pokemon vencidos'].sum()
+                                            promedio_pokes = total_pokes_vencidos / total_batallas if total_batallas > 0 else 0
+                                            
+                                            col_m1.metric("🎮 Total Batallas", total_batallas)
+                                            col_m2.metric("💀 Pokémon Vencidos", int(total_pokes_vencidos))
+                                            col_m3.metric("📊 Promedio por Batalla", f"{promedio_pokes:.1f}")
+                                            
+                                            # Contar 6-0
+                                            # Contar 6-0
+                                            barridas = len(enfrentamientos_display[enfrentamientos_display['Pokes_Ganador'] == 6])
+                                            col_m4.metric("🧹 Barridas (6-0)", barridas)
+                                            
+                                            # Gráfico de resultados
+                                            st.markdown("---")
+                                            st.markdown("### 📊 Distribución de Resultados")
+                                            
+                                            resultados_count = tabla_enfrentamientos['Resultado'].value_counts().reset_index()
+                                            resultados_count.columns = ['Resultado', 'Cantidad']
+                                            
+                                            fig_resultados = px.bar(
+                                                resultados_count,
+                                                x='Resultado',
+                                                y='Cantidad',
+                                                title='Frecuencia de Resultados en la Jornada',
+                                                color='Cantidad',
+                                                color_continuous_scale='Viridis',
+                                                text='Cantidad'
+                                            )
+                                            fig_resultados.update_traces(textposition='outside')
+                                            fig_resultados.update_layout(showlegend=False)
+                                            st.plotly_chart(fig_resultados, use_container_width=True, key=f"resultados_{temporada}_{int(num_jornada)}")
+                                            
+                                        else:
+                                            st.info("No hay enfrentamientos registrados para esta jornada")
+
+
+                                            
+
+            # Gráfico evolutivo acumulativo
+                                        st.markdown("---")
+                                        st.markdown("### 📈 Evolución Acumulativa por Jornada")
+                                        
+                                        # Calcular evolución jornada por jornada
+                                        evolucion_data = []
+                                        
+                                        for jornada_actual in sorted(jornadas_disponibles):
+                                            if jornada_actual <= num_jornada:
+                                                # Filtrar datos hasta esta jornada
+                                                df_hasta_jornada = df_liga_jornada[
+                                                    (df_liga_jornada['Liga_Temporada'] == temporada) & 
+                                                    (df_liga_jornada['N_Jornada'] <= jornada_actual)
+                                                ].copy()
+                                                
+                                                # Recalcular todo desde cero para esta jornada acumulada
+                                                # Contar victorias
+                                                victorias_acum = df_hasta_jornada.groupby('winner')['N_Torneo'].count().reset_index()
+                                                victorias_acum.columns = ['Participante', 'Victorias']
+                                                
+                                                # Contar partidas
+                                                p1_acum = df_hasta_jornada.groupby('player1')['N_Torneo'].count().reset_index()
+                                                p1_acum.columns = ['Participante', 'Partidas_P1']
+                                                
+                                                p2_acum = df_hasta_jornada.groupby('player2')['N_Torneo'].count().reset_index()
+                                                p2_acum.columns = ['Participante', 'Partidas_P2']
+                                                
+                                                # Datos de pokémons - ganadores
+                                                ganador_acum = df_hasta_jornada[['winner', 'pokemons Sob', 'pokemon vencidos']].copy()
+                                                ganador_acum.columns = ['Participante', 'pokes_sobrevivientes', 'poke_vencidos']
+                                                
+                                                # Datos de pokémons - perdedores
+                                                perdedor_acum = df_hasta_jornada[['player1', 'player2', 'winner', 'pokemons Sob', 'pokemon vencidos']].copy()
+                                                perdedor_acum['Participante'] = perdedor_acum.apply(
+                                                    lambda row: row['player2'] if row['winner'] == row['player1'] else row['player1'],
+                                                    axis=1
+                                                )
+                                                perdedor_acum['pokes_sobrevivientes'] = 6 - perdedor_acum['pokemons Sob']
+                                                perdedor_acum['poke_vencidos'] = perdedor_acum['pokemon vencidos'] - 6
+                                                perdedor_acum = perdedor_acum[['Participante', 'pokes_sobrevivientes', 'poke_vencidos']]
+                                                
+                                                # Consolidar datos de pokémons
+                                                pokes_acum = pd.concat([ganador_acum, perdedor_acum])
+                                                pokes_acum = pokes_acum.groupby('Participante')[['pokes_sobrevivientes', 'poke_vencidos']].sum().reset_index()
+                                                
+                                                # Crear base de participantes
+                                                base1 = df_hasta_jornada[['player1']].copy()
+                                                base1.columns = ['Participante']
+                                                base2_temp = df_hasta_jornada[['player2']].copy()
+                                                base2_temp.columns = ['Participante']
+                                                base_temp = pd.concat([base1, base2_temp]).drop_duplicates()
+                                                
+                                                # Merge todo
+                                                base_temp = pd.merge(base_temp, victorias_acum, how='left', on='Participante')
+                                                base_temp['Victorias'] = base_temp['Victorias'].fillna(0).astype(int)
+                                                
+                                                base_temp = pd.merge(base_temp, p1_acum, how='left', on='Participante')
+                                                base_temp = pd.merge(base_temp, p2_acum, how='left', on='Participante')
+                                                base_temp['Partidas_P1'] = base_temp['Partidas_P1'].fillna(0)
+                                                base_temp['Partidas_P2'] = base_temp['Partidas_P2'].fillna(0)
+                                                base_temp['Juegos'] = (base_temp['Partidas_P1'] + base_temp['Partidas_P2']).astype(int)
+                                                base_temp['Derrotas'] = base_temp['Juegos'] - base_temp['Victorias']
+                                                
+                                                base_temp = pd.merge(base_temp, pokes_acum, how='left', on='Participante')
+                                                base_temp['pokes_sobrevivientes'] = base_temp['pokes_sobrevivientes'].fillna(0)
+                                                base_temp['poke_vencidos'] = base_temp['poke_vencidos'].fillna(0)
+                                                
+                                                base_temp = base_temp.drop(columns=['Partidas_P1', 'Partidas_P2'])
+                                                
+                                                # Calcular score
+                                                base_temp_scored = score_final(base_temp)
+                                                
+                                                # Agregar a lista con el número de jornada
+                                                for _, row in base_temp_scored.iterrows():
+                                                    evolucion_data.append({
+                                                        'N_Jornada': jornada_actual,
+                                                        'Participante': row['Participante'],
+                                                        'Puntos_Acumulados': row['Victorias'],
+                                                        'Score_Acumulado': row['score_completo']
+                                                    })
+                                        
+                                        # Convertir a DataFrame
+                                        evolucion = pd.DataFrame(evolucion_data)
+                                        
+                                        if not evolucion.empty:
+                                            # Crear dos gráficos: uno para puntos y otro para score
+                                            col_evol1, col_evol2 = st.columns(2)
+                                            
+                                            with col_evol1:
+                                                fig_evol_puntos = px.line(
+                                                    evolucion,
+                                                    x='N_Jornada',
+                                                    y='Puntos_Acumulados',
+                                                    color='Participante',
+                                                    title='Evolución de Puntos Acumulados',
+                                                    markers=True,
+                                                    labels={'N_Jornada': 'Jornada', 'Puntos_Acumulados': 'Puntos'}
+                                                )
+                                                fig_evol_puntos.update_layout(
+                                                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                                                    hovermode='x unified'
+                                                )
+                                                st.plotly_chart(fig_evol_puntos, use_container_width=True)
+                                            
+                                            with col_evol2:
+                                                fig_evol_score = px.line(
+                                                    evolucion,
+                                                    x='N_Jornada',
+                                                    y='Score_Acumulado',
+                                                    color='Participante',
+                                                    title='Evolución de Score Acumulado',
+                                                    markers=True,
+                                                    labels={'N_Jornada': 'Jornada', 'Score_Acumulado': 'Score'}
+                                                )
+                                                fig_evol_score.update_layout(
+                                                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                                                    hovermode='x unified'
+                                                )
+                                                st.plotly_chart(fig_evol_score, use_container_width=True)
+                                            
+                                            # Tabla comparativa de evolución
+                                            st.markdown("---")
+                                            st.markdown("### 📊 Ranking Acumulado hasta Jornada " + str(int(num_jornada)))
+                                            
+                                            ranking_acumulado = evolucion[evolucion['N_Jornada'] == num_jornada].copy()
+                                            ranking_acumulado = ranking_acumulado.sort_values('Puntos_Acumulados', ascending=False).reset_index(drop=True)
+                                            ranking_acumulado['Posición'] = range(1, len(ranking_acumulado) + 1)
+                                            ranking_acumulado['Score_Acumulado'] = ranking_acumulado['Score_Acumulado'].round(2)
+                                            
+                                            tabla_evol = ranking_acumulado[['Posición', 'Participante', 'Puntos_Acumulados', 'Score_Acumulado']].copy()
+                                            tabla_evol.columns = ['POS', 'JUGADOR', 'PUNTOS', 'SCORE']
+                                            
+                                            st.dataframe(
+                                                tabla_evol,
+                                                use_container_width=True,
+                                                hide_index=True,
+                                                height=min(400, len(tabla_evol) * 40 + 100)
+                                            )
+                                        else:
+                                            st.info("No hay suficientes datos para mostrar la evolución")
+
+
                                         st.markdown("---")
                                         csv_jornada = tabla_jornada_display.to_csv(index=False).encode('utf-8')
                                         st.download_button(
@@ -3177,6 +3426,15 @@ for idx, liga in enumerate(ligas):
                                             mime="text/csv"
                                         )
 
+
+
+
+
+st.markdown("---")
+
+                                     
+                                        
+ 
 
 
 
