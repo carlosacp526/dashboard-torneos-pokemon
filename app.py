@@ -4,7 +4,56 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from datetime import datetime
+# app.py
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from datetime import datetime
 
+
+import time
+
+# Pantalla de carga
+def mostrar_pantalla_carga(ruta_gif):
+    """
+    Muestra una pantalla de carga mientras se procesan los datos
+    """
+    # Crear un placeholder
+    placeholder = st.empty()
+    
+    with placeholder.container():
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("""
+                <style>
+                .loading-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 50px;
+                }
+                .loading-text {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #FF4B4B;
+                    margin-top: 20px;
+                    text-align: center;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            
+            st.image(ruta_gif, use_container_width=True)
+            st.markdown('<div class="loading-text">Cargando datos de las ligas... ⚡</div>', unsafe_allow_html=True)
+    
+    return placeholder
+
+# Mostrar pantalla de carga
+placeholder_carga = mostrar_pantalla_carga("pikachu.gif")
+
+# Simular carga (opcional, si quieres un delay mínimo)
+time.sleep(1)
 def obtener_banner(liga):
     """
     Obtiene la ruta del logo de la liga
@@ -3570,7 +3619,7 @@ base_torneo = base_torneo.drop(columns=["Partidas_P1", "Partidas_P2"])
 
 # Aplicar función score_final (la misma que usaste para ligas)
 base_torneo_final = score_final(base_torneo)
-
+placeholder_carga.empty()
 # ========== FUNCIONES PARA GENERAR TABLAS DE TORNEOS ==========
 
 def obtener_banner_torneo(num_torneo):
