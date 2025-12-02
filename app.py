@@ -1458,20 +1458,43 @@ if player_query:
     
     with col_img:
         # Intentar cargar la imagen del jugador
-        imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.png"
+        imagen_path = f"jugadores/{player_query.replace(' ', '_')}.png"
         try:
             st.image(imagen_path, width=200, caption=player_query)
         except:
             try:
-                imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpeg"    
+                imagen_path = f"jugadores/{player_query.replace(' ', '_')}.jpeg"    
                 st.image(imagen_path, width=200, caption=player_query)
             except:           
                 try:
-                    imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpg"    
+                    imagen_path = f"jugadores/{player_query.replace(' ', '_')}.jpg"    
                     st.image(imagen_path, width=200, caption=player_query)
+
+
                 except:
-                    st.info("📷 Imagen no disponible")
-                    st.caption(f"Agrega: {imagen_path}")
+
+
+                            try:
+                                imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPG"    
+                                st.image(imagen_path, width=200, caption=player_query)
+
+
+                            except:
+
+                                   try:
+                                    imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPEG"    
+                                    st.image(imagen_path, width=200, caption=player_query)                                   
+                                   
+                                   
+ 
+                                   except:
+
+                                        try:
+                                           imagen_path = f"jugadores/{player_query.replace(' ', '_')}.PNG"    
+                                           st.image(imagen_path, width=200, caption=player_query)                                   
+                                        except:                             
+                                           st.info("📷 Imagen no disponible")
+                                           st.caption(f"Agrega: {imagen_path}")
     
     with col_info:
         st.write(f"### {player_query}")
