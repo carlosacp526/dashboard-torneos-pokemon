@@ -4,6 +4,58 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from datetime import datetime
+
+def obtener_banner(liga):
+    """
+    Obtiene la ruta del logo de la liga
+    """
+    import os
+    
+    if liga in LOGOS_LIGAS:
+        ruta = LOGOS_LIGAS[liga]
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no existe logo específico, intentar buscar por nombre
+    posibles_rutas = [
+        f"banner_{liga.lower()}.png",
+        f"banner_{liga}.png",
+        f"{liga}.png",
+        f"banner/{liga.lower()}.png",
+        f"banner/banner_{liga.lower()}.png",
+        f"banner_{liga.lower()}.PNG",
+        f"banner_{liga}.PNG",
+        f"{liga}.PNG",
+        f"banner/{liga.lower()}.PNG",
+        f"banner/banner_{liga.lower()}.PNG",
+        f"banner_{liga.lower()}.jpeg",
+        f"banner_{liga}.jpeg",
+        f"{liga}.jpeg",
+        f"banner/{liga.lower()}.jpeg",
+        f"banner/banner_{liga.lower()}.jpeg",
+        f"banner_{liga.lower()}.jpg",
+        f"banner_{liga}.jpg",
+        f"{liga}.jpg",
+        f"banner/{liga.lower()}.jpg",
+        f"banner/banner_{liga.lower()}.jpg",
+    ]
+    
+
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no encuentra ninguno, devolver logo por defecto
+    if os.path.exists("Logo.png"):
+        return "Logo.png"
+    
+    return None
+
+
+
+
+
+
 def generar_tabla_torneo(df_base, torneo_num):
     """
     Genera tabla de posiciones para un torneo específico
@@ -136,6 +188,8 @@ def asignar_zona(rank, total_jugadores,liga_temporada_filtro):
                 return "Líder"
             else:
                 return ""
+
+
 st.set_page_config(page_title="Dashboard Torneos", layout="wide")
 
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -234,9 +288,148 @@ def compute_player_stats(df):
     stats_df = stats_df.sort_values(by='Winrate%', ascending=False).reset_index(drop=True)
     return stats_df
 
+
+
+
+
 # ---------- UI ----------
 st.title("Dashboard de Torneos")
 # st.markdown("Lee tu archivo CSV `batallas vencidas y perdidas.csv` o súbelo desde aquí. El dashboard intentará detectar columnas relevantes automáticamente.")
+
+
+st.markdown('<div id="inicio"></div>', unsafe_allow_html=True)
+
+# ========== ESTILOS CSS PARA EL MENÚ ==========
+st.markdown("""
+<style>
+    /* Contenedor principal del menú */
+    .nav-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        margin-bottom: 2rem;
+    }
+    
+    /* Título del menú */
+    .nav-title {
+        color: white;
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    /* Secciones del menú */
+    .nav-section {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        margin: 0.5rem;
+        height: 100%;
+    }
+    .nav-link {
+    text-decoration: none !important;
+    } 
+
+        .nav-link:hover,
+        .nav-link:active,
+        .nav-link:visited,
+        .nav-link:focus {
+            text-decoration: none !important;
+    }
+    /* Títulos de sección */
+    .nav-section-title {
+        color: #667eea;
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #667eea;
+        text-align: center;
+    }
+    
+    /* Enlaces del menú */
+    .nav-link {
+        display: block;
+        padding: 0.8rem 1rem;
+        margin: 0.5rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+        text-align: center;
+        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+    }
+    
+    .nav-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    
+    /* Efecto de pulso para el menú */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .nav-container:hover {
+        animation: pulse 2s infinite;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ========== MENÚ DE NAVEGACIÓN ==========
+# st.markdown("""
+# <div class="nav-container">
+#     <div class="nav-title">📍 Navegación Rápida</div>
+# </div>
+# """, unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("""
+    <div class="nav-section">
+        <div class="nav-section-title">📊 Análisis General</div>
+        <a href="#estadisticas" class="nav-link">📈 Estadísticas</a>
+        <a href="#evolucion" class="nav-link">📊 Evolución Temporal</a>
+        <a href="#distribucion" class="nav-link">🎯 Distribución</a>
+        <a href="#clasificacion-evento" class="nav-link">🏅 Por Evento</a>
+        <a href="#clasificacion-tier" class="nav-link">🎮 Por Tier</a>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div class="nav-section">
+        <div class="nav-section-title">👤 Jugadores y Competencias</div>
+        <a href="#perfil" class="nav-link">👤 Perfil de Jugador</a>
+        <a href="#batllaspendientes" class="nav-link">🕒 Batallas Pendientes</a>
+        <a href="#mundial" class="nav-link">🌎 Mundial</a>
+        <a href="#tablas-ligas" class="nav-link">🏆 Ligas</a>
+        <a href="#tablas-torneos" class="nav-link">🎯 Torneos</a>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+    <div class="nav-section">
+        <div class="nav-section-title">🏅 Rankings</div>
+        <a href="#campeones" class="nav-link">🏆 Campeones</a>
+        <a href="#ranking-elo" class="nav-link">📈 Ranking Elo</a>
+        <a href="#historial" class="nav-link">📜 Historial</a>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
 
 with st.sidebar:
     st.header("Fuente de datos")
@@ -253,6 +446,7 @@ elif use_local:
 
     import pandas as pd
     df = pd.read_csv("archivo_preuba1.csv",sep=";")
+    
 
 else:
     st.warning("No hay datos cargados. Sube un CSV o activa 'leer archivo local'.")
@@ -261,6 +455,7 @@ else:
 if df.empty:
     st.info("Sube tu CSV o coloca el archivo 'batallas vencidas y perdidas.csv' en la misma carpeta que app.py.")
     st.stop()
+
 df_liga=df[df.league=="LIGA"]
 # Normalizar y preparar
 df = normalize_columns(df)
@@ -269,6 +464,12 @@ df = ensure_fields(df)
 # Mostrar preview
 # st.subheader("Vista previa del dataset")
 # st.dataframe(df.head(200))
+
+
+# ========== SECCIÓN: ESTADÍSTICAS GENERALES ==========
+st.markdown('<div id="estadisticas"></div>', unsafe_allow_html=True)
+
+
 
 # Estadísticas generales
 st.subheader("Estadísticas generales")
@@ -294,12 +495,11 @@ col7.metric("Eventos ASCENSO", a1)
 col8.metric("Eventos CYPHER", c1)
 
 
-
-
+# ========== SECCIÓN: EVOLUCIÓN TEMPORAL ==========
+st.markdown('<div id="evolucion"></div>', unsafe_allow_html=True)
 
 # Agrega estas secciones después de los gráficos existentes en tu app.py
 
-# ========== GRÁFICOS ADICIONALES ==========
 # ========== GRÁFICOS ADICIONALES ==========
 # 1. Evolución temporal de partidas
 st.subheader("📈 Evolución temporal de partidas")
@@ -340,13 +540,12 @@ if not df.empty and 'date' in df.columns:
         fig_temporal_año.update_layout(xaxis_title='Año', yaxis_title='Cantidad de partidas')
         st.plotly_chart(fig_temporal_año, use_container_width=True)
 
-
-
 # 2. Distribución de partidas - En pestañas
+
+# ========== SECCIÓN: DISTRIBUCIÓN DE PARTIDAS ==========
+st.markdown('<div id="distribucion"></div>', unsafe_allow_html=True)
+
 st.subheader("🎯 Distribución de partidas")
-
-
-
 
 tab1, tab2, tab3 = st.tabs(["📊 Por Tier", "🎮 Por Formato", "🏅 Eventos Populares"])
 
@@ -389,12 +588,59 @@ with tab3:
     fig_leagues.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_leagues, use_container_width=True)
 
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
 
 
 
 
-
+# ========== SECCIÓN: CLASIFICACIÓN POR EVENTO ==========
+st.markdown('<div id="clasificacion-evento"></div>', unsafe_allow_html=True)
 
 # Clasificación por Evento
 # Clasificación por Evento
@@ -442,8 +688,59 @@ with tab3:
 
 
 
-############################
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
 
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
+
+
+
+
+############################
+# ========== SECCIÓN: CLASIFICACIÓN POR TIERS ==========
+st.markdown('<div id="clasificacion-tier"></div>', unsafe_allow_html=True)
 
 
 tiers = df['Tier'].fillna('Sin Tiers').unique().tolist()
@@ -492,12 +789,59 @@ with tab3:
         st.info("No hay datos suficientes para mostrar el gráfico.")
 
 
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
 
-################################
+
+# Batallas pendientes
 
 
-
+st.markdown('<div id="batllaspendientes"></div>', unsafe_allow_html=True)
 
 
 # Batallas pendientes
@@ -553,18 +897,63 @@ else:
         )
         
         # Métricas adicion
+####
+# Perfil de jguador
+################################
 
 
-########################################################
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
 
-########################################################
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
-# Perfil de jugador
-########################################################
 
-# Perfil de jugador
-# Perfil de jugador
 
+
+# ========== SECCIÓN: PERFIL DEL JUGADOR ==========
+st.markdown('<div id="perfil"></div>', unsafe_allow_html=True)
 
 def obtener_logo_liga(liga):
     """
@@ -596,10 +985,10 @@ def obtener_logo_liga(liga):
     
     return None
 LOGOS_LIGAS = {
-    "PES": "logo_pes.PNG",
-    "PSS": "logo_pss.PNG",
-    "PJS": "logo_pjs.PNG",
-    "PMS": "logo_pms.PNG",
+    "PES": "logo_pes.png",
+    "PSS": "logo_pss.png",
+    "PJS": "logo_pjs.png",
+    "PMS": "logo_pms.png",
     "PLS": "logo_pls.png",
     # Agrega más ligas según las tengas
 }
@@ -699,7 +1088,7 @@ def generar_tabla_temporada(df_base, liga_temporada_filtro):
     return tabla_final
 
 # Filtrar solo registros de torneos
-df_torneo = df[df.league == "TORNEO"].copy()
+df_torneo = df[(df.league == "TORNEO") & (df.Walkover>=0)].copy()
 
 # Crear Torneo_Temp desde la columna N_Torneo
 df_torneo["Torneo_Temp"] = df_torneo["N_Torneo"]
@@ -860,11 +1249,179 @@ def score_final(data):
 base2 = score_final(base)
 
 
+
+
+
+# st.subheader("Perfil del jugador")
+
+# player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
+# exact_search = st.checkbox("Búsqueda exacta")
 # Batallas pendientes
 st.subheader("Perfil del jugador")
 
-player_query = st.text_input("Buscar jugador (exacto o parcial)", "")
-exact_search = st.checkbox("Búsqueda exacta")
+# ========== AUTOCOMPLETADO DE JUGADORES ==========
+# Obtener lista única de todos los jugadores
+all_players = pd.concat([
+    df['player1'].dropna(),
+    df['player2'].dropna(),
+    df['winner'].dropna()
+]).unique()
+all_players = sorted([str(p).strip() for p in all_players if str(p) != 'nan' and str(p) != ''])
+
+# CSS para el autocompletado
+st.markdown("""
+<style>
+    .search-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    
+    .player-suggestion {
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        margin: 0.3rem 0;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .player-suggestion:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateX(5px);
+        box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+    }
+    
+    .suggestion-box {
+        background: #f8f9fa;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .suggestion-header {
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .no-results {
+        text-align: center;
+        color: #999;
+        padding: 1rem;
+        font-style: italic;
+    }
+    
+    .player-count {
+        background: #667eea;
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        margin-left: 0.5rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Input de búsqueda
+col_search, col_exact, col_info = st.columns([3, 1, 1])
+
+with col_search:
+    player_query = st.text_input(
+        "🔍 Buscar jugador",
+        "",
+        key="player_search_input",
+        placeholder="Empieza a escribir el nombre del jugador...",
+        help="Escribe al menos 2 caracteres para ver sugerencias"
+    )
+
+with col_exact:
+    exact_search = st.checkbox("Búsqueda exacta", key="player_exact_search")
+
+with col_info:
+    st.metric("👥 Jugadores", len(all_players))
+
+# ========== MOSTRAR SUGERENCIAS ==========
+if player_query and len(player_query) >= 2:
+    # Filtrar jugadores que coincidan
+    if exact_search:
+        suggestions = [p for p in all_players if p.lower() == player_query.lower()]
+    else:
+        suggestions = [p for p in all_players if player_query.lower() in p.lower()]
+    
+    if suggestions:
+        st.markdown(f"""
+        <div class="suggestion-box">
+            <div class="suggestion-header">
+                💡 ¿Quizás quisiste decir? 
+                <span class="player-count">{len(suggestions)} resultado(s)</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Limitar a las primeras 10 sugerencias
+        top_suggestions = suggestions[:10]
+        
+        # Crear columnas para mejor visualización
+        cols = st.columns(min(3, len(top_suggestions)))
+        
+        for idx, suggestion in enumerate(top_suggestions):
+            col_idx = idx % 3
+            with cols[col_idx]:
+                # Contar partidas del jugador
+                player_matches_count = df[
+                    (df['player1'].str.contains(suggestion, case=False, na=False)) |
+                    (df['player2'].str.contains(suggestion, case=False, na=False))
+                ].shape[0]
+                
+                if st.button(
+                    f"🎮 {suggestion}\n📊 {player_matches_count} partidas",
+                    key=f"suggest_{idx}",
+                    use_container_width=True
+                ):
+                    # Actualizar el query con la sugerencia seleccionada
+                    st.session_state.selected_player = suggestion
+                    st.rerun()
+        
+        if len(suggestions) > 10:
+            st.info(f"ℹ️ Mostrando 10 de {len(suggestions)} resultados. Escribe más caracteres para refinar la búsqueda.")
+    else:
+        st.markdown("""
+        <div class="suggestion-box">
+            <div class="no-results">
+                ❌ No se encontraron jugadores que coincidan con "{}"
+            </div>
+        </div>
+        """.format(player_query), unsafe_allow_html=True)
+        
+        # Sugerir jugadores similares (por si hay un error tipográfico)
+        st.markdown("##### 🔍 Jugadores sugeridos:")
+        similar_players = [p for p in all_players if any(char in p.lower() for char in player_query.lower())][:5]
+        
+        if similar_players:
+            cols_similar = st.columns(min(3, len(similar_players)))
+            for idx, player in enumerate(similar_players):
+                with cols_similar[idx % 3]:
+                    if st.button(f"🎯 {player}", key=f"similar_{idx}", use_container_width=True):
+                        st.session_state.selected_player = player
+                        st.rerun()
+
+# ========== USAR EL JUGADOR SELECCIONADO ==========
+# Si hay un jugador seleccionado en session_state, usarlo
+if 'selected_player' in st.session_state and st.session_state.selected_player:
+    player_query = st.session_state.selected_player
+    st.success(f"✅ Jugador seleccionado: **{player_query}**")
+    
+    # Botón para limpiar selección
+    if st.button("🔄 Buscar otro jugador"):
+        del st.session_state.selected_player
+        st.rerun()
 
 # Perfil de jugador
 if player_query:
@@ -895,43 +1452,20 @@ if player_query:
     
     with col_img:
         # Intentar cargar la imagen del jugador
-        imagen_path = f"jugadores/{player_query.replace(' ', '_')}.png"
+        imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.png"
         try:
             st.image(imagen_path, width=200, caption=player_query)
         except:
             try:
-                imagen_path = f"jugadores/{player_query.replace(' ', '_')}.jpeg"    
+                imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpeg"    
                 st.image(imagen_path, width=200, caption=player_query)
             except:           
                 try:
-                    imagen_path = f"jugadores/{player_query.replace(' ', '_')}.jpg"    
+                    imagen_path = f"jugadores/{player_query.lower().replace(' ', '_')}.jpg"    
                     st.image(imagen_path, width=200, caption=player_query)
-
-
                 except:
-
-
-                            try:
-                                imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPG"    
-                                st.image(imagen_path, width=200, caption=player_query)
-
-
-                            except:
-
-                                   try:
-                                    imagen_path = f"jugadores/{player_query.replace(' ', '_')}.JPEG"    
-                                    st.image(imagen_path, width=200, caption=player_query)                                   
-                                   
-                                   
- 
-                                   except:
-
-                                        try:
-                                           imagen_path = f"jugadores/{player_query.replace(' ', '_')}.PNG"    
-                                           st.image(imagen_path, width=200, caption=player_query)                                   
-                                        except:                             
-                                           st.info("📷 Imagen no disponible")
-                                           st.caption(f"Agrega: {imagen_path}")
+                    st.info("📷 Imagen no disponible")
+                    st.caption(f"Agrega: {imagen_path}")
     
     with col_info:
         st.write(f"### {player_query}")
@@ -1053,11 +1587,77 @@ if player_query:
             if campeonatos_liga:
                 st.success(f"🏆 **{len(campeonatos_liga)} Campeonato(s) de Liga**")
                 
+                # ========== MOSTRAR CAMPEONATOS CON IMÁGENES ==========
+# ========== MOSTRAR CAMPEONATOS CON IMÁGENES ==========
                 for camp in campeonatos_liga:
-                    with st.expander(f"🥇 {camp['Liga']}"):
-                        col1, col2 = st.columns(2)
-                        col1.metric("Victorias", int(camp['Victorias']))
-                        col2.metric("Score", f"{camp['Score']:.2f}")
+                    # Extraer el prefijo de la liga (PES, PSS, PJS, etc.)
+                    liga_prefix = ''.join([c for c in camp['Liga'] if c.isalpha()])
+                    
+                    with st.expander(f"🥇 {camp['Liga']}", expanded=False):
+                        # Columnas para imagen y datos
+                        col_img, col_data = st.columns([1, 2])
+                        
+                        with col_img:
+                            # Intentar cargar la imagen/banner de la liga
+                            banner_liga = obtener_banner(camp['Liga'])
+                            logo_liga = obtener_logo_liga(liga_prefix)
+                            
+                            if banner_liga:
+                                st.image(banner_liga, use_container_width=True)
+                            elif logo_liga:
+                                st.image(logo_liga, width=150)
+                            else:
+                                # Mostrar un placeholder con el nombre
+                                st.markdown(f"""
+                                <div style="
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    padding: 2rem;
+                                    border-radius: 10px;
+                                    text-align: center;
+                                    color: white;
+                                    font-weight: bold;
+                                    font-size: 1.5rem;
+                                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                                ">
+                                    🏆<br>{liga_prefix}
+                                </div>
+                                """, unsafe_allow_html=True)
+                        
+                        with col_data:
+                            st.markdown(f"""
+                            <div style="
+                                background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                                padding: 1.5rem;
+                                border-radius: 10px;
+                                margin-bottom: 1rem;
+                                box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+                            ">
+                                <h3 style="color: #1a1a1a; margin: 0; text-shadow: 1px 1px 2px rgba(255,255,255,0.5);">
+                                    🏆 Campeón {camp['Liga']}
+                                </h3>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # Métricas del campeonato
+                            metric_col1, metric_col2 = st.columns(2)
+                            metric_col1.metric("⚔️ Victorias", int(camp['Victorias']))
+                            metric_col2.metric("📊 Score", f"{camp['Score']:.2f}")
+                            
+                            # Información adicional con mejor contraste
+                            st.markdown(f"""
+                            <div style="
+                                background: linear-gradient(to right, #FFD700, #FFA500);
+                                padding: 1rem;
+                                border-radius: 8px;
+                                margin-top: 1rem;
+                                box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+                            ">
+                                <p style="color: #1a1a1a; margin: 0; font-weight: bold; font-size: 1.1rem;">
+                                    🎖️ <strong>Logro desbloqueado:</strong><br>
+                                    <span style="font-size: 1rem;">Campeón de la liga <strong>{camp['Liga']}</strong></span>
+                                </p>
+                            </div>
+                            """, unsafe_allow_html=True)
             else:
                 st.info("Aún no ha ganado campeonatos de liga")
         else:
@@ -1213,8 +1813,6 @@ if player_query:
     
     st.markdown("---")
     
-    
-    # ... resto del código continúa igual ...
     
     # Crear pestañas para organizar la información del jugador
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -1625,20 +2223,58 @@ else:
     st.info("Escribe el nombre (o parte) de un jugador para ver su historial y estadísticas.")
 
 
-##################################################################
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
 
 
+# ========== SECCIÓN: MUNDIAL POKÉMON ==========
+st.markdown('<div id="mundial"></div>', unsafe_allow_html=True)
 
-
-
-
-# Panel admin - descargar datos procesados
-# st.sidebar.header("Admin")
-# if st.sidebar.button("Descargar stats por jugador (.csv)"):
-#     csv = stats_df.to_csv(index=False).encode('utf-8')
-#     st.sidebar.download_button("Descargar", data=csv, file_name="stats_por_jugador.csv", mime="text/csv")
-# st.markdown("---")
 
 # ========== NUEVA SECCIÓN: MUNDIAL ==========
 st.header("🌎 Mundial Pokémon")
@@ -1646,7 +2282,7 @@ st.header("🌎 Mundial Pokémon")
 tab1, tab2 = st.tabs(["🏆 Ranking del Mundial","📊 Puntajes para el Mundial" ])
 
 with tab2:
-    st.image("PUNTAJES_MUNDIAL.png", width=900)
+    st.image("PUNTAJES_MUNDIAL.png",  width=900)
     st.caption("Puntajes para clasificación al mundial")
 
 # with tab2:
@@ -1659,6 +2295,9 @@ with tab2:
 
 # Datos del mundial (puedes cargarlos desde un CSV o definirlos aquí)
 # Opción 1: Datos hardcodeados
+
+
+
 
 
 
@@ -1713,15 +2352,93 @@ with tab1:
 st.markdown("---")
 
 
+#######################
+### Perfil de jugador
+#########################
 
+
+def obtener_banner(liga):
+    """
+    Obtiene la ruta del logo de la liga
+    """
+    import os
+    
+    if liga in LOGOS_LIGAS:
+        ruta = LOGOS_LIGAS[liga]
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no existe logo específico, intentar buscar por nombre
+    posibles_rutas = [
+        f"banner_{liga.lower()}.png",
+        f"banner_{liga}.png",
+        f"{liga}.png",
+        f"banner/{liga.lower()}.png",
+        f"banner/banner_{liga.lower()}.png",
+        f"banner_{liga.lower()}.PNG",
+        f"banner_{liga}.PNG",
+        f"{liga}.PNG",
+        f"banner/{liga.lower()}.PNG",
+        f"banner/banner_{liga.lower()}.PNG",
+        f"banner_{liga.lower()}.jpeg",
+        f"banner_{liga}.jpeg",
+        f"{liga}.jpeg",
+        f"banner/{liga.lower()}.jpeg",
+        f"banner/banner_{liga.lower()}.jpeg",
+        f"banner_{liga.lower()}.jpg",
+        f"banner_{liga}.jpg",
+        f"{liga}.jpg",
+        f"banner/{liga.lower()}.jpg",
+        f"banner/banner_{liga.lower()}.jpg",
+    ]
+    
+
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no encuentra ninguno, devolver logo por defecto
+    if os.path.exists("Logo.png"):
+        return "Logo.png"
+    
+    return None
+
+
+
+def obtener_banner_torneo(num_torneo):
+    """
+    Obtiene la ruta del banner del torneo desde la carpeta bannertorneos
+    """
+    import os
+    
+    # Posibles formatos de nombre
+    posibles_rutas = [
+        f"bannertorneos/TORNEO {num_torneo}.png",
+        f"bannertorneos/TORNEO {num_torneo}.PNG",
+        f"bannertorneos/TORNEO {num_torneo}.jpg",
+        f"bannertorneos/TORNEO {num_torneo}.JPG",
+        f"bannertorneos/TORNEO {num_torneo}.jpeg",
+        f"bannertorneos/TORNEO {num_torneo}.JPEG",
+        f"bannertorneos/torneo{num_torneo}.png",
+        f"bannertorneos/torneo{num_torneo}.jpg",
+        f"bannertorneos/Torneo{num_torneo}.png",
+        f"bannertorneos/Torneo{num_torneo}.jpg",
+    ]
+    
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    
+    # Si no encuentra, retornar None
+    return None
 
 
 
 LOGOS_LIGAS = {
-    "PES": "logo_pes.PNG",
-    "PSS": "logo_pss.PNG",
-    "PJS": "logo_pjs.PNG",
-    "PMS": "logo_pms.PNG",
+    "PES": "logo_pes.png",
+    "PSS": "logo_pss.png",
+    "PJS": "logo_pjs.png",
+    "PMS": "logo_pms.png",
     "PLS": "logo_pls.png",
     # Agrega más ligas según las tengas
 }
@@ -1744,11 +2461,6 @@ def obtener_logo_liga(liga):
         f"{liga}.png",
         f"logos/{liga.lower()}.png",
         f"logos/logo_{liga.lower()}.png",
-        f"logo_{liga.lower()}.PNG",
-        f"Logo_{liga}.PNG",
-        f"{liga}.PNG",
-        f"logos/{liga.lower()}.PNG",
-        f"logos/logo_{liga.lower()}.PNG",
     ]
     
     for ruta in posibles_rutas:
@@ -1853,6 +2565,64 @@ def score_final(data):
 
 base2 = score_final(base)
 
+
+# ========== PREPARACIÓN DE DATOS POR JORNADA ==========
+
+# Crear base2_jornada con N_Jornada
+df_liga_jornada = df_liga.copy()
+df_liga_jornada["N_Jornada"] = df_liga_jornada["N_Torneo"]
+
+# Repetir el proceso pero agrupando por Liga_Temporada y N_Jornada
+Ganador_jornada = df_liga_jornada.groupby(["Liga_Temporada", "N_Jornada", "winner"])["N_Torneo"].count().reset_index()
+Ganador_jornada.columns = ["Liga_Temporada", "N_Jornada", "Participante", "Victorias"]
+
+Partidas_P1_jornada = df_liga_jornada.groupby(["Liga_Temporada", "N_Jornada", "player1"])["N_Torneo"].count().reset_index()
+Partidas_P1_jornada.columns = ["Liga_Temporada", "N_Jornada", "Participante", "Partidas_P1"]
+
+Partidas_P2_jornada = df_liga_jornada.groupby(["Liga_Temporada", "N_Jornada", "player2"])["N_Torneo"].count().reset_index()
+Partidas_P2_jornada.columns = ["Liga_Temporada", "N_Jornada", "Participante", "Partidas_P2"]
+
+df_liga_ganador_jornada = df_liga_jornada[["Liga_Temporada", "N_Jornada", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+df_liga_ganador_jornada.columns = ["Liga_Temporada", "N_Jornada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
+
+df_liga_perdedor_jornada = df_liga_jornada[["Liga_Temporada", "N_Jornada", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+df_liga_perdedor_jornada["Participante"] = df_liga_perdedor_jornada.apply(
+    lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
+    axis=1
+)
+df_liga_perdedor_jornada["pokes_sobrevivientes"] = 6 - df_liga_perdedor_jornada["pokemons Sob"]
+df_liga_perdedor_jornada["poke_vencidos"] = df_liga_perdedor_jornada["pokemon vencidos"] - 6
+df_liga_perdedor_jornada = df_liga_perdedor_jornada[["Liga_Temporada", "N_Jornada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
+
+data_jornada = pd.concat([df_liga_perdedor_jornada, df_liga_ganador_jornada])
+data_jornada = data_jornada.groupby(["Liga_Temporada", "N_Jornada", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
+
+base_p1_jornada = df_liga_jornada[["Liga_Temporada", "N_Jornada", "player1"]].copy()
+base_p1_jornada.columns = ["Liga_Temporada", "N_Jornada", "Participante"]
+
+base_p2_jornada = df_liga_jornada[["Liga_Temporada", "N_Jornada", "player2"]].copy()
+base_p2_jornada.columns = ["Liga_Temporada", "N_Jornada", "Participante"]
+
+base_jornada = pd.concat([base_p1_jornada, base_p2_jornada], ignore_index=True).drop_duplicates()
+
+base_jornada = pd.merge(base_jornada, Ganador_jornada, how="left", on=["Liga_Temporada", "N_Jornada", "Participante"])
+base_jornada["Victorias"] = base_jornada["Victorias"].fillna(0).astype(int)
+
+base_jornada = pd.merge(base_jornada, Partidas_P1_jornada, how="left", on=["Liga_Temporada", "N_Jornada", "Participante"])
+base_jornada = pd.merge(base_jornada, Partidas_P2_jornada, how="left", on=["Liga_Temporada", "N_Jornada", "Participante"])
+base_jornada["Partidas_P1"] = base_jornada["Partidas_P1"].fillna(0)
+base_jornada["Partidas_P2"] = base_jornada["Partidas_P2"].fillna(0)
+base_jornada["Juegos"] = (base_jornada["Partidas_P1"] + base_jornada["Partidas_P2"]).astype(int)
+base_jornada["Derrotas"] = base_jornada["Juegos"] - base_jornada["Victorias"]
+
+base_jornada = pd.merge(base_jornada, data_jornada, how="left", on=["Liga_Temporada", "N_Jornada", "Participante"])
+base_jornada["pokes_sobrevivientes"] = base_jornada["pokes_sobrevivientes"].fillna(0)
+base_jornada["poke_vencidos"] = base_jornada["poke_vencidos"].fillna(0)
+
+base_jornada = base_jornada.drop(columns=["Partidas_P1", "Partidas_P2"])
+
+base2_jornada = score_final(base_jornada)
+
 # ========== FUNCIONES PARA GENERAR TABLAS ==========
 
 def asignar_zona(rank, total_jugadores,liga_temporada_filtro):
@@ -1878,6 +2648,7 @@ def asignar_zona(rank, total_jugadores,liga_temporada_filtro):
                 return "Descenso"
             else:
                 return ""
+
     if liga_temporada_filtro in ( 'PMST4', 'PMST5', 'PMST6'):
             if rank == 1:
                 return "Líder"
@@ -1985,7 +2756,103 @@ def generar_tabla_temporada(df_base, liga_temporada_filtro):
     
     return tabla_final
 
+
+def generar_tabla_jornada(df_base_jornada, liga_temporada_filtro, num_jornada):
+    """
+    Genera tabla de posiciones para una jornada específica
+    """
+    if 'Liga_Temporada' not in df_base_jornada.columns or 'N_Jornada' not in df_base_jornada.columns:
+        return None
+    
+    df_fase = df_base_jornada[
+        (df_base_jornada['Liga_Temporada'] == liga_temporada_filtro) & 
+        (df_base_jornada['N_Jornada'] == num_jornada)
+    ].copy()
+    
+    if df_fase.empty:
+        return None
+    
+    tabla = df_fase[['Participante', 'Victorias', 'score_completo', 'Juegos']].copy()
+    
+    tabla['PUNTOS'] = tabla['Victorias']
+    
+    tabla = tabla.rename(columns={
+        'Participante': 'AKA',
+        'score_completo': 'SCORE',
+        'Juegos': 'PARTIDAS'
+    })
+    
+    tabla['SCORE'] = tabla['SCORE'].round(2)
+    
+    tabla = tabla.sort_values(
+        ['Victorias', 'SCORE'], 
+        ascending=[False, False]
+    ).reset_index(drop=True)
+    
+    tabla['RANK'] = range(1, len(tabla) + 1)
+    
+    tabla_final = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'PARTIDAS', 'Victorias']].copy()
+    
+    return tabla_final
+
 # ========== UI DE TABLAS DE POSICIONES ==========
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
+
+
+# ========== SECCIÓN: TABLAS DE LIGAS ==========
+st.markdown('<div id="tablas-ligas"></div>', unsafe_allow_html=True)
+
+
+# df_liga = df[df.league=="LIGA"]
+
+# # Crear la columna N_Jornada
+# df_liga["N_Jornada"] = df_liga.loc[df_liga.Ligas_categoria != "No Posee Liga", "N_Torneo"]
+
 
 st.header("📊 Tablas de Posiciones por Liga y Temporada")
 
@@ -2010,87 +2877,6 @@ ligas = sorted(list(set([lt.rstrip('T0123456789') for lt in ligas_temporadas])))
 ligas=['PJS', 'PES', 'PSS',  'PMS','PLS']
 # Mostrar información de logos disponibles
 import os
-# st.info(f"Ligas detectadas: {', '.join(ligas)}")
-# with st.expander("🎨 Configuración de logos"):
-#     st.markdown("**Estructura de carpetas recomendada:**")
-#     st.code("""
-#     tu_proyecto/
-#     ├── logo_pes.png
-#     ├── logo_pss.png
-#     ├── logo_pjs.png
-#     ├── logo_pms.png
-#     ├── logo_pls.png
-#     └── app.py
-#     """)
-    
-#     st.markdown("**Logos detectados:**")
-#     for liga in ligas:
-#         logo_path = obtener_logo_liga(liga)
-#         if logo_path:
-#             col1, col2 = st.columns([3, 1])
-#             col1.text(f"✅ {liga}: {logo_path}")
-#             col2.image(logo_path, width=50)
-#         else:
-#             st.text(f"❌ {liga}: No encontrado")
-
-def obtener_banner(liga):
-    """
-    Obtiene la ruta del logo de la liga
-    """
-    import os
-    
-    if liga in LOGOS_LIGAS:
-        ruta = LOGOS_LIGAS[liga]
-        if os.path.exists(ruta):
-            return ruta
-    
-    # Si no existe logo específico, intentar buscar por nombre
-    posibles_rutas = [
-        f"banner_{liga.lower()}.png",
-        f"banner_{liga}.png",
-        f"{liga}.png",
-        f"banner/{liga.lower()}.png",
-        f"banner/banner_{liga.lower()}.png",
-        f"banner_{liga.lower()}.PNG",
-        f"banner_{liga}.PNG",
-        f"{liga}.PNG",
-        f"banner/{liga.lower()}.PNG",
-        f"banner/banner_{liga.lower()}.PNG",
-        f"banner_{liga.lower()}.jpeg",
-        f"banner_{liga}.jpeg",
-        f"{liga}.jpeg",
-        f"banner/{liga.lower()}.jpeg",
-        f"banner/banner_{liga.lower()}.jpeg",
-        f"banner_{liga.lower()}.jpg",
-        f"banner_{liga}.jpg",
-        f"{liga}.jpg",
-        f"banner/{liga.lower()}.jpg",
-        f"banner/banner_{liga.lower()}.jpg",
-    ]
-    
-
-    for ruta in posibles_rutas:
-        if os.path.exists(ruta):
-            return ruta
-    
-    # Si no encuentra ninguno, devolver logo por defecto
-    if os.path.exists("Logo.png"):
-        return "Logo.png"
-    
-    return None
-
-
-# st.markdown("**Logos detectados:**")
-# for liga_t in ligas_temporadas:
-#     logo_path = obtener_banner(liga_t)
-#     if logo_path:
-#         col1, col2 = st.columns([3, 1])
-#         col1.text(f"✅ {liga_t}: {logo_path}")
-#         col2.image(logo_path, width=50)
-#     else:
-#         st.text(f"❌ {liga_t}: No encontrado")
-
-
 
 # Crear pestañas por liga
 tabs_ligas = st.tabs(ligas)
@@ -2126,154 +2912,298 @@ for idx, liga in enumerate(ligas):
             nombres_temporadas = [f"Temporada {temp.replace(liga, '').lstrip('T')}" for temp in temporadas_liga]
             tabs_temporadas = st.tabs(nombres_temporadas)
             
+
             for idx_temp, temporada in enumerate(temporadas_liga):
                 with tabs_temporadas[idx_temp]:
-                    # Generar tabla de posiciones
-                    tabla = generar_tabla_temporada(base2, temporada)
+                    # Crear sub-pestañas: Tabla General y Jornadas
+                    tab_general, tab_jornadas = st.tabs(["📋 Tabla General", "📅 Por Jornada"])
                     
-                    if tabla is None or tabla.empty:
-                        st.info(f"No hay datos disponibles para {temporada}")
-                    else:
-                        # Mostrar encabezado con logo de la liga
-                        col_logo, col_titulo = st.columns([1, 3])
+                    with tab_general:
+                        # Generar tabla de posiciones
+                        tabla = generar_tabla_temporada(base2, temporada)
                         
-                        with col_logo:
-                            logo_baner = obtener_banner(temporada)
-                            if logo_baner:
-                                st.image(logo_baner, width=500)
-                            else:
-                                st.write("🏆")
-                        
-                        with col_titulo:
-                            st.markdown(f"### TABLA DE POSICIONES")
-                            st.markdown(f"**{temporada}**")
-                        
-                        st.markdown("---")
-                        
-                        # Función para aplicar colores
-                        def highlight_ranks(row):
-                            if row['RANK'] == 1:
-                                return ['background-color: #FFD700; font-weight: bold; color: #000'] * len(row)
-                            elif row['RANK'] == 2:
-                                return ['background-color: #C0C0C0; font-weight: bold; color: #000'] * len(row)
-                            elif row['RANK'] == 3:
-                                return ['background-color: #CD7F32; font-weight: bold; color: #000'] * len(row)
-                            elif row['ZONA'] == 'Descenso':
-                                return ['background-color: #E74C3C; color: white; font-weight: bold'] * len(row)
-                            else:
-                                return ['background-color: #34495E; color: white'] * len(row)
-                        
-                        # Mostrar tabla
-                        tabla_display = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'ZONA', 'JORNADAS']].copy()
-                        
-                        st.dataframe(
-                            tabla_display.style.apply(highlight_ranks, axis=1),
-                            use_container_width=True,
-                            hide_index=True,
-                            height=min(600, len(tabla) * 40 + 100)
-                        )
-                        
-                        # Leyenda
-                        # st.markdown("""
-                        # **Leyenda de Zonas:**
-                        # - 🥇 **Líder**: 1er lugar
-                        # - 🥈🥉 **Ascenso**: 2do y 3er lugar
-                        # - 🔻 **Descenso**: Últimos 3 lugares
-                        # - ⚪ **Normal**: Resto de posiciones
-                        # """)
-                        
-                        st.markdown("---")
-                        
-                        # Métricas
-                        col1, col2, col3, col4 = st.columns(4)
-                        col1.metric("👥 Jugadores", len(tabla))
-                        col2.metric("🏆 Líder", tabla.iloc[0]['AKA'])
-                        col3.metric("⚔️ Victorias", int(tabla.iloc[0]['Victorias']))
-                        col4.metric("📊 Score", f"{tabla.iloc[0]['SCORE']:.2f}")
-                        
-                        # Podio
-                        st.markdown("### 🏆 Podio")
-                        col_1, col_2, col_3 = st.columns(3)
-                        
-                        with col_1:
-                            if len(tabla) >= 1:
-                                st.markdown("#### 🥇 1er Lugar")
-                                st.markdown(f"**{tabla.iloc[0]['AKA']}**")
-                                st.metric("Victorias", int(tabla.iloc[0]['Victorias']))
-                                st.metric("Score", f"{tabla.iloc[0]['SCORE']:.2f}")
-                        
-                        with col_2:
-                            if len(tabla) >= 2:
-                                st.markdown("#### 🥈 2do Lugar")
-                                st.markdown(f"**{tabla.iloc[1]['AKA']}**")
-                                st.metric("Victorias", int(tabla.iloc[1]['Victorias']))
-                                st.metric("Score", f"{tabla.iloc[1]['SCORE']:.2f}")
-                        
-                        with col_3:
-                            if len(tabla) >= 3:
-                                st.markdown("#### 🥉 3er Lugar")
-                                st.markdown(f"**{tabla.iloc[2]['AKA']}**")
-                                st.metric("Victorias", int(tabla.iloc[2]['Victorias']))
-                                st.metric("Score", f"{tabla.iloc[2]['SCORE']:.2f}")
-                        
-                        # Gráficos
-                        st.markdown("---")
-                        
-                        col_graf1, col_graf2 = st.columns(2)
-                        
-                        with col_graf1:
-                            fig_victorias = px.bar(
-                                tabla.head(10),
-                                x='AKA',
-                                y='Victorias',
-                                title=f'Top 10 por Victorias - {temporada}',
-                                color='Victorias',
-                                color_continuous_scale='Greens',
-                                text='Victorias'
-                            )
-                            fig_victorias.update_traces(texttemplate='%{text}', textposition='outside')
-                            fig_victorias.update_layout(xaxis_tickangle=-45, showlegend=False)
-                            st.plotly_chart(fig_victorias, use_container_width=True)
-                        
-                        with col_graf2:
-                            fig_scores = px.bar(
-                                tabla.head(10),
-                                x='AKA',
-                                y='SCORE',
-                                title=f'Top 10 por Score - {temporada}',
-                                color='SCORE',
-                                color_continuous_scale='RdYlGn',
-                                text='SCORE'
-                            )
-                            fig_scores.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-                            fig_scores.update_layout(xaxis_tickangle=-45, showlegend=False)
-                            st.plotly_chart(fig_scores, use_container_width=True)
-                        
-                        # Zona de descenso
-                        if len(tabla) > 3:
+                        if tabla is None or tabla.empty:
+                            st.info(f"No hay datos disponibles para {temporada}")
+                        else:
+                            # Mostrar encabezado con logo de la liga
+                            col_logo, col_titulo = st.columns([1, 3])
+                            
+                            with col_logo:
+                                logo_baner = obtener_banner(temporada)
+                                if logo_baner:
+                                    st.image(logo_baner, width=500)
+                                else:
+                                    st.write("🏆")
+                            
+                            with col_titulo:
+                                st.markdown(f"### TABLA DE POSICIONES")
+                                st.markdown(f"**{temporada}**")
+                            
                             st.markdown("---")
-                            st.markdown("### 🔻 Zona de Descenso")
-                            zona_descenso = tabla[tabla['ZONA'] == 'Descenso']
-                            if not zona_descenso.empty:
-                                st.dataframe(
-                                    zona_descenso[['RANK', 'AKA', 'Victorias', 'SCORE']],
-                                    use_container_width=True,
-                                    hide_index=True
+                            
+                            # Función para aplicar colores
+                            def highlight_ranks(row):
+                                if row['RANK'] == 1:
+                                    return ['background-color: #FFD700; font-weight: bold; color: #000'] * len(row)
+                                elif row['RANK'] == 2:
+                                    return ['background-color: #C0C0C0; font-weight: bold; color: #000'] * len(row)
+                                elif row['RANK'] == 3:
+                                    return ['background-color: #CD7F32; font-weight: bold; color: #000'] * len(row)
+                                elif row['ZONA'] == 'Descenso':
+                                    return ['background-color: #E74C3C; color: white; font-weight: bold'] * len(row)
+                                else:
+                                    return ['background-color: #34495E; color: white'] * len(row)
+                            
+                            # Mostrar tabla
+                            tabla_display = tabla[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'ZONA', 'JORNADAS']].copy()
+                            
+                            st.dataframe(
+                                tabla_display.style.apply(highlight_ranks, axis=1),
+                                use_container_width=True,
+                                hide_index=True,
+                                height=min(600, len(tabla) * 40 + 100)
+                            )
+                            
+                            st.markdown("---")
+                            
+                            # Métricas
+                            col1, col2, col3, col4 = st.columns(4)
+                            col1.metric("👥 Jugadores", len(tabla))
+                            col2.metric("🏆 Líder", tabla.iloc[0]['AKA'])
+                            col3.metric("⚔️ Victorias", int(tabla.iloc[0]['Victorias']))
+                            col4.metric("📊 Score", f"{tabla.iloc[0]['SCORE']:.2f}")
+                            
+                            # Podio
+                            st.markdown("### 🏆 Podio")
+                            col_1, col_2, col_3 = st.columns(3)
+                            
+                            with col_1:
+                                if len(tabla) >= 1:
+                                    st.markdown("#### 🥇 1er Lugar")
+                                    st.markdown(f"**{tabla.iloc[0]['AKA']}**")
+                                    st.metric("Victorias", int(tabla.iloc[0]['Victorias']))
+                                    st.metric("Score", f"{tabla.iloc[0]['SCORE']:.2f}")
+                            
+                            with col_2:
+                                if len(tabla) >= 2:
+                                    st.markdown("#### 🥈 2do Lugar")
+                                    st.markdown(f"**{tabla.iloc[1]['AKA']}**")
+                                    st.metric("Victorias", int(tabla.iloc[1]['Victorias']))
+                                    st.metric("Score", f"{tabla.iloc[1]['SCORE']:.2f}")
+                            
+                            with col_3:
+                                if len(tabla) >= 3:
+                                    st.markdown("#### 🥉 3er Lugar")
+                                    st.markdown(f"**{tabla.iloc[2]['AKA']}**")
+                                    st.metric("Victorias", int(tabla.iloc[2]['Victorias']))
+                                    st.metric("Score", f"{tabla.iloc[2]['SCORE']:.2f}")
+                            
+                            # Gráficos
+                            st.markdown("---")
+                            
+                            col_graf1, col_graf2 = st.columns(2)
+                            
+                            with col_graf1:
+                                fig_victorias = px.bar(
+                                    tabla.head(10),
+                                    x='AKA',
+                                    y='Victorias',
+                                    title=f'Top 10 por Victorias - {temporada}',
+                                    color='Victorias',
+                                    color_continuous_scale='Greens',
+                                    text='Victorias'
                                 )
-                        
-                        # Descarga
-                        st.markdown("---")
-                        csv = tabla_display.to_csv(index=False).encode('utf-8')
-                        st.download_button(
-                            label=f"📥 Descargar tabla {temporada}",
-                            data=csv,
-                            file_name=f"tabla_posiciones_{liga}_{temporada}.csv",
-                            mime="text/csv"
+                                fig_victorias.update_traces(texttemplate='%{text}', textposition='outside')
+                                fig_victorias.update_layout(xaxis_tickangle=-45, showlegend=False)
+                                st.plotly_chart(fig_victorias, use_container_width=True)
+                            
+                            with col_graf2:
+                                fig_scores = px.bar(
+                                    tabla.head(10),
+                                    x='AKA',
+                                    y='SCORE',
+                                    title=f'Top 10 por Score - {temporada}',
+                                    color='SCORE',
+                                    color_continuous_scale='RdYlGn',
+                                    text='SCORE'
+                                )
+                                fig_scores.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                                fig_scores.update_layout(xaxis_tickangle=-45, showlegend=False)
+                                st.plotly_chart(fig_scores, use_container_width=True)
+                            
+                            # Zona de descenso
+                            if len(tabla) > 3:
+                                st.markdown("---")
+                                st.markdown("### 🔻 Zona de Descenso")
+                                zona_descenso = tabla[tabla['ZONA'] == 'Descenso']
+                                if not zona_descenso.empty:
+                                    st.dataframe(
+                                        zona_descenso[['RANK', 'AKA', 'Victorias', 'SCORE']],
+                                        use_container_width=True,
+                                        hide_index=True
+                                    )
+                            
+                            # Descarga
+                            st.markdown("---")
+                            csv = tabla_display.to_csv(index=False).encode('utf-8')
+                            st.download_button(
+                                label=f"📥 Descargar tabla {temporada}",
+                                data=csv,
+                                file_name=f"tabla_posiciones_{liga}_{temporada}.csv",
+                                mime="text/csv"
+                            )
+                    
+                    with tab_jornadas:
+                        # Obtener jornadas disponibles para esta temporada
+                        jornadas_disponibles = sorted(
+                            base2_jornada[base2_jornada['Liga_Temporada'] == temporada]['N_Jornada'].dropna().unique()
                         )
+                        
+                        if len(jornadas_disponibles) == 0:
+                            st.info(f"No hay jornadas disponibles para {temporada}")
+                        else:
+                            # Crear pestañas por jornada
+                            nombres_jornadas = [f"Jornada {int(j)}" for j in jornadas_disponibles]
+                            tabs_jornadas_inner = st.tabs(nombres_jornadas)
+                            
+                            for idx_jornada, num_jornada in enumerate(jornadas_disponibles):
+                                with tabs_jornadas_inner[idx_jornada]:
+                                    tabla_jornada = generar_tabla_jornada(base2_jornada, temporada, num_jornada)
+                                    
+                                    if tabla_jornada is None or tabla_jornada.empty:
+                                        st.info(f"No hay datos para la jornada {int(num_jornada)}")
+                                    else:
+                                        st.markdown(f"### 📅 Jornada {int(num_jornada)} - {temporada}")
+                                        st.markdown("---")
+                                        
+                                        def highlight_jornada(row):
+                                            if row['RANK'] == 1:
+                                                return ['background-color: #FFD700; font-weight: bold; color: #000'] * len(row)
+                                            elif row['RANK'] == 2:
+                                                return ['background-color: #C0C0C0; font-weight: bold; color: #000'] * len(row)
+                                            elif row['RANK'] == 3:
+                                                return ['background-color: #CD7F32; font-weight: bold; color: #000'] * len(row)
+                                            else:
+                                                return ['background-color: #34495E; color: white'] * len(row)
+                                        
+                                        tabla_jornada_display = tabla_jornada[['RANK', 'AKA', 'PUNTOS', 'SCORE', 'PARTIDAS']].copy()
+                                        
+                                        st.dataframe(
+                                            tabla_jornada_display.style.apply(highlight_jornada, axis=1),
+                                            use_container_width=True,
+                                            hide_index=True,
+                                            height=min(500, len(tabla_jornada) * 40 + 100)
+                                        )
+                                        
+                                        st.markdown("---")
+                                        
+                                        col1, col2, col3, col4 = st.columns(4)
+                                        col1.metric("👥 Participantes", len(tabla_jornada))
+                                        col2.metric("🥇 Ganador", tabla_jornada.iloc[0]['AKA'])
+                                        col3.metric("⚔️ Victorias", int(tabla_jornada.iloc[0]['Victorias']))
+                                        col4.metric("📊 Score", f"{tabla_jornada.iloc[0]['SCORE']:.2f}")
+                                        
+                                        st.markdown("### 🏆 Top 3 de la Jornada")
+                                        col_j1, col_j2, col_j3 = st.columns(3)
+                                        
+                                        with col_j1:
+                                            if len(tabla_jornada) >= 1:
+                                                st.markdown("#### 🥇")
+                                                st.markdown(f"**{tabla_jornada.iloc[0]['AKA']}**")
+                                                st.metric("Score", f"{tabla_jornada.iloc[0]['SCORE']:.2f}")
+                                        
+                                        with col_j2:
+                                            if len(tabla_jornada) >= 2:
+                                                st.markdown("#### 🥈")
+                                                st.markdown(f"**{tabla_jornada.iloc[1]['AKA']}**")
+                                                st.metric("Score", f"{tabla_jornada.iloc[1]['SCORE']:.2f}")
+                                        
+                                        with col_j3:
+                                            if len(tabla_jornada) >= 3:
+                                                st.markdown("#### 🥉")
+                                                st.markdown(f"**{tabla_jornada.iloc[2]['AKA']}**")
+                                                st.metric("Score", f"{tabla_jornada.iloc[2]['SCORE']:.2f}")
+                                        
+                                        st.markdown("---")
+                                        fig_jornada = px.bar(
+                                            tabla_jornada,
+                                            x='AKA',
+                                            y='Victorias',
+                                            title=f'Victorias en Jornada {int(num_jornada)}',
+                                            color='Victorias',
+                                            color_continuous_scale='Blues',
+                                            text='Victorias'
+                                        )
+                                        fig_jornada.update_traces(texttemplate='%{text}', textposition='outside')
+                                        fig_jornada.update_layout(xaxis_tickangle=-45, showlegend=False)
+                                        st.plotly_chart(fig_jornada, use_container_width=True)
+                                        
+                                        st.markdown("---")
+                                        csv_jornada = tabla_jornada_display.to_csv(index=False).encode('utf-8')
+                                        st.download_button(
+                                            label=f"📥 Descargar Jornada {int(num_jornada)}",
+                                            data=csv_jornada,
+                                            file_name=f"jornada_{int(num_jornada)}_{temporada}.csv",
+                                            mime="text/csv"
+                                        )
+
+
+
+
 
 st.markdown("---")
 
 
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
+
+
+# ========== SECCIÓN: TABLAS DE TORNEOS ==========
+st.markdown('<div id="tablas-torneos"></div>', unsafe_allow_html=True)
 
 
 
@@ -2640,12 +3570,56 @@ else:
 
 st.markdown("---")
 
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
 
-
-
-
-
+# ========== SECCIÓN: CAMPEONES ==========
+st.markdown('<div id="campeones"></div>', unsafe_allow_html=True)
 
 # ========== NUEVA SECCIÓN: CAMPEONES ==========
 st.header("🏆 Salón de la Fama - Campeones")
@@ -2679,7 +3653,7 @@ with tab_champ[2]:
 with tab_champ[3]:
     st.subheader("🥇 Campeones 2024")
     try:
-        st.image("campeones_2024.png",  width=900)
+        st.image("campeones_2024.png", width=900)
         st.caption("Campeones del año 2024")
     except:
         st.info("Coloca la imagen 'campeones_2024.png' en la carpeta del proyecto")
@@ -2687,7 +3661,7 @@ with tab_champ[3]:
 with tab_champ[4]:
     st.subheader("🥇 Campeones 2025-I")
     try:
-        st.image("campeones_2025_I.png", width=900)
+        st.image("campeones_2025_I.png",  width=900)
         st.caption("Campeones del primer trimestre 2025")
     except:
         st.info("Coloca la imagen 'campeones_2025_I.png' en la carpeta del proyecto")
@@ -2709,6 +3683,59 @@ with tab_champ[6]:
         st.info("Coloca la imagen 'campeones_2025_III.png' en la carpeta del proyecto")
 
 st.markdown("---")
+
+
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
+
+
+# ========== SECCIÓN: RANKING ELO ==========
+st.markdown('<div id="ranking-elo"></div>', unsafe_allow_html=True)
+
 
 
 # ========== NUEVA SECCIÓN: CAMPEONES ==========
@@ -2746,7 +3773,7 @@ with tab_champ[2]:
 with tab_champ[3]:
     st.subheader("🥇 Junio 2025")
     try:
-        st.image("Junio25.png", width=900)
+        st.image("Junio25.png",  width=900)
         st.caption("Rank Elo Junio 25")
     except:
         st.info("Coloca la imagen 'Junio25.png' en la carpeta del proyecto")
@@ -2792,14 +3819,62 @@ with tab_champ[7]:
 
 st.markdown("---")
 
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
 
-
+# ========== SECCIÓN: HISTORIAL ==========
+st.markdown('<div id="historial"></div>', unsafe_allow_html=True)
 
 
 #### hisotrial de combates
-
 st.subheader("Historial de combates — Fechas")
+
+# ========== FILTROS PRINCIPALES ==========
 c1, c2, c3 = st.columns(3)
 date_min = df['date'].min()
 date_max = df['date'].max()
@@ -2814,18 +3889,61 @@ if pd.notna(date_min) and pd.notna(date_max):
     }
     
     # Selectores de mes y año
-    start_year = c1.selectbox("Año desde", options=years, index=0)
+    start_year = c1.selectbox("Año desde", options=years, index=0, key="hist_start_year")
     start_month = c1.selectbox("Mes desde", options=list(months.keys()), 
                                format_func=lambda x: months[x],
-                               index=0)
+                               index=0, key="hist_start_month")
     
-    end_year = c2.selectbox("Año hasta", options=years, index=len(years)-1)
+    end_year = c2.selectbox("Año hasta", options=years, index=len(years)-1, key="hist_end_year")
     end_month = c2.selectbox("Mes hasta", options=list(months.keys()), 
                              format_func=lambda x: months[x],
-                             index=11)
+                             index=11, key="hist_end_month")
     
-    liga_filter = c3.selectbox("Liga (filtro)", options=["Todas"] + sorted(leagues))
+    liga_filter = c3.selectbox("Liga (filtro)", options=["Todas"] + sorted(leagues), key="hist_liga")
     
+    # ========== FILTROS DE JUGADORES ==========
+    st.markdown("---")
+    st.markdown("### 🔍 Filtros de Jugadores")
+    
+    col_j1, col_j2, col_options = st.columns([2, 2, 1])
+    
+    with col_j1:
+        st.markdown("**🎮 Jugador 1**")
+        player1_filter = st.text_input(
+            "Buscar Jugador 1 (nombre exacto o parcial)",
+            "",
+            key="hist_player1",
+            placeholder="Ej: Ash, Pikachu..."
+        )
+        player1_exact = st.checkbox("Búsqueda exacta", key="hist_player1_exact")
+    
+    with col_j2:
+        st.markdown("**🎮 Jugador 2**")
+        player2_filter = st.text_input(
+            "Buscar Jugador 2 (nombre exacto o parcial)",
+            "",
+            key="hist_player2",
+            placeholder="Ej: Misty, Charizard..."
+        )
+        player2_exact = st.checkbox("Búsqueda exacta", key="hist_player2_exact")
+    
+    with col_options:
+        st.markdown("**⚙️ Opciones**")
+        filter_mode = st.radio(
+            "Modo de filtro:",
+            ["Ambos jugadores (Y)", "Cualquier jugador (O)"],
+            key="hist_filter_mode"
+        )
+        show_any_position = st.checkbox(
+            "Jugadores en cualquier posición",
+            value=True,
+            key="hist_any_position",
+            help="Si está marcado, busca el jugador ya sea como Player1 o Player2"
+        )
+    
+    st.markdown("---")
+    
+    # ========== APLICAR FILTROS ==========
     # Crear fechas de inicio y fin del periodo
     start_date = pd.Timestamp(year=start_year, month=start_month, day=1)
     # Último día del mes seleccionado
@@ -2834,18 +3952,213 @@ if pd.notna(date_min) and pd.notna(date_max):
     else:
         end_date = pd.Timestamp(year=end_year, month=end_month+1, day=1) - pd.Timedelta(days=1)
     
-    # Aplicar filtros
+    # Filtro base: fechas y liga
     hist_mask = pd.Series(True, index=df.index)
     hist_mask &= (df['date'] >= start_date) & (df['date'] <= end_date)
     if liga_filter != "Todas":
         hist_mask &= df['league'].fillna('Sin liga') == liga_filter
     
+    # Filtros de jugadores
+    if player1_filter:
+        if show_any_position:
+            # Buscar player1_filter en cualquier posición
+            if player1_exact:
+                player1_mask = (
+                    (df['player1'].str.lower() == player1_filter.lower()) |
+                    (df['player2'].str.lower() == player1_filter.lower())
+                )
+            else:
+                player1_mask = (
+                    df['player1'].str.contains(player1_filter, case=False, na=False) |
+                    df['player2'].str.contains(player1_filter, case=False, na=False)
+                )
+        else:
+            # Buscar solo en columna player1
+            if player1_exact:
+                player1_mask = df['player1'].str.lower() == player1_filter.lower()
+            else:
+                player1_mask = df['player1'].str.contains(player1_filter, case=False, na=False)
+    else:
+        player1_mask = pd.Series(True, index=df.index)
+    
+    if player2_filter:
+        if show_any_position:
+            # Buscar player2_filter en cualquier posición
+            if player2_exact:
+                player2_mask = (
+                    (df['player1'].str.lower() == player2_filter.lower()) |
+                    (df['player2'].str.lower() == player2_filter.lower())
+                )
+            else:
+                player2_mask = (
+                    df['player1'].str.contains(player2_filter, case=False, na=False) |
+                    df['player2'].str.contains(player2_filter, case=False, na=False)
+                )
+        else:
+            # Buscar solo en columna player2
+            if player2_exact:
+                player2_mask = df['player2'].str.lower() == player2_filter.lower()
+            else:
+                player2_mask = df['player2'].str.contains(player2_filter, case=False, na=False)
+    else:
+        player2_mask = pd.Series(True, index=df.index)
+    
+    # Combinar filtros según el modo seleccionado
+    if filter_mode == "Ambos jugadores (Y)":
+        # Debe cumplir ambos filtros (Y lógico)
+        hist_mask &= player1_mask & player2_mask
+    else:
+        # Cualquiera de los dos filtros (O lógico)
+        if player1_filter or player2_filter:
+            hist_mask &= player1_mask | player2_mask
+    
     hist_df = df[hist_mask]
-    st.write(f"Partidas en rango ({months[start_month]} {start_year} - {months[end_month]} {end_year}): {len(hist_df)}")
-    st.dataframe(hist_df[['date','player1','player2','winner','league','round','status','replay']].sort_values(by='date', ascending=False).head(500))
+    
+    # ========== MOSTRAR RESULTADOS ==========
+    # Métricas de resumen
+    col_metric1, col_metric2, col_metric3, col_metric4 = st.columns(4)
+    
+    with col_metric1:
+        st.metric("📊 Partidas encontradas", len(hist_df))
+    
+    with col_metric2:
+        if player1_filter:
+            wins_p1 = hist_df[hist_df['winner'].str.contains(player1_filter, case=False, na=False)].shape[0]
+            st.metric(f"🏆 Victorias {player1_filter}", wins_p1)
+        else:
+            st.metric("🏆 Victorias Jugador 1", "-")
+    
+    with col_metric3:
+        if player2_filter:
+            wins_p2 = hist_df[hist_df['winner'].str.contains(player2_filter, case=False, na=False)].shape[0]
+            st.metric(f"🏆 Victorias {player2_filter}", wins_p2)
+        else:
+            st.metric("🏆 Victorias Jugador 2", "-")
+    
+    with col_metric4:
+        eventos_unicos = hist_df['league'].nunique()
+        st.metric("🎮 Eventos únicos", eventos_unicos)
+    
+    st.markdown("---")
+    
+    # Información de filtros aplicados
+    filtros_activos = []
+    if player1_filter:
+        filtros_activos.append(f"**Jugador 1:** {player1_filter} {'(exacto)' if player1_exact else '(parcial)'}")
+    if player2_filter:
+        filtros_activos.append(f"**Jugador 2:** {player2_filter} {'(exacto)' if player2_exact else '(parcial)'}")
+    
+    if filtros_activos:
+        st.info(f"🔍 **Filtros activos:** {' | '.join(filtros_activos)} | **Modo:** {filter_mode}")
+    
+    st.write(f"**Periodo:** {months[start_month]} {start_year} - {months[end_month]} {end_year} | **Liga:** {liga_filter}")
+    
+    # Tabla de resultados
+    if len(hist_df) > 0:
+        # Opciones de visualización
+        with st.expander("⚙️ Opciones de visualización"):
+            col_v1, col_v2 = st.columns(2)
+            with col_v1:
+                max_rows = st.slider("Máximo de filas a mostrar", 10, 1000, 500, 10)
+            with col_v2:
+                sort_column = st.selectbox(
+                    "Ordenar por:",
+                    ['date', 'player1', 'player2', 'winner', 'league'],
+                    index=0
+                )
+                sort_order = st.radio("Orden:", ["Descendente", "Ascendente"], horizontal=True)
+        
+        ascending_order = (sort_order == "Ascendente")
+        
+        # Mostrar tabla
+        tabla_display = hist_df[['date','player1','player2','winner','league','round','status','replay']].sort_values(
+            by=sort_column, 
+            ascending=ascending_order
+        ).head(max_rows)
+        
+        st.dataframe(tabla_display, use_container_width=True)
+        
+        # Botón de descarga
+        csv = tabla_display.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Descargar resultados (CSV)",
+            data=csv,
+            file_name=f"historial_combates_{start_year}{start_month:02d}_{end_year}{end_month:02d}.csv",
+            mime="text/csv"
+        )
+        
+        # Estadísticas adicionales
+        if len(hist_df) > 0:
+            with st.expander("📊 Estadísticas del periodo"):
+                col_stat1, col_stat2 = st.columns(2)
+                
+                with col_stat1:
+                    st.markdown("##### Top 5 jugadores más activos")
+                    all_players = pd.concat([
+                        hist_df['player1'],
+                        hist_df['player2']
+                    ]).value_counts().head(5)
+                    st.dataframe(all_players.reset_index().rename(columns={'index': 'Jugador', 0: 'Partidas'}))
+                
+                with col_stat2:
+                    st.markdown("##### Top 5 ganadores")
+                    top_winners = hist_df['winner'].value_counts().head(5)
+                    st.dataframe(top_winners.reset_index().rename(columns={'index': 'Jugador', 0: 'Victorias'}))
+    else:
+        st.warning("⚠️ No se encontraron partidas con los filtros aplicados. Intenta ajustar los criterios de búsqueda.")
+        
 else:
     st.info("No hay fechas válidas en el dataset; revisa la columna fecha.")
 
+
+
+
+# CSS (agregar al inicio)
+st.markdown("""
+<style>
+    .minimal-back {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .minimal-back a {
+        display: inline-block;
+        padding: 10px 30px;
+        background: #f8f9fa;
+        color: #333 !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        border-left: 4px solid #FF4B4B;
+        transition: all 0.3s ease;
+    }
+    
+    .minimal-back a:hover {
+        background: #FF4B4B;
+        color: white !important;
+        padding-left: 40px;
+        border-left: 4px solid #333;
+    }
+    
+    .minimal-back a:hover::before {
+        content: "⬆️ ";
+        animation: bounce 0.5s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Al final de cada sección:
+st.markdown("""
+<div class="minimal-back">
+    <a href="#inicio">Volver al Inicio</a>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("---")
 
 
 st.caption("Dashboard creado para Poketubi — adapta el CSV a los encabezados sugeridos si necesitas más exactitud.")
