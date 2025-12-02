@@ -984,11 +984,12 @@ def obtener_logo_liga(liga):
         return "Logo.png"
     
     return None
+
 LOGOS_LIGAS = {
-    "PES": "logo_pes.png",
-    "PSS": "logo_pss.png",
-    "PJS": "logo_pjs.png",
-    "PMS": "logo_pms.png",
+    "PES": "logo_pes.PNG",
+    "PSS": "logo_pss.PNG",
+    "PJS": "logo_pjs.PNG",
+    "PMS": "logo_pms.PNG",
     "PLS": "logo_pls.png",
     # Agrega más ligas según las tengas
 }
@@ -2434,11 +2435,12 @@ def obtener_banner_torneo(num_torneo):
 
 
 
+
 LOGOS_LIGAS = {
-    "PES": "logo_pes.png",
-    "PSS": "logo_pss.png",
-    "PJS": "logo_pjs.png",
-    "PMS": "logo_pms.png",
+    "PES": "logo_pes.PNG",
+    "PSS": "logo_pss.PNG",
+    "PJS": "logo_pjs.PNG",
+    "PMS": "logo_pms.PNG",
     "PLS": "logo_pls.png",
     # Agrega más ligas según las tengas
 }
