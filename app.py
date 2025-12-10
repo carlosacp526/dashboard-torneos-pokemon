@@ -2557,92 +2557,92 @@ def obtener_logo_liga(liga):
 # Crear df_liga desde df principal
 
 
-# Crear Liga_Temporada desde la columna round
-df_liga["Liga_Temporada"] = df_liga["round"].apply(lambda x: str(x).split(" ")[0] + str(x).split(" ")[1] if pd.notna(x) and len(str(x).split(" ")) > 1 else "")
+# # Crear Liga_Temporada desde la columna round
+# df_liga["Liga_Temporada"] = df_liga["round"].apply(lambda x: str(x).split(" ")[0] + str(x).split(" ")[1] if pd.notna(x) and len(str(x).split(" ")) > 1 else "")
 
-# Filtrar solo registros con Liga_Temporada válida
-df_liga = df_liga[df_liga["Liga_Temporada"] != ""].copy()
+# # Filtrar solo registros con Liga_Temporada válida
+# df_liga = df_liga[df_liga["Liga_Temporada"] != ""].copy()
 
-# Contar victorias y derrotas por jugador y liga/temporada
-Ganador = df_liga.groupby(["Liga_Temporada", "winner"])["N_Torneo"].count().reset_index()
-Ganador.columns = ["Liga_Temporada", "Participante", "Victorias"]
+# # Contar victorias y derrotas por jugador y liga/temporada
+# Ganador = df_liga.groupby(["Liga_Temporada", "winner"])["N_Torneo"].count().reset_index()
+# Ganador.columns = ["Liga_Temporada", "Participante", "Victorias"]
 
-# Contar partidas como player1
-Partidas_P1 = df_liga.groupby(["Liga_Temporada", "player1"])["N_Torneo"].count().reset_index()
-Partidas_P1.columns = ["Liga_Temporada", "Participante", "Partidas_P1"]
+# # Contar partidas como player1
+# Partidas_P1 = df_liga.groupby(["Liga_Temporada", "player1"])["N_Torneo"].count().reset_index()
+# Partidas_P1.columns = ["Liga_Temporada", "Participante", "Partidas_P1"]
 
-# Contar partidas como player2
-Partidas_P2 = df_liga.groupby(["Liga_Temporada", "player2"])["N_Torneo"].count().reset_index()
-Partidas_P2.columns = ["Liga_Temporada", "Participante", "Partidas_P2"]
+# # Contar partidas como player2
+# Partidas_P2 = df_liga.groupby(["Liga_Temporada", "player2"])["N_Torneo"].count().reset_index()
+# Partidas_P2.columns = ["Liga_Temporada", "Participante", "Partidas_P2"]
 
-# Preparar datos de pokémons sobrevivientes y vencidos para ganadores
-df_liga_ganador = df_liga[["Liga_Temporada", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
-df_liga_ganador.columns = ["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
+# # Preparar datos de pokémons sobrevivientes y vencidos para ganadores
+# df_liga_ganador = df_liga[["Liga_Temporada", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+# df_liga_ganador.columns = ["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
 
-# Preparar datos para perdedores
-df_liga_perdedor = df_liga[["Liga_Temporada", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+# # Preparar datos para perdedores
+# df_liga_perdedor = df_liga[["Liga_Temporada", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
 
-# Identificar al perdedor
-df_liga_perdedor["Participante"] = df_liga_perdedor.apply(
-    lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
-    axis=1
-)
+# # Identificar al perdedor
+# df_liga_perdedor["Participante"] = df_liga_perdedor.apply(
+#     lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
+#     axis=1
+# )
 
-# Para el perdedor, invertir los pokémons sobrevivientes
-df_liga_perdedor["pokes_sobrevivientes"] = 6 - df_liga_perdedor["pokemons Sob"]
-df_liga_perdedor["poke_vencidos"] = df_liga_perdedor["pokemon vencidos"] - 6
+# # Para el perdedor, invertir los pokémons sobrevivientes
+# df_liga_perdedor["pokes_sobrevivientes"] = 6 - df_liga_perdedor["pokemons Sob"]
+# df_liga_perdedor["poke_vencidos"] = df_liga_perdedor["pokemon vencidos"] - 6
 
-df_liga_perdedor = df_liga_perdedor[["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
+# df_liga_perdedor = df_liga_perdedor[["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
 
-# Concatenar datos de ganadores y perdedores
-data = pd.concat([df_liga_perdedor, df_liga_ganador])
-data = data.groupby(["Liga_Temporada", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
+# # Concatenar datos de ganadores y perdedores
+# data = pd.concat([df_liga_perdedor, df_liga_ganador])
+# data = data.groupby(["Liga_Temporada", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
 
-# Crear base completa
-base_p1 = df_liga[["Liga_Temporada", "player1"]].copy()
-base_p1.columns = ["Liga_Temporada", "Participante"]
+# # Crear base completa
+# base_p1 = df_liga[["Liga_Temporada", "player1"]].copy()
+# base_p1.columns = ["Liga_Temporada", "Participante"]
 
-base_p2 = df_liga[["Liga_Temporada", "player2"]].copy()
-base_p2.columns = ["Liga_Temporada", "Participante"]
+# base_p2 = df_liga[["Liga_Temporada", "player2"]].copy()
+# base_p2.columns = ["Liga_Temporada", "Participante"]
 
-base = pd.concat([base_p1, base_p2], ignore_index=True).drop_duplicates()
+# base = pd.concat([base_p1, base_p2], ignore_index=True).drop_duplicates()
 
-# Merge con victorias
-base = pd.merge(base, Ganador, how="left", on=["Liga_Temporada", "Participante"])
-base["Victorias"] = base["Victorias"].fillna(0).astype(int)
+# # Merge con victorias
+# base = pd.merge(base, Ganador, how="left", on=["Liga_Temporada", "Participante"])
+# base["Victorias"] = base["Victorias"].fillna(0).astype(int)
 
-# Merge con partidas
-base = pd.merge(base, Partidas_P1, how="left", on=["Liga_Temporada", "Participante"])
-base = pd.merge(base, Partidas_P2, how="left", on=["Liga_Temporada", "Participante"])
-base["Partidas_P1"] = base["Partidas_P1"].fillna(0)
-base["Partidas_P2"] = base["Partidas_P2"].fillna(0)
-base["Juegos"] = (base["Partidas_P1"] + base["Partidas_P2"]).astype(int)
-base["Derrotas"] = base["Juegos"] - base["Victorias"]
+# # Merge con partidas
+# base = pd.merge(base, Partidas_P1, how="left", on=["Liga_Temporada", "Participante"])
+# base = pd.merge(base, Partidas_P2, how="left", on=["Liga_Temporada", "Participante"])
+# base["Partidas_P1"] = base["Partidas_P1"].fillna(0)
+# base["Partidas_P2"] = base["Partidas_P2"].fillna(0)
+# base["Juegos"] = (base["Partidas_P1"] + base["Partidas_P2"]).astype(int)
+# base["Derrotas"] = base["Juegos"] - base["Victorias"]
 
-# Merge con datos de pokémons
-base = pd.merge(base, data, how="left", on=["Liga_Temporada", "Participante"])
-base["pokes_sobrevivientes"] = base["pokes_sobrevivientes"].fillna(0)
-base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
+# # Merge con datos de pokémons
+# base = pd.merge(base, data, how="left", on=["Liga_Temporada", "Participante"])
+# base["pokes_sobrevivientes"] = base["pokes_sobrevivientes"].fillna(0)
+# base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
 
-# Eliminar columnas temporales
-base = base.drop(columns=["Partidas_P1", "Partidas_P2"])
+# # Eliminar columnas temporales
+# base = base.drop(columns=["Partidas_P1", "Partidas_P2"])
 
-# Calcular score final
-def score_final(data):
-    data_final_ = data.copy()
-    data_final_["% victorias"] = data_final_["Victorias"] / data_final_["Juegos"]
-    data_final_["% Derrotas"] = data_final_["Derrotas"] / data_final_["Juegos"]
-    data_final_["Total de Pkm"] = data_final_["Juegos"] * 6
-    data_final_["% SOB"] = data_final_["pokes_sobrevivientes"] / data_final_["Total de Pkm"]
-    data_final_["puntaje traducido"] = (data_final_["% victorias"] - data_final_["% Derrotas"]) * 4
-    data_final_["% Pkm derrotados"] = data_final_["poke_vencidos"] / data_final_["Total de Pkm"]
-    data_final_["Bonificación de Grupo"] = 3.5
-    data_final_["Desempeño"] = data_final_["% Pkm derrotados"] * 0.7 + data_final_["% victorias"] * 0.1 + 0.1 + 0.1 * data_final_["% SOB"]
-    data_final_["score_completo"] = 100 * (data_final_["puntaje traducido"] / 4 * 0.25 + data_final_["% Pkm derrotados"] * 0.35 + data_final_["Desempeño"] * 0.25 + 0.05 + 0.1 * data_final_["% SOB"])
-    data_final_["score_completo"] =data_final_["score_completo"] .apply(lambda x: round(x,2))
-    return data_final_
+# # Calcular score final
+# def score_final(data):
+#     data_final_ = data.copy()
+#     data_final_["% victorias"] = data_final_["Victorias"] / data_final_["Juegos"]
+#     data_final_["% Derrotas"] = data_final_["Derrotas"] / data_final_["Juegos"]
+#     data_final_["Total de Pkm"] = data_final_["Juegos"] * 6
+#     data_final_["% SOB"] = data_final_["pokes_sobrevivientes"] / data_final_["Total de Pkm"]
+#     data_final_["puntaje traducido"] = (data_final_["% victorias"] - data_final_["% Derrotas"]) * 4
+#     data_final_["% Pkm derrotados"] = data_final_["poke_vencidos"] / data_final_["Total de Pkm"]
+#     data_final_["Bonificación de Grupo"] = 3.5
+#     data_final_["Desempeño"] = data_final_["% Pkm derrotados"] * 0.7 + data_final_["% victorias"] * 0.1 + 0.1 + 0.1 * data_final_["% SOB"]
+#     data_final_["score_completo"] = 100 * (data_final_["puntaje traducido"] / 4 * 0.25 + data_final_["% Pkm derrotados"] * 0.35 + data_final_["Desempeño"] * 0.25 + 0.05 + 0.1 * data_final_["% SOB"])
+#     data_final_["score_completo"] =data_final_["score_completo"] .apply(lambda x: round(x,2))
+#     return data_final_
 
-base2 = score_final(base)
+# base2 = score_final(base)
 
 
 # ========== PREPARACIÓN DE DATOS POR JORNADA ==========
@@ -3547,78 +3547,78 @@ st.markdown('<div id="tablas-torneos"></div>', unsafe_allow_html=True)
 
 # ========== PREPARACIÓN DE DATOS PARA TABLAS DE TORNEOS ==========
 
-# Filtrar solo registros de torneos
-df_torneo = df[df.league == "TORNEO"].copy()
+# # Filtrar solo registros de torneos
+# df_torneo = df[df.league == "TORNEO"].copy()
 
-# Crear Torneo_Temp desde la columna N_Torneo
-df_torneo["Torneo_Temp"] = df_torneo["N_Torneo"]
+# # Crear Torneo_Temp desde la columna N_Torneo
+# df_torneo["Torneo_Temp"] = df_torneo["N_Torneo"]
 
-# Contar victorias por jugador y torneo
-Ganador_torneo = df_torneo.groupby(["Torneo_Temp", "winner"])["N_Torneo"].count().reset_index()
-Ganador_torneo.columns = ["Torneo_Temp", "Participante", "Victorias"]
+# # Contar victorias por jugador y torneo
+# Ganador_torneo = df_torneo.groupby(["Torneo_Temp", "winner"])["N_Torneo"].count().reset_index()
+# Ganador_torneo.columns = ["Torneo_Temp", "Participante", "Victorias"]
 
-# Contar partidas como player1
-Partidas_P1_torneo = df_torneo.groupby(["Torneo_Temp", "player1"])["N_Torneo"].count().reset_index()
-Partidas_P1_torneo.columns = ["Torneo_Temp", "Participante", "Partidas_P1"]
+# # Contar partidas como player1
+# Partidas_P1_torneo = df_torneo.groupby(["Torneo_Temp", "player1"])["N_Torneo"].count().reset_index()
+# Partidas_P1_torneo.columns = ["Torneo_Temp", "Participante", "Partidas_P1"]
 
-# Contar partidas como player2
-Partidas_P2_torneo = df_torneo.groupby(["Torneo_Temp", "player2"])["N_Torneo"].count().reset_index()
-Partidas_P2_torneo.columns = ["Torneo_Temp", "Participante", "Partidas_P2"]
+# # Contar partidas como player2
+# Partidas_P2_torneo = df_torneo.groupby(["Torneo_Temp", "player2"])["N_Torneo"].count().reset_index()
+# Partidas_P2_torneo.columns = ["Torneo_Temp", "Participante", "Partidas_P2"]
 
-# Preparar datos de pokémons sobrevivientes y vencidos para ganadores
-df_torneo_ganador = df_torneo[["Torneo_Temp", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
-df_torneo_ganador.columns = ["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
+# # Preparar datos de pokémons sobrevivientes y vencidos para ganadores
+# df_torneo_ganador = df_torneo[["Torneo_Temp", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+# df_torneo_ganador.columns = ["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]
 
-# Preparar datos para perdedores
-df_torneo_perdedor = df_torneo[["Torneo_Temp", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
+# # Preparar datos para perdedores
+# df_torneo_perdedor = df_torneo[["Torneo_Temp", "player1", "player2", "winner", "pokemons Sob", "pokemon vencidos"]].copy()
 
-# Identificar al perdedor
-df_torneo_perdedor["Participante"] = df_torneo_perdedor.apply(
-    lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
-    axis=1
-)
+# # Identificar al perdedor
+# df_torneo_perdedor["Participante"] = df_torneo_perdedor.apply(
+#     lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
+#     axis=1
+# )
 
-# Para el perdedor, invertir los pokémons sobrevivientes
-df_torneo_perdedor["pokes_sobrevivientes"] = 6 - df_torneo_perdedor["pokemons Sob"]
-df_torneo_perdedor["poke_vencidos"] = df_torneo_perdedor["pokemon vencidos"] - 6
+# # Para el perdedor, invertir los pokémons sobrevivientes
+# df_torneo_perdedor["pokes_sobrevivientes"] = 6 - df_torneo_perdedor["pokemons Sob"]
+# df_torneo_perdedor["poke_vencidos"] = df_torneo_perdedor["pokemon vencidos"] - 6
 
-df_torneo_perdedor = df_torneo_perdedor[["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
+# df_torneo_perdedor = df_torneo_perdedor[["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
 
-# Concatenar datos de ganadores y perdedores
-data_torneo = pd.concat([df_torneo_perdedor, df_torneo_ganador])
-data_torneo = data_torneo.groupby(["Torneo_Temp", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
+# # Concatenar datos de ganadores y perdedores
+# data_torneo = pd.concat([df_torneo_perdedor, df_torneo_ganador])
+# data_torneo = data_torneo.groupby(["Torneo_Temp", "Participante"])[["pokes_sobrevivientes", "poke_vencidos"]].sum().reset_index()
 
-# Crear base completa
-base_p1_torneo = df_torneo[["Torneo_Temp", "player1"]].copy()
-base_p1_torneo.columns = ["Torneo_Temp", "Participante"]
+# # Crear base completa
+# base_p1_torneo = df_torneo[["Torneo_Temp", "player1"]].copy()
+# base_p1_torneo.columns = ["Torneo_Temp", "Participante"]
 
-base_p2_torneo = df_torneo[["Torneo_Temp", "player2"]].copy()
-base_p2_torneo.columns = ["Torneo_Temp", "Participante"]
+# base_p2_torneo = df_torneo[["Torneo_Temp", "player2"]].copy()
+# base_p2_torneo.columns = ["Torneo_Temp", "Participante"]
 
-base_torneo = pd.concat([base_p1_torneo, base_p2_torneo], ignore_index=True).drop_duplicates()
+# base_torneo = pd.concat([base_p1_torneo, base_p2_torneo], ignore_index=True).drop_duplicates()
 
-# Merge con victorias
-base_torneo = pd.merge(base_torneo, Ganador_torneo, how="left", on=["Torneo_Temp", "Participante"])
-base_torneo["Victorias"] = base_torneo["Victorias"].fillna(0).astype(int)
+# # Merge con victorias
+# base_torneo = pd.merge(base_torneo, Ganador_torneo, how="left", on=["Torneo_Temp", "Participante"])
+# base_torneo["Victorias"] = base_torneo["Victorias"].fillna(0).astype(int)
 
-# Merge con partidas
-base_torneo = pd.merge(base_torneo, Partidas_P1_torneo, how="left", on=["Torneo_Temp", "Participante"])
-base_torneo = pd.merge(base_torneo, Partidas_P2_torneo, how="left", on=["Torneo_Temp", "Participante"])
-base_torneo["Partidas_P1"] = base_torneo["Partidas_P1"].fillna(0)
-base_torneo["Partidas_P2"] = base_torneo["Partidas_P2"].fillna(0)
-base_torneo["Juegos"] = (base_torneo["Partidas_P1"] + base_torneo["Partidas_P2"]).astype(int)
-base_torneo["Derrotas"] = base_torneo["Juegos"] - base_torneo["Victorias"]
+# # Merge con partidas
+# base_torneo = pd.merge(base_torneo, Partidas_P1_torneo, how="left", on=["Torneo_Temp", "Participante"])
+# base_torneo = pd.merge(base_torneo, Partidas_P2_torneo, how="left", on=["Torneo_Temp", "Participante"])
+# base_torneo["Partidas_P1"] = base_torneo["Partidas_P1"].fillna(0)
+# base_torneo["Partidas_P2"] = base_torneo["Partidas_P2"].fillna(0)
+# base_torneo["Juegos"] = (base_torneo["Partidas_P1"] + base_torneo["Partidas_P2"]).astype(int)
+# base_torneo["Derrotas"] = base_torneo["Juegos"] - base_torneo["Victorias"]
 
-# Merge con datos de pokémons
-base_torneo = pd.merge(base_torneo, data_torneo, how="left", on=["Torneo_Temp", "Participante"])
-base_torneo["pokes_sobrevivientes"] = base_torneo["pokes_sobrevivientes"].fillna(0)
-base_torneo["poke_vencidos"] = base_torneo["poke_vencidos"].fillna(0)
+# # Merge con datos de pokémons
+# base_torneo = pd.merge(base_torneo, data_torneo, how="left", on=["Torneo_Temp", "Participante"])
+# base_torneo["pokes_sobrevivientes"] = base_torneo["pokes_sobrevivientes"].fillna(0)
+# base_torneo["poke_vencidos"] = base_torneo["poke_vencidos"].fillna(0)
 
-# Eliminar columnas temporales
-base_torneo = base_torneo.drop(columns=["Partidas_P1", "Partidas_P2"])
+# # Eliminar columnas temporales
+# base_torneo = base_torneo.drop(columns=["Partidas_P1", "Partidas_P2"])
 
-# Aplicar función score_final (la misma que usaste para ligas)
-base_torneo_final = score_final(base_torneo)
+# # Aplicar función score_final (la misma que usaste para ligas)
+# base_torneo_final = score_final(base_torneo)
 placeholder_carga.empty()
 # ========== FUNCIONES PARA GENERAR TABLAS DE TORNEOS ==========
 
