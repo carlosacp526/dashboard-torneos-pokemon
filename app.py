@@ -1174,8 +1174,8 @@ df_torneo_perdedor["Participante"] = df_torneo_perdedor.apply(
 )
 
 # Para el perdedor, invertir los pokémons sobrevivientes
-df_torneo_perdedor["pokes_sobrevivientes"] = 6 - df_torneo_perdedor["pokemons Sob"]
-df_torneo_perdedor["poke_vencidos"] = df_torneo_perdedor["pokemon vencidos"] - 6
+df_torneo_perdedor["poke_vencidos"] = 6 - df_torneo_perdedor["pokemons Sob"]
+df_torneo_perdedor["pokes_sobrevivientes"] = df_torneo_perdedor["pokemon vencidos"] - 6
 
 df_torneo_perdedor = df_torneo_perdedor[["Torneo_Temp", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
 
@@ -1248,8 +1248,8 @@ df_liga_perdedor["Participante"] = df_liga_perdedor.apply(
 )
 
 # Para el perdedor, invertir los pokémons sobrevivientes
-df_liga_perdedor["pokes_sobrevivientes"] = 6 - df_liga_perdedor["pokemons Sob"]
-df_liga_perdedor["poke_vencidos"] = df_liga_perdedor["pokemon vencidos"] - 6
+df_liga_perdedor["poke_vencidos"] = 6 - df_liga_perdedor["pokemons Sob"]
+df_liga_perdedor["pokes_sobrevivientes"] = df_liga_perdedor["pokemon vencidos"] - 6
 
 df_liga_perdedor = df_liga_perdedor[["Liga_Temporada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
 
