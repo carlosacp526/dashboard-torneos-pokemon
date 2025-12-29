@@ -4164,7 +4164,7 @@ with tab_champ[8]:
         st.info("Coloca la imagen 'Noviembre25.png' en la carpeta del proyecto")
 
 
-with tab_champ[8]:
+with tab_champ[9]:
     st.subheader("🥇 Diciembre 2025")
     try:
         st.image("Diciembre25.png",  width=900)
