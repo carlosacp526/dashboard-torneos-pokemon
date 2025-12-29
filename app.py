@@ -2669,8 +2669,10 @@ df_liga_perdedor_jornada["Participante"] = df_liga_perdedor_jornada.apply(
     lambda row: row["player2"] if row["winner"] == row["player1"] else row["player1"], 
     axis=1
 )
-df_liga_perdedor_jornada["pokes_sobrevivientes"] = 6 - df_liga_perdedor_jornada["pokemons Sob"]
-df_liga_perdedor_jornada["poke_vencidos"] = df_liga_perdedor_jornada["pokemon vencidos"] - 6
+df_liga_perdedor_jornada["poke_vencidos"] = 6 - df_liga_perdedor_jornada["pokemons Sob"]
+df_liga_perdedor_jornada["pokes_sobrevivientes"] = df_liga_perdedor_jornada["pokemon vencidos"] - 6
+
+
 df_liga_perdedor_jornada = df_liga_perdedor_jornada[["Liga_Temporada", "N_Jornada", "Participante", "pokes_sobrevivientes", "poke_vencidos"]]
 
 data_jornada = pd.concat([df_liga_perdedor_jornada, df_liga_ganador_jornada])
@@ -3361,8 +3363,8 @@ for idx, liga in enumerate(ligas):
                                                     lambda row: row['player2'] if row['winner'] == row['player1'] else row['player1'],
                                                     axis=1
                                                 )
-                                                perdedor_acum['pokes_sobrevivientes'] = 6 - perdedor_acum['pokemons Sob']
-                                                perdedor_acum['poke_vencidos'] = perdedor_acum['pokemon vencidos'] - 6
+                                                perdedor_acum['poke_vencidos'] = 6 - perdedor_acum['pokemons Sob']
+                                                perdedor_acum['pokes_sobrevivientes'] = perdedor_acum['pokemon vencidos'] - 6
                                                 perdedor_acum = perdedor_acum[['Participante', 'pokes_sobrevivientes', 'poke_vencidos']]
                                                 
                                                 # Consolidar datos de pokémons
