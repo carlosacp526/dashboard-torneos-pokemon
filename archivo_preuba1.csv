@@ -8118,14 +8118,18 @@ D'AllFather;Tronchi;D'AllFather;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Re
 Dino agente;ZapeohDev;Dino agente;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;3;6;1
 Mar;Yabadaba;Mar;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 Angello77;Gold;Angello77;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;6;6;1
-CaradeCoso;Mar;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-Moirix;Ricomam;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-Akaru;Jeremith047;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-skll02;Joscake;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-Bamdara;MafiaPolar6242;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-Dino agente;D'AllFather;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-Angelowos;SasoriVzla7;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
-Bloody Cheese;Angello77;;TORNEO;;;Octavos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Octavos de Final;0;6;-1
+CaradeCoso;Mar;CaradeCoso;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;5;6;0
+Ricomam;Akaru;Ricomam;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;2;6;0
+Akaru;Jeremith047;Akaru;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;6;6;1
+skll02;Joscake;skll02;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;1;6;0
+Bamdara;MafiaPolar6242;Bamdara;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;5;6;0
+D'AllFather;Dino agente;D'AllFather;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;1;6;0
+Angelowos;SasoriVzla7;Angelowos;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;3;6;0
+Angello77;Bloody Cheese;Angello77;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;5;6;0
+CaradeCoso;Ricomam;;TORNEO;;;Cuartos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Cuartos de Final;0;6;-1
+Akaru;skll02;;TORNEO;;;Cuartos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Cuartos de Final;0;6;-1
+Bamdara;D'AllFather;;TORNEO;;;Cuartos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Cuartos de Final;0;6;-1
+Angello77;Angelowos;;TORNEO;;;Cuartos de Final;DOU;;DOU;59;DOBLES;No Posee Liga;Cuartos de Final;0;6;-1
 Mr.Shadowdusk;Gold;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
 Mr.Shadowdusk;Elin beacil;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
 Mr.Shadowdusk;Gold;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
@@ -8462,9 +8466,12 @@ EmperorGambit;Saga;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octa
 Fur4nk0;JaLax;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octavos de Final;0;6;-1
 Fur4nk0;JaLax;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octavos de Final;0;6;-1
 Fur4nk0;JaLax;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octavos de Final;0;6;-1
-A25;Mar;A25;TORNEO;2026-02-01;Completed;TREINTAIDOSAVOS DE FINAL;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;TREINTAIDOSAVOS DE FINAL;6;6;1
-A25;Mar;A25;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;6;6;0
-A25;Mar;A25;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;3;6;0
+A25;Mar;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octavos de Final;0;6;-1
+A25;Mar;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octavos de Final;0;6;-1
+A25;Mar;;TORNEO;;;Octavos de Final;VGC;;VGC;62;VGC;No Posee Liga;Octavos de Final;0;6;-1
+Bamdara;Fran;Bamdara;TORNEO;2026-02-01;Completed;treintaidosavo de final;NAT DEX;Replay;NAT DEX;62;SINGLES;No Posee Liga;treintaidosavo de final;6;6;1
+The.Ultracheese;Bamdara;The.Ultracheese;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;62;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;6;6;0
+Mar;Sammy Sweet;Mar;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;62;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;3;6;0
 SasoriVzla7;Davarv;SasoriVzla7;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;5;6;0
 Angello77;Aikauwu;Angello77;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;4;6;0
 Moirix;kmaron_pistola;Moirix;TORNEO;2026-02-01;Completed;DIECISEISAVOS DE FINAL;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;DIECISEISAVOS DE FINAL;5;6;0
@@ -8487,10 +8494,12 @@ Bloody Cheese;HallacAs;Bloody Cheese;TORNEO;2026-02-01;Completed;Octavos de Fina
 LABIAMG;Chris FPS;LABIAMG;TORNEO;2026-02-01;Completed;Octavos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Octavos de Final;1;6;0
 Joscake;GatitaGolosa123;Joscake;TORNEO;2026-02-01;Completed;Octavos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Octavos de Final;6;6;0
 CaradeCoso;Draco axel;CaradeCoso;TORNEO;2026-02-01;Completed;Octavos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Octavos de Final;2;6;0
-Angello77;The.Ultracheese;;TORNEO;;;Cuartos de Final;NAT DEX;;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;0;6;-1
-Adpg;Moirix;;TORNEO;;;Cuartos de Final;NAT DEX;;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;0;6;-1
-Chris FPS;Bloody Cheese;;TORNEO;;;Cuartos de Final;NAT DEX;;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;0;6;-1
-GatitaGolosa123;CaradeCoso;;TORNEO;;;Cuartos de Final;NAT DEX;;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;0;6;-1
+Angello77;The.Ultracheese;Angello77;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;4;6;0
+Adpg;Moirix;Adpg;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
+Chris FPS;Bloody Cheese;Chris FPS;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
+CaradeCoso;GatitaGolosa123;CaradeCoso;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;4;6;0
+Chris FPS;CaradeCoso;;TORNEO;;;Semifinal;NAT DEX;;NAT DEX;60;SINGLES;No Posee Liga;Semifinal;0;6;-1
+Adpg;Angello77;;TORNEO;;;Semifinal;NAT DEX;;NAT DEX;60;SINGLES;No Posee Liga;Semifinal;0;6;-1
 skll02;EmperorGambit;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;0
 ShinkaHMA;Tronchi;ShinkaHMA;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;2;6;0
 Yabadaba;Puchamon03;Yabadaba;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;4;6;0
@@ -8669,11 +8678,14 @@ Joscake;Okari958;Joscake;TORNEO;2026-02-01;Completed;GANADORES RONDA 4;Ubers;Rep
 Porygon Z;Elin Beacil;Porygon Z;TORNEO;2026-02-01;Completed;GANADORES RONDA 4;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;GANADORES RONDA 4;4;6;0
 2DpkmN;Adpg;2DpkmN;TORNEO;2026-02-01;Completed;GANADORES RONDA 4;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;GANADORES RONDA 4;3;6;0
 ShinkaHMA;Mar;;TORNEO;;;GANADORES RONDA 4;Ubers;;Ubers;64;SINGLES;No Posee Liga;GANADORES RONDA 4;0;6;-1
-Joscake;Porygon Z;;TORNEO;;;GANADORES RONDA 5;Ubers;;Ubers;64;SINGLES;No Posee Liga;GANADORES RONDA 5;0;6;-1
-skll02;GatitaGolosa123;;TORNEO;;;PERDEDORES RONDA 4;Ubers;;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;0;6;-1
-Fur4nk0;Bamdara;;TORNEO;;;PERDEDORES RONDA 4;Ubers;;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;0;6;-1
-SasoriVzla7;masafesio;;TORNEO;;;PERDEDORES RONDA 4;Ubers;;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;0;6;-1
-sabergio15;Bloody Cheese;;TORNEO;;;PERDEDORES RONDA 4;Ubers;;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;0;6;-1
+Porygon Z;Joscake;Porygon Z;TORNEO;2026-02-01;Completed;GANADORES RONDA 5;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;GANADORES RONDA 5;5;6;0
+GatitaGolosa123;skll02;GatitaGolosa123;TORNEO;2026-02-01;Completed;PERDEDORES RONDA 4;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;3;6;0
+Bamdara;Fur4nk0;Bamdara;TORNEO;2026-02-01;Completed;PERDEDORES RONDA 4;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;1;6;0
+SasoriVzla7;masafesio;SasoriVzla7;TORNEO;2026-02-01;Completed;PERDEDORES RONDA 4;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;2;6;0
+sabergio15;Bloody Cheese;sabergio15;TORNEO;2026-02-01;Completed;PERDEDORES RONDA 4;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 4;2;6;0
+Adpg;GatitaGolosa123;;TORNEO;;;PERDEDORES RONDA 5;Ubers;;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 5;0;6;-1
+SasoriVzla7;Okari958;SasoriVzla7;TORNEO;2026-02-01;Completed;PERDEDORES RONDA 5;Ubers;Replay;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 5;6;6;1
+Elin Beacil;sabergio15;;TORNEO;;;PERDEDORES RONDA 5;Ubers;;Ubers;64;SINGLES;No Posee Liga;PERDEDORES RONDA 5;0;6;-1
 Saga;Draco axel;Saga;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Fase de grupos;2;6;0
 afroier;Nero22dd;afroier;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Fase de grupos;1;6;0
 Nero22dd;Saga;Nero22dd;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Fase de grupos;2;6;0
@@ -8724,10 +8736,10 @@ Bamdara;Fur4nk0;Bamdara;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GE
 Roy Kasoy;O'Fenomenon't;Roy Kasoy;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Fase de grupos;4;6;0
 Roy Kasoy;Fur4nk0;Roy Kasoy;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Fase de grupos;4;6;0
 Edenking;Bamdara;Edenking;TORNEO;2026-02-01;Completed;Fase de grupos;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Fase de grupos;3;6;0
-Nitr0kill3r;Edenking;;TORNEO;;;Octavos de Final;STADIUM OU GEN 2;;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Octavos de Final;0;6;-1
-MONTIEL JAEGER;Roy Kasoy;;TORNEO;;;Octavos de Final;STADIUM OU GEN 2;;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Octavos de Final;0;6;-1
-Draco axel;Adpg;;TORNEO;;;Cuartos de Final;STADIUM OU GEN 2;;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Cuartos de Final;0;6;-1
-D'AllFather;Angelowos;;TORNEO;;;Cuartos de Final;STADIUM OU GEN 2;;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Cuartos de Final;0;6;-1
+Nitr0kill3r;Edenking;Nitr0kill3r;TORNEO;2026-02-01;Completed;Octavos de Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Octavos de Final;3;6;0
+MONTIEL JAEGER;Roy Kasoy;MONTIEL JAEGER;TORNEO;2026-02-01;Completed;Cuartos de Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Cuartos de Final;2;6;0
+Adpg;Draco axel;Adpg;TORNEO;2026-02-01;Completed;Octavos de Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Octavos de Final;4;6;0
+D'AllFather;Angelowos;D'AllFather;TORNEO;2026-02-01;Completed;Cuartos de Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Cuartos de Final;5;6;0
 D'AllFather;Saga;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
 Moirix;ShinkaHMA;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
 Mar;LABIAMG;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
@@ -8824,3 +8836,8 @@ Akaru;D'AllFather;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase 
 GatitaGolosa123;2DpkmN;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 D'AllFather;GatitaGolosa123;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Aikauwu;Akaru;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
+davarv;Adpg;davarv;TORNEO;2026-02-01;Completed;Cuartos de Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Cuartos de Final;4;6;0
+Bloody Cheese;Nitr0kill3r;Bloody Cheese;TORNEO;2026-02-01;Completed;Cuartos de Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
+Bloody Cheese;MONTIEL JAEGER;Bloody Cheese;TORNEO;2026-02-01;Completed;Semifinal;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Semifinal;1;6;0
+Davarv;D'AllFather;Davarv;TORNEO;2026-02-01;Completed;Semifinal;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Semifinal;5;6;0
+Davarv;Bloody Cheese;Davarv;TORNEO;2026-02-01;Completed;Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Final;3;6;0
