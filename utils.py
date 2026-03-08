@@ -182,11 +182,17 @@ def generar_tabla_jornada(df_base_jornada, lt, num_jornada):
 def obtener_banner(liga):
     if liga in LOGOS_LIGAS and os.path.exists(LOGOS_LIGAS[liga]):
         return LOGOS_LIGAS[liga]
-    for ext in ['png','PNG','jpeg','jpg']:
-        for ruta in [f"banner_{liga.lower()}.{ext}", f"banner/{liga.lower()}.{ext}", f"{liga}.{ext}"]:
+    for ext in ['png','PNG','jpeg','jpg','JPEG','JPG']:
+        for ruta in [
+            f"banner_{liga.lower()}.{ext}",
+            f"banner_{liga}.{ext}",
+            f"banner/{liga.lower()}.{ext}",
+            f"banner/{liga}.{ext}",
+            f"{liga.lower()}.{ext}",
+            f"{liga}.{ext}",
+        ]:
             if os.path.exists(ruta): return ruta
     return "Logo.png" if os.path.exists("Logo.png") else None
-
 def obtener_logo_liga(liga):
     if liga in LOGOS_LIGAS and os.path.exists(LOGOS_LIGAS[liga]):
         return LOGOS_LIGAS[liga]
