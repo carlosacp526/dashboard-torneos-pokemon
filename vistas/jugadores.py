@@ -217,7 +217,7 @@ def show():
 
         with col_ct:
             st.markdown("#### 🥇 Campeonatos de Torneo")
-            if not base_torneo_final.empty and 'Torneo_Temp' in base_torneo_final.columns:
+            if not base_torneo_final.empty and 'Torneo_Temp' in base_torneo_final.columns and min(base_torneo_final.replay)>0:
                 campeonatos_torneo = []
                 for nt in base_torneo_final['Torneo_Temp'].unique():
                     tabla = generar_tabla_torneo(base_torneo_final, nt)
