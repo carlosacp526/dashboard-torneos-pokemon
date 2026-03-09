@@ -6,7 +6,7 @@ sys.path.insert(0, ROOT)
 
 st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="⚡")
 
-from Produccion.vistas import jugadores
+from vistas import jugadores
 from vistas import inicio, analisis, rankings
 
 p_inicio    = st.Page(inicio.show,    title="🏠 Inicio",                   url_path="inicio",    default=True)
