@@ -342,5 +342,8 @@ CSS_BACK = """
 """
 
 def volver_inicio():
-    st.markdown(CSS_BACK, unsafe_allow_html=True)
+    if st.button("⬆️ Volver al Inicio"):
+        pages = st.session_state.get("_pages", {})
+        if "inicio" in pages:
+            st.switch_page(pages["inicio"])
     st.markdown("---")

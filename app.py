@@ -14,7 +14,11 @@ p_jugadores = st.Page(jugadores.show, title="👤 Jugadores y Competencias", url
 p_rankings  = st.Page(rankings.show,  title="🏅 Rankings",                 url_path="rankings")
 
 # Guardar referencias para navegación desde inicio.py
+p_inicio = st.Page(inicio.show, title="🏠 Inicio", url_path="inicio", default=True)
+
+# Guardar TODAS las referencias incluyendo inicio
 st.session_state["_pages"] = {
+    "inicio":    p_inicio,   # ← agregar esta línea
     "analisis":  p_analisis,
     "jugadores": p_jugadores,
     "rankings":  p_rankings,
