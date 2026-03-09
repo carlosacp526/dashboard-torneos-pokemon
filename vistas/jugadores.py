@@ -217,9 +217,14 @@ def show():
 
         with col_ct:
             st.markdown("#### 🥇 Campeonatos de Torneo")
-            if not base_torneo_final.empty and 'Torneo_Temp' in base_torneo_final.columns :
+            if not base_torneo_final.empty and 'Torneo_Temp' in base_torneo_final.columns:
+                torneos_con_final = df_raw[
+                    (df_raw["league"] == "TORNEO") &
+                    (df_raw["round"] == "Final") &
+                    (df_raw["Walkover"] >= 0)
+                ]["N_Torneo"].unique()
                 campeonatos_torneo = []
-                for nt in base_torneo_final['Torneo_Temp'].unique():
+                for nt in base_torneo_final[base_torneo_final['Torneo_Temp'].isin(torneos_con_final)]['Torneo_Temp'].unique():
                     tabla = generar_tabla_torneo(base_torneo_final, nt)
                     if tabla is not None and not tabla.empty:
                         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
