@@ -342,7 +342,13 @@ CSS_BACK = """
 """
 
 def volver_inicio():
-    if st.button("⬆️ Volver al Inicio"):
+    # Genera key único por cada llamada
+    if "_back_counter" not in st.session_state:
+        st.session_state["_back_counter"] = 0
+    st.session_state["_back_counter"] += 1
+    key = f"back_btn_{st.session_state['_back_counter']}"
+    
+    if st.button("⬆️ Volver al Inicio", key=key):
         pages = st.session_state.get("_pages", {})
         if "inicio" in pages:
             st.switch_page(pages["inicio"])
