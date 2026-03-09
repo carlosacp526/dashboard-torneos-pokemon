@@ -6,12 +6,12 @@ sys.path.insert(0, ROOT)
 
 st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="⚡")
 
-from Produccion.vistas import jugadores2
+from Produccion.vistas import jugadores
 from vistas import inicio, analisis, rankings
 
 p_inicio    = st.Page(inicio.show,    title="🏠 Inicio",                   url_path="inicio",    default=True)
 p_analisis  = st.Page(analisis.show,  title="📊 Análisis General",         url_path="analisis")
-p_jugadores = st.Page(jugadores2.show, title="👤 Jugadores y Competencias", url_path="jugadores")
+p_jugadores = st.Page(jugadores.show, title="👤 Jugadores y Competencias", url_path="jugadores")
 p_rankings  = st.Page(rankings.show,  title="🏅 Rankings",                 url_path="rankings")
 
 # Guardar referencias para navegación desde inicio.py
