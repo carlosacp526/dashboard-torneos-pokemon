@@ -137,6 +137,31 @@ def show():
 
         st.markdown("---")
 
+        # Torneos activos del jugador
+        st.markdown("### 🔴 Torneos Activos")
+        torneos_activos = df_raw[
+            (df_raw["league"] == "TORNEO") &
+            (df_raw["Walkover"] == -1) &
+            (
+                df_raw["player1"].str.contains(player_query, case=False, na=False) |
+                df_raw["player2"].str.contains(player_query, case=False, na=False)
+            )
+        ]["N_Torneo"].dropna().unique()
+
+        if len(torneos_activos) > 0:
+            st.success(f"⚔️ Tiene **{len(torneos_activos)}** torneo(s) activo(s)")
+            cols_act = st.columns(min(len(torneos_activos), 4))
+            for idx_a, nt in enumerate(sorted(torneos_activos)):
+                with cols_act[idx_a % 4]:
+                    ban = obtener_banner_torneo(int(nt))
+                    if ban:
+                        st.image(ban, use_container_width=True)
+                    st.markdown(f"**🏆 Torneo {int(nt)}**")
+        else:
+            st.info("No tiene torneos activos pendientes")
+
+        st.markdown("---")
+
         # Ligas y Torneos del jugador
         st.markdown("### 🏅 Participación en Ligas y Torneos")
         col_ligas, col_torneos = st.columns(2)
