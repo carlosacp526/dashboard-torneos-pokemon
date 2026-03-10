@@ -138,7 +138,7 @@ def show():
         st.markdown("---")
 
         # Torneos activos del jugador
-        st.markdown("### 🔴 Torneos Activos")
+        st.markdown("### 🔴 Torneos Activos con Batalla Pendientes")
         torneos_activos = df_raw[
             (df_raw["league"] == "TORNEO") &
             (df_raw["Walkover"] == -1) &
