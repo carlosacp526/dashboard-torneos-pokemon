@@ -357,11 +357,9 @@ def show():
 
                 # Winrate por año
                 wr_año = hist_a.groupby('Año').agg(
-                    Partidas=('Win','count'), Victorias=('Win','sum')
-                ).reset_index()
-                wr_año = hist_a.groupby('Año').agg(
                     Partidas=('Partida','count'), Victorias=('Win','sum')
                 ).reset_index()
+                wr_año['Winrate%'] = (wr_año['Victorias'] / wr_año['Partidas'] * 100).round(1)
                 wr_año['Año'] = wr_año['Año'].astype(str)
                 fig2 = px.bar(wr_año, x='Año', y='Winrate%', text='Winrate%',
                               color='Winrate%', color_continuous_scale='RdYlGn',
