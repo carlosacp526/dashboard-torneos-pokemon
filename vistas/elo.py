@@ -179,26 +179,37 @@ def show():
     # Tabla top 10
     st.subheader("🏆 Top 10 Activos")
     cols_show = ['RANK','Participantes','Elo','Actividad']
-    st.markdown("""
-    <style>
-    .top-table { width:100%; border-collapse:collapse; font-size:15px; }
-    .top-table th { background:#333; color:white; padding:8px 12px; text-align:left; }
-    .top-table td { padding:8px 12px; border-bottom:1px solid #444; color:white; }
-    .rank-1 { background-color:#FFD700 !important; color:#000 !important; font-weight:bold; }
-    .rank-2 { background-color:#C0C0C0 !important; color:#000 !important; font-weight:bold; }
-    .rank-3 { background-color:#CD7F32 !important; color:#000 !important; font-weight:bold; }
-    </style>
-    """, unsafe_allow_html=True)
+    estilos = {
+        1: "background-color:#FFD700;color:#000000;font-weight:bold",
+        2: "background-color:#C0C0C0;color:#000000;font-weight:bold",
+        3: "background-color:#CD7F32;color:#000000;font-weight:bold",
+    }
+    td_base = "padding:8px 12px;border-bottom:1px solid #444;"
     rows_html = ""
     for _, row in top10[cols_show].iterrows():
-        cls = {1:"rank-1", 2:"rank-2", 3:"rank-3"}.get(row['RANK'], "")
-        rows_html += f"<tr class='{cls}'><td>{int(row['RANK'])}</td><td>{row['Participantes']}</td><td>{int(row['Elo'])}</td><td>{row['Actividad']}</td></tr>"
-    st.markdown(f"""
-    <table class="top-table">
-        <thead><tr><th>RANK</th><th>Jugador</th><th>Elo</th><th>Actividad</th></tr></thead>
+        rank = int(row["RANK"])
+        tr_style = estilos.get(rank, "color:white")
+        td_style = td_base + ("color:#000000" if rank <= 3 else "color:white")
+        rows_html += (
+            f'<tr style="{tr_style}">' +
+            f'<td style="{td_style}">{rank}</td>' +
+            f'<td style="{td_style}">{row["Participantes"]}</td>' +
+            f'<td style="{td_style}">{int(row["Elo"])}</td>' +
+            f'<td style="{td_style}">{row["Actividad"]}</td>' +
+            "</tr>"
+        )
+    st.markdown(
+        f'''<table style="width:100%;border-collapse:collapse;font-size:15px">
+        <thead><tr style="background:#333;color:white">
+            <th style="padding:8px 12px;text-align:left">RANK</th>
+            <th style="padding:8px 12px;text-align:left">Jugador</th>
+            <th style="padding:8px 12px;text-align:left">Elo</th>
+            <th style="padding:8px 12px;text-align:left">Actividad</th>
+        </tr></thead>
         <tbody>{rows_html}</tbody>
-    </table><br>
-    """, unsafe_allow_html=True)
+        </table><br>''',
+        unsafe_allow_html=True
+    )
 
     # Gráfico top 10
     fig = px.bar(top10, x='Participantes', y='Elo',
