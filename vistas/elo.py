@@ -55,7 +55,7 @@ def calcular_elo(df_raw):
 
     # Solo partidas completadas con ganador conocido y sin walkover
     elo = df[df['winner'].notna()].copy()
-    if 'Walkover' in elo.columns:
+    if 'Walkover' in df.columns:
         elo = elo[elo['Walkover'] != -1]
     elo = elo.rename(columns={'winner': 'Ganador'})
     elo['Perdedor'] = elo.apply(
@@ -332,7 +332,7 @@ def show():
 
                 # Winrate por mes
                 wr_mes = hist_m.groupby('Mes').agg(
-                    Partidas=('Win','count'), Victorias=('Win','sum')
+                    Partidas=('Partida','count'), Victorias=('Win','sum')
                 ).reset_index()
                 wr_mes['Winrate%'] = (wr_mes['Victorias'] / wr_mes['Partidas'] * 100).round(1)
                 fig2 = px.bar(wr_mes, x='Mes', y='Winrate%', text='Winrate%',
@@ -359,7 +359,9 @@ def show():
                 wr_año = hist_a.groupby('Año').agg(
                     Partidas=('Win','count'), Victorias=('Win','sum')
                 ).reset_index()
-                wr_año['Winrate%'] = (wr_año['Victorias'] / wr_año['Partidas'] * 100).round(1)
+                wr_año = hist_a.groupby('Año').agg(
+                    Partidas=('Partida','count'), Victorias=('Win','sum')
+                ).reset_index()
                 fig2 = px.bar(wr_año, x='Año', y='Winrate%', text='Winrate%',
                               color='Winrate%', color_continuous_scale='RdYlGn',
                               title=f'Winrate por Año — {pq}')
