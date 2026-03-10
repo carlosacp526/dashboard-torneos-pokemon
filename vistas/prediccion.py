@@ -132,9 +132,22 @@ def train_models(feat_df_json):
     y = feat_df['target']
 
     # Train/test split temporal (últimas 20% partidas como test)
+    # Después:
     split = int(len(X) * 0.8)
+
+    # Asegurar que ambas clases estén en train
+    while split < len(X) - 1:
+        y_train_check = y.iloc[:split]
+        if len(y_train_check.unique()) == 2:
+            break
+        split += 1
+
     X_train, X_test = X.iloc[:split], X.iloc[split:]
     y_train, y_test = y.iloc[:split], y.iloc[split:]
+
+    # Validación final
+    if len(y_train.unique()) < 2:
+        raise ValueError("No hay suficientes partidas con ambos resultados para entrenar.")
 
     models = {
         'XGBoost': xgb.XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.05,
