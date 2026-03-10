@@ -118,7 +118,7 @@ def prepare_data(df_raw):
     return feat_df, final_stats, df
 
 @st.cache_data(ttl=3600)
-def train_models(feat_df_json):
+def train_models(_feat_df):
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
     from sklearn.model_selection import cross_val_score
     from sklearn.preprocessing import StandardScaler
@@ -126,7 +126,7 @@ def train_models(feat_df_json):
     import xgboost as xgb
     import lightgbm as lgb
 
-    feat_df = pd.read_json(feat_df_json)
+    feat_df = _feat_df.copy()
     feature_cols = [c for c in feat_df.columns if c != 'target']
     X = feat_df[feature_cols].fillna(0)
     y = feat_df['target']
@@ -288,7 +288,7 @@ def show():
 
     try:
         with st.spinner("Entrenando XGBoost, LightGBM y Random Forest..."):
-            trained_models, results, X_train, X_test, y_train, y_test, feature_cols = train_models(feat_df.to_json())
+            trained_models, results, X_train, X_test, y_train, y_test, feature_cols = train_models(feat_df)
 
         # Tabla de resultados
         res_df = pd.DataFrame(results).T.reset_index().rename(columns={'index':'Modelo'})
