@@ -53,7 +53,7 @@ def show():
     st.markdown("---")
 
     pages = st.session_state.get("_pages", {})
-    col_a, col_b, col_c = st.columns(3)
+    col_a, col_b, col_c, col_d = st.columns(4)
 
     with col_a:
         st.markdown("""
@@ -68,19 +68,29 @@ def show():
     with col_b:
         st.markdown("""
         <div class="nav-section">
-            <div class="nav-section-title">👤 Jugadores y Competencias</div>
+            <div class="nav-section-title">👤 Jugadores</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes\n- 🌎 Mundial\n- 🏆 Ligas\n- 🎯 Torneos")
-        if st.button("➡️ Ir a Jugadores y Competencias", use_container_width=True, key="btn_jugadores"):
+        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes")
+        if st.button("➡️ Ir a Jugadores", use_container_width=True, key="btn_jugadores"):
             if "jugadores" in pages:
                 st.switch_page(pages["jugadores"])
 
     with col_c:
         st.markdown("""
         <div class="nav-section">
+            <div class="nav-section-title">🏆 Ligas y Torneos</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 🏆 Tablas de Ligas\n- 🎯 Tablas de Torneos")
+        if st.button("➡️ Ir a Ligas y Torneos", use_container_width=True, key="btn_ligas"):
+            if "ligas" in pages:
+                st.switch_page(pages["ligas"])
+
+    with col_d:
+        st.markdown("""
+        <div class="nav-section">
             <div class="nav-section-title">🏅 Rankings</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 🏆 Salón de la Fama\n- 📈 Ranking Elo\n- 📜 Historial")
+        st.markdown("- 🏆 Salón de la Fama\n- 📈 Ranking Elo\n- 📜 Historial\n- 🌎 Mundial")
         if st.button("➡️ Ir a Rankings", use_container_width=True, key="btn_rankings"):
             if "rankings" in pages:
                 st.switch_page(pages["rankings"])
