@@ -104,7 +104,6 @@ def calcular_elo(df_raw):
 
 
 def get_player_elo_history(player_query, data_filas, exact=False):
-    """Extrae el historial de Elo de un jugador desde data_filas."""
     if exact:
         mask = (data_filas['Jugador_A'].str.lower() == player_query.lower()) | \
                (data_filas['Jugador_B'].str.lower() == player_query.lower())
@@ -116,17 +115,19 @@ def get_player_elo_history(player_query, data_filas, exact=False):
     if d.empty:
         return pd.DataFrame()
 
-    # Reordenar para que el jugador buscado siempre sea Jugador_A
+    # Determinar si ganó ANTES de hacer el swap (Jugador_A siempre es el ganador en data_filas)
+    d['Win'] = d['Jugador_A'].str.contains(player_query, case=False, na=False)
+
+    # Ahora sí hacer el swap para que el jugador buscado quede en columna A
     is_b = d['Jugador_B'].str.contains(player_query, case=False, na=False) & \
            ~d['Jugador_A'].str.contains(player_query, case=False, na=False)
 
     d_swap = d[is_b].copy()
-    d_swap[['Jugador_A','Jugador_B']]         = d_swap[['Jugador_B','Jugador_A']].values
-    d_swap[['Rating_A','Rating_B']]           = d_swap[['Rating_B','Rating_A']].values
-    d_swap[['Rating_A_NEW','Rating_B_NEW']]   = d_swap[['Rating_B_NEW','Rating_A_NEW']].values
+    d_swap[['Jugador_A','Jugador_B']]       = d_swap[['Jugador_B','Jugador_A']].values
+    d_swap[['Rating_A','Rating_B']]         = d_swap[['Rating_B','Rating_A']].values
+    d_swap[['Rating_A_NEW','Rating_B_NEW']] = d_swap[['Rating_B_NEW','Rating_A_NEW']].values
     d.loc[is_b] = d_swap
 
-    d['Win'] = (d['Jugador_A'].str.contains(player_query, case=False, na=False))
     d['Resultado'] = d['Win'].map({True: '✅ Victoria', False: '❌ Derrota'})
     d['Rival'] = d['Jugador_B']
     d = d.reset_index(drop=True)
