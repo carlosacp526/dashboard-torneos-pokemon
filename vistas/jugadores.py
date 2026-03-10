@@ -155,7 +155,7 @@ def show():
                 with cols_act[idx_a % 4]:
                     ban = obtener_banner_torneo(int(nt))
                     if ban:
-                        st.image(ban, use_container_width=True)
+                        st.image(ban, width=150)
                     st.markdown(f"**🏆 Torneo {int(nt)}**")
         else:
             st.info("No tiene torneos activos pendientes")
