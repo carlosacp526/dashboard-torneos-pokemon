@@ -250,16 +250,16 @@ def show():
 
 
                 es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
-                st.write(f"player_query: '{player_query}'")
-                st.write(f"es_chris_fps: {es_chris_fps}")
-                st.write(f"62 en torneos_con_final: {62 in [int(x) for x in torneos_con_final]}")
-                st.write(f"62 en base_torneo_final: {62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]}")
+                # st.write(f"player_query: '{player_query}'")
+                # st.write(f"es_chris_fps: {es_chris_fps}")
+                # st.write(f"62 en torneos_con_final: {62 in [int(x) for x in torneos_con_final]}")
+                # st.write(f"62 en base_torneo_final: {62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]}")
 
                 campeonatos_torneo = []
                 # Caso especial ANTES del loop: Torneo 62 en parejas, Chris FPS también es campeón
                 #if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
                 if es_chris_fps:
-                    tabla_62 = generar_tabla_torneo(base_torneo_final, 62)
+                    tabla_62 = generar_tabla_torneo(base_torneo_final, 61)
                     if tabla_62 is not None and not tabla_62.empty:
                         mask_62 = (tabla_62['AKA'].str.lower()==player_query.lower()
                                    if exact_search else
@@ -269,9 +269,9 @@ def show():
                         vict_62  = j_62['Victorias'].iloc[0] if not j_62.empty else 0
                     else:
                         score_62, vict_62 = 0, 0
-                    campeonatos_torneo.append({'Torneo':62,'Score':score_62,'Victorias':vict_62})
+                    campeonatos_torneo.append({'Torneo':61,'Score':score_62,'Victorias':vict_62})
                 for nt in base_torneo_final[base_torneo_final['Torneo_Temp'].isin(torneos_con_final)]['Torneo_Temp'].unique():
-                    if int(nt) == 62 and es_chris_fps:
+                    if int(nt) == 61 and es_chris_fps:
                         continue  # ya fue agregado arriba
                     tabla = generar_tabla_torneo(base_torneo_final, nt)
                     if tabla is not None and not tabla.empty:
@@ -279,7 +279,7 @@ def show():
                                   if exact_search else
                                   tabla['AKA'].str.contains(player_query,case=False,na=False))
                         j = tabla[mask_c]
-                        if not j.empty and (j['RANK'].iloc[0] == 1 or (int(nt) == 62 and es_chris_fps)):
+                        if not j.empty and (j['RANK'].iloc[0] == 1 or (int(nt) == 61 and es_chris_fps)):
                             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
                                 
                 if campeonatos_torneo:
