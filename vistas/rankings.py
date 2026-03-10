@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os, sys
+import sklearn
+print(sklearn.__version__)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, volver_inicio
 
