@@ -223,8 +223,50 @@ def show():
                     (df_raw["round"] == "Final") &
                     (df_raw["Walkover"] >= 0)
                 ]["N_Torneo"].unique()
+
+
+
+                # campeonatos_torneo = []
+                # for nt in base_torneo_final[base_torneo_final['Torneo_Temp'].isin(torneos_con_final)]['Torneo_Temp'].unique():
+                #     tabla = generar_tabla_torneo(base_torneo_final, nt)
+                #     if tabla is not None and not tabla.empty:
+                #         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
+                #                   if exact_search else
+                #                   tabla['AKA'].str.contains(player_query,case=False,na=False))
+                #         j = tabla[mask_c]
+                #         if not j.empty and j['RANK'].iloc[0] == 1:
+                #             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
+
+                            
+
+            
+
+                #         # Caso especial: Torneo 62 fue en parejas, Chris FPS también es campeón
+                #         elif int(nt) == 62:
+                #             es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
+                #             st.write(f"DEBUG - nt=62, player_query='{player_query}', es_chris_fps={es_chris_fps}, j_empty={j.empty}")
+                #             if es_chris_fps:
+                #                 campeonatos_torneo.append({'Torneo':62,'Score':0,'Victorias':0})
+
+
+                es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
                 campeonatos_torneo = []
+                # Caso especial ANTES del loop: Torneo 62 en parejas, Chris FPS también es campeón
+                if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
+                    tabla_62 = generar_tabla_torneo(base_torneo_final, 62)
+                    if tabla_62 is not None and not tabla_62.empty:
+                        mask_62 = (tabla_62['AKA'].str.lower()==player_query.lower()
+                                   if exact_search else
+                                   tabla_62['AKA'].str.contains(player_query,case=False,na=False))
+                        j_62 = tabla_62[mask_62]
+                        score_62 = j_62['SCORE'].iloc[0] if not j_62.empty else 0
+                        vict_62  = j_62['Victorias'].iloc[0] if not j_62.empty else 0
+                    else:
+                        score_62, vict_62 = 0, 0
+                    campeonatos_torneo.append({'Torneo':62,'Score':score_62,'Victorias':vict_62})
                 for nt in base_torneo_final[base_torneo_final['Torneo_Temp'].isin(torneos_con_final)]['Torneo_Temp'].unique():
+                    if int(nt) == 62 and es_chris_fps:
+                        continue  # ya fue agregado arriba
                     tabla = generar_tabla_torneo(base_torneo_final, nt)
                     if tabla is not None and not tabla.empty:
                         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
@@ -233,14 +275,7 @@ def show():
                         j = tabla[mask_c]
                         if not j.empty and j['RANK'].iloc[0] == 1:
                             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
-
-                            
-                        # Caso especial: Torneo 62 fue en parejas, Chris FPS también es campeón
-                        elif int(nt) == 62:
-                            es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
-                            st.write(f"DEBUG - nt=62, player_query='{player_query}', es_chris_fps={es_chris_fps}, j_empty={j.empty}")
-                            if es_chris_fps:
-                                campeonatos_torneo.append({'Torneo':62,'Score':0,'Victorias':0})
+                                
                 if campeonatos_torneo:
                     st.success(f"🏆 **{len(campeonatos_torneo)} Campeonato(s) de Torneo**")
                     for camp in campeonatos_torneo:
