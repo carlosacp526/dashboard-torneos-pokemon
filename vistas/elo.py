@@ -362,12 +362,12 @@ def show():
                 wr_año = hist_a.groupby('Año').agg(
                     Partidas=('Partida','count'), Victorias=('Win','sum')
                 ).reset_index()
+                wr_año['Año'] = wr_año['Año'].astype(str)
                 fig2 = px.bar(wr_año, x='Año', y='Winrate%', text='Winrate%',
                               color='Winrate%', color_continuous_scale='RdYlGn',
                               title=f'Winrate por Año — {pq}')
                 fig2.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                 fig2.add_hline(y=50, line_dash="dash", line_color="gray")
-                fig2.update_layout(xaxis_type='category')
                 st.plotly_chart(fig2, use_container_width=True)
 
             with tab4:
