@@ -180,12 +180,15 @@ def show():
     st.subheader("🏆 Top 10 Activos")
     cols_show = ['RANK','Participantes','Elo','Actividad']
     def hl_top(row):
-        if row['RANK'] == 1: return ['background:#FFD700;color:#000;font-weight:bold']*len(row)
-        if row['RANK'] == 2: return ['background:#C0C0C0;color:#000;font-weight:bold']*len(row)
-        if row['RANK'] == 3: return ['background:#CD7F32;color:#000;font-weight:bold']*len(row)
-        return ['background:#1e1e1e;color:white']*len(row)
-    st.dataframe(top10[cols_show].style.apply(hl_top, axis=1),
-                 use_container_width=True, hide_index=True)
+        if row['RANK'] == 1: return ['background-color:#FFD700 !important;color:#000000 !important;font-weight:bold']*len(row)
+        if row['RANK'] == 2: return ['background-color:#C0C0C0 !important;color:#000000 !important;font-weight:bold']*len(row)
+        if row['RANK'] == 3: return ['background-color:#CD7F32 !important;color:#000000 !important;font-weight:bold']*len(row)
+        return ['']*len(row)
+    st.dataframe(
+        top10[cols_show].style.apply(hl_top, axis=1)
+        .set_properties(**{'font-size': '15px'}),
+        use_container_width=True, hide_index=True, height=420
+    )
 
     # Gráfico top 10
     fig = px.bar(top10, x='Participantes', y='Elo',
