@@ -233,11 +233,13 @@ def show():
                         j = tabla[mask_c]
                         if not j.empty and j['RANK'].iloc[0] == 1:
                             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
+
+                            
                         # Caso especial: Torneo 62 fue en parejas, Chris FPS también es campeón
                         elif int(nt) == 62:
-                          es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps" or player_query.lower() in "chris_fps"
-                          if es_chris_fps and not j.empty:
-                              campeonatos_torneo.append({'Torneo':62,'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
+                            es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
+                            if es_chris_fps and not j.empty:
+                                campeonatos_torneo.append({'Torneo':62,'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]}) 
                 if campeonatos_torneo:
                     st.success(f"🏆 **{len(campeonatos_torneo)} Campeonato(s) de Torneo**")
                     for camp in campeonatos_torneo:
