@@ -273,7 +273,7 @@ def show():
                                   if exact_search else
                                   tabla['AKA'].str.contains(player_query,case=False,na=False))
                         j = tabla[mask_c]
-                        if not j.empty and j['RANK'].iloc[0] == 1:
+                        if not j.empty and (j['RANK'].iloc[0] == 1 or (int(nt) == 62 and es_chris_fps)):
                             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
                                 
                 if campeonatos_torneo:
