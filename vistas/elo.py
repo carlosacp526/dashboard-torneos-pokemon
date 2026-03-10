@@ -179,16 +179,26 @@ def show():
     # Tabla top 10
     st.subheader("🏆 Top 10 Activos")
     cols_show = ['RANK','Participantes','Elo','Actividad']
-    def hl_top(row):
-        if row['RANK'] == 1: return ['background-color:#FFD700 !important;color:#000000 !important;font-weight:bold']*len(row)
-        if row['RANK'] == 2: return ['background-color:#C0C0C0 !important;color:#000000 !important;font-weight:bold']*len(row)
-        if row['RANK'] == 3: return ['background-color:#CD7F32 !important;color:#000000 !important;font-weight:bold']*len(row)
-        return ['']*len(row)
-    st.dataframe(
-        top10[cols_show].style.apply(hl_top, axis=1)
-        .set_properties(**{'font-size': '15px'}),
-        use_container_width=True, hide_index=True, height=420
-    )
+    st.markdown("""
+    <style>
+    .top-table { width:100%; border-collapse:collapse; font-size:15px; }
+    .top-table th { background:#333; color:white; padding:8px 12px; text-align:left; }
+    .top-table td { padding:8px 12px; border-bottom:1px solid #444; color:white; }
+    .rank-1 { background-color:#FFD700 !important; color:#000 !important; font-weight:bold; }
+    .rank-2 { background-color:#C0C0C0 !important; color:#000 !important; font-weight:bold; }
+    .rank-3 { background-color:#CD7F32 !important; color:#000 !important; font-weight:bold; }
+    </style>
+    """, unsafe_allow_html=True)
+    rows_html = ""
+    for _, row in top10[cols_show].iterrows():
+        cls = {1:"rank-1", 2:"rank-2", 3:"rank-3"}.get(row['RANK'], "")
+        rows_html += f"<tr class='{cls}'><td>{int(row['RANK'])}</td><td>{row['Participantes']}</td><td>{int(row['Elo'])}</td><td>{row['Actividad']}</td></tr>"
+    st.markdown(f"""
+    <table class="top-table">
+        <thead><tr><th>RANK</th><th>Jugador</th><th>Elo</th><th>Actividad</th></tr></thead>
+        <tbody>{rows_html}</tbody>
+    </table><br>
+    """, unsafe_allow_html=True)
 
     # Gráfico top 10
     fig = px.bar(top10, x='Participantes', y='Elo',
