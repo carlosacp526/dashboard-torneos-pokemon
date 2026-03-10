@@ -257,7 +257,8 @@ def show():
 
                 campeonatos_torneo = []
                 # Caso especial ANTES del loop: Torneo 62 en parejas, Chris FPS también es campeón
-                if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
+                #if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
+                if es_chris_fps:
                     tabla_62 = generar_tabla_torneo(base_torneo_final, 62)
                     if tabla_62 is not None and not tabla_62.empty:
                         mask_62 = (tabla_62['AKA'].str.lower()==player_query.lower()
