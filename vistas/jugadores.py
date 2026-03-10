@@ -250,6 +250,11 @@ def show():
 
 
                 es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
+                st.write(f"player_query: '{player_query}'")
+                st.write(f"es_chris_fps: {es_chris_fps}")
+                st.write(f"62 en torneos_con_final: {62 in [int(x) for x in torneos_con_final]}")
+                st.write(f"62 en base_torneo_final: {62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]}")
+
                 campeonatos_torneo = []
                 # Caso especial ANTES del loop: Torneo 62 en parejas, Chris FPS también es campeón
                 if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
