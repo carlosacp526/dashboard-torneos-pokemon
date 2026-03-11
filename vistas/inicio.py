@@ -71,7 +71,7 @@ def show():
         <div class="nav-section">
             <div class="nav-section-title">👤 Jugadores y Competencias</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes\n- 🌎 Mundial\n- 🏆 Ligas\n- 🎯 Torneos")
+        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes")
         if st.button("➡️ Ir a Jugadores y Competencias", use_container_width=True, key="btn_jugadores"):
             if "jugadores" in pages:
                 st.switch_page(pages["jugadores"])
@@ -81,7 +81,7 @@ def show():
         <div class="nav-section">
             <div class="nav-section-title">🏅 Rankings</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 🏆 Salón de la Fama\n- 📜 Historial de Campeones\n- 🌎 Mundial Pokémon")
+        st.markdown("- 🏆 Salón de la Fama\n- 📜 Historial de combates\n- 🌎 Mundial Pokémon")
         if st.button("➡️ Ir a Rankings", use_container_width=True, key="btn_rankings"):
             if "rankings" in pages:
                 st.switch_page(pages["rankings"])
