@@ -6,6 +6,60 @@ import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, score_final, volver_inicio
+import pickle, hashlib
+from datetime import datetime, timedelta
+
+MODEL_CACHE_PATH = "modelo_prediccion.pkl"
+MODEL_MAX_AGE_DAYS = 30
+
+def _data_hash(_df_raw):
+    """Hash rápido para detectar cambios en el CSV."""
+    return hashlib.md5(str(len(_df_raw)).encode() + str(_df_raw.iloc[-1].values).encode()).hexdigest()[:8]
+
+def get_or_train_models(df_raw):
+    """
+    Carga el modelo desde disco si existe y tiene menos de 30 días.
+    Si no, entrena desde cero y lo guarda en disco.
+    Devuelve: trained, results, X_train, X_test, y_train, y_test, feature_cols, latest_stats, df_fecha
+    """
+    # Intentar cargar desde disco
+    if os.path.exists(MODEL_CACHE_PATH):
+        try:
+            with open(MODEL_CACHE_PATH, "rb") as f:
+                cache = pickle.load(f)
+            age = datetime.now() - cache["trained_at"]
+            data_hash = _data_hash(df_raw)
+            if age < timedelta(days=MODEL_MAX_AGE_DAYS) and cache.get("data_hash") == data_hash:
+                return cache
+        except Exception:
+            pass  # si falla la carga, reentrenar
+
+    # Construir features
+    X, y, feature_cols, latest_stats, df_fecha = build_training_data(df_raw)
+
+    # Entrenar
+    trained, results, X_train, X_test, y_train, y_test = train_models(X, y)
+
+    cache = {
+        "trained": trained, "results": results,
+        "X_train": X_train, "X_test": X_test,
+        "y_train": y_train, "y_test": y_test,
+        "feature_cols": feature_cols,
+        "latest_stats": latest_stats,
+        "df_fecha": df_fecha,
+        "X": X, "y": y,
+        "trained_at": datetime.now(),
+        "data_hash": _data_hash(df_raw),
+    }
+
+    try:
+        with open(MODEL_CACHE_PATH, "wb") as f:
+            pickle.dump(cache, f)
+    except Exception as e:
+        pass  # si no puede guardar, igual funciona en memoria
+
+    return cache
+
 
 FECHA_MAP = {
     ("ASCENSO",1):202112,("ASCENSO",2):202201,("ASCENSO",3):202207,
@@ -60,7 +114,6 @@ TRAINING_STAT_COLS = [
     "CATEGORIA_ASCENSO_Ac","CATEGORIA_CYPHER_Ac","CATEGORIA_LIGA_Ac","CATEGORIA_TORNEO_Ac",
 ]
 
-@st.cache_data(ttl=3600)
 def build_training_data(_df_raw):
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
@@ -184,7 +237,6 @@ def build_training_data(_df_raw):
     return X, y, all_feat, latest, df_fecha
 
 
-@st.cache_data(ttl=3600)
 def train_models(_X, _y):
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.model_selection import cross_val_score, train_test_split
@@ -244,12 +296,45 @@ def show():
     st.header("Prediccion de Combates")
     st.caption("Modelos ML basados en estadisticas historicas acumuladas por jugador")
     df_raw = load_data()
-    with st.spinner("Construyendo features..."):
+    # ── Modelo: cargar desde disco o entrenar ──────────────────────────
+    cache_exists = os.path.exists(MODEL_CACHE_PATH)
+    cache_age_str = ""
+    if cache_exists:
         try:
-            X, y, feature_cols, latest_stats, df_fecha = build_training_data(df_raw)
+            with open(MODEL_CACHE_PATH, "rb") as _f:
+                _meta = pickle.load(_f)
+            _age = datetime.now() - _meta["trained_at"]
+            _days = _age.days
+            _next = MODEL_MAX_AGE_DAYS - _days
+            cache_age_str = f"Modelo guardado — entrenado hace **{_days}d**, próximo reentrenamiento en **{_next}d**"
+        except Exception:
+            cache_age_str = "Modelo guardado (fecha desconocida)"
+
+    col_st, col_btn = st.columns([3,1])
+    with col_st:
+        if cache_age_str:
+            st.info(f"💾 {cache_age_str}")
+        else:
+            st.warning("⏳ No hay modelo guardado — se entrenará ahora (puede tardar ~1 min)")
+    with col_btn:
+        force_retrain = st.button("🔄 Reentrenar ahora", help="Fuerza reentrenamiento ignorando el caché")
+
+    if force_retrain and os.path.exists(MODEL_CACHE_PATH):
+        os.remove(MODEL_CACHE_PATH)
+        st.toast("Modelo eliminado — reentrenando...", icon="🔄")
+
+    with st.spinner("Cargando modelo..." if cache_exists and not force_retrain else "Entrenando modelos (primera vez o reentrenamiento)..."):
+        try:
+            cache = get_or_train_models(df_raw)
         except Exception as e:
             st.error(f"Error al preparar datos: {e}")
             import traceback; st.code(traceback.format_exc()); return
+
+    X            = cache["X"]
+    y            = cache["y"]
+    feature_cols = cache["feature_cols"]
+    latest_stats = cache["latest_stats"]
+    df_fecha     = cache["df_fecha"]
 
     st.subheader("Analisis de Datos")
     tab1, tab2, tab3 = st.tabs(["Dataset","Correlaciones","Distribuciones"])
@@ -303,8 +388,12 @@ def show():
     st.markdown("---")
     st.subheader("Entrenamiento de Modelos")
     try:
-        with st.spinner("Entrenando XGBoost, LightGBM y Random Forest..."):
-            trained, results, X_train, X_test, y_train, y_test = train_models(X, y)
+        trained    = cache["trained"]
+        results    = cache["results"]
+        X_train    = cache["X_train"]
+        X_test     = cache["X_test"]
+        y_train    = cache["y_train"]
+        y_test     = cache["y_test"]
 
         valid = {k:v for k,v in results.items() if "error" not in v}
         res_df = pd.DataFrame(valid).T.reset_index().rename(columns={"index":"Modelo"})
