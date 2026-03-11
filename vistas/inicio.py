@@ -24,7 +24,6 @@ def show():
         ) | df['winner'].notna()
     )
 
-    # CSS menú
     st.markdown("""
 <style>
 .nav-section {
@@ -53,7 +52,9 @@ def show():
     st.markdown("---")
 
     pages = st.session_state.get("_pages", {})
-    col_a, col_b, col_c, col_d = st.columns(4)
+
+    # ── Fila 1 ───────────────────────────────────────────────────────
+    col_a, col_b, col_c = st.columns(3)
 
     with col_a:
         st.markdown("""
@@ -68,29 +69,54 @@ def show():
     with col_b:
         st.markdown("""
         <div class="nav-section">
-            <div class="nav-section-title">👤 Jugadores</div>
+            <div class="nav-section-title">👤 Jugadores y Competencias</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes")
-        if st.button("➡️ Ir a Jugadores", use_container_width=True, key="btn_jugadores"):
+        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes\n- 🌎 Mundial\n- 🏆 Ligas\n- 🎯 Torneos")
+        if st.button("➡️ Ir a Jugadores y Competencias", use_container_width=True, key="btn_jugadores"):
             if "jugadores" in pages:
                 st.switch_page(pages["jugadores"])
 
     with col_c:
         st.markdown("""
         <div class="nav-section">
-            <div class="nav-section-title">🏆 Ligas y Torneos</div>
+            <div class="nav-section-title">🏅 Rankings</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 🏆 Tablas de Ligas\n- 🎯 Tablas de Torneos")
-        if st.button("➡️ Ir a Ligas y Torneos", use_container_width=True, key="btn_ligas"):
-            if "ligas" in pages:
-                st.switch_page(pages["ligas"])
+        st.markdown("- 🏆 Salón de la Fama\n- 📜 Historial de Campeones\n- 🌎 Mundial Pokémon")
+        if st.button("➡️ Ir a Rankings", use_container_width=True, key="btn_rankings"):
+            if "rankings" in pages:
+                st.switch_page(pages["rankings"])
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Fila 2 ───────────────────────────────────────────────────────
+    col_d, col_e, col_f = st.columns(3)
 
     with col_d:
         st.markdown("""
         <div class="nav-section">
-            <div class="nav-section-title">🏅 Rankings</div>
+            <div class="nav-section-title">⚡ Ranking Elo</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 🏆 Salón de la Fama\n- 📈 Ranking Elo\n- 📜 Historial\n- 🌎 Mundial")
-        if st.button("➡️ Ir a Rankings", use_container_width=True, key="btn_rankings"):
-            if "rankings" in pages:
-                st.switch_page(pages["rankings"])
+        st.markdown("- 📊 Tabla Elo en tiempo real\n- 📈 Evolución histórica\n- 🔥 Rachas y forma reciente\n- 🆚 Comparativa entre jugadores")
+        if st.button("➡️ Ir a Ranking Elo", use_container_width=True, key="btn_elo"):
+            if "elo" in pages:
+                st.switch_page(pages["elo"])
+
+    with col_e:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🤖 Predicción</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 🔮 Predecir resultado de un combate\n- 📊 Comparar stats históricas\n- 🌲 XGBoost · LightGBM · Random Forest\n- 🔍 Análisis SHAP por jugador")
+        if st.button("➡️ Ir a Predicción", use_container_width=True, key="btn_prediccion"):
+            if "prediccion" in pages:
+                st.switch_page(pages["prediccion"])
+
+    with col_f:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🏆 Ligas y Torneos</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 📋 Tablas por temporada\n- 🎯 Resultados por jornada\n- 🏟️ Tablas de torneos\n- 🥇 Campeonatos")
+        if st.button("➡️ Ir a Ligas y Torneos", use_container_width=True, key="btn_ligas"):
+            if "ligas" in pages:
+                st.switch_page(pages["ligas"])
