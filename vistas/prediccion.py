@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, score_final, volver_inicio
+from utils import load_data, normalize_columns, ensure_fields, score_final
 import pickle, hashlib
 from datetime import datetime
 
@@ -279,11 +279,9 @@ def show():
 2. Subí el archivo `modelo_prediccion.pkl` generado al repositorio (misma carpeta que `app.py`)
 3. Hacé redeploy en Streamlit Cloud
         """)
-        volver_inicio()
         return
     elif status != "OK":
         st.error(f"❌ Error al cargar el modelo: {status}")
-        volver_inicio()
         return
 
     # Mostrar metadata del modelo
@@ -527,4 +525,3 @@ Contexto: Combate {fmt_p} en {lcat_p}.
         st.error(f"Error al entrenar modelos: {e}")
         import traceback; st.code(traceback.format_exc())
 
-    volver_inicio()

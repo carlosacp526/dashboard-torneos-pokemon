@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os, sys
-import sklearn
-print(sklearn.__version__)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, volver_inicio
+from utils import load_data, normalize_columns, ensure_fields
 
 def show():
     df_raw = load_data()
@@ -34,7 +32,6 @@ def show():
                 st.info(f"Coloca '{img}' en la carpeta del proyecto")
 
     st.markdown("---")
-    volver_inicio()
 
     # ── Ranking Elo ─────────────────────────────────────────────────
     st.markdown('<div id="ranking-elo"></div>', unsafe_allow_html=True)
@@ -65,7 +62,6 @@ def show():
                 st.info(f"Coloca '{img}' en la carpeta del proyecto")
 
     st.markdown("---")
-    volver_inicio()
 
     # ── Historial de combates ───────────────────────────────────────
     st.markdown('<div id="historial"></div>', unsafe_allow_html=True)
@@ -185,44 +181,4 @@ def show():
     else:
         st.warning("No se encontraron partidas con los filtros aplicados.")
 
-    volver_inicio()
-
-    # ── Mundial Pokémon ─────────────────────────────────────────────
-    st.markdown('<div id="mundial"></div>', unsafe_allow_html=True)
-    st.header("🌎 Mundial Pokémon")
-
-    tab1, tab2 = st.tabs(["🏆 Ranking del Mundial","📊 Puntajes para el Mundial"])
-    with tab2:
-        if os.path.exists("PUNTAJES_MUNDIAL.png"):
-            st.image("PUNTAJES_MUNDIAL.png", width=900)
-        st.caption("Puntajes para clasificación al mundial")
-
-    with tab1:
-        try:
-            ranking_completo = pd.read_csv("score_mundial.csv")
-            ranking_completo["Puntaje"] = ranking_completo.Puntaje.apply(lambda x: int(x))
-            clasificados = ranking_completo[ranking_completo.Rank < 17]
-            resto = ranking_completo[ranking_completo.Rank >= 17]
-
-            st.subheader("🏆 CLASIFICADOS TOP 16")
-            def highlight_top3(row):
-                if row['Rank']==1: return ['background-color:#004C99;font-weight:bold']*len(row)
-                if row['Rank']==2: return ['background-color:#0066CC;font-weight:bold']*len(row)
-                if row['Rank']==3: return ['background-color:#007BFF;font-weight:bold']*len(row)
-                return ['']*len(row)
-            st.dataframe(clasificados.style.apply(highlight_top3,axis=1), use_container_width=True, hide_index=True)
-
-            st.subheader("📊 RANKING COMPLETO")
-            p1 = resto.iloc[0:28].reset_index(drop=True)
-            p2 = resto.iloc[28:56].reset_index(drop=True)
-            p3 = resto.iloc[56:].reset_index(drop=True)
-            c1,c2,c3 = st.columns(3)
-            with c1: st.dataframe(p1, use_container_width=True, hide_index=True, height=600)
-            with c2: st.dataframe(p2, use_container_width=True, hide_index=True, height=600)
-            with c3: st.dataframe(p3, use_container_width=True, hide_index=True, height=600)
-        except Exception as e:
-            st.error(f"No se pudo cargar score_mundial.csv: {e}")
-
-    st.markdown("---")
-    volver_inicio()
     st.caption("Dashboard creado para Poketubi — adapta el CSV a los encabezados sugeridos si necesitas más exactitud.")
