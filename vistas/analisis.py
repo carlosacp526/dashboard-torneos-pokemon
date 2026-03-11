@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, compute_player_stats, volver_inicio
+from utils import load_data, normalize_columns, ensure_fields, compute_player_stats
 
 def show():
     df_raw = load_data()
@@ -86,7 +86,6 @@ def show():
         fig.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig, use_container_width=True)
 
-    volver_inicio()
 
     # ── Clasificación por Evento ────────────────────────────────────
     st.markdown('<div id="clasificacion-evento"></div>', unsafe_allow_html=True)
@@ -115,7 +114,6 @@ def show():
             fig.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig, use_container_width=True)
 
-    volver_inicio()
 
     # ── Clasificación por Tier ──────────────────────────────────────
     st.markdown('<div id="clasificacion-tier"></div>', unsafe_allow_html=True)
@@ -145,4 +143,3 @@ def show():
             fig.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig, use_container_width=True)
 
-    volver_inicio()
