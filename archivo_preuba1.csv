@@ -8775,7 +8775,7 @@ Bloody Cheese;MONTIEL JAEGER;Bloody Cheese;TORNEO;2026-02-01;Completed;Semifinal
 Davarv;D'AllFather;Davarv;TORNEO;2026-02-01;Completed;Semifinal;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Semifinal;5;6;0
 Davarv;Bloody Cheese;Davarv;TORNEO;2026-02-01;Completed;Final;STADIUM OU GEN 2;Replay;STADIUM OU GEN 2;65;SINGLES;No Posee Liga;Final;3;6;0
 D'AllFather;Saga;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
-Moirix;ShinkaHMA;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
+ShinkaHMA;Moirix;ShinkaHMA;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
 Mar;LABIAMG;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
 Bloody Cheese;Chonarthas;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
 Angello77;MONTIEL JAEGER;;TORNEO;;;RONDA SUIZA 1;NAT DEX;;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;-1
@@ -8821,13 +8821,13 @@ Roy Kasoy;Elin Beacil;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;F
 ZapeohDev;Roy Kasoy;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Angello77;The.Ultracheese;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Angelowos;MafiaPolar6242;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
-Jeremith047;Dino agente;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
-MafiaPolar6242;Jeremith047;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
+Dino agente;Jeremith047;Dino agente;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
+MafiaPolar6242;Jeremith047;MafiaPolar6242;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 Mar;Angelowos;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
-Jeremith047;Mar;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
+Mar;Jeremith047;Mar;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 Dino agente;MafiaPolar6242;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Mar;Dino agente;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
-Angelowos;Jeremith047;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
+Angelowos;Jeremith047;Angelowos;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 Dino agente;Angelowos;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 MafiaPolar6242;Mar;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Bamdara;Edenking;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
@@ -8846,7 +8846,7 @@ Porygon Z;MT_Lira;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase 
 ELIASVE727827;Blodborne;ELIASVE727827;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 MT_Lira;Blodborne;MT_Lira;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 Chris FPS;Porygon Z;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
-Chris FPS;Blodborne;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;-1
+Chris FPS;Blodborne;Chris FPS;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 ELIASVE727827;MT_Lira;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Chris FPS;ELIASVE727827;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Porygon Z;Blodborne;Porygon Z;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
@@ -8860,7 +8860,7 @@ CaradeCoso;Saga;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de
 Davarv;sabergio15;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Saga;Davarv;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 masafesio;CaradeCoso;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
-GatitaGolosa123;Aikauwu;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
+GatitaGolosa123;Aikauwu;GatitaGolosa123;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 2DpkmN;D'AllFather;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Aikauwu;2DpkmN;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
 Akaru;GatitaGolosa123;;TORNEO;;;Fase de grupos;OU;;OU;67;SINGLES;No Posee Liga;Fase de grupos;0;6;-1
