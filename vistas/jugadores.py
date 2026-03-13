@@ -7,6 +7,379 @@ from utils import (load_data, normalize_columns, ensure_fields, compute_player_s
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
                    build_base_liga, build_base_torneo, build_base_jornada)
 
+
+"""
+Función generar_pdf_jugador() — agregar a jugadores.py
+Genera una cartilla PDF con el resumen completo del jugador.
+"""
+
+import io
+from datetime import datetime
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+    HRFlowable, KeepTogether
+)
+
+
+# ── Colores Poketubi ────────────────────────────────────────────────────────
+ROJO      = colors.HexColor("#E74C3C")
+AZUL      = colors.HexColor("#2980B9")
+AZUL_OSC  = colors.HexColor("#1A252F")
+DORADO    = colors.HexColor("#F1C40F")
+PLATA     = colors.HexColor("#BDC3C7")
+BRONCE    = colors.HexColor("#CD7F32")
+VERDE     = colors.HexColor("#27AE60")
+GRIS_FOND = colors.HexColor("#F2F3F4")
+BLANCO    = colors.white
+
+
+def generar_pdf_jugador(
+    player_query,
+    player_matches,
+    p_stats_quick,
+    ligas_jugador,
+    torneos_jugador,
+    campeonatos_liga,
+    campeonatos_torneo,
+    wo_partidas,
+    score_ligas_df,     # DataFrame con cols: Liga, Victorias, Derrotas, Score
+    score_torneos_df,   # DataFrame con cols: Torneo, Victorias, Derrotas, Score
+    rivales_df,         # DataFrame con cols: Rival, Partidas, Victorias, Derrotas, Winrate%
+):
+    """
+    Genera la cartilla PDF del jugador y devuelve bytes para st.download_button.
+    """
+    buf = io.BytesIO()
+
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=A4,
+        leftMargin=1.8*cm, rightMargin=1.8*cm,
+        topMargin=1.5*cm,  bottomMargin=1.5*cm,
+        title=f"Cartilla — {player_query}",
+        author="Poketubi"
+    )
+
+    W = A4[0] - 3.6*cm   # ancho disponible
+
+    # ── Estilos ─────────────────────────────────────────────────────────────
+    styles = getSampleStyleSheet()
+
+    def estilo(name, parent='Normal', **kwargs):
+        return ParagraphStyle(name, parent=styles[parent], **kwargs)
+
+    titulo_doc  = estilo('TituloDoc',  'Title',
+                         fontSize=22, textColor=BLANCO, alignment=TA_CENTER,
+                         spaceAfter=4)
+    subtitulo   = estilo('Subtitulo',  'Normal',
+                         fontSize=11, textColor=BLANCO, alignment=TA_CENTER,
+                         spaceAfter=2)
+    seccion     = estilo('Seccion',    'Heading2',
+                         fontSize=13, textColor=AZUL_OSC, spaceBefore=10,
+                         spaceAfter=4, borderPad=2)
+    normal      = estilo('Normal2',    'Normal', fontSize=9, leading=13)
+    negrita     = estilo('Negrita',    'Normal', fontSize=9, leading=13,
+                         fontName='Helvetica-Bold')
+    celda_hdr   = estilo('CeldaHdr',   'Normal', fontSize=8, textColor=BLANCO,
+                         fontName='Helvetica-Bold', alignment=TA_CENTER)
+    celda_body  = estilo('CeldaBody',  'Normal', fontSize=8, alignment=TA_CENTER)
+    footer_st   = estilo('Footer',     'Normal', fontSize=7,
+                         textColor=colors.grey, alignment=TA_CENTER)
+
+    story = []
+
+    # ════════════════════════════════════════════════════════════════════════
+    # ENCABEZADO
+    # ════════════════════════════════════════════════════════════════════════
+    header_data = [[
+        Paragraph(f"POKETUBI", titulo_doc),
+        Paragraph(f"Cartilla del Jugador", subtitulo),
+        Paragraph(player_query.upper(), titulo_doc),
+    ]]
+    header_tbl = Table([[
+        Paragraph("POKETUBI", estilo('H1', fontSize=20, textColor=BLANCO,
+                                     fontName='Helvetica-Bold', alignment=TA_CENTER)),
+        Paragraph(f"Cartilla del Jugador<br/><font size='11'>{player_query}</font>",
+                  estilo('H2', fontSize=16, textColor=BLANCO,
+                         fontName='Helvetica-Bold', alignment=TA_CENTER)),
+        Paragraph(datetime.now().strftime("%d/%m/%Y"),
+                  estilo('H3', fontSize=9, textColor=PLATA, alignment=TA_RIGHT)),
+    ]], colWidths=[W*0.2, W*0.6, W*0.2])
+
+    header_tbl.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0), (-1,-1), AZUL_OSC),
+        ('ROWBACKGROUNDS',(0,0), (-1,-1), [AZUL_OSC]),
+        ('TOPPADDING',    (0,0), (-1,-1), 14),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 14),
+        ('LEFTPADDING',   (0,0), (-1,-1), 8),
+        ('RIGHTPADDING',  (0,0), (-1,-1), 8),
+        ('ROUNDEDCORNERS',(0,0), (-1,-1), [6,6,6,6]),
+    ]))
+    story.append(header_tbl)
+    story.append(Spacer(1, 0.4*cm))
+
+    # ── helper: tabla estilizada ─────────────────────────────────────────────
+    def tabla_bonita(headers, rows, col_widths=None, zebra=True):
+        data = [[Paragraph(str(h), celda_hdr) for h in headers]]
+        for r in rows:
+            data.append([Paragraph(str(c), celda_body) for c in r])
+        if col_widths is None:
+            col_widths = [W / len(headers)] * len(headers)
+        t = Table(data, colWidths=col_widths, repeatRows=1)
+        style = [
+            ('BACKGROUND',   (0,0), (-1,0),  AZUL),
+            ('GRID',         (0,0), (-1,-1), 0.3, colors.HexColor("#D5D8DC")),
+            ('ROWBACKGROUNDS',(0,1),(-1,-1),
+             [GRIS_FOND, BLANCO] if zebra else [BLANCO]),
+            ('TOPPADDING',   (0,0), (-1,-1), 3),
+            ('BOTTOMPADDING',(0,0), (-1,-1), 3),
+            ('LEFTPADDING',  (0,0), (-1,-1), 5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ]
+        t.setStyle(TableStyle(style))
+        return t
+
+    def seccion_titulo(texto, emoji=""):
+        story.append(HRFlowable(width=W, thickness=1.5, color=AZUL, spaceAfter=4))
+        story.append(Paragraph(f"{emoji} {texto}", seccion))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 1. RESUMEN GENERAL
+    # ════════════════════════════════════════════════════════════════════════
+    seccion_titulo("Resumen General", "📊")
+
+    jq = p_stats_quick[
+        p_stats_quick['Jugador'].str.contains(player_query, case=False)
+    ] if not p_stats_quick.empty else None
+
+    partidas  = int(jq['Partidas'].iloc[0])  if jq is not None and not jq.empty else len(player_matches)
+    victorias = int(jq['Victorias'].iloc[0]) if jq is not None and not jq.empty else 0
+    derrotas  = int(jq['Derrotas'].iloc[0])  if jq is not None and not jq.empty else 0
+    winrate   = float(jq['Winrate%'].iloc[0]) if jq is not None and not jq.empty else 0.0
+
+    resumen_data = [
+        ["Partidas totales", "Victorias", "Derrotas", "Winrate", "Ligas", "Torneos"],
+        [str(partidas), str(victorias), str(derrotas),
+         f"{winrate:.1f}%", str(len(ligas_jugador)), str(len(torneos_jugador))],
+    ]
+    resumen_tbl = Table(
+        [[Paragraph(str(c), celda_hdr if i==0 else celda_body) for c in row]
+         for i, row in enumerate(resumen_data)],
+        colWidths=[W/6]*6
+    )
+    resumen_tbl.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0), (-1,0),  AZUL_OSC),
+        ('BACKGROUND',    (0,1), (-1,1),  GRIS_FOND),
+        ('GRID',          (0,0), (-1,-1), 0.3, colors.HexColor("#D5D8DC")),
+        ('FONTSIZE',      (0,1), (-1,1),  13),
+        ('FONTNAME',      (0,1), (-1,1),  'Helvetica-Bold'),
+        ('ALIGN',         (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING',    (0,0), (-1,-1), 7),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+    ]))
+    story.append(resumen_tbl)
+    story.append(Spacer(1, 0.3*cm))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 2. CAMPEONATOS
+    # ════════════════════════════════════════════════════════════════════════
+    seccion_titulo("Campeonatos y Logros", "🏆")
+
+    camp_rows = []
+    for c in campeonatos_liga:
+        camp_rows.append([f"Liga — {c['Liga']}", f"{int(c['Victorias'])} victorias", f"{c['Score']:.2f}"])
+    for c in campeonatos_torneo:
+        camp_rows.append([f"Torneo {c['Torneo']}", f"{int(c['Victorias'])} victorias", f"{c['Score']:.2f}"])
+
+    if camp_rows:
+        tbl = tabla_bonita(["Campeonato", "Victorias", "Score"],
+                           camp_rows, [W*0.55, W*0.25, W*0.20])
+        # Colorear filas de campeonato
+        tbl_style = [
+            ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#FEF9E7")),
+        ]
+        story.append(tbl)
+        if len(campeonatos_liga) + len(campeonatos_torneo) > 0:
+            total = len(campeonatos_liga) + len(campeonatos_torneo)
+            story.append(Spacer(1, 0.2*cm))
+            story.append(Paragraph(
+                f"<b>Total de campeonatos: {total}</b> "
+                f"({len(campeonatos_liga)} de Liga + {len(campeonatos_torneo)} de Torneo)",
+                normal
+            ))
+    else:
+        story.append(Paragraph("Aún no ha ganado campeonatos.", normal))
+
+    story.append(Spacer(1, 0.3*cm))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 3. SCORE POR LIGA
+    # ════════════════════════════════════════════════════════════════════════
+    if score_ligas_df is not None and not score_ligas_df.empty:
+        seccion_titulo("Score en Ligas", "📈")
+        rows = []
+        for _, r in score_ligas_df.iterrows():
+            rows.append([r.get('Liga',''), int(r.get('Victorias',0)),
+                         int(r.get('Derrotas',0)), f"{float(r.get('Score',0)):.2f}"])
+        story.append(tabla_bonita(
+            ["Liga / Temporada", "Victorias", "Derrotas", "Score"],
+            rows, [W*0.45, W*0.18, W*0.18, W*0.19]
+        ))
+        avg = score_ligas_df['Score'].mean() if 'Score' in score_ligas_df.columns else 0
+        story.append(Spacer(1, 0.15*cm))
+        story.append(Paragraph(f"Score promedio en ligas: <b>{avg:.2f}</b>", normal))
+        story.append(Spacer(1, 0.3*cm))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 4. SCORE POR TORNEO
+    # ════════════════════════════════════════════════════════════════════════
+    if score_torneos_df is not None and not score_torneos_df.empty:
+        seccion_titulo("Score en Torneos", "🎯")
+        rows = []
+        for _, r in score_torneos_df.iterrows():
+            rows.append([r.get('Torneo',''), int(r.get('Victorias',0)),
+                         int(r.get('Derrotas',0)), f"{float(r.get('Score',0)):.2f}"])
+        story.append(tabla_bonita(
+            ["Torneo", "Victorias", "Derrotas", "Score"],
+            rows, [W*0.45, W*0.18, W*0.18, W*0.19]
+        ))
+        avg = score_torneos_df['Score'].mean() if 'Score' in score_torneos_df.columns else 0
+        story.append(Spacer(1, 0.15*cm))
+        story.append(Paragraph(f"Score promedio en torneos: <b>{avg:.2f}</b>", normal))
+        story.append(Spacer(1, 0.3*cm))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 5. WALKOVERS
+    # ════════════════════════════════════════════════════════════════════════
+    seccion_titulo("Walkovers", "⚠️")
+
+    if wo_partidas is not None and not wo_partidas.empty:
+        wo_dados     = wo_partidas[wo_partidas.get("Tipo WO","") == "Dado (ganó por WO)"] \
+                       if "Tipo WO" in wo_partidas.columns else wo_partidas.iloc[0:0]
+        wo_recibidos = wo_partidas[wo_partidas.get("Tipo WO","") == "Recibido (perdió por WO)"] \
+                       if "Tipo WO" in wo_partidas.columns else wo_partidas.iloc[0:0]
+
+        wo_summary = Table([
+            [Paragraph("Total WO", celda_hdr),
+             Paragraph("Dados (ganó)", celda_hdr),
+             Paragraph("Recibidos (perdió)", celda_hdr)],
+            [Paragraph(str(len(wo_partidas)), celda_body),
+             Paragraph(str(len(wo_dados)),    celda_body),
+             Paragraph(str(len(wo_recibidos)),celda_body)],
+        ], colWidths=[W/3]*3)
+        wo_summary.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0), (-1,0), ROJO),
+            ('BACKGROUND',    (0,1), (-1,1), colors.HexColor("#FDEDEC")),
+            ('ALIGN',         (0,0), (-1,-1),'CENTER'),
+            ('FONTNAME',      (0,1), (-1,1), 'Helvetica-Bold'),
+            ('FONTSIZE',      (0,1), (-1,1), 14),
+            ('GRID',          (0,0), (-1,-1), 0.3, colors.HexColor("#D5D8DC")),
+            ('TOPPADDING',    (0,0), (-1,-1), 6),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ]))
+        story.append(wo_summary)
+
+        # Detalle WO
+        if not wo_partidas.empty:
+            story.append(Spacer(1, 0.2*cm))
+            wo_rows = []
+            for _, r in wo_partidas.head(20).iterrows():
+                tipo = r.get("Tipo WO", "")
+                ev   = str(r.get("league",""))
+                nt   = str(r.get("N_Torneo",""))
+                liga = str(r.get("Ligas_categoria",""))
+                ronda= str(r.get("round",""))
+                fecha= str(r.get("date",""))[:10] if r.get("date") is not None else ""
+                evento = f"{ev} {nt or liga}".strip()
+                wo_rows.append([tipo, evento, ronda, fecha])
+            story.append(tabla_bonita(
+                ["Tipo", "Evento", "Ronda", "Fecha"],
+                wo_rows, [W*0.30, W*0.35, W*0.18, W*0.17]
+            ))
+    else:
+        story.append(Paragraph("✅ Sin walkovers registrados.", normal))
+
+    story.append(Spacer(1, 0.3*cm))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 6. TOP RIVALES
+    # ════════════════════════════════════════════════════════════════════════
+    if rivales_df is not None and not rivales_df.empty:
+        seccion_titulo("Principales Rivales (min. 4 partidas)", "⚔️")
+        rows = []
+        for _, r in rivales_df.head(15).iterrows():
+            wr = float(r.get('Winrate%', 0))
+            rows.append([
+                r.get('Rival',''),
+                int(r.get('Partidas',0)),
+                int(r.get('Victorias',0)),
+                int(r.get('Derrotas',0)),
+                f"{wr:.1f}%"
+            ])
+        tbl = tabla_bonita(
+            ["Rival", "Partidas", "Victorias", "Derrotas", "Winrate%"],
+            rows, [W*0.35, W*0.15, W*0.15, W*0.15, W*0.20]
+        )
+        # Color especial: verde si winrate > 50, rojo si < 50
+        tbl_style_extra = []
+        for i, r in enumerate(rivales_df.head(15).iterrows(), start=1):
+            wr = float(r[1].get('Winrate%', 50))
+            color = colors.HexColor("#EAFAF1") if wr >= 50 else colors.HexColor("#FDEDEC")
+            tbl_style_extra.append(('BACKGROUND', (0,i), (-1,i), color))
+        tbl.setStyle(TableStyle([
+            ('BACKGROUND',   (0,0), (-1,0),  AZUL),
+            ('GRID',         (0,0), (-1,-1), 0.3, colors.HexColor("#D5D8DC")),
+            ('TOPPADDING',   (0,0), (-1,-1), 3),
+            ('BOTTOMPADDING',(0,0), (-1,-1), 3),
+            ('LEFTPADDING',  (0,0), (-1,-1), 5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 5),
+            *tbl_style_extra,
+        ]))
+        story.append(tbl)
+        story.append(Spacer(1, 0.3*cm))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 7. ÚLTIMAS 10 PARTIDAS
+    # ════════════════════════════════════════════════════════════════════════
+    seccion_titulo("Últimas Partidas", "📋")
+    ultimas = player_matches.sort_values('date', ascending=False).head(10)
+    rows = []
+    for _, r in ultimas.iterrows():
+        fecha   = str(r.get('date',''))[:10]
+        rival   = r.get('player2','') if str(r.get('player1','')).lower().strip() == player_query.lower().strip() \
+                  else r.get('player1','')
+        ganador = str(r.get('winner',''))
+        resultado = "✓ W" if player_query.lower() in str(ganador).lower() else "✗ L"
+        evento  = f"{r.get('league','')} {r.get('N_Torneo','') or r.get('Ligas_categoria','') or ''}".strip()
+        ronda   = str(r.get('round',''))
+        rows.append([fecha, str(rival), resultado, evento, ronda])
+
+    story.append(tabla_bonita(
+        ["Fecha", "Rival", "Resultado", "Evento", "Ronda"],
+        rows, [W*0.15, W*0.25, W*0.12, W*0.30, W*0.18]
+    ))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FOOTER
+    # ════════════════════════════════════════════════════════════════════════
+    story.append(Spacer(1, 0.5*cm))
+    story.append(HRFlowable(width=W, thickness=0.5, color=colors.grey))
+    story.append(Spacer(1, 0.15*cm))
+    story.append(Paragraph(
+        f"Poketubi — Cartilla generada el {datetime.now().strftime('%d/%m/%Y %H:%M')} | "
+        f"Jugador: {player_query} | Total partidas: {partidas}",
+        footer_st
+    ))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf.read()
+
 def show():
     df_raw = load_data()
     df = normalize_columns(df_raw.copy())
@@ -641,6 +1014,102 @@ def show():
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No se encontraron rivales con al menos 4 partidas.")
+
+        # ── Exportar PDF ────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 📄 Exportar Cartilla")
+
+        with st.spinner("Preparando PDF..."):
+            # Preparar score ligas
+            if not base2.empty:
+                jl = (base2[base2['Participante'].str.lower()==player_query.lower()]
+                      if exact_search else
+                      base2[base2['Participante'].str.contains(player_query,case=False,na=False)])
+                if not jl.empty:
+                    score_l = jl.sort_values('score_completo',ascending=False)[
+                        ['Liga_Temporada','Victorias','Derrotas','score_completo']
+                    ].rename(columns={'Liga_Temporada':'Liga','score_completo':'Score'})
+                    score_l['Score'] = score_l['Score'].round(2)
+                else:
+                    score_l = pd.DataFrame()
+            else:
+                score_l = pd.DataFrame()
+
+            # Preparar score torneos
+            if not base_torneo_final.empty:
+                jt = (base_torneo_final[base_torneo_final['Participante'].str.lower()==player_query.lower()]
+                      if exact_search else
+                      base_torneo_final[base_torneo_final['Participante'].str.contains(player_query,case=False,na=False)])
+                if not jt.empty:
+                    score_t = jt.sort_values('score_completo',ascending=False)[
+                        ['Torneo_Temp','Victorias','Derrotas','score_completo']
+                    ].rename(columns={'Torneo_Temp':'Torneo','score_completo':'Score'})
+                    score_t['Score'] = score_t['Score'].round(2)
+                    score_t['Torneo'] = score_t['Torneo'].apply(lambda x: f"Torneo {int(x)}")
+                else:
+                    score_t = pd.DataFrame()
+            else:
+                score_t = pd.DataFrame()
+
+            # Preparar walkovers
+            wo_pdf = df_raw[
+                (df_raw["Walkover"] == 1) & (
+                    df_raw["player1"].str.contains(player_query, case=False, na=False) |
+                    df_raw["player2"].str.contains(player_query, case=False, na=False)
+                )
+            ].copy()
+            if not wo_pdf.empty:
+                def _clasificar(row):
+                    p = player_query.lower().strip()
+                    winner = str(row.get("winner","")).lower().strip()
+                    return "Dado (ganó por WO)" if p in winner else "Recibido (perdió por WO)"
+                wo_pdf["Tipo WO"] = wo_pdf.apply(_clasificar, axis=1)
+
+            # Preparar rivales
+            rivales_pdf = []
+            for rival in player_matches[player_matches['player1'].str.contains(player_query,case=False,na=False)]['player2'].dropna().unique().tolist() +                           player_matches[player_matches['player2'].str.contains(player_query,case=False,na=False)]['player1'].dropna().unique().tolist():
+                rm = player_matches[
+                    player_matches['player1'].str.contains(rival,case=False,na=False) |
+                    player_matches['player2'].str.contains(rival,case=False,na=False)
+                ]
+                if len(rm) >= 4:
+                    v = rm[rm['winner'].str.contains(player_query,case=False,na=False)].shape[0]
+                    d = len(rm) - v
+                    wr = round(v/len(rm)*100, 1) if len(rm) > 0 else 0
+                    rivales_pdf.append({'Rival':rival,'Partidas':len(rm),'Victorias':v,'Derrotas':d,'Winrate%':wr})
+            rivales_df_pdf = pd.DataFrame(rivales_pdf).drop_duplicates('Rival').sort_values('Partidas',ascending=False) if rivales_pdf else pd.DataFrame()
+
+            # Ligas y torneos
+            ligas_j   = player_matches[player_matches['league']=='LIGA']['Ligas_categoria'].dropna().unique().tolist()
+            torneos_j = player_matches[player_matches['league']=='TORNEO']['N_Torneo'].dropna().unique().tolist()
+
+            try:
+                pdf_bytes = generar_pdf_jugador(
+                    player_query      = player_query,
+                    player_matches    = player_matches,
+                    p_stats_quick     = p_stats_quick,
+                    ligas_jugador     = ligas_j,
+                    torneos_jugador   = torneos_j,
+                    campeonatos_liga  = campeonatos_liga if 'campeonatos_liga' in dir() else [],
+                    campeonatos_torneo= campeonatos_torneo if 'campeonatos_torneo' in dir() else [],
+                    wo_partidas       = wo_pdf,
+                    score_ligas_df    = score_l,
+                    score_torneos_df  = score_t,
+                    rivales_df        = rivales_df_pdf,
+                )
+                nombre_archivo = f"cartilla_{player_query.replace(' ','_')}.pdf"
+                st.download_button(
+                    label="📥 Descargar Cartilla PDF",
+                    data=pdf_bytes,
+                    file_name=nombre_archivo,
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+            except Exception as e:
+                st.error(f"Error generando PDF: {e}")
+                import traceback; st.code(traceback.format_exc())
+
+
     else:
         st.info("Escribe el nombre de un jugador para ver su historial.")
 
