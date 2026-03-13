@@ -9,52 +9,45 @@ from utils import (load_data, normalize_columns, ensure_fields, compute_player_s
 
 
 
-import io, os, math
+
+import io, os
 from datetime import datetime
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
-from reportlab.lib.units import cm, mm
+from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas as rl_canvas
 from reportlab.lib.utils import ImageReader
 
-# ── Paleta ──────────────────────────────────────────────────────────────────
-C_BG       = colors.HexColor("#0D1B2A")   # fondo oscuro azul marino
-C_PANEL    = colors.HexColor("#1B2B3B")   # paneles internos
-C_PANEL2   = colors.HexColor("#162232")   # panel alt
-C_ACCENT   = colors.HexColor("#E74C3C")   # rojo Poketubi
-C_GOLD     = colors.HexColor("#F1C40F")   # dorado
-C_GREEN    = colors.HexColor("#2ECC71")   # verde victoria
-C_RED      = colors.HexColor("#E74C3C")   # rojo derrota
-C_BLUE     = colors.HexColor("#3498DB")   # azul claro
-C_TEXT     = colors.HexColor("#ECF0F1")   # texto principal
-C_SUBTEXT  = colors.HexColor("#95A5A6")   # texto secundario
-C_LINE     = colors.HexColor("#2C3E50")   # separadores
-C_BAR_BG   = colors.HexColor("#243447")   # fondo barras
+C_BG      = colors.HexColor("#0D1B2A")
+C_PANEL   = colors.HexColor("#1B2B3B")
+C_PANEL2  = colors.HexColor("#162232")
+C_ACCENT  = colors.HexColor("#E74C3C")
+C_GOLD    = colors.HexColor("#F1C40F")
+C_GREEN   = colors.HexColor("#2ECC71")
+C_RED     = colors.HexColor("#E74C3C")
+C_BLUE    = colors.HexColor("#3498DB")
+C_PURPLE  = colors.HexColor("#9B59B6")
+C_ORANGE  = colors.HexColor("#E67E22")
+C_TEXT    = colors.HexColor("#ECF0F1")
+C_SUBTEXT = colors.HexColor("#95A5A6")
+C_LINE    = colors.HexColor("#2C3E50")
+C_BAR_BG  = colors.HexColor("#243447")
+C_WHITE   = colors.white
 
-PW, PH = landscape(A4)   # 841.89 x 595.28 pts
-MARGIN = 14
+PW, PH = landscape(A4)
+MARGIN  = 14
 
+def sf(c, col):
+    c.setFillColorRGB(col.red, col.green, col.blue)
 
-def hex_to_rgb(hex_color):
-    h = hex_color.hexval() if hasattr(hex_color, 'hexval') else str(hex_color)
-    h = h.lstrip('#')
-    if len(h) == 6:
-        return tuple(int(h[i:i+2],16)/255 for i in (0,2,4))
-    return (1,1,1)
+def ss(c, col):
+    c.setStrokeColorRGB(col.red, col.green, col.blue)
 
-
-def set_fill(c, color):
-    r,g,b = hex_to_rgb(color)
-    c.setFillColorRGB(r,g,b)
-
-def set_stroke(c, color):
-    r,g,b = hex_to_rgb(color)
-    c.setStrokeColorRGB(r,g,b)
-
-def rounded_rect(c, x, y, w, h, r=6, fill=True, stroke=False):
+def rrect(c, x, y, w, h, r=5, fill_col=None, stroke_col=None, lw=0.5):
+    if fill_col: sf(c, fill_col)
+    if stroke_col: ss(c, stroke_col); c.setLineWidth(lw)
     p = c.beginPath()
-    p.moveTo(x+r, y)
-    p.lineTo(x+w-r, y)
+    p.moveTo(x+r, y); p.lineTo(x+w-r, y)
     p.arcTo(x+w-2*r, y, x+w, y+2*r, startAng=-90, extent=90)
     p.lineTo(x+w, y+h-r)
     p.arcTo(x+w-2*r, y+h-2*r, x+w, y+h, startAng=0, extent=90)
@@ -63,401 +56,261 @@ def rounded_rect(c, x, y, w, h, r=6, fill=True, stroke=False):
     p.lineTo(x, y+r)
     p.arcTo(x, y, x+2*r, y+2*r, startAng=180, extent=90)
     p.close()
-    c.drawPath(p, fill=1 if fill else 0, stroke=1 if stroke else 0)
+    c.drawPath(p, fill=1 if fill_col else 0, stroke=1 if stroke_col else 0)
 
-def draw_text(c, text, x, y, size=9, color=C_TEXT, font="Helvetica-Bold", anchor="left"):
-    set_fill(c, color)
+def txt(c, text, x, y, size=9, col=None, font="Helvetica-Bold", anchor="left"):
+    sf(c, col or C_TEXT)
     c.setFont(font, size)
-    if anchor == "center":
-        c.drawCentredString(x, y, str(text))
-    elif anchor == "right":
-        c.drawRightString(x, y, str(text))
-    else:
-        c.drawString(x, y, str(text))
+    s = str(text)
+    if anchor == "center": c.drawCentredString(x, y, s)
+    elif anchor == "right": c.drawRightString(x, y, s)
+    else: c.drawString(x, y, s)
 
-def draw_bar(c, x, y, w, h, pct, color_fill=C_GREEN, color_bg=C_BAR_BG, radius=3):
-    """Horizontal bar pct 0-100"""
-    set_fill(c, color_bg)
-    rounded_rect(c, x, y, w, h, r=radius)
+def hbar(c, x, y, w, h, pct, col_fill=None, r=3):
+    rrect(c, x, y, w, h, r=r, fill_col=C_BAR_BG)
     if pct > 0:
-        fill_w = max(w * min(pct,100) / 100, 6)
-        set_fill(c, color_fill)
-        rounded_rect(c, x, y, fill_w, h, r=radius)
+        fw = max(w * min(float(pct), 100) / 100, 4)
+        rrect(c, x, y, fw, h, r=r, fill_col=col_fill or C_GREEN)
 
-def draw_radar_bar(c, cx, y, label, pct, bar_w, bar_h=7, color=C_BLUE):
-    """Una fila label + barra de habilidad"""
-    # label
-    draw_text(c, label, cx, y+1.5, size=7, color=C_SUBTEXT, font="Helvetica")
-    # bar background + fill
-    bx = cx + 72
-    draw_bar(c, bx, y, bar_w, bar_h, pct, color_fill=color, color_bg=C_BAR_BG)
-    # pct text
-    draw_text(c, f"{pct:.0f}%", bx + bar_w + 4, y+1.5, size=7, color=C_TEXT, font="Helvetica-Bold")
+def stat_box(c, x, y, w, h, label, value, col=None):
+    col = col or C_BLUE
+    rrect(c, x, y, w, h, r=5, fill_col=C_PANEL)
+    rrect(c, x, y+h-3, w, 3, r=2, fill_col=col)
+    txt(c, str(value), x+w/2, y+h/2+1, size=14, col=C_TEXT, font="Helvetica-Bold", anchor="center")
+    txt(c, label,      x+w/2, y+3,     size=6,  col=C_SUBTEXT, font="Helvetica", anchor="center")
 
-def stat_box(c, x, y, w, h, label, value, sub=None, color=C_BLUE):
-    set_fill(c, C_PANEL)
-    rounded_rect(c, x, y, w, h, r=5)
-    # color top bar
-    set_fill(c, color)
-    rounded_rect(c, x, y+h-4, w, 4, r=3)
-    draw_text(c, str(value), x+w/2, y+h/2+2, size=16, color=C_TEXT, font="Helvetica-Bold", anchor="center")
-    draw_text(c, label, x+w/2, y+4, size=6.5, color=C_SUBTEXT, font="Helvetica", anchor="center")
-    if sub:
-        draw_text(c, sub, x+w/2, y+h/2-8, size=7, color=color, font="Helvetica-Bold", anchor="center")
+def skill_row(c, lx, y, label, pct, bar_w, bar_h=7, col=None):
+    col = col or C_BLUE
+    txt(c, label[:15], lx, y+1, size=6.5, col=C_SUBTEXT, font="Helvetica")
+    bx = lx + 78
+    hbar(c, bx, y, bar_w, bar_h, pct, col_fill=col)
+    txt(c, f"{pct:.0f}%", bx+bar_w+4, y+1, size=6.5, col=C_TEXT, font="Helvetica-Bold")
+
+def hline(c, x, y, w):
+    ss(c, C_LINE); c.setLineWidth(0.4); c.line(x, y, x+w, y)
 
 
 def generar_pdf_jugador(
-    player_query,
-    player_matches,
-    p_stats_quick,
-    ligas_jugador,
-    torneos_jugador,
-    campeonatos_liga,
-    campeonatos_torneo,
-    wo_partidas,
-    score_ligas_df,
-    score_torneos_df,
-    rivales_df,
+    player_query, player_matches, p_stats_quick,
+    ligas_jugador, torneos_jugador,
+    campeonatos_liga, campeonatos_torneo,
+    wo_partidas, score_ligas_df, score_torneos_df, rivales_df,
 ):
+    import pandas as pd
     buf = io.BytesIO()
-    c = rl_canvas.Canvas(buf, pagesize=landscape(A4))
+    cv  = rl_canvas.Canvas(buf, pagesize=landscape(A4))
 
-    # ── FONDO GENERAL ───────────────────────────────────────────────────────
-    set_fill(c, C_BG)
-    c.rect(0, 0, PW, PH, fill=1, stroke=0)
+    # FONDO
+    sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
 
-    # ── HEADER BAR ──────────────────────────────────────────────────────────
-    HDR_H = 52
-    set_fill(c, C_PANEL)
-    c.rect(0, PH-HDR_H, PW, HDR_H, fill=1, stroke=0)
-    # accent line bottom of header
-    set_fill(c, C_ACCENT)
-    c.rect(0, PH-HDR_H-2, PW, 2, fill=1, stroke=0)
+    # HEADER
+    HDR = 50
+    rrect(cv, 0, PH-HDR, PW, HDR, r=0, fill_col=C_PANEL)
+    sf(cv, C_ACCENT); cv.rect(0, PH-HDR-2, PW, 2, fill=1, stroke=0)
 
-    # Logo (si existe)
-    logo_path = "Logo.png"
-    if os.path.exists(logo_path):
-        try:
-            img = ImageReader(logo_path)
-            c.drawImage(img, MARGIN, PH-HDR_H+4, height=44, width=44,
-                        preserveAspectRatio=True, mask='auto')
-        except Exception:
-            pass
-
-    # Nombre jugador en header
-    draw_text(c, player_query.upper(), 68, PH-28, size=20, color=C_TEXT,
-              font="Helvetica-Bold")
-    draw_text(c, "CARTILLA DEL JUGADOR", 68, PH-42, size=8,
-              color=C_SUBTEXT, font="Helvetica")
-
-    # Fecha en esquina derecha
-    draw_text(c, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-28,
-              size=8, color=C_SUBTEXT, font="Helvetica", anchor="right")
-    draw_text(c, "POKETUBI", PW-MARGIN, PH-42, size=7,
-              color=C_ACCENT, font="Helvetica-Bold", anchor="right")
-
-    # ── ZONA PRINCIPAL (debajo del header) ──────────────────────────────────
-    body_y  = MARGIN
-    body_h  = PH - HDR_H - 6 - MARGIN*2
-    body_top = body_y + body_h   # coords Y en reportlab son desde abajo
-
-    # Dividimos en 4 columnas:
-    # Col A (foto)     : 90pt
-    # Col B (stats)    : 180pt
-    # Col C (habilidades): 195pt
-    # Col D (últimas)  : resto
-
-    COL_A_W = 90
-    COL_B_W = 185
-    COL_C_W = 200
-    COL_D_W = PW - MARGIN*2 - COL_A_W - COL_B_W - COL_C_W - 12  # gaps
-
-    xA = MARGIN
-    xB = xA + COL_A_W + 4
-    xC = xB + COL_B_W + 4
-    xD = xC + COL_C_W + 4
-
-    # ── COL A: FOTO JUGADOR ─────────────────────────────────────────────────
-    set_fill(c, C_PANEL)
-    rounded_rect(c, xA, body_y, COL_A_W, body_h, r=8)
-
-    foto_encontrada = False
-    for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-        path = f"jugadores/{player_query.replace(' ','_')}.{ext}"
-        if os.path.exists(path):
+    for lp in ["Logo.png","logo.png","LOGO.PNG"]:
+        if os.path.exists(lp):
             try:
-                img = ImageReader(path)
-                foto_h = min(COL_A_W * 1.2, body_h - 20)
-                foto_y = body_y + body_h - foto_h - 8
-                c.drawImage(img, xA+4, foto_y, width=COL_A_W-8, height=foto_h,
-                            preserveAspectRatio=True, mask='auto')
-                foto_encontrada = True
-                break
-            except Exception:
-                pass
+                cv.drawImage(ImageReader(lp), MARGIN, PH-HDR+5, height=40, width=40,
+                             preserveAspectRatio=True, mask='auto')
+            except Exception: pass
+            break
 
-    if not foto_encontrada:
-        # placeholder silueta
-        set_fill(c, C_PANEL2)
-        rounded_rect(c, xA+8, body_y+body_h-100, COL_A_W-16, 90, r=6)
-        draw_text(c, "📷", xA+COL_A_W/2, body_y+body_h-58, size=22,
-                  color=C_SUBTEXT, anchor="center")
+    txt(cv, player_query.upper(), 62, PH-25, size=18, col=C_TEXT, font="Helvetica-Bold")
+    txt(cv, "CARTILLA DEL JUGADOR  ·  POKETUBI", 62, PH-40, size=7, col=C_SUBTEXT, font="Helvetica")
+    txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-28, size=8,
+        col=C_SUBTEXT, font="Helvetica", anchor="right")
 
-    # Nombre corto abajo
-    draw_text(c, player_query.split()[0] if player_query else "—",
-              xA+COL_A_W/2, body_y+8, size=9, color=C_GOLD,
-              font="Helvetica-Bold", anchor="center")
+    # BODY LAYOUT
+    BY = MARGIN
+    BH = PH - HDR - 6 - MARGIN*2
+    CA_W = 88; CB_W = 182; CC_W = 198
+    CD_W = PW - MARGIN*2 - CA_W - CB_W - CC_W - 12
+    xA = MARGIN; xB = xA+CA_W+4; xC = xB+CB_W+4; xD = xC+CC_W+4
 
-    # ── COL B: STATS GENERALES ──────────────────────────────────────────────
-    set_fill(c, C_PANEL)
-    rounded_rect(c, xB, body_y, COL_B_W, body_h, r=8)
+    # COL A FOTO
+    rrect(cv, xA, BY, CA_W, BH, r=8, fill_col=C_PANEL)
+    foto_ok = False
+    for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
+        p = f"jugadores/{player_query.replace(' ','_')}.{ext}"
+        if os.path.exists(p):
+            try:
+                fh = min(CA_W*1.15, BH-22)
+                cv.drawImage(ImageReader(p), xA+4, BY+BH-fh-6,
+                             width=CA_W-8, height=fh,
+                             preserveAspectRatio=True, mask='auto')
+                foto_ok = True; break
+            except Exception: pass
+    if not foto_ok:
+        rrect(cv, xA+10, BY+BH-95, CA_W-20, 85, r=6, fill_col=C_PANEL2)
+        txt(cv, "SIN FOTO", xA+CA_W/2, BY+BH-58, size=7, col=C_SUBTEXT, font="Helvetica", anchor="center")
+    txt(cv, player_query.split()[0][:10], xA+CA_W/2, BY+6, size=8, col=C_GOLD,
+        font="Helvetica-Bold", anchor="center")
 
-    draw_text(c, "ESTADÍSTICAS", xB+COL_B_W/2, body_y+body_h-14,
-              size=8, color=C_ACCENT, font="Helvetica-Bold", anchor="center")
+    # COL B STATS
+    rrect(cv, xB, BY, CB_W, BH, r=8, fill_col=C_PANEL)
+    txt(cv, "ESTADISTICAS", xB+CB_W/2, BY+BH-13, size=8, col=C_ACCENT,
+        font="Helvetica-Bold", anchor="center")
 
-    # Extraer stats
     jq = None
     if not p_stats_quick.empty:
-        mask = p_stats_quick['Jugador'].str.contains(player_query, case=False)
-        if mask.any():
-            jq = p_stats_quick[mask].iloc[0]
+        m = p_stats_quick['Jugador'].str.contains(player_query, case=False)
+        if m.any(): jq = p_stats_quick[m].iloc[0]
 
-    partidas  = int(jq['Partidas'])  if jq is not None else len(player_matches)
-    victorias = int(jq['Victorias']) if jq is not None else 0
-    derrotas  = int(jq['Derrotas'])  if jq is not None else 0
+    partidas  = int(jq['Partidas'])   if jq is not None else len(player_matches)
+    victorias = int(jq['Victorias'])  if jq is not None else 0
+    derrotas  = int(jq['Derrotas'])   if jq is not None else 0
     winrate   = float(jq['Winrate%']) if jq is not None else 0.0
 
-    # Cajas de stats — fila superior
-    BOX_H = 46; BOX_W = (COL_B_W-16)/3; box_gap = 8
-    row1_y = body_y + body_h - 30 - BOX_H
+    BW = (CB_W-16)/3
+    by1 = BY+BH-30-44
+    stat_box(cv, xB+8,        by1, BW, 44, "PARTIDAS",  partidas,  col=C_BLUE)
+    stat_box(cv, xB+8+BW+4,   by1, BW, 44, "VICTORIAS", victorias, col=C_GREEN)
+    stat_box(cv, xB+8+BW*2+8, by1, BW, 44, "DERROTAS",  derrotas,  col=C_RED)
 
-    stat_box(c, xB+8,                row1_y, BOX_W, BOX_H, "PARTIDAS",  partidas,  color=C_BLUE)
-    stat_box(c, xB+8+BOX_W+4,        row1_y, BOX_W, BOX_H, "VICTORIAS", victorias, color=C_GREEN)
-    stat_box(c, xB+8+BOX_W*2+8,      row1_y, BOX_W, BOX_H, "DERROTAS",  derrotas,  color=C_RED)
+    wr_col = C_GREEN if winrate >= 50 else C_RED
+    wr_y = by1 - 44 - 4
+    rrect(cv, xB+8, wr_y, CB_W-16, 44, r=5, fill_col=C_PANEL2)
+    rrect(cv, xB+8, wr_y+41, CB_W-16, 3, r=2, fill_col=wr_col)
+    txt(cv, f"{winrate:.1f}%", xB+CB_W/2, wr_y+20, size=22, col=C_GOLD,
+        font="Helvetica-Bold", anchor="center")
+    txt(cv, "WINRATE GENERAL", xB+CB_W/2, wr_y+6, size=7, col=C_SUBTEXT,
+        font="Helvetica", anchor="center")
 
-    # Winrate grande
-    wr_y = row1_y - BOX_H - 6
-    set_fill(c, C_PANEL2)
-    rounded_rect(c, xB+8, wr_y, COL_B_W-16, BOX_H, r=5)
-    set_fill(c, C_GREEN if winrate >= 50 else C_RED)
-    rounded_rect(c, xB+8, wr_y+BOX_H-4, COL_B_W-16, 4, r=3)
-    draw_text(c, f"{winrate:.1f}%", xB+COL_B_W/2, wr_y+BOX_H/2+4,
-              size=22, color=C_GOLD, font="Helvetica-Bold", anchor="center")
-    draw_text(c, "WINRATE GENERAL", xB+COL_B_W/2, wr_y+6,
-              size=7, color=C_SUBTEXT, font="Helvetica", anchor="center")
+    wo_total=0; wo_dados=0; wo_rec=0
+    if wo_partidas is not None and not wo_partidas.empty:
+        wo_total = len(wo_partidas)
+        if "Tipo WO" in wo_partidas.columns:
+            wo_dados = int(wo_partidas["Tipo WO"].str.contains("Dado",     na=False).sum())
+            wo_rec   = int(wo_partidas["Tipo WO"].str.contains("Recibido", na=False).sum())
 
-    # Walkovers
-    wo_total = len(wo_partidas) if wo_partidas is not None else 0
-    wo_dados = 0; wo_rec = 0
-    if wo_partidas is not None and not wo_partidas.empty and "Tipo WO" in wo_partidas.columns:
-        wo_dados = len(wo_partidas[wo_partidas["Tipo WO"].str.contains("Dado", na=False)])
-        wo_rec   = len(wo_partidas[wo_partidas["Tipo WO"].str.contains("Recibido", na=False)])
+    wo_y = wr_y - 28 - 4
+    BW3 = (CB_W-16)/3
+    stat_box(cv, xB+8,           wo_y, BW3, 28, "WO TOTAL",     wo_total, col=C_GOLD)
+    stat_box(cv, xB+8+BW3+4,     wo_y, BW3, 28, "WO DADOS",     wo_dados, col=C_GREEN)
+    stat_box(cv, xB+8+BW3*2+8,   wo_y, BW3, 28, "WO RECIBIDOS", wo_rec,   col=C_RED)
 
-    wo_y = wr_y - BOX_H//2 - 10
-    BOX_W2 = (COL_B_W-16)/3
-    stat_box(c, xB+8,           wo_y, BOX_W2, BOX_H//2+4, "WO TOTAL",    wo_total, color=C_GOLD)
-    stat_box(c, xB+8+BOX_W2+4,  wo_y, BOX_W2, BOX_H//2+4, "WO DADOS",    wo_dados, color=C_GREEN)
-    stat_box(c, xB+8+BOX_W2*2+8,wo_y, BOX_W2, BOX_H//2+4, "WO RECIBIDOS",wo_rec,  color=C_RED)
-
-    # Campeonatos
-    camp_y = wo_y - 14
-    draw_text(c, "CAMPEONATOS", xB+8, camp_y, size=7, color=C_ACCENT, font="Helvetica-Bold")
     n_camp = len(campeonatos_liga) + len(campeonatos_torneo)
-    camps_str = f"🏆 {n_camp} título(s)  —  {len(campeonatos_liga)} Liga · {len(campeonatos_torneo)} Torneo"
-    draw_text(c, camps_str if n_camp > 0 else "Sin campeonatos aún",
-              xB+8, camp_y-12, size=7.5,
-              color=C_GOLD if n_camp > 0 else C_SUBTEXT, font="Helvetica-Bold")
+    cy = wo_y - 18
+    txt(cv, "CAMPEONATOS", xB+8, cy, size=7, col=C_ACCENT, font="Helvetica-Bold")
+    cs = (f"{n_camp} titulo(s)  -  {len(campeonatos_liga)} Liga  {len(campeonatos_torneo)} Torneo"
+          if n_camp > 0 else "Sin campeonatos aun")
+    txt(cv, cs, xB+8, cy-13, size=8, col=C_GOLD if n_camp > 0 else C_SUBTEXT, font="Helvetica-Bold")
 
-    # Ligas y torneos participados
-    part_y = camp_y - 30
-    draw_text(c, f"Ligas participadas: {len(ligas_jugador)}", xB+8, part_y,
-              size=7.5, color=C_TEXT, font="Helvetica")
-    draw_text(c, f"Torneos participados: {len(torneos_jugador)}", xB+8, part_y-13,
-              size=7.5, color=C_TEXT, font="Helvetica")
+    py = cy - 32
+    txt(cv, f"Ligas participadas:   {len(ligas_jugador)}",   xB+8, py,    size=7.5, col=C_TEXT, font="Helvetica")
+    txt(cv, f"Torneos participados: {len(torneos_jugador)}", xB+8, py-13, size=7.5, col=C_TEXT, font="Helvetica")
 
-    # ── COL C: GRÁFICO DE HABILIDADES ───────────────────────────────────────
-    set_fill(c, C_PANEL)
-    rounded_rect(c, xC, body_y, COL_C_W, body_h, r=8)
+    # COL C HABILIDADES
+    rrect(cv, xC, BY, CC_W, BH, r=8, fill_col=C_PANEL)
+    txt(cv, "RENDIMIENTO POR CATEGORIA", xC+CC_W/2, BY+BH-13, size=8,
+        col=C_ACCENT, font="Helvetica-Bold", anchor="center")
 
-    draw_text(c, "HABILIDADES & RENDIMIENTO", xC+COL_C_W/2, body_y+body_h-14,
-              size=8, color=C_ACCENT, font="Helvetica-Bold", anchor="center")
+    BAR_W = CC_W - 118
+    lx = xC + 8
+    sy = BY + BH - 30
 
-    BAR_W = COL_C_W - 110
-    bar_x_start = xC + 8
-    cur_y = body_y + body_h - 30
+    def wr_rows(matches, col_key, max_r, cols_list):
+        result = {}
+        if col_key in matches.columns:
+            for val in matches[col_key].dropna().unique():
+                s = matches[matches[col_key]==val]
+                if len(s) >= 2:
+                    w = s['winner'].str.contains(player_query, case=False, na=False).sum()
+                    result[str(val)] = round(w/len(s)*100, 1)
+        return result
 
-    # ── Sección: Por Formato ─────────────────────────────────────────────────
-    draw_text(c, "POR FORMATO", bar_x_start, cur_y-2, size=6.5,
-              color=C_SUBTEXT, font="Helvetica-Bold")
-    cur_y -= 14
-
-    formatos_wr = {}
-    if 'Formato' in player_matches.columns:
-        for fmt in player_matches['Formato'].dropna().unique():
-            sub = player_matches[player_matches['Formato'] == fmt]
-            if len(sub) >= 2:
-                w = sub['winner'].str.contains(player_query, case=False, na=False).sum()
-                formatos_wr[fmt] = round(w / len(sub) * 100, 1)
-
-    if formatos_wr:
-        for fmt, wr in sorted(formatos_wr.items(), key=lambda x: -x[1])[:5]:
-            color_bar = C_GREEN if wr >= 50 else C_RED
-            draw_radar_bar(c, bar_x_start, cur_y, fmt[:14], wr, BAR_W, color=color_bar)
-            cur_y -= 14
+    # Formato
+    txt(cv, "WINRATE POR FORMATO", lx, sy, size=6.5, col=C_SUBTEXT, font="Helvetica-Bold"); sy -= 13
+    fmt_wr = wr_rows(player_matches, 'Formato', 5, [])
+    if fmt_wr:
+        for fmt, wr in sorted(fmt_wr.items(), key=lambda x:-x[1])[:5]:
+            skill_row(cv, lx, sy, fmt, wr, BAR_W, col=C_GREEN if wr>=50 else C_RED); sy -= 13
     else:
-        draw_text(c, "Sin datos de formato", bar_x_start, cur_y, size=7, color=C_SUBTEXT)
-        cur_y -= 14
+        txt(cv, "Sin datos", lx, sy, size=7, col=C_SUBTEXT, font="Helvetica"); sy -= 13
 
-    cur_y -= 4
-    # separador
-    set_stroke(c, C_LINE)
-    c.setLineWidth(0.5)
-    c.line(xC+8, cur_y, xC+COL_C_W-8, cur_y)
-    cur_y -= 8
+    sy -= 3; hline(cv, xC+6, sy, CC_W-12); sy -= 8
 
-    # ── Sección: Por Tipo de Torneo ──────────────────────────────────────────
-    draw_text(c, "POR TIPO DE EVENTO", bar_x_start, cur_y-2, size=6.5,
-              color=C_SUBTEXT, font="Helvetica-Bold")
-    cur_y -= 14
-
-    eventos_wr = {}
-    if 'league' in player_matches.columns:
-        for ev in player_matches['league'].dropna().unique():
-            sub = player_matches[player_matches['league'] == ev]
-            if len(sub) >= 2:
-                w = sub['winner'].str.contains(player_query, case=False, na=False).sum()
-                eventos_wr[ev] = round(w / len(sub) * 100, 1)
-
-    if eventos_wr:
-        colores_ev = [C_BLUE, C_GOLD, C_GREEN, colors.HexColor("#9B59B6"), C_ACCENT]
-        for i, (ev, wr) in enumerate(sorted(eventos_wr.items(), key=lambda x: -x[1])[:5]):
-            col = colores_ev[i % len(colores_ev)]
-            draw_radar_bar(c, bar_x_start, cur_y, ev[:14], wr, BAR_W, color=col)
-            cur_y -= 14
+    # Tipo evento
+    txt(cv, "WINRATE POR TIPO DE EVENTO", lx, sy, size=6.5, col=C_SUBTEXT, font="Helvetica-Bold"); sy -= 13
+    ev_wr = wr_rows(player_matches, 'league', 5, [])
+    ev_cols_list = [C_BLUE, C_GOLD, C_PURPLE, C_ORANGE, C_GREEN]
+    if ev_wr:
+        for i, (ev, wr) in enumerate(sorted(ev_wr.items(), key=lambda x:-x[1])[:5]):
+            skill_row(cv, lx, sy, ev, wr, BAR_W, col=ev_cols_list[i%len(ev_cols_list)]); sy -= 13
     else:
-        draw_text(c, "Sin datos de tipo", bar_x_start, cur_y, size=7, color=C_SUBTEXT)
-        cur_y -= 14
+        txt(cv, "Sin datos", lx, sy, size=7, col=C_SUBTEXT, font="Helvetica"); sy -= 13
 
-    cur_y -= 4
-    set_stroke(c, C_LINE)
-    c.setLineWidth(0.5)
-    c.line(xC+8, cur_y, xC+COL_C_W-8, cur_y)
-    cur_y -= 8
+    sy -= 3; hline(cv, xC+6, sy, CC_W-12); sy -= 8
 
-    # ── Sección: Por Tier ───────────────────────────────────────────────────
-    draw_text(c, "POR TIER", bar_x_start, cur_y-2, size=6.5,
-              color=C_SUBTEXT, font="Helvetica-Bold")
-    cur_y -= 14
-
-    tier_wr = {}
-    if 'Tier' in player_matches.columns:
-        for tier in player_matches['Tier'].dropna().unique():
-            sub = player_matches[player_matches['Tier'] == tier]
-            if len(sub) >= 2:
-                w = sub['winner'].str.contains(player_query, case=False, na=False).sum()
-                tier_wr[tier] = round(w / len(sub) * 100, 1)
-
+    # Tier
+    txt(cv, "WINRATE POR TIER", lx, sy, size=6.5, col=C_SUBTEXT, font="Helvetica-Bold"); sy -= 13
+    tier_wr = wr_rows(player_matches, 'Tier', 4, [])
     if tier_wr:
-        for tier, wr in sorted(tier_wr.items(), key=lambda x: -x[1])[:4]:
-            color_bar = C_BLUE if wr >= 50 else colors.HexColor("#E67E22")
-            draw_radar_bar(c, bar_x_start, cur_y, str(tier)[:14], wr, BAR_W, color=color_bar)
-            cur_y -= 14
+        for tier, wr in sorted(tier_wr.items(), key=lambda x:-x[1])[:4]:
+            skill_row(cv, lx, sy, tier, wr, BAR_W, col=C_BLUE if wr>=50 else C_ORANGE); sy -= 13
     else:
-        draw_text(c, "Sin datos de tier", bar_x_start, cur_y, size=7, color=C_SUBTEXT)
-        cur_y -= 14
+        txt(cv, "Sin datos", lx, sy, size=7, col=C_SUBTEXT, font="Helvetica"); sy -= 13
 
-    # ── COL D: RIVALES + ÚLTIMAS PARTIDAS ───────────────────────────────────
-    set_fill(c, C_PANEL)
-    rounded_rect(c, xD, body_y, COL_D_W, body_h, r=8)
+    # COL D RIVALES + ULTIMAS
+    rrect(cv, xD, BY, CD_W, BH, r=8, fill_col=C_PANEL)
+    txt(cv, "RIVALES PRINCIPALES", xD+CD_W/2, BY+BH-13, size=8,
+        col=C_ACCENT, font="Helvetica-Bold", anchor="center")
 
-    draw_text(c, "RIVALES PRINCIPALES", xD+COL_D_W/2, body_y+body_h-14,
-              size=8, color=C_ACCENT, font="Helvetica-Bold", anchor="center")
+    RY = BY+BH-28
+    CWS = [CD_W*0.42, CD_W*0.1, CD_W*0.1, CD_W*0.1, CD_W*0.20]
+    CXS = [xD+5]
+    for cw in CWS[:-1]: CXS.append(CXS[-1]+cw)
 
-    # Tabla de rivales
-    riv_y = body_y + body_h - 28
-    hdrs = ["Rival", "P", "V", "D", "WR%"]
-    col_ws = [COL_D_W*0.44, COL_D_W*0.1, COL_D_W*0.1, COL_D_W*0.1, COL_D_W*0.18]
-    col_xs = [xD+6]
-    for cw in col_ws[:-1]:
-        col_xs.append(col_xs[-1]+cw)
-
-    # header row
-    set_fill(c, C_PANEL2)
-    c.rect(xD+4, riv_y-12, COL_D_W-8, 12, fill=1, stroke=0)
-    for hdr, cx, cw in zip(hdrs, col_xs, col_ws):
-        draw_text(c, hdr, cx+cw/2, riv_y-10, size=6.5,
-                  color=C_SUBTEXT, font="Helvetica-Bold", anchor="center")
-    riv_y -= 13
+    rrect(cv, xD+4, RY-11, CD_W-8, 12, r=3, fill_col=C_PANEL2)
+    for hdr, cx, cw in zip(["RIVAL","P","V","D","WR%"], CXS, CWS):
+        txt(cv, hdr, cx+cw/2, RY-9, size=6, col=C_SUBTEXT, font="Helvetica-Bold", anchor="center")
+    RY -= 12
 
     ROW_H = 11
     if rivales_df is not None and not rivales_df.empty:
-        max_rivales = min(len(rivales_df), int((riv_y - body_y - 50) / ROW_H))
-        for i, (_, r) in enumerate(rivales_df.head(max_rivales).iterrows()):
-            wr = float(r.get('Winrate%', 50))
-            # alternating bg
+        max_r = max(1, int((RY - BY - 48) / ROW_H))
+        for i, (_, r) in enumerate(rivales_df.head(max_r).iterrows()):
             if i % 2 == 0:
-                set_fill(c, C_PANEL2)
-                c.rect(xD+4, riv_y-ROW_H+1, COL_D_W-8, ROW_H, fill=1, stroke=0)
-
-            rival_name = str(r.get('Rival',''))[:18]
-            draw_text(c, rival_name, col_xs[0]+1, riv_y-8, size=6.5, color=C_TEXT, font="Helvetica")
-            draw_text(c, str(int(r.get('Partidas',0))), col_xs[1]+col_ws[1]/2, riv_y-8, size=6.5, color=C_TEXT, anchor="center")
-            draw_text(c, str(int(r.get('Victorias',0))),col_xs[2]+col_ws[2]/2, riv_y-8, size=6.5, color=C_GREEN, font="Helvetica-Bold", anchor="center")
-            draw_text(c, str(int(r.get('Derrotas',0))), col_xs[3]+col_ws[3]/2, riv_y-8, size=6.5, color=C_RED, font="Helvetica-Bold", anchor="center")
-            # wr bar pequeña
-            wr_bx = col_xs[4]
-            draw_bar(c, wr_bx, riv_y-9, col_ws[4]-4, 7,
-                     wr, color_fill=C_GREEN if wr>=50 else C_RED)
-            draw_text(c, f"{wr:.0f}%", wr_bx+col_ws[4]/2, riv_y-9,
-                      size=5.5, color=C_TEXT, font="Helvetica-Bold", anchor="center")
-            riv_y -= ROW_H
+                rrect(cv, xD+4, RY-ROW_H+1, CD_W-8, ROW_H, r=2, fill_col=C_PANEL2)
+            wr = float(r.get('Winrate%', 50))
+            txt(cv, str(r.get('Rival',''))[:17], CXS[0]+1, RY-8, size=6.5, col=C_TEXT, font="Helvetica")
+            txt(cv, str(int(r.get('Partidas',0))),  CXS[1]+CWS[1]/2, RY-8, size=6.5, col=C_TEXT, anchor="center")
+            txt(cv, str(int(r.get('Victorias',0))), CXS[2]+CWS[2]/2, RY-8, size=6.5, col=C_GREEN, font="Helvetica-Bold", anchor="center")
+            txt(cv, str(int(r.get('Derrotas',0))),  CXS[3]+CWS[3]/2, RY-8, size=6.5, col=C_RED,   font="Helvetica-Bold", anchor="center")
+            hbar(cv, CXS[4], RY-9, CWS[4]-4, 7, wr, col_fill=C_GREEN if wr>=50 else C_RED)
+            txt(cv, f"{wr:.0f}%", CXS[4]+CWS[4]/2, RY-9, size=5.5, col=C_TEXT, font="Helvetica-Bold", anchor="center")
+            RY -= ROW_H
     else:
-        draw_text(c, "Sin rivales frecuentes", xD+COL_D_W/2, riv_y-15,
-                  size=7, color=C_SUBTEXT, anchor="center")
-        riv_y -= 20
+        txt(cv, "Sin rivales frecuentes", xD+CD_W/2, RY-15, size=7, col=C_SUBTEXT, anchor="center")
+        RY -= 20
 
-    # ── Últimas partidas ─────────────────────────────────────────────────────
-    if riv_y > body_y + 35:
-        riv_y -= 6
-        set_stroke(c, C_LINE)
-        c.setLineWidth(0.5)
-        c.line(xD+8, riv_y, xD+COL_D_W-8, riv_y)
-        riv_y -= 10
-
-        draw_text(c, "ÚLTIMAS PARTIDAS", xD+COL_D_W/2, riv_y,
-                  size=7, color=C_ACCENT, font="Helvetica-Bold", anchor="center")
-        riv_y -= 12
-
-        ultimas = player_matches.sort_values('date', ascending=False).head(8)
+    if RY > BY+38:
+        RY -= 4; hline(cv, xD+6, RY, CD_W-12); RY -= 10
+        txt(cv, "ULTIMAS PARTIDAS", xD+CD_W/2, RY, size=7, col=C_ACCENT,
+            font="Helvetica-Bold", anchor="center")
+        RY -= 11
+        ultimas = player_matches.sort_values('date', ascending=False).head(10)
         for _, r in ultimas.iterrows():
-            if riv_y < body_y + 8:
-                break
-            fecha = str(r.get('date',''))[:10]
-            p1 = str(r.get('player1',''))
-            p2 = str(r.get('player2',''))
-            rival = p2 if player_query.lower() in p1.lower() else p1
+            if RY < BY+6: break
             ganador = str(r.get('winner',''))
-            gano = player_query.lower() in ganador.lower()
-            res_color = C_GREEN if gano else C_RED
-            res_txt   = "W" if gano else "L"
+            gano    = player_query.lower() in ganador.lower()
+            p1      = str(r.get('player1',''))
+            rival   = str(r.get('player2','')) if player_query.lower() in p1.lower() else p1
+            fecha   = str(r.get('date',''))[:10]
+            col_r   = C_GREEN if gano else C_RED
+            rrect(cv, xD+5, RY-8, 12, 9, r=2, fill_col=col_r)
+            txt(cv, "W" if gano else "L", xD+11, RY-6.5, size=6,
+                col=C_WHITE, font="Helvetica-Bold", anchor="center")
+            txt(cv, rival[:17], xD+20, RY-6.5, size=6.5, col=C_TEXT, font="Helvetica")
+            txt(cv, fecha, xD+CD_W-5, RY-6.5, size=6, col=C_SUBTEXT, anchor="right")
+            RY -= ROW_H
 
-            set_fill(c, res_color)
-            rounded_rect(c, xD+6, riv_y-8, 12, 9, r=2)
-            draw_text(c, res_txt, xD+12, riv_y-6.5, size=6, color=colors.white,
-                      font="Helvetica-Bold", anchor="center")
-            draw_text(c, rival[:16], xD+22, riv_y-6.5, size=6.5, color=C_TEXT, font="Helvetica")
-            draw_text(c, fecha, xD+COL_D_W-6, riv_y-6.5, size=6,
-                      color=C_SUBTEXT, anchor="right")
-            riv_y -= ROW_H
+    # FOOTER
+    txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}",
+        PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
-    # ── FOOTER ───────────────────────────────────────────────────────────────
-    c.saveState()
-    set_fill(c, C_SUBTEXT)
-    c.setFont("Helvetica", 6)
-    c.drawCentredString(PW/2, 5, f"Poketubi · Cartilla generada el {datetime.now().strftime('%d/%m/%Y %H:%M')} · {player_query}")
-    c.restoreState()
-
-    c.save()
+    cv.save()
     buf.seek(0)
     return buf.read()
 
