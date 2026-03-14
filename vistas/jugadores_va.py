@@ -149,42 +149,13 @@ def generar_pdf_jugador(
         txt(cv, "SIN FOTO", xA+CA_W/2, BY+BH-58, size=7, col=C_SUBTEXT, font="Helvetica", anchor="center")
     txt(cv, player_query.split()[0][:10], xA+CA_W/2, BY+16, size=8, col=C_GOLD,
         font="Helvetica-Bold", anchor="center")
-    # Última liga participada — logo + nombre, solo si tiene liga real
+    # Última liga participada
     if 'Ligas_categoria' in player_matches.columns:
-        ligas_part = player_matches[
-            (player_matches['league']=='LIGA') &
-            (player_matches['Ligas_categoria'].notna()) &
-            (~player_matches['Ligas_categoria'].isin(['No Posee Liga','nan','']))
-        ]['Ligas_categoria']
+        ligas_part = player_matches[player_matches['league']=='LIGA']['Ligas_categoria'].dropna()
         if not ligas_part.empty:
-            ultima_liga = str(ligas_part.iloc[-1]).strip()
-            if ultima_liga and ultima_liga not in ('nan','No Posee Liga',''):
-                # Buscar logo sin fallback a Logo.png
-                LOGOS_MAP = {"PES":"logo_pes.PNG","PSS":"logo_pss.PNG",
-                             "PJS":"logo_pjs.PNG","PMS":"logo_pms.PNG","PLS":"logo_pls.png"}
-                logo_path = None
-                # Check dict first
-                if ultima_liga in LOGOS_MAP and os.path.exists(LOGOS_MAP[ultima_liga]):
-                    logo_path = LOGOS_MAP[ultima_liga]
-                # Then try variations
-                if not logo_path:
-                    for ext in ['PNG','png','JPG','jpg','JPEG','jpeg']:
-                        for pat in [f"logo_{ultima_liga.lower()}.{ext}",
-                                     f"Logo_{ultima_liga}.{ext}",
-                                     f"logos/{ultima_liga.lower()}.{ext}"]:
-                            if os.path.exists(pat):
-                                logo_path = pat; break
-                        if logo_path: break
-                if logo_path:
-                    try:
-                        cv.drawImage(ImageReader(logo_path),
-                                     xA+CA_W/2-12, BY+20,
-                                     width=24, height=18,
-                                     preserveAspectRatio=True, mask='auto')
-                    except Exception:
-                        pass
-                txt(cv, ultima_liga, xA+CA_W/2, BY+6, size=6.5, col=C_SUBTEXT,
-                    font="Helvetica", anchor="center")
+            ultima_liga = str(ligas_part.iloc[-1])
+            txt(cv, ultima_liga, xA+CA_W/2, BY+6, size=7, col=C_SUBTEXT,
+                font="Helvetica", anchor="center")
 
     # COL B STATS
     rrect(cv, xB, BY, CB_W, BH, r=8, fill_col=C_PANEL)
@@ -236,73 +207,42 @@ def generar_pdf_jugador(
           if n_camp > 0 else "Sin campeonatos aun")
     txt(cv, cs, xB+8, cy-13, size=8, col=C_GOLD if n_camp > 0 else C_SUBTEXT, font="Helvetica-Bold")
 
-    # Banners de campeonatos — cada uno con imagen + nombre debajo
-    ban_y = cy - 30
-    ban_h = 26   # altura imagen
-    lbl_h = 10   # altura label debajo
-    item_h = ban_h + lbl_h + 2
-    ban_gap = 4
-    ban_w = 44
+    # Banners de campeonatos ganados
+    ban_y = cy - 28
+    ban_h = 28
+    ban_x = xB + 8
+    ban_gap = 3
     max_ban_w = CB_W - 16
-    items_per_row = max(1, int((max_ban_w + ban_gap) / (ban_w + ban_gap)))
-
     all_camps = (
         [('liga', c['Liga']) for c in campeonatos_liga] +
         [('torneo', c['Torneo']) for c in campeonatos_torneo]
     )
     if all_camps:
-        row_x = xB + 8
-        row_y = ban_y
-        for idx, (tipo, val) in enumerate(all_camps):
-            if idx > 0 and idx % items_per_row == 0:
-                row_y -= (item_h + 4)
-                row_x = xB + 8
-
+        n_ban = len(all_camps)
+        ban_w = min(50, (max_ban_w - ban_gap*(n_ban-1)) / n_ban)
+        for tipo, val in all_camps:
             ban_path = None
             if tipo == 'liga':
-                # Extract 3-letter prefix: PJST1→PJS, PEST2→PES
-                pref = str(val)[:3].upper()
-                LOGOS_MAP2 = {"PES":"logo_pes.PNG","PSS":"logo_pss.PNG",
-                              "PJS":"logo_pjs.PNG","PMS":"logo_pms.PNG","PLS":"logo_pls.png"}
-                # Try banner first
-                for ext in ['png','PNG','jpg','JPG']:
-                    for ruta in [f"banner_{str(val).lower()}.{ext}",
-                                  f"banner/{str(val).lower()}.{ext}"]:
-                        if os.path.exists(ruta):
-                            ban_path = ruta; break
-                    if ban_path: break
-                # Fallback to liga logo (no Logo.png fallback)
-                if not ban_path:
-                    if pref in LOGOS_MAP2 and os.path.exists(LOGOS_MAP2[pref]):
-                        ban_path = LOGOS_MAP2[pref]
-                    else:
-                        for ext in ['PNG','png','jpg','JPG']:
-                            p = f"logo_{pref.lower()}.{ext}"
-                            if os.path.exists(p): ban_path = p; break
+                ban_path = obtener_banner(val) or obtener_logo_liga(''.join([c for c in str(val) if c.isalpha()]))
             else:
                 try: ban_path = obtener_banner_torneo(int(val))
                 except Exception: pass
-
-            # Fondo del item
-            rrect(cv, row_x, row_y - item_h, ban_w, item_h, r=3, fill_col=C_PANEL2)
-
             if ban_path and os.path.exists(str(ban_path)):
                 try:
-                    cv.drawImage(ImageReader(ban_path), row_x+1, row_y-ban_h,
-                                 width=ban_w-2, height=ban_h,
+                    cv.drawImage(ImageReader(ban_path), ban_x, ban_y,
+                                 width=ban_w, height=ban_h,
                                  preserveAspectRatio=True, mask='auto')
                 except Exception:
-                    pass
-
-            # Nombre del campeonato debajo de la imagen
-            label = str(val)[:9] if tipo == 'liga' else f"T.{val}"
-            txt(cv, label, row_x + ban_w/2, row_y - item_h + 2,
-                size=5.5, col=C_GOLD, font="Helvetica-Bold", anchor="center")
-
-            row_x += ban_w + ban_gap
-
-        n_rows = (len(all_camps) - 1) // items_per_row + 1
-        py = ban_y - n_rows * (item_h + 4) - 8
+                    rrect(cv, ban_x, ban_y, ban_w, ban_h, r=3, fill_col=C_PANEL2)
+                    txt(cv, str(val)[:6], ban_x+ban_w/2, ban_y+9, size=5.5,
+                        col=C_GOLD, font="Helvetica-Bold", anchor="center")
+            else:
+                rrect(cv, ban_x, ban_y, ban_w, ban_h, r=3, fill_col=C_PANEL2)
+                label = str(val)[:8] if tipo=='liga' else f"T{val}"
+                txt(cv, label, ban_x+ban_w/2, ban_y+9, size=5.5,
+                    col=C_GOLD, font="Helvetica-Bold", anchor="center")
+            ban_x += ban_w + ban_gap
+        py = ban_y - 18
     else:
         py = cy - 32
 
