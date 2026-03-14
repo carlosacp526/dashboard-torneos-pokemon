@@ -178,7 +178,7 @@ def generar_pdf_jugador(
                 if logo_path:
                     try:
                         cv.drawImage(ImageReader(logo_path),
-                                     xA+CA_W/2-12, BY+20,
+                                     xA+CA_W/2-12, BY+30,
                                      width=24, height=18,
                                      preserveAspectRatio=True, mask='auto')
                     except Exception:
