@@ -226,8 +226,8 @@ def generar_pdf_jugador(
     wo_y = wr_y - 28 - 4
     BW3 = (CB_W-16)/3
     stat_box(cv, xB+8,           wo_y, BW3, 28, "WO TOTAL",     wo_total, col=C_GOLD)
-    stat_box(cv, xB+8+BW3+4,     wo_y, BW3, 28, "WO DADOS",     wo_dados, col=C_GREEN)
-    stat_box(cv, xB+8+BW3*2+8,   wo_y, BW3, 28, "WO RECIBIDOS", wo_rec,   col=C_RED)
+    stat_box(cv, xB+8+BW3+4,     wo_y, BW3, 28, "WO RECIBIDOS", wo_dados, col=C_GREEN)
+    stat_box(cv, xB+8+BW3*2+8,   wo_y, BW3, 28, "WO DADOS",     wo_rec,   col=C_RED)
 
     n_camp = len(campeonatos_liga) + len(campeonatos_torneo)
     cy = wo_y - 18
