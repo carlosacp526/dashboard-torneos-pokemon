@@ -79,12 +79,15 @@ def stat_box(c, x, y, w, h, label, value, col=None):
     txt(c, str(value), x+w/2, y+h/2+1, size=14, col=C_TEXT, font="Helvetica-Bold", anchor="center")
     txt(c, label,      x+w/2, y+3,     size=6,  col=C_SUBTEXT, font="Helvetica", anchor="center")
 
-def skill_row(c, lx, y, label, pct, bar_w, bar_h=7, col=None):
+def skill_row(c, lx, y, label, pct, bar_w, bar_h=7, col=None, n_bat=None):
     col = col or C_BLUE
     txt(c, label[:15], lx, y+1, size=6.5, col=C_SUBTEXT, font="Helvetica")
     bx = lx + 78
     hbar(c, bx, y, bar_w, bar_h, pct, col_fill=col)
-    txt(c, f"{pct:.0f}%", bx+bar_w+4, y+1, size=6.5, col=C_TEXT, font="Helvetica-Bold")
+    pct_str = f"{pct:.0f}%"
+    if n_bat is not None:
+        pct_str += f"  ({n_bat})"
+    txt(c, pct_str, bx+bar_w+4, y+1, size=6.5, col=C_TEXT, font="Helvetica-Bold")
 
 def hline(c, x, y, w):
     ss(c, C_LINE); c.setLineWidth(0.4); c.line(x, y, x+w, y)
@@ -144,8 +147,15 @@ def generar_pdf_jugador(
     if not foto_ok:
         rrect(cv, xA+10, BY+BH-95, CA_W-20, 85, r=6, fill_col=C_PANEL2)
         txt(cv, "SIN FOTO", xA+CA_W/2, BY+BH-58, size=7, col=C_SUBTEXT, font="Helvetica", anchor="center")
-    txt(cv, player_query.split()[0][:10], xA+CA_W/2, BY+6, size=8, col=C_GOLD,
+    txt(cv, player_query.split()[0][:10], xA+CA_W/2, BY+16, size=8, col=C_GOLD,
         font="Helvetica-Bold", anchor="center")
+    # Última liga participada
+    if 'Ligas_categoria' in player_matches.columns:
+        ligas_part = player_matches[player_matches['league']=='LIGA']['Ligas_categoria'].dropna()
+        if not ligas_part.empty:
+            ultima_liga = str(ligas_part.iloc[-1])
+            txt(cv, ultima_liga, xA+CA_W/2, BY+6, size=7, col=C_SUBTEXT,
+                font="Helvetica", anchor="center")
 
     # COL B STATS
     rrect(cv, xB, BY, CB_W, BH, r=8, fill_col=C_PANEL)
@@ -197,7 +207,45 @@ def generar_pdf_jugador(
           if n_camp > 0 else "Sin campeonatos aun")
     txt(cv, cs, xB+8, cy-13, size=8, col=C_GOLD if n_camp > 0 else C_SUBTEXT, font="Helvetica-Bold")
 
-    py = cy - 32
+    # Banners de campeonatos ganados
+    ban_y = cy - 28
+    ban_h = 28
+    ban_x = xB + 8
+    ban_gap = 3
+    max_ban_w = CB_W - 16
+    all_camps = (
+        [('liga', c['Liga']) for c in campeonatos_liga] +
+        [('torneo', c['Torneo']) for c in campeonatos_torneo]
+    )
+    if all_camps:
+        n_ban = len(all_camps)
+        ban_w = min(50, (max_ban_w - ban_gap*(n_ban-1)) / n_ban)
+        for tipo, val in all_camps:
+            ban_path = None
+            if tipo == 'liga':
+                ban_path = obtener_banner(val) or obtener_logo_liga(''.join([c for c in str(val) if c.isalpha()]))
+            else:
+                try: ban_path = obtener_banner_torneo(int(val))
+                except Exception: pass
+            if ban_path and os.path.exists(str(ban_path)):
+                try:
+                    cv.drawImage(ImageReader(ban_path), ban_x, ban_y,
+                                 width=ban_w, height=ban_h,
+                                 preserveAspectRatio=True, mask='auto')
+                except Exception:
+                    rrect(cv, ban_x, ban_y, ban_w, ban_h, r=3, fill_col=C_PANEL2)
+                    txt(cv, str(val)[:6], ban_x+ban_w/2, ban_y+9, size=5.5,
+                        col=C_GOLD, font="Helvetica-Bold", anchor="center")
+            else:
+                rrect(cv, ban_x, ban_y, ban_w, ban_h, r=3, fill_col=C_PANEL2)
+                label = str(val)[:8] if tipo=='liga' else f"T{val}"
+                txt(cv, label, ban_x+ban_w/2, ban_y+9, size=5.5,
+                    col=C_GOLD, font="Helvetica-Bold", anchor="center")
+            ban_x += ban_w + ban_gap
+        py = ban_y - 18
+    else:
+        py = cy - 32
+
     txt(cv, f"Ligas participadas:   {len(ligas_jugador)}",   xB+8, py,    size=7.5, col=C_TEXT, font="Helvetica")
     txt(cv, f"Torneos participados: {len(torneos_jugador)}", xB+8, py-13, size=7.5, col=C_TEXT, font="Helvetica")
 
@@ -206,26 +254,27 @@ def generar_pdf_jugador(
     txt(cv, "RENDIMIENTO POR CATEGORIA", xC+CC_W/2, BY+BH-13, size=8,
         col=C_ACCENT, font="Helvetica-Bold", anchor="center")
 
-    BAR_W = CC_W - 118
+    BAR_W = CC_W - 124
     lx = xC + 8
     sy = BY + BH - 30
 
-    def wr_rows(matches, col_key, max_r, cols_list):
+    def wr_rows(matches, col_key):
+        """Returns dict: {label: (winrate_pct, n_batallas)}"""
         result = {}
         if col_key in matches.columns:
             for val in matches[col_key].dropna().unique():
                 s = matches[matches[col_key]==val]
                 if len(s) >= 2:
-                    w = s['winner'].str.contains(player_query, case=False, na=False).sum()
-                    result[str(val)] = round(w/len(s)*100, 1)
+                    w = int(s['winner'].str.contains(player_query, case=False, na=False).sum())
+                    result[str(val)] = (round(w/len(s)*100, 1), len(s))
         return result
 
     # Formato
     txt(cv, "WINRATE POR FORMATO", lx, sy, size=6.5, col=C_SUBTEXT, font="Helvetica-Bold"); sy -= 13
-    fmt_wr = wr_rows(player_matches, 'Formato', 5, [])
+    fmt_wr = wr_rows(player_matches, 'Formato')
     if fmt_wr:
-        for fmt, wr in sorted(fmt_wr.items(), key=lambda x:-x[1])[:5]:
-            skill_row(cv, lx, sy, fmt, wr, BAR_W, col=C_GREEN if wr>=50 else C_RED); sy -= 13
+        for fmt, (wr, nb) in sorted(fmt_wr.items(), key=lambda x:-x[1][0])[:5]:
+            skill_row(cv, lx, sy, fmt, wr, BAR_W, col=C_GREEN if wr>=50 else C_RED, n_bat=nb); sy -= 13
     else:
         txt(cv, "Sin datos", lx, sy, size=7, col=C_SUBTEXT, font="Helvetica"); sy -= 13
 
@@ -233,22 +282,22 @@ def generar_pdf_jugador(
 
     # Tipo evento
     txt(cv, "WINRATE POR TIPO DE EVENTO", lx, sy, size=6.5, col=C_SUBTEXT, font="Helvetica-Bold"); sy -= 13
-    ev_wr = wr_rows(player_matches, 'league', 5, [])
+    ev_wr = wr_rows(player_matches, 'league')
     ev_cols_list = [C_BLUE, C_GOLD, C_PURPLE, C_ORANGE, C_GREEN]
     if ev_wr:
-        for i, (ev, wr) in enumerate(sorted(ev_wr.items(), key=lambda x:-x[1])[:5]):
-            skill_row(cv, lx, sy, ev, wr, BAR_W, col=ev_cols_list[i%len(ev_cols_list)]); sy -= 13
+        for i, (ev, (wr, nb)) in enumerate(sorted(ev_wr.items(), key=lambda x:-x[1][0])[:5]):
+            skill_row(cv, lx, sy, ev, wr, BAR_W, col=ev_cols_list[i%len(ev_cols_list)], n_bat=nb); sy -= 13
     else:
         txt(cv, "Sin datos", lx, sy, size=7, col=C_SUBTEXT, font="Helvetica"); sy -= 13
 
     sy -= 3; hline(cv, xC+6, sy, CC_W-12); sy -= 8
 
-    # Tier
+    # Tier — TODOS sin cap
     txt(cv, "WINRATE POR TIER", lx, sy, size=6.5, col=C_SUBTEXT, font="Helvetica-Bold"); sy -= 13
-    tier_wr = wr_rows(player_matches, 'Tier', 4, [])
+    tier_wr = wr_rows(player_matches, 'Tier')
     if tier_wr:
-        for tier, wr in sorted(tier_wr.items(), key=lambda x:-x[1])[:4]:
-            skill_row(cv, lx, sy, tier, wr, BAR_W, col=C_BLUE if wr>=50 else C_ORANGE); sy -= 13
+        for tier, (wr, nb) in sorted(tier_wr.items(), key=lambda x:-x[1][0]):
+            skill_row(cv, lx, sy, tier, wr, BAR_W, col=C_BLUE if wr>=50 else C_ORANGE, n_bat=nb); sy -= 13
     else:
         txt(cv, "Sin datos", lx, sy, size=7, col=C_SUBTEXT, font="Helvetica"); sy -= 13
 
@@ -269,8 +318,8 @@ def generar_pdf_jugador(
 
     ROW_H = 11
     if rivales_df is not None and not rivales_df.empty:
-        max_r = max(1, int((RY - BY - 48) / ROW_H))
-        for i, (_, r) in enumerate(rivales_df.head(max_r).iterrows()):
+        for i, (_, r) in enumerate(rivales_df.head(15).iterrows()):
+            if RY < BY + 6: break
             if i % 2 == 0:
                 rrect(cv, xD+4, RY-ROW_H+1, CD_W-8, ROW_H, r=2, fill_col=C_PANEL2)
             wr = float(r.get('Winrate%', 50))
