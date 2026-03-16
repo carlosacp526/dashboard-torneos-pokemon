@@ -387,7 +387,7 @@ def generar_pdf_jugador(
     RY = BY+BH-28-12
 
     if rivales_df is not None and not rivales_df.empty:
-        for i, (_, r) in enumerate(rivales_df.head(25).iterrows()):
+        for i, (_, r) in enumerate(rivales_df.head(30).iterrows()):
             if RY < BY + 6: break
             if i % 2 == 0:
                 rrect(cv, xD+4, RY-ROW_H+1, CD_W-8, ROW_H, r=2, fill_col=C_PANEL2)
