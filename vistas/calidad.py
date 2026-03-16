@@ -16,13 +16,13 @@ SCORE_LABELS = {
 }
 
 ID_LABELS = {
-    "ID1": "Distribución WR",
+    "ID1": "Equilibrio Q4/Q3",
     "ID2": "Ratio Top",
     "ID3": "Ratio Tail",
     "ID4": "Ratio Centro",
     "ID5": "Sobrevivientes",
-    "ID6": "Derrotas Pkm",
-    "ID7": "Participación",
+    "ID6": "Resist. Derrota",
+    "ID7": "Walkovers",
 }
 
 
@@ -108,67 +108,68 @@ def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
     q2 = len(df_j[df_j['cuartil'] == 'Q2'])
     q1 = len(df_j[df_j['cuartil'] == 'Q1'])
 
-    # ── ID1: distribución winrate — qué tan cerca está Q4/Q3 del 100% ────────
-    # Ideal = Q4 ≈ Q3 (ratio ~100% = distribución equilibrada)
-    # Cuanto más se aleja del 100%, más desequilibrada la liga
+    # ── ID1: equilibrio Q4/Q3 — ideal = 100% ───────────────────────────────
+    # Rango real: 30–157%  |  p25=68  median=87  p75=110
     ratio_vr_v = round(q4 * 100 / q3, 2) if q3 > 0 else 0
-    if   q3 == 0:                 id1 = 0  # sin datos
-    elif 80 <= ratio_vr_v <= 120: id1 = 1  # Excelente — muy equilibrado
-    elif 60 <= ratio_vr_v <= 150: id1 = 2  # Buena
-    else:                          id1 = 3  # Regular — muy desequilibrado
+    if   q3 == 0:                      id1 = 0  # sin datos
+    elif 75 <= ratio_vr_v <= 125:      id1 = 1  # Excelente
+    elif 55 <= ratio_vr_v <= 155:      id1 = 2  # Buena
+    else:                               id1 = 3  # Regular
 
-    # ── ID2: top sufre jornadas malas (Q1+Q2 / Q3+Q4) ────────────────────────
+    # ── ID2: ¿el top3 también pierde jornadas? ────────────────────────────────
+    # Rango real: 28–50%  |  p25=31  median=35  p75=42
     top_low  = len(df_j[(df_j['grupo'] == 'top') & (df_j['cuartil'].isin(['Q1','Q2']))])
     top_high = len(df_j[(df_j['grupo'] == 'top') & (df_j['cuartil'].isin(['Q3','Q4']))])
     ratio_top = round(top_low * 100 / top_high, 2) if top_high > 0 else 0
-    if   ratio_top > 100: id2 = 1
-    elif ratio_top > 50:  id2 = 2
-    else:                  id2 = 3
+    if   ratio_top >= 42: id2 = 1  # Excelente — el top también sufre
+    elif ratio_top >= 33: id2 = 2  # Buena
+    else:                  id2 = 3  # Regular — el top siempre domina
 
-    # ── ID3: tail logra jornadas buenas (Q3+Q4 / Q1+Q2) ─────────────────────
+    # ── ID3: ¿el tail3 logra jornadas buenas? ────────────────────────────────
+    # Rango real: 12–50%  |  p25=28  median=28  p75=42
     tail_high = len(df_j[(df_j['grupo'] == 'tail') & (df_j['cuartil'].isin(['Q3','Q4']))])
     tail_low  = len(df_j[(df_j['grupo'] == 'tail') & (df_j['cuartil'].isin(['Q1','Q2']))])
     ratio_tail = round(tail_high * 100 / tail_low, 2) if tail_low > 0 else 0
-    if   ratio_tail > 100: id3 = 1
-    elif ratio_tail > 50:  id3 = 2
-    else:                   id3 = 3
+    if   ratio_tail >= 42: id3 = 1  # Excelente — la cola compite
+    elif ratio_tail >= 28: id3 = 2  # Buena
+    else:                   id3 = 3  # Regular — la cola nunca levanta
 
-    # ── ID4: centro con resultados intermedios (Q2+Q3 > Q1+Q4) ──────────────
+    # ── ID4: ¿el bloque centro tiene resultados mixtos? ──────────────────────
+    # Rango real: 20–200%  |  p25=52  median=80  p75=118  ideal=40–100%
     centro_ext = len(df_j[(df_j['grupo'] == 'centro') & (df_j['cuartil'].isin(['Q1','Q4']))])
     centro_mid = len(df_j[(df_j['grupo'] == 'centro') & (df_j['cuartil'].isin(['Q2','Q3']))])
     ratio_centro = round(centro_ext * 100 / centro_mid, 2) if centro_mid > 0 else 0
-    if   ratio_centro > 100:       id4 = 1
-    elif 70 <= ratio_centro < 100: id4 = 2
-    elif 0  <= ratio_centro < 70:  id4 = 3
-    else:                           id4 = 0
+    if   40 <= ratio_centro <= 100:  id4 = 1  # Excelente — centro mixto y estable
+    elif ratio_centro <= 140:         id4 = 2  # Buena
+    else:                              id4 = 3  # Regular — muy extremo o muy plano
 
-    # ── ID5: sobrevivientes ponderados por cuartil ────────────────────────────
+    # ── ID5: sobrevivientes ponderados — partidas reñidas ────────────────────
+    # Rango real: 11–45  |  p25=19  median=22  p75=30
     def sob_q(q): return df_j[df_j['cuartil'] == q]['pokes_sob'].mean() or 0
     sob_val = round(((sob_q('Q4')/3 + sob_q('Q3')/2 + sob_q('Q2')/1) / 3 - 1) * 100, 2)
-    if   sob_val > 63: id5 = 1
-    elif sob_val > 36: id5 = 2
-    elif sob_val >= 1: id5 = 3
-    else:               id5 = 0
+    if   sob_val >= 30: id5 = 1  # Excelente — partidas muy reñidas
+    elif sob_val >= 19: id5 = 2  # Buena
+    elif sob_val >= 1:  id5 = 3  # Regular
+    else:                id5 = 0  # sin datos
 
-    # ── ID6: Pkm vencidos en cuartiles bajos (resistencia al perder) ──────────
+    # ── ID6: Pkm vencidos en derrota — resistencia ────────────────────────────
+    # Rango real: 51–74  |  p25=54  median=56  p75=59
     def venc_q(q):
         v = df_j[df_j['cuartil'] == q]['poke_venc'].mean()
         return v if (v and v > 0) else 1e-9
     derr_val = round(((3/venc_q('Q3') + 2/venc_q('Q2') + 1/venc_q('Q1')) / 3) * 100, 2)
-    if   derr_val > 85: id6 = 1
-    elif derr_val >= 60: id6 = 1
-    elif derr_val > 33:  id6 = 2
-    else:                id6 = 3
+    if   derr_val >= 59: id6 = 1  # Excelente — mucha resistencia
+    elif derr_val >= 54: id6 = 2  # Buena
+    else:                 id6 = 3  # Regular
 
-    # ── ID7: participación promedio por jornada (normalizada por total) ───────
-    # Escala consistente: 1=Excelente, 2=Buena, 3=Regular, 0=Sin datos
-    part_por_jornada = df_j.groupby('jornada')['player'].nunique()
-    part_promedio = round(part_por_jornada.mean() / n_jugadores, 2)
-    if   part_promedio >= 0.9: id7 = 1  # Excelente — casi todos siempre presentes
-    elif part_promedio >= 0.7: id7 = 2  # Buena
-    elif part_promedio >= 0.5: id7 = 3  # Regular
-    else:                       id7 = 0  # Sin datos / muy mal
-
+    # ── ID7: walkovers — ausencias que dañan la competencia ──────────────────
+    # Rango real: 0–21.6%  |  p25=0%  median=5.9%  p75=9.3%
+    wo_total  = liga_rows[liga_rows['Walkover'] == 1].shape[0]
+    total_part = len(liga_rows)
+    wo_pct    = round(wo_total * 100 / total_part, 2) if total_part > 0 else 0
+    if   wo_pct == 0:  id7 = 1  # Excelente — sin walkovers
+    elif wo_pct <= 6:  id7 = 2  # Buena — pocos WO
+    else:               id7 = 3  # Regular — muchos WO
     calidad = int(round((id1+id2+id3+id4+id5+id6+id7) / 7, 0))
 
     return pd.DataFrame([{
@@ -179,7 +180,7 @@ def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
         'RATIO CENTRAL': ratio_centro,
         'SOB PROM':      sob_val,
         'VEN CENT':      derr_val,
-        'N%':            part_promedio,
+        'WO%':            wo_pct,
         'ID1': id1, 'ID2': id2, 'ID3': id3, 'ID4': id4,
         'ID5': id5, 'ID6': id6, 'ID7': id7,
         'CALIDAD_LIGA':  calidad,
@@ -281,7 +282,7 @@ def show():
 
     with tab1:
         display_cols = ['formato','CALIDAD_LIGA','ID1','ID2','ID3','ID4','ID5','ID6','ID7',
-                        'RATIO_VR_V','RATIO TOP','RATIO TAIL','RATIO CENTRAL','SOB PROM','VEN CENT','N%']
+                        'RATIO_VR_V','RATIO TOP','RATIO TAIL','RATIO CENTRAL','SOB PROM','VEN CENT','WO%']
         display_cols = [c for c in display_cols if c in df_view.columns]
         tabla = df_view[display_cols].copy()
 
@@ -394,7 +395,7 @@ y permite comparar ligas con distintos formatos de manera justa.
         c1.metric("Calidad Liga",  f"{calidad}/3", label)
         c2.metric("Formato",       row.get('formato',''))
         c3.metric("Sob. Prom.",    f"{row.get('SOB PROM',0):.1f}")
-        c4.metric("Participación", f"{row.get('N%',0)*100:.0f}%")
+        c4.metric("Participación", f"{row.get('WO%',0)*100:.0f}%")
 
         id_cols_disp = [c for c in ['ID1','ID2','ID3','ID4','ID5','ID6','ID7'] if c in df_view.columns]
         cols_ids = st.columns(len(id_cols_disp))
