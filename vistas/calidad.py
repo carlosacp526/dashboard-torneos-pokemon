@@ -395,7 +395,7 @@ y permite comparar ligas con distintos formatos de manera justa.
         c1.metric("Calidad Liga",  f"{calidad}/3", label)
         c2.metric("Formato",       row.get('formato',''))
         c3.metric("Sob. Prom.",    f"{row.get('SOB PROM',0):.1f}")
-        c4.metric("Participación", f"{row.get('WO%',0)*100:.0f}%")
+        c4.metric("Walkovers", f"{row.get('WO%',0):.1f}%")
 
         id_cols_disp = [c for c in ['ID1','ID2','ID3','ID4','ID5','ID6','ID7'] if c in df_view.columns]
         cols_ids = st.columns(len(id_cols_disp))
