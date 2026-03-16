@@ -25,7 +25,7 @@ st.session_state["_pages"] = {
     "rankings":   p_rankings,
     "elo":        p_elo,
     "prediccion": p_prediccion,
-    "Calidad": p_calidad 
+    "calidad": p_calidad 
 }
 
 pg = st.navigation({

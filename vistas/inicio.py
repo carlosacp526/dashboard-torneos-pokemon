@@ -120,3 +120,18 @@ def show():
         if st.button("➡️ Ir a Ligas y Torneos", use_container_width=True, key="btn_ligas"):
             if "ligas" in pages:
                 st.switch_page(pages["ligas"])
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Fila 3 ───────────────────────────────────────────────────────
+    col_g, col_h, col_i = st.columns(3)
+
+    with col_g:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🔬 Calidad de Ligas</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 📊 Indicadores por temporada\n- 🌡️ Heatmap de competitividad\n- 🎯 Ratio élite / cola\n- 📈 Participación y sobrevivientes")
+        if st.button("➡️ Ir a Calidad de Ligas", use_container_width=True, key="btn_calidad"):
+            if "calidad" in pages:
+                st.switch_page(pages["calidad"])
