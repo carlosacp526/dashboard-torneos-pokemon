@@ -108,12 +108,14 @@ def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
     q2 = len(df_j[df_j['cuartil'] == 'Q2'])
     q1 = len(df_j[df_j['cuartil'] == 'Q1'])
 
-    # ── ID1: distribución winrate — ratio Q4/Q3 ──────────────────────────────
+    # ── ID1: distribución winrate — qué tan cerca está Q4/Q3 del 100% ────────
+    # Ideal = Q4 ≈ Q3 (ratio ~100% = distribución equilibrada)
+    # Cuanto más se aleja del 100%, más desequilibrada la liga
     ratio_vr_v = round(q4 * 100 / q3, 2) if q3 > 0 else 0
-    if   ratio_vr_v > 100: id1 = 0
-    elif ratio_vr_v > 70:  id1 = 1
-    elif ratio_vr_v > 50:  id1 = 2
-    else:                   id1 = 3
+    if   q3 == 0:                 id1 = 0  # sin datos
+    elif 80 <= ratio_vr_v <= 120: id1 = 1  # Excelente — muy equilibrado
+    elif 60 <= ratio_vr_v <= 150: id1 = 2  # Buena
+    else:                          id1 = 3  # Regular — muy desequilibrado
 
     # ── ID2: top sufre jornadas malas (Q1+Q2 / Q3+Q4) ────────────────────────
     top_low  = len(df_j[(df_j['grupo'] == 'top') & (df_j['cuartil'].isin(['Q1','Q2']))])
@@ -159,13 +161,13 @@ def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
     else:                id6 = 3
 
     # ── ID7: participación promedio por jornada (normalizada por total) ───────
-    # Usa promedio en vez de mínimo → más justo para ligas con pocas jornadas
+    # Escala consistente: 1=Excelente, 2=Buena, 3=Regular, 0=Sin datos
     part_por_jornada = df_j.groupby('jornada')['player'].nunique()
     part_promedio = round(part_por_jornada.mean() / n_jugadores, 2)
-    if   part_promedio >= 0.9: id7 = 3
-    elif part_promedio >= 0.7: id7 = 2
-    elif part_promedio >= 0.5: id7 = 1
-    else:                       id7 = 0
+    if   part_promedio >= 0.9: id7 = 1  # Excelente — casi todos siempre presentes
+    elif part_promedio >= 0.7: id7 = 2  # Buena
+    elif part_promedio >= 0.5: id7 = 3  # Regular
+    else:                       id7 = 0  # Sin datos / muy mal
 
     calidad = int(round((id1+id2+id3+id4+id5+id6+id7) / 7, 0))
 
