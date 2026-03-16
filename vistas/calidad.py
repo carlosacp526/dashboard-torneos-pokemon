@@ -8,8 +8,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields
 
 # ── Constantes ────────────────────────────────────────────────────────────────
-LIGAS_ORDER = ['PJS', 'PES', 'PSS', 'PMS', 'PLS']
-
 SCORE_LABELS = {
     1: ("🟢 Excelente", "#2ECC71"),
     2: ("🟡 Buena",     "#F1C40F"),
@@ -18,7 +16,7 @@ SCORE_LABELS = {
 }
 
 ID_LABELS = {
-    "ID1": "Ratio V/VR",
+    "ID1": "Distribución WR",
     "ID2": "Ratio Top",
     "ID3": "Ratio Tail",
     "ID4": "Ratio Centro",
@@ -27,14 +25,13 @@ ID_LABELS = {
     "ID7": "Participación",
 }
 
-# ── Construcción del dataframe por jornada ────────────────────────────────────
+
+# ── Paso 1: tabla jugador × jornada normalizada ───────────────────────────────
 def build_jornada_df(liga_rows: pd.DataFrame) -> pd.DataFrame:
     """
-    A partir de las filas de liga del CSV, construye un DataFrame
-    equivalente al que el notebook leía desde los Excel:
-    una fila por jugador × jornada con columnas:
-    Estadisticas Generales, Jornada, Victorias, Juegos,
-    pokes_sobrevivientes, poke_vencidos, Puntaje, Estado
+    Construye una fila por jugador × jornada con winrate normalizado (0-1)
+    y stats de Pokémon por partida. Funciona para cualquier cantidad de
+    partidas por jornada (3, 5, 7, etc.)
     """
     rows = []
     for jornada in sorted(liga_rows['Jornada'].dropna().unique()):
@@ -49,193 +46,142 @@ def build_jornada_df(liga_rows: pd.DataFrame) -> pd.DataFrame:
             sob = 0; venc = 0
             for _, r in p_games.iterrows():
                 if r['winner'] == p:
-                    sob  += float(r['pokemons Sob'])  if pd.notna(r['pokemons Sob'])  else 0
-                    venc += float(r['pokemon vencidos']) if pd.notna(r['pokemon vencidos']) else 0
+                    sob  += float(r['pokemons Sob'])       if pd.notna(r['pokemons Sob'])       else 0
+                    venc += float(r['pokemon vencidos'])    if pd.notna(r['pokemon vencidos'])   else 0
                 else:
-                    sob  += float(r['pokemon vencidos'] - 6) if pd.notna(r['pokemon vencidos']) else 0
-                    venc += float(6 - r['pokemons Sob'])     if pd.notna(r['pokemons Sob'])     else 0
+                    sob  += float(r['pokemon vencidos']-6) if pd.notna(r['pokemon vencidos'])   else 0
+                    venc += float(6 - r['pokemons Sob'])   if pd.notna(r['pokemons Sob'])        else 0
             rows.append({
-                'Estadisticas Generales': p,
-                'Jornada':               jornada,
-                'Victorias':             wins,
-                'Juegos':                games,
-                'pokes_sobrevivientes':  sob,
-                'poke_vencidos':         venc,
-                'Puntaje':               wins,
-                'Estado':                1,
+                'player':    p,
+                'jornada':   jornada,
+                'wins':      wins,
+                'games':     games,
+                'winrate':   wins / games if games > 0 else 0,  # normalizado 0-1
+                'pokes_sob': sob  / games if games > 0 else 0,  # por partida
+                'poke_venc': venc / games if games > 0 else 0,  # por partida
             })
     return pd.DataFrame(rows)
 
 
-# ── Función principal de calidad (adaptación de `alineacion`) ─────────────────
-def calcular_calidad(data: pd.DataFrame, column: str) -> pd.DataFrame:
+def asignar_cuartil(wr: float) -> str:
     """
-    Replica la función `alineacion` del notebook.
-    Devuelve un DataFrame de 1 fila con los indicadores ID1-ID7 y CALIDAD_LIGA.
+    Divide en cuartiles fijos basados en winrate normalizado.
+    Funciona igual para 3, 5 o 7 partidas por jornada.
+      Q4 = élite    (≥75% victorias)
+      Q3 = bueno    (50-74%)
+      Q2 = regular  (25-49%)
+      Q1 = cola     (<25%)
     """
-    if data.empty or data['Victorias'].nunique() < 2:
+    if   wr >= 0.75: return 'Q4'
+    elif wr >= 0.50: return 'Q3'
+    elif wr >= 0.25: return 'Q2'
+    else:             return 'Q1'
+
+
+# ── Paso 2: calcular los 7 indicadores ───────────────────────────────────────
+def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
+    df_j = build_jornada_df(liga_rows)
+    if df_j.empty or df_j['player'].nunique() < 4:
         return pd.DataFrame()
 
-    # ── id1: pokes promedio por nivel de victorias ────────────────────────────
-    id1 = (data.groupby('Victorias')
-               .agg({'pokes_sobrevivientes': 'mean', 'poke_vencidos': 'mean'})
-               .reset_index()
-               .rename(columns={'Victorias': 'index'}))
-    id1['pokes_sobrevivientes'] = id1['pokes_sobrevivientes'].apply(lambda x: round(x / 3, 2))
-    id1['poke_vencidos']        = id1['poke_vencidos'].apply(lambda x: round(x / 3, 2))
+    games_per_jornada = df_j['games'].median()
+    n_jornadas   = df_j['jornada'].nunique()
+    n_jugadores  = df_j['player'].nunique()
 
-    # ── N y % por nivel de victorias ─────────────────────────────────────────
-    N = (data.groupby('Victorias')['Estado'].count()
-             .reset_index()
-             .rename(columns={'Victorias': 'index', 'Estado': 'Estado'}))
-    N['N'] = N['index']
+    # Cuartil por jornada normalizado
+    df_j['cuartil'] = df_j['winrate'].apply(asignar_cuartil)
 
-    PORCENTAJE = data.groupby('Victorias')['Estado'].count().reset_index()
-    PORCENTAJE['%'] = PORCENTAJE['Estado'] * 100 / data['Victorias'].shape[0]
-    PORCENTAJE = PORCENTAJE.drop(columns=['Estado']).rename(columns={'Victorias': 'index'})
+    # Clasificar jugadores en top3 / tail3 / centro según winrate acumulado
+    p_stats = df_j.groupby('player').agg(
+        total_wins=('wins', 'sum'), total_games=('games', 'sum')
+    )
+    p_stats['wr_total'] = p_stats['total_wins'] / p_stats['total_games']
+    top3  = p_stats.nlargest(3,  'wr_total').index.tolist()
+    tail3 = p_stats.nsmallest(3, 'wr_total').index.tolist()
+    df_j['grupo'] = df_j['player'].apply(
+        lambda p: 'top' if p in top3 else ('tail' if p in tail3 else 'centro')
+    )
 
-    # ── Top 3 jugadores ───────────────────────────────────────────────────────
-    nombres_tops = (data.groupby('Estadisticas Generales')
-                        .agg({'Puntaje': 'mean', 'Victorias': 'sum'})
-                        .sort_values(['Puntaje', 'Victorias'], ascending=False)
-                        .head(3).index.values)
-    top = pd.DataFrame()
-    for p in nombres_tops:
-        t1 = data[data['Estadisticas Generales'] == p].groupby('Victorias')['Juegos'].count()
-        top = pd.concat([top, t1], axis=1)
-    if not top.empty:
-        top = top.reset_index().groupby('index').sum()
-        top = top['Juegos'].sum(axis=1).reset_index()
-        top.columns = ['index', 'top']
-    else:
-        top = pd.DataFrame({'index': [0,1,2,3], 'top': [0,0,0,0]})
+    # conteos por cuartil
+    q4 = len(df_j[df_j['cuartil'] == 'Q4'])
+    q3 = len(df_j[df_j['cuartil'] == 'Q3'])
+    q2 = len(df_j[df_j['cuartil'] == 'Q2'])
+    q1 = len(df_j[df_j['cuartil'] == 'Q1'])
 
-    # ── Tail 3 jugadores ──────────────────────────────────────────────────────
-    nombres_tail = (data.groupby('Estadisticas Generales')
-                        .agg({'Puntaje': 'mean', 'Victorias': 'sum'})
-                        .sort_values(['Puntaje', 'Victorias'], ascending=False)
-                        .tail(3).index.values)
-    tail = pd.DataFrame()
-    for p in nombres_tail:
-        t1 = data[data['Estadisticas Generales'] == p].groupby('Victorias')['Juegos'].count()
-        tail = pd.concat([tail, t1], axis=1)
-    if not tail.empty:
-        tail = tail.reset_index().groupby('index').sum()
-        tail = tail['Juegos'].sum(axis=1).reset_index()
-        tail.columns = ['index', 'tail']
-    else:
-        tail = pd.DataFrame({'index': [0,1,2,3], 'tail': [0,0,0,0]})
+    # ── ID1: distribución winrate — ratio Q4/Q3 ──────────────────────────────
+    ratio_vr_v = round(q4 * 100 / q3, 2) if q3 > 0 else 0
+    if   ratio_vr_v > 100: id1 = 0
+    elif ratio_vr_v > 70:  id1 = 1
+    elif ratio_vr_v > 50:  id1 = 2
+    else:                   id1 = 3
 
-    # ── Jugadores únicos por nivel ────────────────────────────────────────────
-    unicos = (data.groupby('Victorias')['Estadisticas Generales'].nunique()
-                  .reset_index()
-                  .rename(columns={'Victorias': 'index', 'Estadisticas Generales': 'Unicos_P'}))
-
-    # ── Cuadro final ─────────────────────────────────────────────────────────
-    cuadro = (N.merge(PORCENTAJE, on='index', how='left')
-               .merge(top,    on='index', how='left')
-               .merge(tail,   on='index', how='left')
-               .merge(id1,    on='index', how='left')
-               .merge(unicos, on='index', how='left'))
-    cuadro['top']  = cuadro['top'].fillna(0)
-    cuadro['tail'] = cuadro['tail'].fillna(0)
-    cuadro['centro'] = cuadro['Estado'] - cuadro['top'] - cuadro['tail']
-
-    def get_row(idx):
-        r = cuadro[cuadro['index'] == idx]
-        return r.iloc[0] if not r.empty else pd.Series({'Estado': 0, 'top': 0, 'tail': 0,
-                                                         'centro': 0, 'pokes_sobrevivientes': 0,
-                                                         'poke_vencidos': 1e-9, 'Unicos_P': 0})
-
-    r0 = get_row(0); r1 = get_row(1); r2 = get_row(2); r3 = get_row(3)
-
-    # ID1: ratio V (3 wins) vs VR (2 wins)
-    vr = float(r2['Estado']); v = float(r3['Estado'])
-    ratio_vr_v = round(v * 100 / vr, 2) if vr > 0 else 0
-    if   ratio_vr_v > 100: id1_score = 0
-    elif ratio_vr_v > 70:  id1_score = 1
-    elif ratio_vr_v > 50:  id1_score = 2
-    else:                   id1_score = 3
-
-    # ID2: ratio top (low wins / high wins)
-    top_low  = float(r0['top']) + float(r1['top'])
-    top_high = float(r2['top']) + float(r3['top'])
+    # ── ID2: top sufre jornadas malas (Q1+Q2 / Q3+Q4) ────────────────────────
+    top_low  = len(df_j[(df_j['grupo'] == 'top') & (df_j['cuartil'].isin(['Q1','Q2']))])
+    top_high = len(df_j[(df_j['grupo'] == 'top') & (df_j['cuartil'].isin(['Q3','Q4']))])
     ratio_top = round(top_low * 100 / top_high, 2) if top_high > 0 else 0
-    if   ratio_top > 100: id2_score = 1
-    elif ratio_top > 50:  id2_score = 2
-    else:                  id2_score = 3
+    if   ratio_top > 100: id2 = 1
+    elif ratio_top > 50:  id2 = 2
+    else:                  id2 = 3
 
-    # ID3: ratio tail (high wins / low wins)
-    tail_high = float(r2['tail']) + float(r3['tail'])
-    tail_low  = float(r0['tail']) + float(r1['tail'])
+    # ── ID3: tail logra jornadas buenas (Q3+Q4 / Q1+Q2) ─────────────────────
+    tail_high = len(df_j[(df_j['grupo'] == 'tail') & (df_j['cuartil'].isin(['Q3','Q4']))])
+    tail_low  = len(df_j[(df_j['grupo'] == 'tail') & (df_j['cuartil'].isin(['Q1','Q2']))])
     ratio_tail = round(tail_high * 100 / tail_low, 2) if tail_low > 0 else 0
-    if   ratio_tail > 100: id3_score = 1
-    elif ratio_tail > 50:  id3_score = 2
-    else:                   id3_score = 3
+    if   ratio_tail > 100: id3 = 1
+    elif ratio_tail > 50:  id3 = 2
+    else:                   id3 = 3
 
-    # ID4: ratio centro
-    centro_ext  = float(r3['centro']) + float(r0['centro'])
-    centro_mid  = float(r1['centro']) + float(r2['centro'])
+    # ── ID4: centro con resultados intermedios (Q2+Q3 > Q1+Q4) ──────────────
+    centro_ext = len(df_j[(df_j['grupo'] == 'centro') & (df_j['cuartil'].isin(['Q1','Q4']))])
+    centro_mid = len(df_j[(df_j['grupo'] == 'centro') & (df_j['cuartil'].isin(['Q2','Q3']))])
     ratio_centro = round(centro_ext * 100 / centro_mid, 2) if centro_mid > 0 else 0
-    if   ratio_centro > 100:           id4_score = 1
-    elif 70 <= ratio_centro < 100:     id4_score = 2
-    elif 0  <= ratio_centro < 70:      id4_score = 3
-    else:                               id4_score = 0
+    if   ratio_centro > 100:       id4 = 1
+    elif 70 <= ratio_centro < 100: id4 = 2
+    elif 0  <= ratio_centro < 70:  id4 = 3
+    else:                           id4 = 0
 
-    # ID5: sobrevivientes ponderados
-    sob_val = round(
-        ((float(r3['pokes_sobrevivientes']) / 3 +
-          float(r2['pokes_sobrevivientes']) / 2 +
-          float(r1['pokes_sobrevivientes']) / 1) / 3 - 1) * 100, 2)
-    if   sob_val > 63: id5_score = 1
-    elif sob_val > 36: id5_score = 2
-    elif sob_val >= 1: id5_score = 3
-    else:               id5_score = 0
+    # ── ID5: sobrevivientes ponderados por cuartil ────────────────────────────
+    def sob_q(q): return df_j[df_j['cuartil'] == q]['pokes_sob'].mean() or 0
+    sob_val = round(((sob_q('Q4')/3 + sob_q('Q3')/2 + sob_q('Q2')/1) / 3 - 1) * 100, 2)
+    if   sob_val > 63: id5 = 1
+    elif sob_val > 36: id5 = 2
+    elif sob_val >= 1: id5 = 3
+    else:               id5 = 0
 
-    # ID6: pokémon vencidos
-    pv2 = float(r2['poke_vencidos']); pv1 = float(r1['poke_vencidos']); pv0 = float(r0['poke_vencidos'])
-    pv2 = pv2 if pv2 > 0 else 1e-9
-    pv1 = pv1 if pv1 > 0 else 1e-9
-    pv0 = pv0 if pv0 > 0 else 1e-9
-    derr_val = round(((3 / pv2 + 2 / pv1 + 1 / pv0) / 3) * 100, 2)
-    if   derr_val > 85: id6_score = 1
-    elif derr_val >= 60: id6_score = 1
-    elif derr_val > 33:  id6_score = 2
-    else:                id6_score = 3
+    # ── ID6: Pkm vencidos en cuartiles bajos (resistencia al perder) ──────────
+    def venc_q(q):
+        v = df_j[df_j['cuartil'] == q]['poke_venc'].mean()
+        return v if (v and v > 0) else 1e-9
+    derr_val = round(((3/venc_q('Q3') + 2/venc_q('Q2') + 1/venc_q('Q1')) / 3) * 100, 2)
+    if   derr_val > 85: id6 = 1
+    elif derr_val >= 60: id6 = 1
+    elif derr_val > 33:  id6 = 2
+    else:                id6 = 3
 
-    # ID7: participación (mínimo de únicos / total jugadores)
-    total_j = data['Estadisticas Generales'].nunique()
-    min_unicos = float(cuadro['Unicos_P'].min()) if 'Unicos_P' in cuadro.columns else 0
-    n_por = round(min_unicos / total_j, 2) if total_j > 0 else 0
-    if   n_por >= 0.9: id7_score = 3
-    elif n_por >= 0.7: id7_score = 2
-    elif n_por >= 0.5: id7_score = 1
-    else:               id7_score = 0
+    # ── ID7: participación promedio por jornada (normalizada por total) ───────
+    # Usa promedio en vez de mínimo → más justo para ligas con pocas jornadas
+    part_por_jornada = df_j.groupby('jornada')['player'].nunique()
+    part_promedio = round(part_por_jornada.mean() / n_jugadores, 2)
+    if   part_promedio >= 0.9: id7 = 3
+    elif part_promedio >= 0.7: id7 = 2
+    elif part_promedio >= 0.5: id7 = 1
+    else:                       id7 = 0
 
-    calidad = int(round((id1_score + id2_score + id3_score + id4_score +
-                          id5_score + id6_score + id7_score) / 7, 0))
+    calidad = int(round((id1+id2+id3+id4+id5+id6+id7) / 7, 0))
 
-    d_final = pd.DataFrame([{
+    return pd.DataFrame([{
+        'formato':       f"{int(games_per_jornada)}p/{n_jornadas}j/{n_jugadores}jug",
         'RATIO_VR_V':    ratio_vr_v,
-        'VR':            vr,
-        'V':             v,
         'RATIO TOP':     ratio_top,
         'RATIO TAIL':    ratio_tail,
         'RATIO CENTRAL': ratio_centro,
         'SOB PROM':      sob_val,
         'VEN CENT':      derr_val,
-        'N%':            n_por,
-        'ID1':           id1_score,
-        'ID2':           id2_score,
-        'ID3':           id3_score,
-        'ID4':           id4_score,
-        'ID5':           id5_score,
-        'ID6':           id6_score,
-        'ID7':           id7_score,
+        'N%':            part_promedio,
+        'ID1': id1, 'ID2': id2, 'ID3': id3, 'ID4': id4,
+        'ID5': id5, 'ID6': id6, 'ID7': id7,
         'CALIDAD_LIGA':  calidad,
-    }])
-    d_final.index = [column]
-    return d_final
+    }], index=[column])
 
 
 @st.cache_data(ttl=3600)
@@ -243,7 +189,7 @@ def calcular_todas_las_ligas(_df_raw):
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
     liga_rows = df[df['league'] == 'LIGA'].copy()
-    liga_rows = liga_rows[liga_rows['Walkover'] >= 0]  # excluir WO
+    liga_rows = liga_rows[liga_rows['Walkover'] >= 0]
     liga_rows['Liga_Temporada'] = liga_rows['round'].apply(
         lambda x: str(x).split(' ')[0] + str(x).split(' ')[1]
         if pd.notna(x) and len(str(x).split(' ')) > 1 else ''
@@ -251,48 +197,36 @@ def calcular_todas_las_ligas(_df_raw):
     liga_rows['Jornada'] = liga_rows['round'].apply(
         lambda x: int(str(x).split(' J')[1]) if pd.notna(x) and ' J' in str(x) else None
     )
-    liga_rows = liga_rows[liga_rows['Liga_Temporada'] != '']
-    liga_rows = liga_rows[liga_rows['Jornada'].notna()]
-    liga_rows = liga_rows[liga_rows['Jornada'] != 10]  # excluir playoffs
+    liga_rows = liga_rows[(liga_rows['Liga_Temporada'] != '') &
+                           liga_rows['Jornada'].notna() &
+                           (liga_rows['Jornada'] != 10)]
 
     resultados = []
     for lt in sorted(liga_rows['Liga_Temporada'].unique()):
         sub = liga_rows[liga_rows['Liga_Temporada'] == lt].copy()
-        jdf = build_jornada_df(sub)
-        if jdf.empty:
-            continue
-        res = calcular_calidad(jdf, column=lt)
+        res = calcular_calidad(sub, column=lt)
         if not res.empty:
             resultados.append(res)
 
-    if not resultados:
-        return pd.DataFrame()
-    return pd.concat(resultados)
-
-
-# ── Helpers de visualización ──────────────────────────────────────────────────
-def score_badge(score: int) -> str:
-    label, color = SCORE_LABELS.get(score, ("⚫", "#95A5A6"))
-    return f'<span style="background:{color};color:white;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.8em">{label}</span>'
-
-def calidad_color(score: int) -> str:
-    return SCORE_LABELS.get(score, ("", "#95A5A6"))[1]
+    return pd.concat(resultados) if resultados else pd.DataFrame()
 
 
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
     st.header("🔬 Control de Calidad de Ligas")
-    st.caption("Indicadores estadísticos de competitividad por temporada, basados en distribución de victorias, rendimiento de élite/cola y participación.")
+    st.caption(
+        "Indicadores normalizados de competitividad — funcionan correctamente "
+        "independientemente de si la liga tiene 3, 5 o 7 partidas por jornada."
+    )
 
     with st.spinner("Calculando indicadores de calidad..."):
         df_raw = load_data()
         data_calidad = calcular_todas_las_ligas(df_raw)
 
     if data_calidad.empty:
-        st.error("No se pudieron calcular indicadores. Verificá los datos de liga en el CSV.")
+        st.error("No se pudieron calcular indicadores.")
         return
 
-    # Agregar columna Liga y Temporada para filtros
     data_calidad = data_calidad.copy()
     data_calidad['Liga']      = data_calidad.index.map(lambda x: x[:3])
     data_calidad['Temporada'] = data_calidad.index.map(lambda x: x[3:])
@@ -317,9 +251,8 @@ def show():
         st.warning("Sin resultados para el filtro seleccionado.")
         return
 
-    # ── Resumen visual: calidad por liga ─────────────────────────────────────
+    # ── Cards de calidad ──────────────────────────────────────────────────────
     st.markdown("### 📊 Resumen de Calidad por Temporada")
-
     cols_per_row = 4
     items = list(df_view.iterrows())
     for row_start in range(0, len(items), cols_per_row):
@@ -328,179 +261,139 @@ def show():
         for col, (idx, row) in zip(cols, batch):
             calidad = int(row['CALIDAD_LIGA'])
             label, color = SCORE_LABELS.get(calidad, ("⚫", "#95A5A6"))
+            fmt = row.get('formato', '')
             with col:
                 st.markdown(f"""
 <div style="background:{color}22;border:2px solid {color};border-radius:10px;
             padding:12px;text-align:center;margin-bottom:8px">
   <div style="font-size:1.4em;font-weight:bold;color:{color}">{idx}</div>
-  <div style="font-size:0.9em;color:{color};font-weight:bold">{label}</div>
+  <div style="font-size:0.7em;color:#888">{fmt}</div>
   <div style="font-size:2em;font-weight:bold;color:{color}">{calidad}</div>
-  <div style="font-size:0.7em;color:#666">CALIDAD LIGA</div>
+  <div style="font-size:0.75em;color:{color};font-weight:bold">{label}</div>
 </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # ── Tabla detallada de indicadores ───────────────────────────────────────
-    st.markdown("### 📋 Detalle de Indicadores")
-
+    # ── Tabs ──────────────────────────────────────────────────────────────────
     tab1, tab2, tab3 = st.tabs(["🔢 Tabla Completa", "📈 Comparativa", "📖 Interpretación"])
 
     with tab1:
-        # Tabla con colores por score
-        display_cols = ['CALIDAD_LIGA', 'ID1', 'ID2', 'ID3', 'ID4', 'ID5', 'ID6', 'ID7',
-                        'RATIO_VR_V', 'RATIO TOP', 'RATIO TAIL', 'RATIO CENTRAL',
-                        'SOB PROM', 'VEN CENT', 'N%']
+        display_cols = ['formato','CALIDAD_LIGA','ID1','ID2','ID3','ID4','ID5','ID6','ID7',
+                        'RATIO_VR_V','RATIO TOP','RATIO TAIL','RATIO CENTRAL','SOB PROM','VEN CENT','N%']
         display_cols = [c for c in display_cols if c in df_view.columns]
         tabla = df_view[display_cols].copy()
 
         def color_score(val):
             try:
                 v = int(val)
-                colors_map = {0: '#95A5A680', 1: '#2ECC7180', 2: '#F1C40F80', 3: '#E74C3C80'}
-                return f'background-color: {colors_map.get(v, "")}'
+                cm = {0:'#95A5A680', 1:'#2ECC7180', 2:'#F1C40F80', 3:'#E74C3C80'}
+                return f'background-color:{cm.get(v,"")}'
             except Exception:
                 return ''
 
-        id_cols = ['CALIDAD_LIGA', 'ID1', 'ID2', 'ID3', 'ID4', 'ID5', 'ID6', 'ID7']
+        id_cols = ['CALIDAD_LIGA','ID1','ID2','ID3','ID4','ID5','ID6','ID7']
         styled = tabla.style.applymap(color_score, subset=[c for c in id_cols if c in tabla.columns])
         st.dataframe(styled, use_container_width=True)
 
-        # Rename columns for clarity
-        tabla_rename = tabla.rename(columns={**ID_LABELS,
-                                              'CALIDAD_LIGA': 'Calidad Liga',
-                                              'RATIO_VR_V': '% V/VR',
-                                              'RATIO TOP': '% Top',
-                                              'RATIO TAIL': '% Tail',
-                                              'RATIO CENTRAL': '% Centro',
-                                              'SOB PROM': 'Sob Prom',
-                                              'VEN CENT': 'Venc Cent',
-                                              'N%': 'Part%'})
-        csv = tabla_rename.to_csv().encode('utf-8')
+        csv = tabla.to_csv().encode('utf-8')
         st.download_button("📥 Descargar CSV", csv, "calidad_ligas.csv", "text/csv")
 
     with tab2:
         id_cols_avail = [c for c in ['ID1','ID2','ID3','ID4','ID5','ID6','ID7'] if c in df_view.columns]
 
-        # Heatmap de indicadores
-        heat_data = df_view[id_cols_avail].copy().T
+        # Heatmap
+        heat_data = df_view[id_cols_avail].T
         heat_data.index = [ID_LABELS.get(c, c) for c in heat_data.index]
-
         fig_heat = go.Figure(data=go.Heatmap(
             z=heat_data.values,
             x=heat_data.columns.tolist(),
             y=heat_data.index.tolist(),
-            colorscale=[[0, '#95A5A6'], [0.33, '#E74C3C'], [0.66, '#F1C40F'], [1, '#2ECC71']],
+            colorscale=[[0,'#95A5A6'],[0.33,'#2ECC71'],[0.66,'#F1C40F'],[1,'#E74C3C']],
             zmin=0, zmax=3,
-            text=heat_data.values,
-            texttemplate="%{text}",
-            hoverongaps=False,
+            text=heat_data.values, texttemplate="%{text}",
         ))
-        fig_heat.update_layout(
-            title="Heatmap de Indicadores por Temporada",
-            height=350,
-            xaxis_tickangle=-45,
-            margin=dict(l=150)
-        )
+        fig_heat.update_layout(title="Heatmap de Indicadores por Temporada",
+                                height=350, xaxis_tickangle=-45, margin=dict(l=150))
         st.plotly_chart(fig_heat, use_container_width=True)
 
-        # Calidad general por temporada
+        # Barras
         fig_bar = px.bar(
-            df_view.reset_index(),
-            x='index', y='CALIDAD_LIGA',
+            df_view.reset_index(), x='index', y='CALIDAD_LIGA',
             color='CALIDAD_LIGA',
-            color_continuous_scale=['#E74C3C', '#F1C40F', '#2ECC71'],
-            range_color=[0, 3],
+            color_continuous_scale=['#2ECC71','#F1C40F','#E74C3C'],
+            range_color=[1, 3],
             title="Calidad Liga por Temporada",
-            labels={'index': 'Temporada', 'CALIDAD_LIGA': 'Calidad (0-3)'},
-            text='CALIDAD_LIGA',
+            labels={'index':'Temporada','CALIDAD_LIGA':'Calidad (1-3)'},
+            text='CALIDAD_LIGA', hover_data=['formato'],
         )
         fig_bar.update_traces(textposition='outside')
         fig_bar.update_layout(xaxis_tickangle=-45, showlegend=False)
         st.plotly_chart(fig_bar, use_container_width=True)
 
-        # Radar por temporada seleccionada
-        if len(df_view) == 1:
-            row = df_view.iloc[0]
-            vals = [float(row.get(c, 0)) for c in id_cols_avail]
+        # Radar
+        fig_radar = go.Figure()
+        for idx, row in df_view.iterrows():
+            vals   = [float(row.get(c, 0)) for c in id_cols_avail]
             labels = [ID_LABELS.get(c, c) for c in id_cols_avail]
-            fig_radar = go.Figure(go.Scatterpolar(
-                r=vals + [vals[0]],
-                theta=labels + [labels[0]],
-                fill='toself',
-                fillcolor='rgba(52,152,219,0.3)',
-                line=dict(color='#3498DB'),
-                name=df_view.index[0]
+            fig_radar.add_trace(go.Scatterpolar(
+                r=vals + [vals[0]], theta=labels + [labels[0]],
+                fill='toself', name=idx, opacity=0.6,
             ))
-            fig_radar.update_layout(
-                polar=dict(radialaxis=dict(visible=True, range=[0, 3])),
-                title=f"Perfil de Calidad — {df_view.index[0]}",
-                height=400
-            )
-            st.plotly_chart(fig_radar, use_container_width=True)
-        else:
-            # Multi-temporada radar
-            fig_radar = go.Figure()
-            for idx, row in df_view.iterrows():
-                vals = [float(row.get(c, 0)) for c in id_cols_avail]
-                labels = [ID_LABELS.get(c, c) for c in id_cols_avail]
-                fig_radar.add_trace(go.Scatterpolar(
-                    r=vals + [vals[0]], theta=labels + [labels[0]],
-                    fill='toself', name=idx, opacity=0.6,
-                ))
-            fig_radar.update_layout(
-                polar=dict(radialaxis=dict(visible=True, range=[0, 3])),
-                title="Comparativa de Calidad entre Temporadas",
-                height=450
-            )
-            st.plotly_chart(fig_radar, use_container_width=True)
+        fig_radar.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 3])),
+            title="Comparativa de Calidad entre Temporadas", height=450
+        )
+        st.plotly_chart(fig_radar, use_container_width=True)
 
     with tab3:
         st.markdown("""
-**Sistema de puntuación: 0-3 por indicador (promedio = CALIDAD_LIGA)**
+### Sistema normalizado — funciona para 3, 5 o 7 partidas por jornada
 
-| Score | Significado |
-|-------|-------------|
-| 🟢 **1** | Excelente — distribución muy competitiva |
-| 🟡 **2** | Buena — competitiva con áreas de mejora |
-| 🔴 **3** | Regular — desequilibrio o baja participación |
-| ⚫ **0** | Sin datos suficientes |
+En vez de usar niveles fijos de victorias (0,1,2,3), cada jornada se clasifica
+por el **winrate del jugador** (victorias / partidas jugadas) en cuatro cuartiles:
+
+| Cuartil | Winrate | Significado |
+|---------|---------|-------------|
+| Q4 | ≥ 75% | Élite de esa jornada |
+| Q3 | 50–74% | Sobre el promedio |
+| Q2 | 25–49% | Bajo el promedio |
+| Q1 | < 25%  | Cola de esa jornada |
+
+Esto hace que una jornada 5-0 y una 3-0 sean equivalentes (ambas Q4),
+y permite comparar ligas con distintos formatos de manera justa.
 
 ---
 
-| Indicador | Qué mide |
-|-----------|----------|
-| **ID1 – Ratio V/VR** | Proporción de jornadas con 3 victorias vs 2 victorias. Ideal: los que ganan 3 no sean mayoría aplastante. |
-| **ID2 – Ratio Top** | El top 3 de jugadores: ¿ganan poco en jornadas de muchos 0s? Mide dominio de la élite. |
-| **ID3 – Ratio Tail** | Los últimos 3: ¿logran victorias en jornadas de alto nivel? Mide competitividad de la cola. |
-| **ID4 – Ratio Centro** | Los jugadores medios: ¿ganan en jornadas extremas (0 ó 3)? Mide cohesión del bloque central. |
-| **ID5 – Sobrevivientes** | Promedio ponderado de Pokémon sobrevivientes según cantidad de victorias. Más sobrevivientes = partidas más disputadas. |
-| **ID6 – Vencidos** | Pokémon vencidos en derrotas. Más vencidos en derrotas = rivales más fuertes. |
-| **ID7 – Participación** | Porcentaje mínimo de jugadores únicos que compiten en cada jornada. Mide asistencia. |
+| Indicador | Qué mide | 🟢 1 | 🟡 2 | 🔴 3 |
+|-----------|----------|------|------|------|
+| **ID1** Distribución WR | Ratio Q4/Q3 — ¿muchos barridos? | 70–100% | 50–70% | < 50% |
+| **ID2** Ratio Top | ¿El top3 también pierde jornadas? | > 100% | 50–100% | < 50% |
+| **ID3** Ratio Tail | ¿El tail3 gana alguna jornada buena? | > 100% | 50–100% | < 50% |
+| **ID4** Ratio Centro | ¿El bloque medio es consistente? | > 100% | 70–100% | < 70% |
+| **ID5** Sobrevivientes | Partidas reñidas = más Pokémon vivos | > 63 | > 36 | ≥ 1 |
+| **ID6** Vencidos | Resistencia al perder | > 60 | > 33 | resto |
+| **ID7** Participación | Promedio de jugadores por jornada / total | ≥ 90% | ≥ 70% | ≥ 50% |
+
+**CALIDAD_LIGA** = promedio redondeado de ID1 a ID7
 """)
 
     st.markdown("---")
 
-    # ── Detalle por liga individual ───────────────────────────────────────────
+    # ── Detalle individual ────────────────────────────────────────────────────
     st.markdown("### 🔍 Análisis Individual por Temporada")
-
-    temporada_sel = st.selectbox(
-        "Seleccionar temporada para análisis detallado",
-        options=sorted(df_view.index.tolist()),
-        key="cq_detail"
-    )
-
+    temporada_sel = st.selectbox("Seleccionar temporada",
+                                  options=sorted(df_view.index.tolist()), key="cq_detail")
     if temporada_sel:
         row = df_view.loc[temporada_sel]
         calidad = int(row['CALIDAD_LIGA'])
         label, color = SCORE_LABELS.get(calidad, ("⚫", "#95A5A6"))
 
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Calidad Liga", f"{calidad}/3", label)
-        c2.metric("% V/VR", f"{row.get('RATIO_VR_V', 0):.1f}%")
-        c3.metric("Sob. Prom.", f"{row.get('SOB PROM', 0):.1f}")
-        c4.metric("Participación", f"{row.get('N%', 0)*100:.0f}%")
+        c1,c2,c3,c4 = st.columns(4)
+        c1.metric("Calidad Liga",  f"{calidad}/3", label)
+        c2.metric("Formato",       row.get('formato',''))
+        c3.metric("Sob. Prom.",    f"{row.get('SOB PROM',0):.1f}")
+        c4.metric("Participación", f"{row.get('N%',0)*100:.0f}%")
 
-        st.markdown("**Desglose de indicadores:**")
         id_cols_disp = [c for c in ['ID1','ID2','ID3','ID4','ID5','ID6','ID7'] if c in df_view.columns]
         cols_ids = st.columns(len(id_cols_disp))
         for col, idc in zip(cols_ids, id_cols_disp):
