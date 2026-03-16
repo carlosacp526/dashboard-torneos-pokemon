@@ -377,18 +377,29 @@ def generar_pdf_jugador(
     RY -= 12
 
     ROW_H = 11
+    CWS = [CD_W*0.38, CD_W*0.09, CD_W*0.09, CD_W*0.09, CD_W*0.17, CD_W*0.14]
+    CXS = [xD+5]
+    for cw in CWS[:-1]: CXS.append(CXS[-1]+cw)
+
+    rrect(cv, xD+4, BY+BH-28-12, CD_W-8, 12, r=3, fill_col=C_PANEL2)
+    for hdr, cx, cw in zip(["RIVAL","P","V","D","WR%","FMT"], CXS, CWS):
+        txt(cv, hdr, cx+cw/2, BY+BH-28-9+1, size=6, col=C_SUBTEXT, font="Helvetica-Bold", anchor="center")
+    RY = BY+BH-28-12
+
     if rivales_df is not None and not rivales_df.empty:
-        for i, (_, r) in enumerate(rivales_df.head(15).iterrows()):
+        for i, (_, r) in enumerate(rivales_df.head(25).iterrows()):
             if RY < BY + 6: break
             if i % 2 == 0:
                 rrect(cv, xD+4, RY-ROW_H+1, CD_W-8, ROW_H, r=2, fill_col=C_PANEL2)
             wr = float(r.get('Winrate%', 50))
-            txt(cv, str(r.get('Rival',''))[:17], CXS[0]+1, RY-8, size=6.5, col=C_TEXT, font="Helvetica")
-            txt(cv, str(int(r.get('Partidas',0))),  CXS[1]+CWS[1]/2, RY-8, size=6.5, col=C_TEXT, anchor="center")
-            txt(cv, str(int(r.get('Victorias',0))), CXS[2]+CWS[2]/2, RY-8, size=6.5, col=C_GREEN, font="Helvetica-Bold", anchor="center")
-            txt(cv, str(int(r.get('Derrotas',0))),  CXS[3]+CWS[3]/2, RY-8, size=6.5, col=C_RED,   font="Helvetica-Bold", anchor="center")
+            fmt = str(r.get('Formato','')).replace('No Posee','')[:6]
+            txt(cv, str(r.get('Rival',''))[:16],    CXS[0]+1,         RY-8, size=6.5, col=C_TEXT,  font="Helvetica")
+            txt(cv, str(int(r.get('Partidas',0))),   CXS[1]+CWS[1]/2, RY-8, size=6.5, col=C_TEXT,  anchor="center")
+            txt(cv, str(int(r.get('Victorias',0))),  CXS[2]+CWS[2]/2, RY-8, size=6.5, col=C_GREEN, font="Helvetica-Bold", anchor="center")
+            txt(cv, str(int(r.get('Derrotas',0))),   CXS[3]+CWS[3]/2, RY-8, size=6.5, col=C_RED,   font="Helvetica-Bold", anchor="center")
             hbar(cv, CXS[4], RY-9, CWS[4]-4, 7, wr, col_fill=C_GREEN if wr>=50 else C_RED)
             txt(cv, f"{wr:.0f}%", CXS[4]+CWS[4]/2, RY-9, size=5.5, col=C_TEXT, font="Helvetica-Bold", anchor="center")
+            txt(cv, fmt, CXS[5]+CWS[5]/2, RY-8, size=5.5, col=C_SUBTEXT, font="Helvetica", anchor="center")
             RY -= ROW_H
     else:
         txt(cv, "Sin rivales frecuentes", xD+CD_W/2, RY-15, size=7, col=C_SUBTEXT, anchor="center")
@@ -399,7 +410,7 @@ def generar_pdf_jugador(
         txt(cv, "ULTIMAS PARTIDAS", xD+CD_W/2, RY, size=7, col=C_ACCENT,
             font="Helvetica-Bold", anchor="center")
         RY -= 11
-        ultimas = player_matches.sort_values('date', ascending=False).head(10)
+        ultimas = player_matches.sort_values('date', ascending=False).head(5)
         for _, r in ultimas.iterrows():
             if RY < BY+6: break
             ganador = str(r.get('winner',''))
@@ -407,11 +418,13 @@ def generar_pdf_jugador(
             p1      = str(r.get('player1',''))
             rival   = str(r.get('player2','')) if player_query.lower() in p1.lower() else p1
             fecha   = str(r.get('date',''))[:10]
+            fmt_p   = str(r.get('Formato','')).replace('No Posee','')[:8]
             col_r   = C_GREEN if gano else C_RED
             rrect(cv, xD+5, RY-8, 12, 9, r=2, fill_col=col_r)
             txt(cv, "W" if gano else "L", xD+11, RY-6.5, size=6,
                 col=C_WHITE, font="Helvetica-Bold", anchor="center")
-            txt(cv, rival[:17], xD+20, RY-6.5, size=6.5, col=C_TEXT, font="Helvetica")
+            txt(cv, rival[:14], xD+20, RY-6.5, size=6.5, col=C_TEXT, font="Helvetica")
+            txt(cv, fmt_p, xD+CD_W/2, RY-6.5, size=5.5, col=C_SUBTEXT, font="Helvetica", anchor="center")
             txt(cv, fecha, xD+CD_W-5, RY-6.5, size=6, col=C_SUBTEXT, anchor="right")
             RY -= ROW_H
 
@@ -1119,7 +1132,8 @@ def show():
                     v = rm[rm['winner'].str.contains(player_query,case=False,na=False)].shape[0]
                     d = len(rm) - v
                     wr = round(v/len(rm)*100, 1) if len(rm) > 0 else 0
-                    rivales_pdf.append({'Rival':rival,'Partidas':len(rm),'Victorias':v,'Derrotas':d,'Winrate%':wr})
+                    rivales_pdf.append({'Rival':rival,'Partidas':len(rm),'Victorias':v,'Derrotas':d,'Winrate%':wr,
+                                     'Formato': rm['Formato'].mode()[0] if 'Formato' in rm.columns and not rm['Formato'].dropna().empty else ''})
             rivales_df_pdf = pd.DataFrame(rivales_pdf).drop_duplicates('Rival').sort_values('Partidas',ascending=False) if rivales_pdf else pd.DataFrame()
 
             # Ligas y torneos
