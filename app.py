@@ -7,7 +7,8 @@ sys.path.insert(0, ROOT)
 st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="⚡")
 
 from vistas import inicio, analisis, jugadores, rankings, elo, ligas, prediccion
-
+from vistas import calidad
+p_calidad = st.Page(calidad.show, title="🔬 Calidad de Ligas", url_path="calidad")
 p_inicio     = st.Page(inicio.show,     title="🏠 Inicio",                  url_path="inicio",     default=True)
 p_analisis   = st.Page(analisis.show,   title="📊 Análisis General",        url_path="analisis")
 p_jugadores  = st.Page(jugadores.show,  title="👤 Jugadores",               url_path="jugadores")
@@ -24,11 +25,12 @@ st.session_state["_pages"] = {
     "rankings":   p_rankings,
     "elo":        p_elo,
     "prediccion": p_prediccion,
+    "Calidad": p_calidad 
 }
 
 pg = st.navigation({
     "🏠 Inicio": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores, p_ligas, p_rankings, p_elo, p_prediccion],
+    "📊 Secciones": [p_analisis, p_jugadores, p_ligas, p_rankings, p_elo, p_prediccion,p_calidad],
 })
 
 pg.run()
