@@ -61,9 +61,68 @@ def calcular_elo(df_raw):
     elo['Perdedor'] = elo.apply(
         lambda r: r['player2'] if str(r['Ganador']).strip() == str(r['player1']).strip() else r['player1'], axis=1
     )
-    elo = elo[['Ganador', 'Perdedor', 'date']].dropna().copy()
+
+    # ── Orden de rondas dentro de cada torneo/evento ──────────────────────────
+    ROUND_ORDER = {
+        # Ligas — por jornada (extraído del campo round)
+        # Torneos formato suizo
+        'ronda suiza 1': 10, 'ronda suiza 2': 11, 'ronda suiza 3': 12,
+        'ronda suiza 4': 13, 'ronda suiza 5': 14, 'ronda suiza 6': 15,
+        'ronda suiza 7': 16,
+        'ganadores ronda 1': 10, 'ganadores ronda 2': 11, 'ganadores ronda 3': 12,
+        'ganadores ronda 4': 13, 'ganadores ronda 5': 14,
+        'perdedores ronda 1': 10, 'perdedores ronda 2': 11, 'perdedores ronda 3': 12,
+        'perdedores ronda 4': 13, 'perdedores ronda 5': 14,
+        'perdedores ronda 6': 15, 'perdedores ronda 7': 16, 'perdedores ronda 8': 17,
+        # Fase de grupos siempre antes de eliminatorias
+        'fase de grupos': 20,
+        'playoff': 25,
+        # Eliminatorias de mayor a menor
+        'treintaidosavo de final': 30,
+        'dieciseisavos de final': 40,
+        'octavos de final': 50,
+        'cuartos de final': 60,
+        'semifinal': 70,
+        'ascenso bo3 semifinales': 71,
+        'ascenso singles semi': 71, 'ascenso doubles semi': 71,
+        'ascenso bo3 final': 80,
+        'ascenso singles cuartos': 61, 'ascenso doubles cuartos': 61,
+        'ascenso singles final': 80, 'ascenso doubles final': 80,
+        'ascenso  final': 80,
+        'final': 90,
+    }
+
+    def get_round_order(r):
+        if pd.isna(r):
+            return 50  # default medio
+        r_low = str(r).strip().lower()
+        # Ligas: "PJS T1 J3" → orden = número de jornada
+        if ' j' in r_low:
+            try:
+                return int(r_low.split(' j')[1])
+            except Exception:
+                pass
+        # Cypher/Ascenso fechas
+        if r_low.startswith('cypher fecha') or r_low.startswith('ascenso fecha'):
+            try:
+                return int(r_low.split()[-1])
+            except Exception:
+                pass
+        return ROUND_ORDER.get(r_low, 50)
+
+    # Preservar N_Torneo y league para el ordenamiento
+    elo['_round_order'] = df.loc[elo.index, 'round'].apply(get_round_order) if 'round' in df.columns else 50
+    elo['_n_torneo']    = df.loc[elo.index, 'N_Torneo'].fillna(0)   if 'N_Torneo' in df.columns else 0
+    elo['_league']      = df.loc[elo.index, 'league'].fillna('')     if 'league' in df.columns else ''
+
+    elo = elo[['Ganador', 'Perdedor', 'date', '_round_order', '_n_torneo', '_league']].dropna(subset=['Ganador','Perdedor','date']).copy()
     elo = elo[elo['Ganador'] != elo['Perdedor']]
-    elo = elo.sort_values('date').reset_index(drop=True)
+
+    # Ordenar: fecha → número de torneo → orden de ronda
+    elo = elo.sort_values(
+        ['date', '_n_torneo', '_round_order'],
+        ascending=[True, True, True]
+    ).reset_index(drop=True)
 
     # Inicializar ELOs
     todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
@@ -121,9 +180,11 @@ def calcular_elo_formato(df_raw, formato: str):
     elo['Perdedor'] = elo.apply(
         lambda r: r['player2'] if str(r['Ganador']).strip() == str(r['player1']).strip() else r['player1'], axis=1
     )
-    elo = elo[['Ganador', 'Perdedor', 'date']].dropna().copy()
+    elo['_round_order'] = df.loc[elo.index, 'round'].apply(get_round_order) if 'round' in df.columns else 50
+    elo['_n_torneo']    = df.loc[elo.index, 'N_Torneo'].fillna(0) if 'N_Torneo' in df.columns else 0
+    elo = elo[['Ganador', 'Perdedor', 'date', '_round_order', '_n_torneo']].dropna(subset=['Ganador','Perdedor','date']).copy()
     elo = elo[elo['Ganador'] != elo['Perdedor']]
-    elo = elo.sort_values('date').reset_index(drop=True)
+    elo = elo.sort_values(['date', '_n_torneo', '_round_order'], ascending=[True, True, True]).reset_index(drop=True)
     if elo.empty:
         return pd.DataFrame(), pd.DataFrame()
 
