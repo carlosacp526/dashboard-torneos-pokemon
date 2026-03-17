@@ -103,6 +103,63 @@ def calcular_elo(df_raw):
     return data_elo, data_filas, elo
 
 
+
+def calcular_elo_formato(df_raw, formato: str):
+    """Calcula Elo filtrando solo las partidas de un formato específico."""
+    df = normalize_columns(df_raw.copy())
+    df = ensure_fields(df)
+    if 'Formato' not in df.columns:
+        return pd.DataFrame(), pd.DataFrame()
+    df = df[df['Formato'] == formato]
+    if df.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    elo = df[df['winner'].notna()].copy()
+    if 'Walkover' in df.columns:
+        elo = elo[elo['Walkover'] != -1]
+    elo = elo.rename(columns={'winner': 'Ganador'})
+    elo['Perdedor'] = elo.apply(
+        lambda r: r['player2'] if str(r['Ganador']).strip() == str(r['player1']).strip() else r['player1'], axis=1
+    )
+    elo = elo[['Ganador', 'Perdedor', 'date']].dropna().copy()
+    elo = elo[elo['Ganador'] != elo['Perdedor']]
+    elo = elo.sort_values('date').reset_index(drop=True)
+    if elo.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
+    data_elo = pd.DataFrame({'Participantes': todos, 'Elo': 1000})
+
+    data_filas = pd.DataFrame({
+        'Jugador_A': [''] * len(elo), 'Rating_A': [0.0] * len(elo),
+        'Rating_A_NEW': [0.0] * len(elo), 'Jugador_B': [''] * len(elo),
+        'Rating_B': [0.0] * len(elo), 'Rating_B_NEW': [0.0] * len(elo),
+        'Fecha': elo['date'].values,
+    })
+
+    for i in range(len(elo)):
+        ganador  = elo.loc[i, 'Ganador']
+        perdedor = elo.loc[i, 'Perdedor']
+        rating_a = data_elo.loc[data_elo['Participantes'] == ganador,  'Elo'].values[0]
+        rating_b = data_elo.loc[data_elo['Participantes'] == perdedor, 'Elo'].values[0]
+        player   = PSElo(rating_a)
+        player.update_rating(ganador, perdedor, rating_a, rating_b, 1, data_elo, data_filas, i)
+
+    per = elo[['Perdedor','date']].rename(columns={'Perdedor':'Jugador','date':'Fecha'})
+    gan = elo[['Ganador', 'date']].rename(columns={'Ganador': 'Jugador','date':'Fecha'})
+    dfechas = pd.concat([per, gan]).groupby('Jugador')['Fecha'].max().reset_index()
+    data_elo = pd.merge(data_elo, dfechas, how='left', left_on='Participantes', right_on='Jugador')
+    del data_elo['Jugador']
+
+    cutoff = pd.Timestamp.now() - pd.DateOffset(months=3)
+    data_elo['Actividad'] = data_elo['Fecha'].apply(
+        lambda x: 'Activo' if pd.notna(x) and x >= cutoff else 'Inactivo'
+    )
+    data_elo = data_elo.sort_values('Elo', ascending=False).reset_index(drop=True)
+    data_elo['RANK'] = range(1, len(data_elo) + 1)
+    return data_elo, data_filas
+
+
 def get_player_elo_history(player_query, data_filas, exact=False):
     if exact:
         mask = (data_filas['Jugador_A'].str.lower() == player_query.lower()) | \
@@ -179,37 +236,26 @@ def show():
     # Tabla top 10
     st.subheader("🏆 Top 10 Activos")
     cols_show = ['RANK','Participantes','Elo','Actividad']
-    estilos = {
-        1: "background-color:#FFD700;color:#000000;font-weight:bold",
-        2: "background-color:#C0C0C0;color:#000000;font-weight:bold",
-        3: "background-color:#CD7F32;color:#000000;font-weight:bold",
-    }
-    td_base = "padding:8px 12px;border-bottom:1px solid #444;"
+    st.markdown("""
+    <style>
+    .top-table { width:100%; border-collapse:collapse; font-size:15px; }
+    .top-table th { background:#333; color:white; padding:8px 12px; text-align:left; }
+    .top-table td { padding:8px 12px; border-bottom:1px solid #444; color:white; }
+    .rank-1 { background-color:#FFD700 !important; color:#000 !important; font-weight:bold; }
+    .rank-2 { background-color:#C0C0C0 !important; color:#000 !important; font-weight:bold; }
+    .rank-3 { background-color:#CD7F32 !important; color:#000 !important; font-weight:bold; }
+    </style>
+    """, unsafe_allow_html=True)
     rows_html = ""
     for _, row in top10[cols_show].iterrows():
-        rank = int(row["RANK"])
-        tr_style = estilos.get(rank, "color:white")
-        td_style = td_base + ("color:#000000" if rank <= 3 else "color:white")
-        rows_html += (
-            f'<tr style="{tr_style}">' +
-            f'<td style="{td_style}">{rank}</td>' +
-            f'<td style="{td_style}">{row["Participantes"]}</td>' +
-            f'<td style="{td_style}">{int(row["Elo"])}</td>' +
-            f'<td style="{td_style}">{row["Actividad"]}</td>' +
-            "</tr>"
-        )
-    st.markdown(
-        f'''<table style="width:100%;border-collapse:collapse;font-size:15px">
-        <thead><tr style="background:#333;color:white">
-            <th style="padding:8px 12px;text-align:left">RANK</th>
-            <th style="padding:8px 12px;text-align:left">Jugador</th>
-            <th style="padding:8px 12px;text-align:left">Elo</th>
-            <th style="padding:8px 12px;text-align:left">Actividad</th>
-        </tr></thead>
+        cls = {1:"rank-1", 2:"rank-2", 3:"rank-3"}.get(row['RANK'], "")
+        rows_html += f"<tr class='{cls}'><td>{int(row['RANK'])}</td><td>{row['Participantes']}</td><td>{int(row['Elo'])}</td><td>{row['Actividad']}</td></tr>"
+    st.markdown(f"""
+    <table class="top-table">
+        <thead><tr><th>RANK</th><th>Jugador</th><th>Elo</th><th>Actividad</th></tr></thead>
         <tbody>{rows_html}</tbody>
-        </table><br>''',
-        unsafe_allow_html=True
-    )
+    </table><br>
+    """, unsafe_allow_html=True)
 
     # Gráfico top 10
     fig = px.bar(top10, x='Participantes', y='Elo',
@@ -233,6 +279,107 @@ def show():
             st.dataframe(data_elo[cols_show], use_container_width=True, hide_index=True, height=500)
             csv2 = data_elo[cols_show].to_csv(index=False).encode('utf-8')
             st.download_button("📥 Descargar ranking completo", csv2, "ranking_elo_completo.csv", "text/csv")
+
+    st.markdown("---")
+
+    # ── Elo por Formato ─────────────────────────────────────────────
+    st.header("🎮 Ranking Elo por Formato")
+    st.caption("Elo calculado de forma independiente para cada formato: solo cuenta el desempeño en ese formato específico.")
+
+    df_raw_fmt = load_data()
+    formatos_disp = []
+    df_fmt_check = normalize_columns(df_raw_fmt.copy())
+    if 'Formato' in df_fmt_check.columns:
+        formatos_disp = sorted(df_fmt_check['Formato'].dropna().unique().tolist())
+
+    if not formatos_disp:
+        st.info("No se encontró la columna 'Formato' en los datos.")
+    else:
+        tabs_fmt = st.tabs([f"🎯 {f}" for f in formatos_disp])
+        for tab_f, formato in zip(tabs_fmt, formatos_disp):
+            with tab_f:
+                with st.spinner(f"Calculando Elo {formato}..."):
+                    elo_fmt, filas_fmt = calcular_elo_formato(df_raw_fmt, formato)
+
+                if elo_fmt.empty:
+                    st.info(f"Sin partidas de {formato} registradas.")
+                    continue
+
+                activos_fmt = elo_fmt[elo_fmt['Actividad'] == 'Activo'].copy()
+                top10_fmt   = activos_fmt.head(10).reset_index(drop=True)
+
+                # Podio top 3
+                podio_f = st.columns(3)
+                for idx in range(min(3, len(top10_fmt))):
+                    with podio_f[idx]:
+                        jugador = top10_fmt.loc[idx, 'Participantes']
+                        elo_val = int(top10_fmt.loc[idx, 'Elo'])
+                        st.markdown(f"""
+<div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
+            border:2px solid {colores[idx]};border-radius:12px;
+            padding:16px;text-align:center">
+    <div style="font-size:2rem">{medallas[idx]}</div>
+    <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
+    <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
+    <div style="font-size:0.8rem;color:#aaa">ELO {formato}</div>
+</div>""", unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Gráfico top 10
+                if len(top10_fmt) > 0:
+                    fig_f = px.bar(
+                        top10_fmt, x='Participantes', y='Elo',
+                        color='Elo', color_continuous_scale='RdYlGn',
+                        text='Elo', title=f'Top 10 Elo — {formato} (Activos)'
+                    )
+                    fig_f.update_traces(texttemplate='%{text}', textposition='outside')
+                    fig_f.update_layout(
+                        xaxis_tickangle=-30, showlegend=False,
+                        yaxis_range=[top10_fmt['Elo'].min()-50, top10_fmt['Elo'].max()+100]
+                    )
+                    st.plotly_chart(fig_f, use_container_width=True)
+
+                # Tabla completa
+                with st.expander(f"📋 Ranking completo {formato}"):
+                    tab_a, tab_t = st.tabs(["✅ Activos", "🌐 Todos"])
+                    with tab_a:
+                        st.dataframe(activos_fmt[['RANK','Participantes','Elo','Actividad']],
+                                     use_container_width=True, hide_index=True, height=400)
+                        csv_f = activos_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode('utf-8')
+                        st.download_button(f"📥 Descargar {formato} activos", csv_f,
+                                           f"elo_{formato.lower()}_activos.csv", "text/csv",
+                                           key=f"dl_{formato}_act")
+                    with tab_t:
+                        st.dataframe(elo_fmt[['RANK','Participantes','Elo','Actividad']],
+                                     use_container_width=True, hide_index=True, height=400)
+                        csv_f2 = elo_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode('utf-8')
+                        st.download_button(f"📥 Descargar {formato} completo", csv_f2,
+                                           f"elo_{formato.lower()}_completo.csv", "text/csv",
+                                           key=f"dl_{formato}_all")
+
+                # Comparativa: ¿en qué difiere del Elo general?
+                if len(elo_fmt) > 0:
+                    merged = pd.merge(
+                        elo_fmt[['Participantes','Elo']].rename(columns={'Elo':f'Elo_{formato}'}),
+                        data_elo[['Participantes','Elo']].rename(columns={'Elo':'Elo_General'}),
+                        on='Participantes', how='inner'
+                    )
+                    merged['Diferencia'] = merged[f'Elo_{formato}'] - merged['Elo_General']
+                    merged = merged.sort_values('Diferencia', ascending=False)
+                    with st.expander(f"📊 Comparativa {formato} vs Elo General"):
+                        st.caption("Diferencia positiva = mejor en este formato que en el ranking general")
+                        fig_cmp = px.bar(
+                            merged.head(20), x='Participantes', y='Diferencia',
+                            color='Diferencia', color_continuous_scale='RdYlGn',
+                            text='Diferencia',
+                            title=f'Diferencia Elo {formato} vs General — Top 20'
+                        )
+                        fig_cmp.update_traces(texttemplate='%{text:+.0f}', textposition='outside')
+                        fig_cmp.update_layout(xaxis_tickangle=-30, showlegend=False)
+                        fig_cmp.add_hline(y=0, line_dash="dash", line_color="gray")
+                        st.plotly_chart(fig_cmp, use_container_width=True)
+
 
     st.markdown("---")
 
