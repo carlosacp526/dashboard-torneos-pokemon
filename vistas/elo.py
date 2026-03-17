@@ -323,6 +323,13 @@ def show():
     <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
     <div style="font-size:0.8rem;color:#aaa">ELO {formato}</div>
 </div>""", unsafe_allow_html=True)
+                        for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
+                            path = f"jugadores/{jugador.replace(' ','_')}.{ext}"
+                            if not os.path.exists(path):
+                                path = f"jugadores/{jugador}.{ext}"
+                            if os.path.exists(path):
+                                st.image(path, width=100)
+                                break
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
