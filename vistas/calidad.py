@@ -338,19 +338,54 @@ def show():
     with tab2:
         id_cols_avail = [c for c in ['ID1','ID2','ID3','ID4','ID5','ID6','ID7'] if c in df_view.columns]
 
-        # Heatmap
-        heat_data = df_view[id_cols_avail].T
+        # Heatmap — IDs (1=verde, 2=amarillo, 3=rojo) + fila CALIDAD_LIGA (1-5)
+        heat_data = df_view[id_cols_avail].T.copy()
         heat_data.index = [ID_LABELS.get(c, c) for c in heat_data.index]
-        fig_heat = go.Figure(data=go.Heatmap(
-            z=heat_data.values,
+
+        # Normalizar CALIDAD_LIGA de escala 1-5 a escala 1-3 para mostrar en el mismo heatmap
+        # 5=Élite→1, 4=Excelente→1.5, 3=Buena→2, 2=Regular→2.5, 1=Débil→3
+        cal_row = df_view['CALIDAD_LIGA'].apply(lambda x: round((5 - int(x)) * 0.5 + 1, 2))
+        cal_labels = df_view['CALIDAD_LIGA'].apply(
+            lambda x: {5:'🏆', 4:'🟢', 3:'🟡', 2:'🟠', 1:'🔴'}.get(int(x), '?')
+        )
+        heat_data.loc['── CALIDAD ──'] = cal_row.values
+
+        fig_heat = go.Figure()
+
+        # Capa IDs (filas 0 a n-2)
+        fig_heat.add_trace(go.Heatmap(
+            z=heat_data.iloc[:-1].values,
             x=heat_data.columns.tolist(),
-            y=heat_data.index.tolist(),
-            colorscale=[[0,'#95A5A6'],[0.33,'#2ECC71'],[0.66,'#F1C40F'],[1,'#E74C3C']],
-            zmin=0, zmax=3,
-            text=heat_data.values, texttemplate="%{text}",
+            y=heat_data.index[:-1].tolist(),
+            colorscale=[[0,'#2ECC71'],[0.5,'#F1C40F'],[1,'#E74C3C']],
+            zmin=1, zmax=3,
+            text=df_view[id_cols_avail].T.values,
+            texttemplate="%{text}",
+            showscale=False,
         ))
-        fig_heat.update_layout(title="Heatmap de Indicadores por Temporada",
-                                height=350, xaxis_tickangle=-45, margin=dict(l=150))
+
+        # Capa CALIDAD (última fila) con colores púrpura→verde→amarillo→naranja→rojo
+        fig_heat.add_trace(go.Heatmap(
+            z=[cal_row.values],
+            x=heat_data.columns.tolist(),
+            y=['── CALIDAD ──'],
+            colorscale=[
+                [0.00, '#9B59B6'],  # Élite
+                [0.25, '#2ECC71'],  # Excelente
+                [0.50, '#F1C40F'],  # Buena
+                [0.75, '#E67E22'],  # Regular
+                [1.00, '#E74C3C'],  # Débil
+            ],
+            zmin=1, zmax=3,
+            text=[cal_labels.values],
+            texttemplate="%{text}",
+            showscale=False,
+        ))
+
+        fig_heat.update_layout(
+            title="Heatmap — IDs (1=🟢 3=🔴) y Calidad General",
+            height=380, xaxis_tickangle=-45, margin=dict(l=160)
+        )
         st.plotly_chart(fig_heat, use_container_width=True)
 
         # Barras — usar etiquetas de nivel
@@ -404,17 +439,31 @@ y permite comparar ligas con distintos formatos de manera justa.
 
 ---
 
-| Indicador | Qué mide | 🟢 1 | 🟡 2 | 🔴 3 |
-|-----------|----------|------|------|------|
-| **ID1** Distribución WR | Ratio Q4/Q3 — ¿muchos barridos? | 70–100% | 50–70% | < 50% |
-| **ID2** Ratio Top | ¿El top3 también pierde jornadas? | > 100% | 50–100% | < 50% |
-| **ID3** Ratio Tail | ¿El tail3 gana alguna jornada buena? | > 100% | 50–100% | < 50% |
-| **ID4** Ratio Centro | ¿El bloque medio es consistente? | > 100% | 70–100% | < 70% |
-| **ID5** Sobrevivientes | Partidas reñidas = más Pokémon vivos | > 63 | > 36 | ≥ 1 |
-| **ID6** Vencidos | Resistencia al perder | > 60 | > 33 | resto |
-| **ID7** Participación | Promedio de jugadores por jornada / total | ≥ 90% | ≥ 70% | ≥ 50% |
+### Indicadores — umbrales calibrados con datos reales de las 19 ligas
 
-**CALIDAD_LIGA** = promedio redondeado de ID1 a ID7
+| Indicador | Qué mide | 🟢 1 Excelente | 🟡 2 Buena | 🔴 3 Regular |
+|-----------|----------|----------------|------------|--------------|
+| **ID1** Equilibrio Q4/Q3 | ¿Igual cantidad de barridos que victorias ajustadas? (rango: 30–157%) | 75–125% | 55–155% | fuera del rango |
+| **ID2** Ratio Top | ¿El top3 también pierde jornadas? (rango: 28–50%) | ≥ 42% | ≥ 33% | < 33% |
+| **ID3** Ratio Tail | ¿El tail3 logra jornadas buenas? (rango: 12–50%) | ≥ 42% | ≥ 28% | < 28% |
+| **ID4** Ratio Centro | ¿El bloque medio tiene resultados mixtos? (rango: 20–200%) | 40–100% | ≤ 140% | > 140% |
+| **ID5** Sobrevivientes | Partidas reñidas = más Pokémon vivos (rango: 11–45) | ≥ 30 | ≥ 19 | < 19 |
+| **ID6** Resist. Derrota | Pkm vencidos por el perdedor (rango: 51–74) | ≥ 59 | ≥ 54 | < 54 |
+| **ID7** Walkovers | % de partidas jugadas por WO (rango: 0–21.6%) | 0% | ≤ 6% | > 6% |
+
+---
+
+### Escala de calidad general — 5 niveles
+
+**CALIDAD_LIGA** = promedio continuo de ID1 a ID7, clasificado por percentiles reales:
+
+| Nivel | Promedio | Descripción |
+|-------|----------|-------------|
+| 🏆 **Élite** | < 1.65 | Liga excepcionalmente competitiva |
+| 🟢 **Excelente** | 1.65–1.80 | Muy buena competencia en todos los aspectos |
+| 🟡 **Buena** | 1.80–2.05 | Liga competitiva con algunas áreas de mejora |
+| 🟠 **Regular** | 2.05–2.20 | Desequilibrios notables en varios indicadores |
+| 🔴 **Débil** | > 2.20 | Liga con problemas de competitividad o asistencia |
 """)
 
     st.markdown("---")
