@@ -309,8 +309,27 @@ def show():
             except Exception:
                 return ''
 
-        id_cols = ['CALIDAD_LIGA','ID1','ID2','ID3','ID4','ID5','ID6','ID7']
-        styled = tabla.style.applymap(color_score, subset=[c for c in id_cols if c in tabla.columns])
+        def color_calidad(val):
+            try:
+                v = int(val)
+                # 5=Élite(púrpura) 4=Excelente(verde) 3=Buena(amarillo) 2=Regular(naranja) 1=Débil(rojo)
+                cm = {5:'#9B59B680', 4:'#2ECC7180', 3:'#F1C40F80', 2:'#E67E2280', 1:'#E74C3C80', 0:'#95A5A680'}
+                return f'background-color:{cm.get(v,"")}'
+            except Exception:
+                return ''
+
+        # Mapear CALIDAD_LIGA a etiqueta legible
+        niveles_map = {5:'🏆 Élite', 4:'🟢 Excelente', 3:'🟡 Buena', 2:'🟠 Regular', 1:'🔴 Débil', 0:'⚫ S/D'}
+        tabla_display = tabla.copy()
+        if 'CALIDAD_LIGA' in tabla_display.columns:
+            tabla_display['CALIDAD_LIGA'] = tabla_display['CALIDAD_LIGA'].apply(
+                lambda x: niveles_map.get(int(x), str(x)) if pd.notna(x) else x
+            )
+
+        id_cols_style = ['ID1','ID2','ID3','ID4','ID5','ID6','ID7']
+        styled = tabla_display.style\
+            .applymap(color_calidad, subset=['CALIDAD_LIGA'] if 'CALIDAD_LIGA' in tabla_display.columns else [])\
+            .applymap(color_score, subset=[c for c in id_cols_style if c in tabla_display.columns])
         st.dataframe(styled, use_container_width=True)
 
         csv = tabla.to_csv().encode('utf-8')
@@ -334,18 +353,21 @@ def show():
                                 height=350, xaxis_tickangle=-45, margin=dict(l=150))
         st.plotly_chart(fig_heat, use_container_width=True)
 
-        # Barras
+        # Barras — usar etiquetas de nivel
+        niveles_map = {5:'🏆 Élite', 4:'🟢 Excelente', 3:'🟡 Buena', 2:'🟠 Regular', 1:'🔴 Débil'}
+        df_bar = df_view.reset_index().copy()
+        df_bar['Nivel'] = df_bar['CALIDAD_LIGA'].apply(lambda x: niveles_map.get(int(x), str(x)))
+        color_map = {'🏆 Élite':'#9B59B6','🟢 Excelente':'#2ECC71',
+                     '🟡 Buena':'#F1C40F','🟠 Regular':'#E67E22','🔴 Débil':'#E74C3C'}
         fig_bar = px.bar(
-            df_view.reset_index(), x='index', y='CALIDAD_LIGA',
-            color='CALIDAD_LIGA',
-            color_continuous_scale=['#2ECC71','#F1C40F','#E74C3C'],
-            range_color=[1, 3],
-            title="Calidad Liga por Temporada",
-            labels={'index':'Temporada','CALIDAD_LIGA':'Calidad (1-3)'},
-            text='CALIDAD_LIGA', hover_data=['formato'],
+            df_bar, x='index', y='PROMEDIO',
+            color='Nivel', color_discrete_map=color_map,
+            title="Calidad Liga por Temporada (promedio continuo)",
+            labels={'index':'Temporada','PROMEDIO':'Promedio IDs (menor = mejor)'},
+            text='Nivel', hover_data=['formato'],
         )
         fig_bar.update_traces(textposition='outside')
-        fig_bar.update_layout(xaxis_tickangle=-45, showlegend=False)
+        fig_bar.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_bar, use_container_width=True)
 
         # Radar
