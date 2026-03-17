@@ -47,6 +47,39 @@ class PSElo:
         data_filas.loc[i, "Rating_B"]      = opponent_rating
         data_filas.loc[i, "Rating_B_NEW"]  = new_rating_b
 
+ROUND_ORDER = {
+    'ronda suiza 1': 10, 'ronda suiza 2': 11, 'ronda suiza 3': 12,
+    'ronda suiza 4': 13, 'ronda suiza 5': 14, 'ronda suiza 6': 15,
+    'ronda suiza 7': 16,
+    'ganadores ronda 1': 10, 'ganadores ronda 2': 11, 'ganadores ronda 3': 12,
+    'ganadores ronda 4': 13, 'ganadores ronda 5': 14,
+    'perdedores ronda 1': 10, 'perdedores ronda 2': 11, 'perdedores ronda 3': 12,
+    'perdedores ronda 4': 13, 'perdedores ronda 5': 14,
+    'perdedores ronda 6': 15, 'perdedores ronda 7': 16, 'perdedores ronda 8': 17,
+    'fase de grupos': 20, 'playoff': 25,
+    'treintaidosavo de final': 30, 'dieciseisavos de final': 40,
+    'octavos de final': 50, 'cuartos de final': 60, 'semifinal': 70,
+    'ascenso bo3 semifinales': 71,
+    'ascenso singles semi': 71, 'ascenso doubles semi': 71,
+    'ascenso bo3 final': 80,
+    'ascenso singles cuartos': 61, 'ascenso doubles cuartos': 61,
+    'ascenso singles final': 80, 'ascenso doubles final': 80,
+    'ascenso  final': 80,
+    'final': 90,
+}
+
+
+def get_round_order(r):
+    if pd.isna(r): return 50
+    r_low = str(r).strip().lower()
+    if ' j' in r_low:
+        try: return int(r_low.split(' j')[1])
+        except: pass
+    if r_low.startswith('cypher fecha') or r_low.startswith('ascenso fecha'):
+        try: return int(r_low.split()[-1])
+        except: pass
+    return ROUND_ORDER.get(r_low, 50)
+
 @st.cache_data(ttl=3600)
 def calcular_elo(df_raw):
     """Calcula el Elo de todos los jugadores a partir del CSV principal."""
@@ -61,68 +94,11 @@ def calcular_elo(df_raw):
     elo['Perdedor'] = elo.apply(
         lambda r: r['player2'] if str(r['Ganador']).strip() == str(r['player1']).strip() else r['player1'], axis=1
     )
-
-    # ── Orden de rondas dentro de cada torneo/evento ──────────────────────────
-    ROUND_ORDER = {
-        # Ligas — por jornada (extraído del campo round)
-        # Torneos formato suizo
-        'ronda suiza 1': 10, 'ronda suiza 2': 11, 'ronda suiza 3': 12,
-        'ronda suiza 4': 13, 'ronda suiza 5': 14, 'ronda suiza 6': 15,
-        'ronda suiza 7': 16,
-        'ganadores ronda 1': 10, 'ganadores ronda 2': 11, 'ganadores ronda 3': 12,
-        'ganadores ronda 4': 13, 'ganadores ronda 5': 14,
-        'perdedores ronda 1': 10, 'perdedores ronda 2': 11, 'perdedores ronda 3': 12,
-        'perdedores ronda 4': 13, 'perdedores ronda 5': 14,
-        'perdedores ronda 6': 15, 'perdedores ronda 7': 16, 'perdedores ronda 8': 17,
-        # Fase de grupos siempre antes de eliminatorias
-        'fase de grupos': 20,
-        'playoff': 25,
-        # Eliminatorias de mayor a menor
-        'treintaidosavo de final': 30,
-        'dieciseisavos de final': 40,
-        'octavos de final': 50,
-        'cuartos de final': 60,
-        'semifinal': 70,
-        'ascenso bo3 semifinales': 71,
-        'ascenso singles semi': 71, 'ascenso doubles semi': 71,
-        'ascenso bo3 final': 80,
-        'ascenso singles cuartos': 61, 'ascenso doubles cuartos': 61,
-        'ascenso singles final': 80, 'ascenso doubles final': 80,
-        'ascenso  final': 80,
-        'final': 90,
-    }
-
-    def get_round_order(r):
-        if pd.isna(r):
-            return 50  # default medio
-        r_low = str(r).strip().lower()
-        # Ligas: "PJS T1 J3" → orden = número de jornada
-        if ' j' in r_low:
-            try:
-                return int(r_low.split(' j')[1])
-            except Exception:
-                pass
-        # Cypher/Ascenso fechas
-        if r_low.startswith('cypher fecha') or r_low.startswith('ascenso fecha'):
-            try:
-                return int(r_low.split()[-1])
-            except Exception:
-                pass
-        return ROUND_ORDER.get(r_low, 50)
-
-    # Preservar N_Torneo y league para el ordenamiento
-    elo['_round_order'] = df.loc[elo.index, 'round'].apply(get_round_order) if 'round' in df.columns else 50
-    elo['_n_torneo']    = df.loc[elo.index, 'N_Torneo'].fillna(0)   if 'N_Torneo' in df.columns else 0
-    elo['_league']      = df.loc[elo.index, 'league'].fillna('')     if 'league' in df.columns else ''
-
-    elo = elo[['Ganador', 'Perdedor', 'date', '_round_order', '_n_torneo', '_league']].dropna(subset=['Ganador','Perdedor','date']).copy()
+    elo['_ro'] = elo['round'].apply(get_round_order) if 'round' in elo.columns else 50
+    elo['_nt'] = elo['N_Torneo'].fillna(0) if 'N_Torneo' in elo.columns else 0
+    elo = elo[['Ganador','Perdedor','date','_ro','_nt']].dropna(subset=['Ganador','Perdedor','date']).copy()
     elo = elo[elo['Ganador'] != elo['Perdedor']]
-
-    # Ordenar: fecha → número de torneo → orden de ronda
-    elo = elo.sort_values(
-        ['date', '_n_torneo', '_round_order'],
-        ascending=[True, True, True]
-    ).reset_index(drop=True)
+    elo = elo.sort_values(['date','_nt','_ro'], ascending=True).reset_index(drop=True)
 
     # Inicializar ELOs
     todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
@@ -163,63 +139,46 @@ def calcular_elo(df_raw):
 
 
 
-def calcular_elo_formato(df_raw, formato: str):
-    """Calcula Elo filtrando solo las partidas de un formato específico."""
+def calcular_elo_formato(df_raw, formato):
     df = normalize_columns(df_raw.copy())
     df = ensure_fields(df)
-    if 'Formato' not in df.columns:
-        return pd.DataFrame(), pd.DataFrame()
+    if 'Formato' not in df.columns: return pd.DataFrame(), pd.DataFrame()
     df = df[df['Formato'] == formato]
-    if df.empty:
-        return pd.DataFrame(), pd.DataFrame()
-
+    if df.empty: return pd.DataFrame(), pd.DataFrame()
     elo = df[df['winner'].notna()].copy()
-    if 'Walkover' in df.columns:
-        elo = elo[elo['Walkover'] != -1]
+    if 'Walkover' in df.columns: elo = elo[elo['Walkover'] != -1]
     elo = elo.rename(columns={'winner': 'Ganador'})
     elo['Perdedor'] = elo.apply(
-        lambda r: r['player2'] if str(r['Ganador']).strip() == str(r['player1']).strip() else r['player1'], axis=1
-    )
-    elo['_round_order'] = df.loc[elo.index, 'round'].apply(get_round_order) if 'round' in df.columns else 50
-    elo['_n_torneo']    = df.loc[elo.index, 'N_Torneo'].fillna(0) if 'N_Torneo' in df.columns else 0
-    elo = elo[['Ganador', 'Perdedor', 'date', '_round_order', '_n_torneo']].dropna(subset=['Ganador','Perdedor','date']).copy()
+        lambda r: r['player2'] if str(r['Ganador']).strip()==str(r['player1']).strip() else r['player1'], axis=1)
+    elo['_ro'] = elo['round'].apply(get_round_order) if 'round' in elo.columns else 50
+    elo['_nt'] = elo['N_Torneo'].fillna(0) if 'N_Torneo' in elo.columns else 0
+    elo = elo[['Ganador','Perdedor','date','_ro','_nt']].dropna(subset=['Ganador','Perdedor','date']).copy()
     elo = elo[elo['Ganador'] != elo['Perdedor']]
-    elo = elo.sort_values(['date', '_n_torneo', '_round_order'], ascending=[True, True, True]).reset_index(drop=True)
-    if elo.empty:
-        return pd.DataFrame(), pd.DataFrame()
-
+    elo = elo.sort_values(['date','_nt','_ro'], ascending=True).reset_index(drop=True)
+    if elo.empty: return pd.DataFrame(), pd.DataFrame()
     todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
     data_elo = pd.DataFrame({'Participantes': todos, 'Elo': 1000})
-
     data_filas = pd.DataFrame({
-        'Jugador_A': [''] * len(elo), 'Rating_A': [0.0] * len(elo),
-        'Rating_A_NEW': [0.0] * len(elo), 'Jugador_B': [''] * len(elo),
-        'Rating_B': [0.0] * len(elo), 'Rating_B_NEW': [0.0] * len(elo),
+        'Jugador_A': ['']*len(elo), 'Rating_A': [0.0]*len(elo),
+        'Rating_A_NEW': [0.0]*len(elo), 'Jugador_B': ['']*len(elo),
+        'Rating_B': [0.0]*len(elo), 'Rating_B_NEW': [0.0]*len(elo),
         'Fecha': elo['date'].values,
     })
-
     for i in range(len(elo)):
-        ganador  = elo.loc[i, 'Ganador']
-        perdedor = elo.loc[i, 'Perdedor']
-        rating_a = data_elo.loc[data_elo['Participantes'] == ganador,  'Elo'].values[0]
-        rating_b = data_elo.loc[data_elo['Participantes'] == perdedor, 'Elo'].values[0]
-        player   = PSElo(rating_a)
-        player.update_rating(ganador, perdedor, rating_a, rating_b, 1, data_elo, data_filas, i)
-
+        g = elo.loc[i,'Ganador']; p = elo.loc[i,'Perdedor']
+        ra = data_elo.loc[data_elo['Participantes']==g,'Elo'].values[0]
+        rb = data_elo.loc[data_elo['Participantes']==p,'Elo'].values[0]
+        PSElo(ra).update_rating(g, p, ra, rb, 1, data_elo, data_filas, i)
     per = elo[['Perdedor','date']].rename(columns={'Perdedor':'Jugador','date':'Fecha'})
-    gan = elo[['Ganador', 'date']].rename(columns={'Ganador': 'Jugador','date':'Fecha'})
-    dfechas = pd.concat([per, gan]).groupby('Jugador')['Fecha'].max().reset_index()
+    gan = elo[['Ganador','date']].rename(columns={'Ganador':'Jugador','date':'Fecha'})
+    dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
     data_elo = pd.merge(data_elo, dfechas, how='left', left_on='Participantes', right_on='Jugador')
     del data_elo['Jugador']
-
     cutoff = pd.Timestamp.now() - pd.DateOffset(months=3)
-    data_elo['Actividad'] = data_elo['Fecha'].apply(
-        lambda x: 'Activo' if pd.notna(x) and x >= cutoff else 'Inactivo'
-    )
+    data_elo['Actividad'] = data_elo['Fecha'].apply(lambda x: 'Activo' if pd.notna(x) and x>=cutoff else 'Inactivo')
     data_elo = data_elo.sort_values('Elo', ascending=False).reset_index(drop=True)
-    data_elo['RANK'] = range(1, len(data_elo) + 1)
+    data_elo['RANK'] = range(1, len(data_elo)+1)
     return data_elo, data_filas
-
 
 def get_player_elo_history(player_query, data_filas, exact=False):
     if exact:
@@ -345,13 +304,11 @@ def show():
 
     # ── Elo por Formato ─────────────────────────────────────────────
     st.header("🎮 Ranking Elo por Formato")
-    st.caption("Elo calculado de forma independiente para cada formato: solo cuenta el desempeño en ese formato específico.")
+    st.caption("Elo calculado de forma independiente para cada formato.")
 
     df_raw_fmt = load_data()
-    formatos_disp = []
     df_fmt_check = normalize_columns(df_raw_fmt.copy())
-    if 'Formato' in df_fmt_check.columns:
-        formatos_disp = sorted(df_fmt_check['Formato'].dropna().unique().tolist())
+    formatos_disp = sorted(df_fmt_check['Formato'].dropna().unique().tolist()) if 'Formato' in df_fmt_check.columns else []
 
     if not formatos_disp:
         st.info("No se encontró la columna 'Formato' en los datos.")
@@ -360,93 +317,58 @@ def show():
         for tab_f, formato in zip(tabs_fmt, formatos_disp):
             with tab_f:
                 with st.spinner(f"Calculando Elo {formato}..."):
-                    elo_fmt, filas_fmt = calcular_elo_formato(df_raw_fmt, formato)
-
+                    elo_fmt, _ = calcular_elo_formato(df_raw_fmt, formato)
                 if elo_fmt.empty:
-                    st.info(f"Sin partidas de {formato} registradas.")
+                    st.info(f"Sin partidas de {formato}.")
                     continue
-
-                activos_fmt = elo_fmt[elo_fmt['Actividad'] == 'Activo'].copy()
+                activos_fmt = elo_fmt[elo_fmt['Actividad']=='Activo'].copy()
                 top10_fmt   = activos_fmt.head(10).reset_index(drop=True)
-
-                # Podio top 3
                 podio_f = st.columns(3)
                 for idx in range(min(3, len(top10_fmt))):
                     with podio_f[idx]:
-                        jugador = top10_fmt.loc[idx, 'Participantes']
-                        elo_val = int(top10_fmt.loc[idx, 'Elo'])
-                        st.markdown(f"""
-<div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
-            border:2px solid {colores[idx]};border-radius:12px;
-            padding:16px;text-align:center">
-    <div style="font-size:2rem">{medallas[idx]}</div>
-    <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
-    <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
-    <div style="font-size:0.8rem;color:#aaa">ELO {formato}</div>
-</div>""", unsafe_allow_html=True)
+                        jugador = top10_fmt.loc[idx,'Participantes']
+                        elo_val = int(top10_fmt.loc[idx,'Elo'])
+                        st.markdown(f"""<div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
+border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:center">
+<div style="font-size:2rem">{medallas[idx]}</div>
+<div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
+<div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
+<div style="font-size:0.8rem;color:#aaa">ELO {formato}</div></div>""", unsafe_allow_html=True)
                         for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
                             path = f"jugadores/{jugador.replace(' ','_')}.{ext}"
-                            if not os.path.exists(path):
-                                path = f"jugadores/{jugador}.{ext}"
-                            if os.path.exists(path):
-                                st.image(path, width=100)
-                                break
-
+                            if not os.path.exists(path): path = f"jugadores/{jugador}.{ext}"
+                            if os.path.exists(path): st.image(path, width=100); break
                 st.markdown("<br>", unsafe_allow_html=True)
-
-                # Gráfico top 10
                 if len(top10_fmt) > 0:
-                    fig_f = px.bar(
-                        top10_fmt, x='Participantes', y='Elo',
-                        color='Elo', color_continuous_scale='RdYlGn',
-                        text='Elo', title=f'Top 10 Elo — {formato} (Activos)'
-                    )
+                    fig_f = px.bar(top10_fmt, x='Participantes', y='Elo',
+                                   color='Elo', color_continuous_scale='RdYlGn',
+                                   text='Elo', title=f'Top 10 Elo — {formato}')
                     fig_f.update_traces(texttemplate='%{text}', textposition='outside')
-                    fig_f.update_layout(
-                        xaxis_tickangle=-30, showlegend=False,
-                        yaxis_range=[top10_fmt['Elo'].min()-50, top10_fmt['Elo'].max()+100]
-                    )
+                    fig_f.update_layout(xaxis_tickangle=-30, showlegend=False,
+                                        yaxis_range=[top10_fmt['Elo'].min()-50, top10_fmt['Elo'].max()+100])
                     st.plotly_chart(fig_f, use_container_width=True)
-
-                # Tabla completa
                 with st.expander(f"📋 Ranking completo {formato}"):
-                    tab_a, tab_t = st.tabs(["✅ Activos", "🌐 Todos"])
+                    tab_a, tab_t = st.tabs(["✅ Activos","🌐 Todos"])
                     with tab_a:
-                        st.dataframe(activos_fmt[['RANK','Participantes','Elo','Actividad']],
-                                     use_container_width=True, hide_index=True, height=400)
-                        csv_f = activos_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode('utf-8')
-                        st.download_button(f"📥 Descargar {formato} activos", csv_f,
-                                           f"elo_{formato.lower()}_activos.csv", "text/csv",
-                                           key=f"dl_{formato}_act")
+                        st.dataframe(activos_fmt[['RANK','Participantes','Elo','Actividad']], use_container_width=True, hide_index=True, height=400)
+                        st.download_button(f"📥 {formato} activos", activos_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode(), f"elo_{formato.lower()}_activos.csv","text/csv",key=f"dl_{formato}_act")
                     with tab_t:
-                        st.dataframe(elo_fmt[['RANK','Participantes','Elo','Actividad']],
-                                     use_container_width=True, hide_index=True, height=400)
-                        csv_f2 = elo_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode('utf-8')
-                        st.download_button(f"📥 Descargar {formato} completo", csv_f2,
-                                           f"elo_{formato.lower()}_completo.csv", "text/csv",
-                                           key=f"dl_{formato}_all")
-
-                # Comparativa: ¿en qué difiere del Elo general?
-                if len(elo_fmt) > 0:
-                    merged = pd.merge(
-                        elo_fmt[['Participantes','Elo']].rename(columns={'Elo':f'Elo_{formato}'}),
-                        data_elo[['Participantes','Elo']].rename(columns={'Elo':'Elo_General'}),
-                        on='Participantes', how='inner'
-                    )
-                    merged['Diferencia'] = merged[f'Elo_{formato}'] - merged['Elo_General']
-                    merged = merged.sort_values('Diferencia', ascending=False)
-                    with st.expander(f"📊 Comparativa {formato} vs Elo General"):
-                        st.caption("Diferencia positiva = mejor en este formato que en el ranking general")
-                        fig_cmp = px.bar(
-                            merged.head(20), x='Participantes', y='Diferencia',
-                            color='Diferencia', color_continuous_scale='RdYlGn',
-                            text='Diferencia',
-                            title=f'Diferencia Elo {formato} vs General — Top 20'
-                        )
-                        fig_cmp.update_traces(texttemplate='%{text:+.0f}', textposition='outside')
-                        fig_cmp.update_layout(xaxis_tickangle=-30, showlegend=False)
-                        fig_cmp.add_hline(y=0, line_dash="dash", line_color="gray")
-                        st.plotly_chart(fig_cmp, use_container_width=True)
+                        st.dataframe(elo_fmt[['RANK','Participantes','Elo','Actividad']], use_container_width=True, hide_index=True, height=400)
+                        st.download_button(f"📥 {formato} completo", elo_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode(), f"elo_{formato.lower()}.csv","text/csv",key=f"dl_{formato}_all")
+                merged = pd.merge(
+                    elo_fmt[['Participantes','Elo']].rename(columns={'Elo':f'Elo_{formato}'}),
+                    data_elo[['Participantes','Elo']].rename(columns={'Elo':'Elo_General'}),
+                    on='Participantes', how='inner')
+                merged['Diferencia'] = merged[f'Elo_{formato}'] - merged['Elo_General']
+                merged = merged.sort_values('Diferencia', ascending=False)
+                with st.expander(f"📊 {formato} vs Elo General"):
+                    fig_cmp = px.bar(merged.head(20), x='Participantes', y='Diferencia',
+                                     color='Diferencia', color_continuous_scale='RdYlGn',
+                                     text='Diferencia', title=f'Diferencia Elo {formato} vs General')
+                    fig_cmp.update_traces(texttemplate='%{text:+.0f}', textposition='outside')
+                    fig_cmp.update_layout(xaxis_tickangle=-30, showlegend=False)
+                    fig_cmp.add_hline(y=0, line_dash="dash", line_color="gray")
+                    st.plotly_chart(fig_cmp, use_container_width=True)
 
 
     st.markdown("---")
