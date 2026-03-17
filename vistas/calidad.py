@@ -15,6 +15,18 @@ SCORE_LABELS = {
     0: ("⚫ Sin datos",  "#95A5A6"),
 }
 
+# Escala de 5 niveles para CALIDAD_LIGA (basada en promedio continuo)
+def calidad_nivel(promedio: float):
+    """
+    Convierte el promedio continuo de IDs en uno de 5 niveles.
+    Umbrales calibrados con los percentiles reales de las 19 ligas.
+    """
+    if   promedio < 1.65:  return 5, "🏆 Élite",      "#9B59B6"  # top ~5%
+    elif promedio < 1.80:  return 4, "🟢 Excelente",  "#2ECC71"  # p20
+    elif promedio < 2.05:  return 3, "🟡 Buena",      "#F1C40F"  # p60
+    elif promedio < 2.20:  return 2, "🟠 Regular",    "#E67E22"  # p80
+    else:                   return 1, "🔴 Débil",      "#E74C3C"  # peor
+
 ID_LABELS = {
     "ID1": "Equilibrio Q4/Q3",
     "ID2": "Ratio Top",
@@ -170,7 +182,9 @@ def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
     if   wo_pct == 0:  id7 = 1  # Excelente — sin walkovers
     elif wo_pct <= 6:  id7 = 2  # Buena — pocos WO
     else:               id7 = 3  # Regular — muchos WO
-    calidad = int(round((id1+id2+id3+id4+id5+id6+id7) / 7, 0))
+    promedio_ids = round((id1+id2+id3+id4+id5+id6+id7) / 7, 4)
+    nivel, label_cal, _ = calidad_nivel(promedio_ids)
+    calidad = nivel  # 5=Élite, 4=Excelente, 3=Buena, 2=Regular, 1=Débil
 
     return pd.DataFrame([{
         'formato':       f"{int(games_per_jornada)}p/{n_jornadas}j/{n_jugadores}jug",
@@ -184,6 +198,7 @@ def calcular_calidad(liga_rows: pd.DataFrame, column: str) -> pd.DataFrame:
         'ID1': id1, 'ID2': id2, 'ID3': id3, 'ID4': id4,
         'ID5': id5, 'ID6': id6, 'ID7': id7,
         'CALIDAD_LIGA':  calidad,
+        'PROMEDIO':      promedio_ids,
     }], index=[column])
 
 
@@ -262,17 +277,17 @@ def show():
         batch = items[row_start:row_start + cols_per_row]
         cols  = st.columns(len(batch))
         for col, (idx, row) in zip(cols, batch):
-            calidad = int(row['CALIDAD_LIGA'])
-            label, color = SCORE_LABELS.get(calidad, ("⚫", "#95A5A6"))
-            fmt = row.get('formato', '')
+            nivel, label, color = calidad_nivel(float(row.get('PROMEDIO', row['CALIDAD_LIGA'])))
+            fmt  = row.get('formato', '')
+            prom = float(row.get('PROMEDIO', 0))
             with col:
                 st.markdown(f"""
 <div style="background:{color}22;border:2px solid {color};border-radius:10px;
             padding:12px;text-align:center;margin-bottom:8px">
   <div style="font-size:1.4em;font-weight:bold;color:{color}">{idx}</div>
   <div style="font-size:0.7em;color:#888">{fmt}</div>
-  <div style="font-size:2em;font-weight:bold;color:{color}">{calidad}</div>
-  <div style="font-size:0.75em;color:{color};font-weight:bold">{label}</div>
+  <div style="font-size:2em;font-weight:bold;color:{color}">{label}</div>
+  <div style="font-size:0.75em;color:#aaa">promedio: {prom:.2f}</div>
 </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
@@ -388,11 +403,11 @@ y permite comparar ligas con distintos formatos de manera justa.
                                   options=sorted(df_view.index.tolist()), key="cq_detail")
     if temporada_sel:
         row = df_view.loc[temporada_sel]
-        calidad = int(row['CALIDAD_LIGA'])
-        label, color = SCORE_LABELS.get(calidad, ("⚫", "#95A5A6"))
+        nivel, label, color = calidad_nivel(float(row.get('PROMEDIO', row['CALIDAD_LIGA'])))
+        prom = float(row.get('PROMEDIO', 0))
 
         c1,c2,c3,c4 = st.columns(4)
-        c1.metric("Calidad Liga",  f"{calidad}/3", label)
+        c1.metric("Calidad Liga", label, f"promedio {prom:.2f}")
         c2.metric("Formato",       row.get('formato',''))
         c3.metric("Sob. Prom.",    f"{row.get('SOB PROM',0):.1f}")
         c4.metric("Walkovers", f"{row.get('WO%',0):.1f}%")
