@@ -704,18 +704,9 @@ def show():
                 else:
                     st.dataframe(formato_wo_tabla(wo_partidas), use_container_width=True, hide_index=True)
 
-            with tab_wo2:
-                if wo_dados.empty:
-                    st.info("No tiene walkovers dados.")
-                else:
-                    st.dataframe(formato_wo_tabla(wo_dados), use_container_width=True, hide_index=True)
-                    # Resumen por torneo/liga
-                    by_event = wo_dados.groupby(["league","N_Torneo","Ligas_categoria"]).size().reset_index(name="Cantidad")
-                    if len(by_event) > 1:
-                        st.markdown("**Distribución por evento:**")
-                        st.dataframe(by_event, use_container_width=True, hide_index=True)
 
-            with tab_wo3:
+
+            with tab_wo2:
                 if wo_recibidos.empty:
                     st.info("No tiene walkovers recibidos.")
                 else:
@@ -725,6 +716,16 @@ def show():
                         st.markdown("**Distribución por evento:**")
                         st.dataframe(by_event, use_container_width=True, hide_index=True)
 
+            with tab_wo3:
+                if wo_dados.empty:
+                    st.info("No tiene walkovers dados.")
+                else:
+                    st.dataframe(formato_wo_tabla(wo_dados), use_container_width=True, hide_index=True)
+                    # Resumen por torneo/liga
+                    by_event = wo_dados.groupby(["league","N_Torneo","Ligas_categoria"]).size().reset_index(name="Cantidad")
+                    if len(by_event) > 1:
+                        st.markdown("**Distribución por evento:**")
+                        st.dataframe(by_event, use_container_width=True, hide_index=True)
         st.markdown("---")
 
         # Campeonatos ganados
