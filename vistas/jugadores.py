@@ -668,9 +668,9 @@ def show():
                 es_j2 = (p2 == p) if exact_search else (p in p2)
                 es_ganador = (winner == p) if exact_search else (p in winner)
                 if es_ganador:
-                    return "Dado (ganó por WO)"
+                    return "Recibido (ganó por WO)"
                 else:
-                    return "Recibido (perdió por WO)"
+                    return "Dado (perdió por WO)"
 
             wo_partidas["Tipo WO"] = wo_partidas.apply(clasificar_wo, axis=1)
 
@@ -679,10 +679,10 @@ def show():
 
             wc1, wc2, wc3 = st.columns(3)
             wc1.metric("Total Walkovers", len(wo_partidas))
-            wc2.metric("✅ Dados (ganó por WO)", len(wo_dados))
-            wc3.metric("❌ Recibidos (perdió por WO)", len(wo_recibidos))
+            wc2.metric("✅ Recibidos (ganó por WO)", len(wo_dados))
+            wc3.metric("❌ Dados (perdió por WO)", len(wo_recibidos))
 
-            tab_wo1, tab_wo2, tab_wo3 = st.tabs(["📋 Todos", "✅ Dados", "❌ Recibidos"])
+            tab_wo1, tab_wo2, tab_wo3 = st.tabs(["📋 Todos", "✅ Recibidos", "❌ Dados"])
 
             def formato_wo_tabla(wo_df):
                 if wo_df.empty:
