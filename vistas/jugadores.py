@@ -674,13 +674,13 @@ def show():
 
             wo_partidas["Tipo WO"] = wo_partidas.apply(clasificar_wo, axis=1)
 
-            wo_dados     = wo_partidas[wo_partidas["Tipo WO"] == "Dado (ganó por WO)"]
-            wo_recibidos = wo_partidas[wo_partidas["Tipo WO"] == "Recibido (perdió por WO)"]
+            wo_dados     = wo_partidas[wo_partidas["Tipo WO"] == "Dado (perdió por WO)"]
+            wo_recibidos = wo_partidas[wo_partidas["Tipo WO"] == "Recibido (ganó por WO)"]
 
             wc1, wc2, wc3 = st.columns(3)
             wc1.metric("Total Walkovers", len(wo_partidas))
-            wc2.metric("✅ Recibidos (ganó por WO)", len(wo_dados))
-            wc3.metric("❌ Dados (perdió por WO)", len(wo_recibidos))
+            wc2.metric("✅ Recibidos (ganó por WO)", len(wo_recibidos))
+            wc3.metric("❌ Dados (perdió por WO)", len(wo_dados))
 
             tab_wo1, tab_wo2, tab_wo3 = st.tabs(["📋 Todos", "✅ Recibidos", "❌ Dados"])
 
