@@ -1,48 +1,50 @@
 player1;player2;winner;league;date;status;round;Formato_esp;replay;Tier;N_Torneo;Formato;Ligas_categoria;Fase_completo;pokemons Sob;pokemon vencidos;Walkover
-Darmanethan;xtososa777;Darmanethan;ASCENSO;2021-12-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Cuartos;5;6;0
-Jffmm;Pandu;Jffmm;ASCENSO;2021-12-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Cuartos;2;6;0
-MAF1001;Edenking;MAF1001;ASCENSO;2021-12-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Cuartos;1;6;0
-Spodoptera;Roncito;Spodoptera;ASCENSO;2021-12-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Cuartos;2;6;0
-Aikauwu;DiegoCCA;Aikauwu;ASCENSO;2021-12-01;Completed;ascenso singles Cuartos;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Cuartos;3;6;0
-D'AllFather;Zek123;D'AllFather;ASCENSO;2021-12-01;Completed;ascenso singles Cuartos;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Cuartos;1;6;0
-Joscake;Edenking;Joscake;ASCENSO;2021-12-01;Completed;ascenso singles Cuartos;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Cuartos;2;6;0
-Tronchi;Sammy Sweet;Tronchi;ASCENSO;2021-12-01;Completed;ascenso singles Cuartos;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Cuartos;1;6;0
-Darmanethan;Spodoptera;Darmanethan;ASCENSO;2021-12-01;Completed;ascenso doubles Semi;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Semi;3;6;0
-Jffmm;MAF1001;Jffmm;ASCENSO;2021-12-01;Completed;ascenso doubles Semi;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Semi;5;6;0
-Joscake;Aikauwu;Joscake;ASCENSO;2021-12-01;Completed;ascenso singles Semi;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Semi;2;6;0
-D'AllFather;Sammy Sweet;D'AllFather;ASCENSO;2021-12-01;Completed;ascenso singles Semi;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Semi;4;6;0
-Jffmm;Darmanethan;Jffmm;ASCENSO;2021-12-01;Completed;ascenso doubles Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso doubles Final;5;6;0
-Joscake;D'AllFather;Joscake;ASCENSO;2021-12-01;Completed;ascenso singles Final;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso singles Final;1;6;0
-Joscake;Jffmm;Joscake;ASCENSO;2021-12-01;Completed;ascenso  Final;OU;Replay;OU;1;SINGLES;No Posee Liga;ascenso  Final;5;6;0
-Joscake;Jffmm;Joscake;ASCENSO;2021-12-01;Completed;ascenso  Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;ascenso  Final;3;6;0
-Joscake;Jffmm;Joscake;ASCENSO;2021-12-01;Completed;ascenso  Final;VGC;Replay;VGC;1;VGC;No Posee Liga;ascenso  Final;2;6;0
+Darmanethan;xtososa777;Darmanethan;ASCENSO;2021-12-01;Completed;Cuartos de Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Cuartos de Final;5;6;0
+Jffmm;Pandu;Jffmm;ASCENSO;2021-12-01;Completed;Cuartos de Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Cuartos de Final;2;6;0
+MAF1001;Edenking;MAF1001;ASCENSO;2021-12-01;Completed;Cuartos de Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Cuartos de Final;1;6;0
+Spodoptera;Roncito;Spodoptera;ASCENSO;2021-12-01;Completed;Cuartos de Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Cuartos de Final;2;6;0
+Aikauwu;DiegoCCA;Aikauwu;ASCENSO;2021-12-01;Completed;Cuartos de Final;OU;Replay;OU;1;SINGLES;No Posee Liga;Cuartos de Final;3;6;0
+D'AllFather;Zek123;D'AllFather;ASCENSO;2021-12-01;Completed;Cuartos de Final;OU;Replay;OU;1;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
+Joscake;Edenking;Joscake;ASCENSO;2021-12-01;Completed;Cuartos de Final;OU;Replay;OU;1;SINGLES;No Posee Liga;Cuartos de Final;2;6;0
+Tronchi;Sammy Sweet;Tronchi;ASCENSO;2021-12-01;Completed;Cuartos de Final;OU;Replay;OU;1;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
+Darmanethan;Spodoptera;Darmanethan;ASCENSO;2021-12-01;Completed;Semifinal;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Semifinal;3;6;0
+Jffmm;MAF1001;Jffmm;ASCENSO;2021-12-01;Completed;Semifinal;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Semifinal;5;6;0
+Joscake;Aikauwu;Joscake;ASCENSO;2021-12-01;Completed;Semifinal;OU;Replay;OU;1;SINGLES;No Posee Liga;Semifinal;2;6;0
+D'AllFather;Sammy Sweet;D'AllFather;ASCENSO;2021-12-01;Completed;Semifinal;OU;Replay;OU;1;SINGLES;No Posee Liga;Semifinal;4;6;0
+Jffmm;Darmanethan;Jffmm;ASCENSO;2021-12-01;Completed;Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Final;5;6;0
+Joscake;D'AllFather;Joscake;ASCENSO;2021-12-01;Completed;Final;OU;Replay;OU;1;SINGLES;No Posee Liga;Final;1;6;0
+Joscake;Jffmm;Joscake;ASCENSO;2021-12-01;Completed;Final;OU;Replay;OU;1;SINGLES;No Posee Liga;Final;5;6;0
+Joscake;Jffmm;Joscake;ASCENSO;2021-12-01;Completed;Final;DOU;Replay;DOU;1;DOBLES;No Posee Liga;Final;3;6;0
+Joscake;Jffmm;Joscake;ASCENSO;2021-12-01;Completed;Final;VGC;Replay;VGC;1;VGC;No Posee Liga;Final;2;6;0
 Joscake;Roy Kasoy;Joscake;ASCENSO;2021-12-01;Completed;PlayOff;OU;Replay;OU;1;SINGLES;No Posee Liga;PlayOff;3;6;0
 Joscake;Roy Kasoy;Joscake;ASCENSO;2021-12-01;Completed;PlayOff;DOU;Replay;DOU;1;DOBLES;No Posee Liga;PlayOff;5;6;0
 Joscake;Roy Kasoy;Joscake;ASCENSO;2021-12-01;Completed;PlayOff;VGC;Replay;VGC;1;VGC;No Posee Liga;PlayOff;5;6;0
-D'AllFather;MAF1001;D'AllFather;ASCENSO;2022-01-01;Completed;ascenso bo3 semifinales;OU;Replay;OU;2;SINGLES;No Posee Liga;ascenso bo3 semifinales;3;6;0
-Pandu;Tronchi;Pandu;ASCENSO;2022-01-01;Completed;ascenso bo3 semifinales;OU;Replay;OU;2;SINGLES;No Posee Liga;ascenso bo3 semifinales;2;6;0
-D'AllFather;MAF1001;D'AllFather;ASCENSO;2022-01-01;Completed;ascenso bo3 semifinales;DOU;Replay;DOU;2;DOBLES;No Posee Liga;ascenso bo3 semifinales;2;6;0
-Tronchi;Pandu;Tronchi;ASCENSO;2022-01-01;Completed;ascenso bo3 semifinales;DOU;Replay;DOU;2;DOBLES;No Posee Liga;ascenso bo3 semifinales;6;6;0
-Pandu;Tronchi;Pandu;ASCENSO;2022-01-01;Completed;ascenso bo3 semifinales;VGC;Replay;VGC;2;VGC;No Posee Liga;ascenso bo3 semifinales;4;6;0
-D'AllFather;Pandu;D'AllFather;ASCENSO;2022-01-01;Completed;ascenso bo3 final;OU;Replay;OU;2;SINGLES;No Posee Liga;ascenso bo3 final;4;6;0
-D'AllFather;Pandu;D'AllFather;ASCENSO;2022-01-01;Completed;ascenso bo3 final;DOU;Replay;DOU;2;DOBLES;No Posee Liga;ascenso bo3 final;3;6;0
-Aikauwu;O'Fenomenon't;Aikauwu;ASCENSO;2022-07-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Cuartos;3;6;0
-Bloody Cheese;Lautaro;Bloody Cheese;ASCENSO;2022-07-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Cuartos;3;6;0
-Pandu;MAF1001;Pandu;ASCENSO;2022-07-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Cuartos;3;6;0
-Spodoptera;The.Ultracheese;Spodoptera;ASCENSO;2022-07-01;Completed;ascenso doubles Cuartos;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Cuartos;2;6;0
-Aikauwu;Lautaro;Aikauwu;ASCENSO;2022-07-01;Completed;ascenso singles Cuartos;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Cuartos;4;6;0
-Bloody Cheese;Angelowos;Bloody Cheese;ASCENSO;2022-07-01;Completed;ascenso singles Cuartos;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Cuartos;3;6;0
-O'Fenomenon't;Pandu;O'Fenomenon't;ASCENSO;2022-07-01;Completed;ascenso singles Cuartos;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Cuartos;3;6;0
-The.Ultracheese;MAF1001;The.Ultracheese;ASCENSO;2022-07-01;Completed;ascenso singles Cuartos;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Cuartos;3;6;0
-Aikauwu;Pandu;Aikauwu;ASCENSO;2022-07-01;Completed;ascenso doubles Semi;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Semi;3;6;0
-Bloody Cheese;Spodoptera;Bloody Cheese;ASCENSO;2022-07-01;Completed;ascenso doubles Semi;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Semi;3;6;0
-Bloody Cheese;O'Fenomenon't;Bloody Cheese;ASCENSO;2022-07-01;Completed;ascenso singles Semi;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Semi;4;6;0
-The.Ultracheese;Aikauwu;The.Ultracheese;ASCENSO;2022-07-01;Completed;ascenso singles Semi;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Semi;2;6;0
-Bloody Cheese;Aikauwu;Bloody Cheese;ASCENSO;2022-07-01;Completed;ascenso doubles Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso doubles Final;1;6;0
-The.Ultracheese;Bloody Cheese;The.Ultracheese;ASCENSO;2022-07-01;Completed;ascenso singles Final;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso singles Final;1;6;0
-The.Ultracheese;Bloody Cheese;The.Ultracheese;ASCENSO;2022-07-01;Completed;ascenso bo3 final;OU;Replay;OU;3;SINGLES;No Posee Liga;ascenso bo3 final;2;6;0
-Bloody Cheese;The.Ultracheese;Bloody Cheese;ASCENSO;2022-07-01;Completed;ascenso bo3 final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;ascenso bo3 final;4;6;0
-The.Ultracheese;Bloody Cheese;The.Ultracheese;ASCENSO;2022-07-01;Completed;ascenso bo3 final;VGC;Replay;VGC;3;VGC;No Posee Liga;ascenso bo3 final;4;6;0
+D'AllFather;MAF1001;D'AllFather;ASCENSO;2022-01-01;Completed;Semifinal;OU;Replay;OU;2;SINGLES;No Posee Liga;Semifinal;3;6;0
+Pandu;Tronchi;Pandu;ASCENSO;2022-01-01;Completed;Semifinal;OU;Replay;OU;2;SINGLES;No Posee Liga;Semifinal;2;6;0
+D'AllFather;MAF1001;D'AllFather;ASCENSO;2022-01-01;Completed;Semifinal;DOU;Replay;DOU;2;DOBLES;No Posee Liga;Semifinal;2;6;0
+D'AllFather;MAF1001;D'AllFather;ASCENSO;2022-01-01;Completed;Semifinal;DOU;Replay;DOU;2;DOBLES;No Posee Liga;Semifinal;6;6;0
+Tronchi;Pandu;Tronchi;ASCENSO;2022-01-01;Completed;Semifinal;DOU;Replay;DOU;2;DOBLES;No Posee Liga;Semifinal;6;6;0
+Pandu;Tronchi;Pandu;ASCENSO;2022-01-01;Completed;Semifinal;VGC;Replay;VGC;2;VGC;No Posee Liga;Semifinal;4;6;0
+D'AllFather;Pandu;D'AllFather;ASCENSO;2022-01-01;Completed;Final;OU;Replay;OU;2;SINGLES;No Posee Liga;Final;4;6;0
+D'AllFather;Pandu;D'AllFather;ASCENSO;2022-01-01;Completed;Final;DOU;Replay;DOU;2;DOBLES;No Posee Liga;Final;3;6;0
+D'AllFather;Pandu;D'AllFather;ASCENSO;2022-01-01;Completed;Final;DOU;Replay;DOU;2;DOBLES;No Posee Liga;Final;6;6;0
+Aikauwu;O'Fenomenon't;Aikauwu;ASCENSO;2022-07-01;Completed;Cuartos de Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Cuartos de Final;3;6;0
+Bloody Cheese;Lautaro;Bloody Cheese;ASCENSO;2022-07-01;Completed;Cuartos de Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Cuartos de Final;3;6;0
+Pandu;MAF1001;Pandu;ASCENSO;2022-07-01;Completed;Cuartos de Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Cuartos de Final;3;6;0
+Spodoptera;The.Ultracheese;Spodoptera;ASCENSO;2022-07-01;Completed;Cuartos de Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Cuartos de Final;2;6;0
+Aikauwu;Lautaro;Aikauwu;ASCENSO;2022-07-01;Completed;Cuartos de Final;OU;Replay;OU;3;SINGLES;No Posee Liga;Cuartos de Final;4;6;0
+Bloody Cheese;Angelowos;Bloody Cheese;ASCENSO;2022-07-01;Completed;Cuartos de Final;OU;Replay;OU;3;SINGLES;No Posee Liga;Cuartos de Final;3;6;0
+O'Fenomenon't;Pandu;O'Fenomenon't;ASCENSO;2022-07-01;Completed;Cuartos de Final;OU;Replay;OU;3;SINGLES;No Posee Liga;Cuartos de Final;3;6;0
+The.Ultracheese;MAF1001;The.Ultracheese;ASCENSO;2022-07-01;Completed;Cuartos de Final;OU;Replay;OU;3;SINGLES;No Posee Liga;Cuartos de Final;3;6;0
+Aikauwu;Pandu;Aikauwu;ASCENSO;2022-07-01;Completed;Semifinal;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Semifinal;3;6;0
+Bloody Cheese;Spodoptera;Bloody Cheese;ASCENSO;2022-07-01;Completed;Semifinal;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Semifinal;3;6;0
+Bloody Cheese;O'Fenomenon't;Bloody Cheese;ASCENSO;2022-07-01;Completed;Semifinal;OU;Replay;OU;3;SINGLES;No Posee Liga;Semifinal;4;6;0
+The.Ultracheese;Aikauwu;The.Ultracheese;ASCENSO;2022-07-01;Completed;Semifinal;OU;Replay;OU;3;SINGLES;No Posee Liga;Semifinal;2;6;0
+Bloody Cheese;Aikauwu;Bloody Cheese;ASCENSO;2022-07-01;Completed;Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Final;1;6;0
+The.Ultracheese;Bloody Cheese;The.Ultracheese;ASCENSO;2022-07-01;Completed;Final;OU;Replay;OU;3;SINGLES;No Posee Liga;Final;1;6;0
+The.Ultracheese;Bloody Cheese;The.Ultracheese;ASCENSO;2022-07-01;Completed;Final;OU;Replay;OU;3;SINGLES;No Posee Liga;Final;2;6;0
+Bloody Cheese;The.Ultracheese;Bloody Cheese;ASCENSO;2022-07-01;Completed;Final;DOU;Replay;DOU;3;DOBLES;No Posee Liga;Final;4;6;0
+The.Ultracheese;Bloody Cheese;The.Ultracheese;ASCENSO;2022-07-01;Completed;Final;VGC;Replay;VGC;3;VGC;No Posee Liga;Final;4;6;0
 Edenking;The.Ultracheese;Edenking;ASCENSO;2022-07-01;Completed;PlayOff;OU;Replay;OU;3;SINGLES;No Posee Liga;PlayOff;4;6;0
 Edenking;The.Ultracheese;Edenking;ASCENSO;2022-07-01;Completed;PlayOff;DOU;Replay;DOU;3;DOBLES;No Posee Liga;PlayOff;2;6;0
 Edenking;The.Ultracheese;Edenking;ASCENSO;2022-07-01;Completed;PlayOff;VGC;Replay;VGC;3;VGC;No Posee Liga;PlayOff;2;6;0
@@ -7972,7 +7974,7 @@ skll02;ShinkaHMA;skll02;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay
 Mr.Shadowdusk;SasoriVzla7;Mr.Shadowdusk;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 Mar;Joscake;Mar;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;3;6;0
 Bloody Cheese;MafiaPolar6242;Bloody Cheese;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;3;6;0
-Yabadaba;The.Ultracheese;Yabadaba;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;3;6;1
+Yabadaba;The.Ultracheese;Yabadaba;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;6;6;1
 Draco axel;Fran;Draco axel;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 Elin beacil;Angello77;Elin beacil;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;3;6;0
 Angelowos;Bamdara;Angelowos;TORNEO;2025-12-01;Completed;RONDA SUIZA 3;NAT DEX;Replay;NAT DEX;57;SINGLES;No Posee Liga;RONDA SUIZA 3;4;6;0
@@ -8107,7 +8109,7 @@ skll02;Akaru;skll02;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;
 Bamdara;Moirix;Bamdara;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;1;6;0
 Angelowos;SasoriVzla7;Angelowos;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 CaradeCoso;Jeremith047;CaradeCoso;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;6;6;0
-JaLax;DMRS 666;JaLax;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;3;6;1
+JaLax;DMRS 666;JaLax;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;6;6;1
 ShinkaHMA;The.Ultracheese;ShinkaHMA;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 Puchamon03;Okari958;Puchamon03;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 LABIAMG;Hydreigon_chelas;LABIAMG;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;3;6;0
@@ -8116,7 +8118,7 @@ Ricomam;Draco axel;Ricomam;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;
 Saga;Joscake;Saga;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 MafiaPolar6242;HallacAs;MafiaPolar6242;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;1;6;0
 D'AllFather;Tronchi;D'AllFather;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
-Dino agente;ZapeohDev;Dino agente;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;3;6;1
+Dino agente;ZapeohDev;Dino agente;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;6;6;1
 Mar;Yabadaba;Mar;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;2;6;0
 Angello77;Gold;Angello77;TORNEO;2026-01-01;Completed;RONDA SUIZA 3;DOU;Replay;DOU;59;DOBLES;No Posee Liga;RONDA SUIZA 3;6;6;1
 CaradeCoso;Mar;CaradeCoso;TORNEO;2026-01-01;Completed;Octavos de Final;DOU;Replay;DOU;59;DOBLES;No Posee Liga;Octavos de Final;5;6;0
@@ -8196,16 +8198,16 @@ D'AllFather;CaradeCoso;D'AllFather;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;Fre
 skll02;CaradeCoso;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 1;0;6;0
 Mr.Shadowdusk;Bloody Cheese;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;0;6;0
 Mr.Shadowdusk;The.Ultracheese;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;0;6;0
-Bloody Cheese;Mr.Shadowdusk;Bloody Cheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
-The.Ultracheese;Mr.Shadowdusk;The.Ultracheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
-Mr.Shadowdusk;Bloody Cheese;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
-Mr.Shadowdusk;The.Ultracheese;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
+Bloody Cheese;Mr.Shadowdusk;Bloody Cheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
+The.Ultracheese;Mr.Shadowdusk;The.Ultracheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
+Mr.Shadowdusk;Bloody Cheese;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
+Mr.Shadowdusk;The.Ultracheese;Mr.Shadowdusk;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 Chris FPS;Bloody Cheese;Chris FPS;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
 Chris FPS;The.Ultracheese;Chris FPS;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
-Bloody Cheese;Chris FPS;Bloody Cheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
-The.Ultracheese;Chris FPS;The.Ultracheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
-Chris FPS;Bloody Cheese;Chris FPS;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
-Chris FPS;The.Ultracheese;Chris FPS;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
+Bloody Cheese;Chris FPS;Bloody Cheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
+The.Ultracheese;Chris FPS;The.Ultracheese;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
+Chris FPS;Bloody Cheese;Chris FPS;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
+Chris FPS;The.Ultracheese;Chris FPS;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 Joscake;Ricomam;Joscake;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;1;6;0
 Angello77;Ricomam;Angello77;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
 Joscake;Ricomam;Joscake;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;1;6;0
@@ -8246,14 +8248,14 @@ D'AllFather;Elin beacil;D'AllFather;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Mu
 D'AllFather;Gold;D'AllFather;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 D'AllFather;Elin beacil;D'AllFather;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 D'AllFather;Gold;D'AllFather;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
-Elin beacil;D'AllFather;Elin beacil;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;4;6;1
-Gold;D'AllFather;Gold;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;0;6;1
+Elin beacil;D'AllFather;Elin beacil;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;4;6;0
+Gold;D'AllFather;Gold;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;0;6;0
 skll02;Elin beacil;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 skll02;Gold;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 skll02;Elin beacil;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 skll02;Gold;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
-Elin beacil;skll02;Elin beacil;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;4;6;1
-Gold;skll02;Gold;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;0;6;1
+Elin beacil;skll02;Elin beacil;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;4;6;0
+Gold;skll02;Gold;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;Free For all;Replay;Free For all;61;SINGLES;No Posee Liga;RONDA SUIZA 2;0;6;0
 Chris FPS;Joscake;Chris FPS;TORNEO;2026-02-01;Completed;Final;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;Final;0;6;0
 Chris FPS;Angello77;Chris FPS;TORNEO;2026-02-01;Completed;Final;MultiRandomBattle;Replay;MultiRandomBattle;61;SINGLES;No Posee Liga;Final;0;6;0
 Chris FPS;Joscake;Chris FPS;TORNEO;2026-02-01;Completed;Final;Free For all Randoms;Replay;Free For all Randoms;61;SINGLES;No Posee Liga;Final;4;6;0
@@ -8431,9 +8433,9 @@ NanDitto;Angelowos;NanDitto;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay
 Edenking;Gerbacia14;Edenking;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;6;6;0
 Edenking;Gerbacia14;Edenking;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;3;6;0
 Edenking;Gerbacia14;Edenking;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;6;6;0
-JaLax;Ricomam;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;3;6;1
-JaLax;Ricomam;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;3;6;1
-JaLax;Ricomam;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;3;6;1
+JaLax;Ricomam;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;6;6;1
+JaLax;Ricomam;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;6;6;1
+JaLax;Ricomam;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;6;6;1
 David Wong;Jeremith047;David Wong;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;3;6;0
 David Wong;Jeremith047;David Wong;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;3;6;0
 David Wong;Jeremith047;David Wong;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;VGC;Replay;VGC;62;VGC;No Posee Liga;RONDA SUIZA 3;6;6;0
@@ -8523,7 +8525,7 @@ Angello77;The.Ultracheese;Angello77;TORNEO;2026-02-01;Completed;Cuartos de Final
 Adpg;Moirix;Adpg;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
 Chris FPS;Bloody Cheese;Chris FPS;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;1;6;0
 CaradeCoso;GatitaGolosa123;CaradeCoso;TORNEO;2026-02-01;Completed;Cuartos de Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Cuartos de Final;4;6;0
-Chris FPS;CaradeCoso;Chris FPS;TORNEO;2026-02-01;Completed;Semifinal;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Semifinal;1;6;1
+Chris FPS;CaradeCoso;Chris FPS;TORNEO;2026-02-01;Completed;Semifinal;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Semifinal;1;6;0
 Angello77;Adpg;Angello77;TORNEO;2026-02-01;Completed;Semifinal;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Semifinal;6;6;0
 Chris FPS;Angello77;Chris FPS;TORNEO;2026-02-01;Completed;Final;NAT DEX;Replay;NAT DEX;60;SINGLES;No Posee Liga;Final;1;6;0
 skll02;EmperorGambit;skll02;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;0
@@ -8559,7 +8561,7 @@ Saga;Arthur;Saga;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay
 Fran;Elin beacil;Fran;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;4;6;0
 Dino agente;Nigga Chan;Dino agente;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;2;6;0
 Farweb;DimitryYamiYamiiii;Farweb;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;0
-Volksito;LABIAMG;Volksito;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;1
+Volksito;LABIAMG;Volksito;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
 gbrielzzzs;xtososa777;gbrielzzzs;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;2;6;0
 GatitaGolosa123;Fur4nko;GatitaGolosa123;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;1;6;0
 Guillotina;Okari958;Guillotina;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;2;6;0
@@ -8568,7 +8570,7 @@ Angelowos;gaiver_a;Angelowos;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SI
 Blodborne;CRISSXEROX;Blodborne;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;5;6;0
 CaradeCoso;Juanssss;CaradeCoso;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;0
 AerosmithJR;Blazing;AerosmithJR;TORNEO;2026-02-01;Completed;RONDA SUIZA 1;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 1;1;6;0
-JaLax;skll02;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;1
+JaLax;skll02;JaLax;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 Blodborne;Yabadaba;Blodborne;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;0
 CaradeCoso;Bamdara;CaradeCoso;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;1;6;0
 ShinkaHMA;Chris FPS;ShinkaHMA;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
@@ -8588,7 +8590,7 @@ Saga;Farweb;Saga;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay
 Fran;Volksito;Fran;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;1;6;0
 GatitaGolosa123;Dino agente;GatitaGolosa123;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;1;6;0
 Guillotina;Angelowos;Guillotina;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;0
-AerosmithJR;gbrielzzzs;AerosmithJR;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
+AerosmithJR;gbrielzzzs;AerosmithJR;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 Tattin;xtososa777;Tattin;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
 Tronchi;Nero22dd;Tronchi;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;0
 Porygon Z;Dino324000;Porygon Z;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;0
@@ -8607,7 +8609,7 @@ Elin beacil;DimitryYamiYamiiii;Elin beacil;TORNEO;2026-02-01;Completed;RONDA SUI
 LABIAMG;Nigga Chan;LABIAMG;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
 Okari958;Fur4nko;Okari958;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
 MONTIEL JAEGER;gaiver_a;MONTIEL JAEGER;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
-Blazing;CRISSXEROX;Blazing;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;3;6;1
+Blazing;CRISSXEROX;Blazing;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;6;6;1
 Juansssss;EmperorGambit;Juansssss;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;1;6;0
 D'AllFather;Puchamon03;D'AllFather;TORNEO;2026-02-01;Completed;RONDA SUIZA 2;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 2;2;6;0
 Ake-Izou;Fran;Ake-Izou;TORNEO;2026-02-01;Completed;RONDA SUIZA 3;RANDOM SINGLES;Replay;RANDOM SINGLES;63;SINGLES;No Posee Liga;RONDA SUIZA 3;2;6;0
@@ -8827,7 +8829,7 @@ LABIAMG;Mar;LABIAMG;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT
 Chonarthas;Bloody Cheese;Chonarthas;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;0
 Angello77;MONTIEL JAEGER;Angello77;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;0
 2DpkmN;skll02;2DpkmN;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;4;6;0
-The.Ultracheese;Okari958;The.Ultracheese;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;3;6;1
+The.Ultracheese;Okari958;The.Ultracheese;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
 MT_Lira;Ger;MT_Lira;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;5;6;0
 Chris FPS;Aikauwu;Chris FPS;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;1
 GatitaGolosa123;CaradeCoso;GatitaGolosa123;TORNEO;2026-03-01;Completed;RONDA SUIZA 1;NAT DEX;Replay;NAT DEX;66;SINGLES;No Posee Liga;RONDA SUIZA 1;6;6;0
@@ -8928,7 +8930,7 @@ Porygon Z;ELIASVE727827;Porygon Z;TORNEO;2026-03-01;Completed;Fase de grupos;OU;
 Chris FPS;MT_Lira;Chris FPS;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;5;6;0
 Porygon Z;MT_Lira;Porygon Z;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;4;6;0
 ELIASVE727827;Blodborne;ELIASVE727827;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
-MT_Lira;Blodborne;MT_Lira;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;1;6;1
+MT_Lira;Blodborne;MT_Lira;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 Chris FPS;Porygon Z;Chris FPS;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;1;6;0
 Chris FPS;Blodborne;Chris FPS;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
 ELIASVE727827;MT_Lira;ELIASVE727827;TORNEO;2026-03-01;Completed;Fase de grupos;OU;Replay;OU;67;SINGLES;No Posee Liga;Fase de grupos;6;6;1
