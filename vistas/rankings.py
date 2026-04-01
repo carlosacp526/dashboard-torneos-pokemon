@@ -50,6 +50,7 @@ def show():
         ("Diciembre25.png",  "Diciembre 2025"),
         ("Enero26.png",      "Enero 2026"),
         ("Febrero26.png",    "Febrero 2026"),
+        ("Marzo26.png",    "Marzo 2026"),
     ]
     tab_elo = st.tabs([label for _, label in meses_elo])
     for tab, (img, label) in zip(tab_elo, meses_elo):
