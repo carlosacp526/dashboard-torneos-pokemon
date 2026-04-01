@@ -174,7 +174,7 @@ def calcular_elo_formato(df_raw, formato):
     dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
     data_elo = pd.merge(data_elo, dfechas, how='left', left_on='Participantes', right_on='Jugador')
     del data_elo['Jugador']
-    cutoff = pd.Timestamp.now() - pd.DateOffset(months=3)
+    cutoff = pd.Timestamp.now() - pd.DateOffset(months=6)
     data_elo['Actividad'] = data_elo['Fecha'].apply(lambda x: 'Activo' if pd.notna(x) and x>=cutoff else 'Inactivo')
     data_elo = data_elo.sort_values('Elo', ascending=False).reset_index(drop=True)
     data_elo['RANK'] = range(1, len(data_elo)+1)
