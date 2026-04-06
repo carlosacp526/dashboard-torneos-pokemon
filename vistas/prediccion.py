@@ -22,14 +22,12 @@ def load_model(df_raw):
     """
     if not os.path.exists(MODEL_CACHE_PATH):
         return None, "NO_PKL"
-
     try:
         with open(MODEL_CACHE_PATH, "rb") as f:
             cache = pickle.load(f)
         return cache, "OK"
     except Exception as e:
         return None, f"ERROR: {e}"
-
 
 
 FECHA_MAP = {
@@ -263,11 +261,184 @@ def make_pred_row(j1, j2, latest, feature_cols):
     return row[feature_cols].fillna(0)
 
 
+def _get_player_stats(jug, latest_stats, df_fecha):
+    """Devuelve un dict con todas las stats relevantes de un jugador."""
+    r = latest_stats[latest_stats["Jugador"] == jug]
+    hist = df_fecha[df_fecha["Jugador"] == jug].sort_values("Fecha")
+
+    if r.empty:
+        return None
+
+    rv = r.iloc[0]
+    total_juegos = int(rv.get("Juegos_Ac", hist["Juegos"].sum()) if "Juegos_Ac" in rv else hist["Juegos"].sum())
+    total_victorias = int(hist["Victorias"].sum())
+    total_derrotas = int(hist["Derrotas"].sum()) if "Derrotas" in hist.columns else total_juegos - total_victorias
+
+    # Winrate por formato (acumulado)
+    wr_singles   = rv.get("Formato_SINGLES_Ac", 0)
+    wr_dobles    = rv.get("Formato_DOBLES_Ac", 0)
+    wr_vgc       = rv.get("Formato_VGC_Ac", 0)
+    total_fmt    = max(wr_singles + wr_dobles + wr_vgc, 1)
+
+    # Participacion por tier/categoria
+    cat_ascenso  = int(rv.get("CATEGORIA_ASCENSO_Ac", 0))
+    cat_cypher   = int(rv.get("CATEGORIA_CYPHER_Ac", 0))
+    cat_liga     = int(rv.get("CATEGORIA_LIGA_Ac", 0))
+    cat_torneo   = int(rv.get("CATEGORIA_TORNEO_Ac", 0))
+
+    # Fases
+    fase_elim    = int(rv.get("Fase_Eliminatorias_Ac", 0))
+    fase_grupos  = int(rv.get("Fase_GRUPOS_Ac", 0))
+    fase_jornadas= int(rv.get("Fase_JORNADAS_Ac", 0))
+    fase_rondas  = int(rv.get("Fase_RONDAS_Ac", 0))
+
+    return {
+        "winrate_ac":   float(rv.get("Winrate_Ac", 0)),
+        "score_prom":   float(rv.get("Score_Prom_Ac", 0)),
+        "total_juegos": total_juegos,
+        "victorias":    total_victorias,
+        "derrotas":     total_derrotas,
+        # formatos (partidas jugadas)
+        "singles":  wr_singles,
+        "dobles":   wr_dobles,
+        "vgc":      wr_vgc,
+        "total_fmt":total_fmt,
+        # tiers
+        "cat_ascenso": cat_ascenso,
+        "cat_cypher":  cat_cypher,
+        "cat_liga":    cat_liga,
+        "cat_torneo":  cat_torneo,
+        # fases
+        "fase_elim":     fase_elim,
+        "fase_grupos":   fase_grupos,
+        "fase_jornadas": fase_jornadas,
+        "fase_rondas":   fase_rondas,
+        # historial para grafico
+        "hist": hist,
+    }
+
+
+def _render_player_card(nombre, stats, color):
+    """Muestra la card completa de un jugador."""
+    wr_pct = stats["winrate_ac"] * 100
+    score  = stats["score_prom"]
+    total  = stats["total_juegos"]
+
+    st.markdown(f"""
+    <div style="border:2px solid {color};border-radius:14px;padding:18px 20px;background:{color}11">
+        <div style="font-size:1.35rem;font-weight:700;color:{color};margin-bottom:6px">🎮 {nombre}</div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:10px">
+            <div style="text-align:center">
+                <div style="font-size:1.8rem;font-weight:800;color:{color}">{wr_pct:.1f}%</div>
+                <div style="font-size:0.75rem;color:#888">Winrate Global</div>
+            </div>
+            <div style="text-align:center">
+                <div style="font-size:1.8rem;font-weight:800">{score:.1f}</div>
+                <div style="font-size:0.75rem;color:#888">Score Prom.</div>
+            </div>
+            <div style="text-align:center">
+                <div style="font-size:1.8rem;font-weight:800">{total}</div>
+                <div style="font-size:0.75rem;color:#888">Partidas</div>
+            </div>
+            <div style="text-align:center">
+                <div style="font-size:1.8rem;font-weight:800;color:#2ecc71">{stats['victorias']}</div>
+                <div style="font-size:0.75rem;color:#888">Victorias</div>
+            </div>
+            <div style="text-align:center">
+                <div style="font-size:1.8rem;font-weight:800;color:#e74c3c">{stats['derrotas']}</div>
+                <div style="font-size:0.75rem;color:#888">Derrotas</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("**Formatos jugados**")
+    fmt_data = {
+        "SINGLES": stats["singles"],
+        "DOBLES":  stats["dobles"],
+        "VGC":     stats["vgc"],
+    }
+    fmt_df = pd.DataFrame(list(fmt_data.items()), columns=["Formato","Partidas"])
+    fig_fmt = px.bar(fmt_df, x="Formato", y="Partidas",
+                     color="Formato",
+                     color_discrete_sequence=[color, "#aaaaaa", "#dddddd"],
+                     text="Partidas")
+    fig_fmt.update_layout(showlegend=False, height=200, margin=dict(t=10,b=10,l=0,r=0))
+    fig_fmt.update_traces(textposition="outside")
+    st.plotly_chart(fig_fmt, use_container_width=True, key=f"fmt_{nombre}")
+
+    st.markdown("**Tiers / Categorías**")
+    tier_data = {
+        "Ascenso": stats["cat_ascenso"],
+        "Cypher":  stats["cat_cypher"],
+        "Liga":    stats["cat_liga"],
+        "Torneo":  stats["cat_torneo"],
+    }
+    tier_df = pd.DataFrame(list(tier_data.items()), columns=["Tier","Participaciones"])
+    fig_tier = px.pie(tier_df, names="Tier", values="Participaciones",
+                      color_discrete_sequence=px.colors.qualitative.Set2,
+                      hole=0.4)
+    fig_tier.update_layout(height=220, margin=dict(t=10,b=10,l=0,r=0),
+                           legend=dict(orientation="h", y=-0.15))
+    st.plotly_chart(fig_tier, use_container_width=True, key=f"tier_{nombre}")
+
+    st.markdown("**Fases alcanzadas**")
+    fase_data = {
+        "Eliminatorias": stats["fase_elim"],
+        "Grupos":        stats["fase_grupos"],
+        "Jornadas":      stats["fase_jornadas"],
+        "Rondas":        stats["fase_rondas"],
+    }
+    fase_df = pd.DataFrame(list(fase_data.items()), columns=["Fase","Partidas"])
+    fig_fase = px.bar(fase_df, x="Partidas", y="Fase", orientation="h",
+                      color="Partidas", color_continuous_scale="Blues", text="Partidas")
+    fig_fase.update_layout(showlegend=False, height=200,
+                           margin=dict(t=10,b=10,l=0,r=0), coloraxis_showscale=False)
+    fig_fase.update_traces(textposition="outside")
+    st.plotly_chart(fig_fase, use_container_width=True, key=f"fase_{nombre}")
+
+    # Evolución del score acumulado
+    hist = stats["hist"]
+    if not hist.empty and "Score_Ac" in hist.columns:
+        st.markdown("**Evolución Score Acumulado**")
+        hist = hist.copy()
+        hist["Fecha_dt"] = pd.to_datetime(hist["Fecha"].astype(str), format="%Y%m")
+        fig_evo = px.line(hist, x="Fecha_dt", y="Score_Ac", markers=True,
+                          color_discrete_sequence=[color])
+        fig_evo.update_layout(height=180, margin=dict(t=10,b=10,l=0,r=0),
+                              xaxis_title="", yaxis_title="Score Ac.")
+        st.plotly_chart(fig_evo, use_container_width=True, key=f"evo_{nombre}")
+
+
+def _bar_comparativa(label, val1, val2, nombre1, nombre2, fmt=None):
+    """Mini barra horizontal comparativa entre dos jugadores."""
+    total = max(val1 + val2, 1)
+    pct1  = val1 / total * 100
+    fmt1  = fmt(val1) if fmt else str(int(val1))
+    fmt2  = fmt(val2) if fmt else str(int(val2))
+    st.markdown(f"""
+    <div style="margin-bottom:10px">
+        <div style="font-size:0.78rem;color:#888;margin-bottom:3px">{label}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:70px;text-align:right;font-weight:700;font-size:0.85rem">{fmt1}</div>
+            <div style="flex:1;background:#e74c3c;border-radius:6px;height:16px;overflow:hidden;position:relative">
+                <div style="background:#2ecc71;width:{pct1:.1f}%;height:100%"></div>
+            </div>
+            <div style="width:70px;text-align:left;font-weight:700;font-size:0.85rem">{fmt2}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#aaa;margin-top:1px">
+            <span>{nombre1}</span><span>{nombre2}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 def show():
-    st.header("Prediccion de Combates")
-    st.caption("Modelos ML basados en estadisticas historicas acumuladas por jugador")
+    st.header("⚔️ Predicción de Combates")
+    st.caption("Modelos ML basados en estadísticas históricas acumuladas por jugador")
+
     df_raw = load_data()
-    # ── Cargar modelo desde PKL (generado por entrenar_modelo.py) ──────
+
     with st.spinner("Cargando modelo..."):
         cache, status = load_model(df_raw)
 
@@ -284,7 +455,6 @@ def show():
         st.error(f"❌ Error al cargar el modelo: {status}")
         return
 
-    # Mostrar metadata del modelo
     trained_at = cache.get("trained_at")
     if trained_at:
         age = (datetime.now() - trained_at).days
@@ -295,233 +465,294 @@ def show():
     feature_cols = cache["feature_cols"]
     latest_stats = cache["latest_stats"]
     df_fecha     = cache["df_fecha"]
+    trained      = cache["trained"]
+    results      = cache["results"]
+    X_test       = cache["X_test"]
+    y_test       = cache["y_test"]
 
-    st.subheader("Analisis de Datos")
-    tab1, tab2, tab3 = st.tabs(["Dataset","Correlaciones","Distribuciones"])
+    valid     = {k:v for k,v in results.items() if "error" not in v}
+    res_df    = pd.DataFrame(valid).T.reset_index().rename(columns={"index":"Modelo"})
+    res_df    = res_df.sort_values("cv_accuracy", ascending=False).reset_index(drop=True)
+    best_name = res_df.loc[res_df["cv_accuracy"].idxmax(), "Modelo"]
 
-    with tab1:
-        c1,c2,c3,c4 = st.columns(4)
-        c1.metric("Batallas entrenamiento", len(X))
-        c2.metric("Features", len(feature_cols))
-        c3.metric("Jugadores unicos", latest_stats["Jugador"].nunique())
-        c4.metric("Balance target", f"J1 gana: {(1-y.mean())*100:.1f}%")
-        col1, col2 = st.columns(2)
-        with col1:
-            jug_g = df_fecha.groupby("Jugador")["Juegos"].sum().sort_values(ascending=False).head(15).reset_index()
-            fig = px.bar(jug_g, x="Jugador", y="Juegos", title="Top 15 por Partidas",
-                         color="Juegos", color_continuous_scale="blues")
-            fig.update_layout(xaxis_tickangle=-40)
-            st.plotly_chart(fig, use_container_width=True)
-        with col2:
-            jug_wr = df_fecha[df_fecha["Juegos_Ac"]>=10].groupby("Jugador").last()["Winrate_Ac"].sort_values(ascending=False).head(15).reset_index()
-            fig = px.bar(jug_wr, x="Jugador", y="Winrate_Ac", title="Top 15 Winrate (min 10 partidas)",
-                         color="Winrate_Ac", color_continuous_scale="greens")
-            fig.update_layout(xaxis_tickangle=-40, yaxis_tickformat=".0%")
-            st.plotly_chart(fig, use_container_width=True)
-        st.markdown("#### Evolucion Score Acumulado")
-        top_j = df_fecha.groupby("Jugador")["Juegos"].sum().nlargest(8).index.tolist()
-        sel_j = st.multiselect("Jugadores:", df_fecha["Jugador"].unique().tolist(), default=top_j[:5])
-        if sel_j:
-            dp = df_fecha[df_fecha["Jugador"].isin(sel_j)].copy()
-            dp["Fecha_dt"] = pd.to_datetime(dp["Fecha"].astype(str), format="%Y%m")
-            fig = px.line(dp, x="Fecha_dt", y="Score_Ac", color="Jugador",
-                          title="Score Acumulado por Jugador", markers=True)
-            st.plotly_chart(fig, use_container_width=True)
-
-    with tab2:
-        corr = X.join(y.rename("target")).corr()["target"].drop("target").sort_values()
-        fig = px.bar(x=corr.values, y=corr.index, orientation="h",
-                     title="Correlacion Features vs Resultado (positivo = favorece J2)",
-                     color=corr.values, color_continuous_scale="RdYlGn",
-                     labels={"x":"Correlacion","y":"Feature"})
-        fig.update_layout(height=600)
-        st.plotly_chart(fig, use_container_width=True)
-
-    with tab3:
-        feat_sel = st.selectbox("Feature:", feature_cols)
-        fig = px.histogram(X.join(y.rename("target")), x=feat_sel,
-                           color=y.map({0:"J1 gana",1:"J2 gana"}),
-                           barmode="overlay", nbins=40, title=f"Distribucion - {feat_sel}",
-                           color_discrete_map={"J1 gana":"#2ecc71","J2 gana":"#e74c3c"})
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("Entrenamiento de Modelos")
     try:
-        trained = cache["trained"]
-        results = cache["results"]
-        X_train = cache["X_train"]
-        X_test  = cache["X_test"]
-        y_train = cache["y_train"]
-        y_test  = cache["y_test"]
+        all_players = sorted(latest_stats["Jugador"].unique().tolist())
 
-        valid = {k:v for k,v in results.items() if "error" not in v}
-        res_df = pd.DataFrame(valid).T.reset_index().rename(columns={"index":"Modelo"})
-        res_df = res_df.sort_values("cv_accuracy", ascending=False).reset_index(drop=True)
-        disp = res_df.copy()
-        disp["accuracy"]    = (disp["accuracy"]*100).round(2).astype(str)+"%"
-        disp["cv_accuracy"] = (disp["cv_accuracy"]*100).round(2).astype(str)+"%"
-        disp.columns = ["Modelo","Accuracy (Test)","CV Accuracy (5-fold)"]
-        st.dataframe(disp, use_container_width=True, hide_index=True)
+        # ── Sección de configuración del combate ──────────────────────────
+        st.markdown("## Configurar Combate")
+        col_j1, col_vs, col_j2 = st.columns([5, 1, 5])
+        with col_j1:
+            p1 = st.selectbox("🎮 Jugador 1", all_players, key="pp1")
+        with col_vs:
+            st.markdown("<div style='text-align:center;padding-top:28px;font-size:1.4rem;font-weight:700'>VS</div>",
+                        unsafe_allow_html=True)
+        with col_j2:
+            p2 = st.selectbox("🎮 Jugador 2", [p for p in all_players if p != p1], key="pp2")
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(name="Test", x=res_df["Modelo"], y=res_df["accuracy"]*100, marker_color="#3498db"))
-        fig.add_trace(go.Bar(name="CV 5-fold", x=res_df["Modelo"], y=res_df["cv_accuracy"]*100, marker_color="#2ecc71"))
-        fig.update_layout(barmode="group", title="Comparacion de Modelos", yaxis_title="Accuracy (%)",
-                          xaxis_tickangle=-20, yaxis_range=[40,100])
-        st.plotly_chart(fig, use_container_width=True)
+        col_cfg1, col_cfg2, col_cfg3 = st.columns(3)
+        with col_cfg1:
+            fmt_p  = st.selectbox("Formato", ["SINGLES","DOBLES","VGC"], key="pfmt")
+        with col_cfg2:
+            lcat_p = st.selectbox("Competencia", ["TORNEO","LIGA","ASCENSO","CYPHER"], key="plcat")
+        with col_cfg3:
+            best_idx = list(trained.keys()).index(best_name)
+            mod_p = st.selectbox("Modelo ML", list(trained.keys()), index=best_idx, key="pmod")
 
-        best_name = res_df.loc[res_df["cv_accuracy"].idxmax(), "Modelo"]
-        st.success(f"Mejor modelo: {best_name} - CV: {res_df['cv_accuracy'].max()*100:.2f}%")
+        # ── Perfiles de los jugadores ──────────────────────────────────────
         st.markdown("---")
+        st.markdown("## 📊 Perfiles de los Jugadores")
+        stats1 = _get_player_stats(p1, latest_stats, df_fecha)
+        stats2 = _get_player_stats(p2, latest_stats, df_fecha)
 
-        st.subheader("Importancia de Features")
-        tfi, tshap = st.tabs(["Feature Importance","SHAP"])
-        with tfi:
-            mod_fi = st.selectbox("Modelo:", list(trained.keys()), key="fi_mod")
-            if hasattr(trained[mod_fi], "feature_importances_"):
-                fi = pd.DataFrame({"Feature":feature_cols,"Importance":trained[mod_fi].feature_importances_})
-                fi = fi.sort_values("Importance", ascending=True).tail(15)
-                fig = px.bar(fi, x="Importance", y="Feature", orientation="h",
-                             title=f"Feature Importance - {mod_fi}",
-                             color="Importance", color_continuous_scale="viridis")
-                fig.update_layout(height=500)
-                st.plotly_chart(fig, use_container_width=True)
-                st.caption("_x = stats J1 | _y = stats J2 | _Ac = acumulado historico")
-        with tshap:
+        card1, card2 = st.columns(2)
+        with card1:
+            if stats1:
+                _render_player_card(p1, stats1, "#2ecc71")
+            else:
+                st.warning(f"Sin datos históricos para {p1}")
+        with card2:
+            if stats2:
+                _render_player_card(p2, stats2, "#3498db")
+            else:
+                st.warning(f"Sin datos históricos para {p2}")
+
+        # ── Comparativa cara a cara ────────────────────────────────────────
+        if stats1 and stats2:
+            st.markdown("---")
+            st.markdown("## ⚖️ Comparativa Directa")
+            _bar_comparativa("Winrate Global",       stats1["winrate_ac"],   stats2["winrate_ac"],   p1, p2, fmt=lambda v: f"{v*100:.1f}%")
+            _bar_comparativa("Score Promedio",        stats1["score_prom"],   stats2["score_prom"],   p1, p2, fmt=lambda v: f"{v:.1f}")
+            _bar_comparativa("Total Partidas",        stats1["total_juegos"], stats2["total_juegos"], p1, p2)
+            _bar_comparativa("Partidas Singles",      stats1["singles"],      stats2["singles"],      p1, p2)
+            _bar_comparativa("Partidas Dobles",       stats1["dobles"],       stats2["dobles"],       p1, p2)
+            _bar_comparativa("Partidas VGC",          stats1["vgc"],          stats2["vgc"],          p1, p2)
+            _bar_comparativa("Elim. alcanzadas",      stats1["fase_elim"],    stats2["fase_elim"],    p1, p2)
+            _bar_comparativa("Participación Liga",    stats1["cat_liga"],     stats2["cat_liga"],     p1, p2)
+            _bar_comparativa("Participación Torneo",  stats1["cat_torneo"],   stats2["cat_torneo"],   p1, p2)
+
+        # ── Botón de predicción ────────────────────────────────────────────
+        st.markdown("---")
+        predecir = st.button("🔮 Predecir Combate", use_container_width=True, type="primary")
+
+        if predecir:
+            X_p      = make_pred_row(p1, p2, latest_stats, feature_cols)
+            prob     = trained[mod_p].predict_proba(X_p)[0]
+            prob_j1, prob_j2 = prob[0], prob[1]
+            conf     = max(prob_j1, prob_j2)
+            fav      = p1 if prob_j1 >= prob_j2 else p2
+
+            st.markdown("---")
+            st.markdown("## 🏆 Resultado de la Predicción")
+
+            cw1, cw2, cw3 = st.columns([2, 1, 2])
+            for col, jug, pjug in [(cw1, p1, prob_j1), (cw3, p2, prob_j2)]:
+                es_fav = pjug == max(prob_j1, prob_j2)
+                clr    = "#2ecc71" if es_fav else "#e74c3c"
+                with col:
+                    st.markdown(f"""
+                    <div style="text-align:center;padding:22px;background:{clr}22;
+                                border:2px solid {clr};border-radius:14px">
+                        <div style="font-size:1.3rem;font-weight:bold">{jug}</div>
+                        <div style="font-size:2.8rem;font-weight:800;color:{clr}">{pjug*100:.1f}%</div>
+                        {"<div style='font-size:0.9rem;font-weight:600;color:"+clr+"'>⭐ FAVORITO</div>" if es_fav else ""}
+                    </div>""", unsafe_allow_html=True)
+            with cw2:
+                st.markdown("<div style='text-align:center;padding-top:44px;font-size:1.5rem'>VS</div>",
+                            unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="background:#e74c3c;border-radius:8px;height:24px;position:relative;overflow:hidden">
+                <div style="background:#2ecc71;width:{prob_j1*100:.1f}%;height:100%"></div>
+                <div style="position:absolute;top:4px;left:10px;color:white;font-weight:bold;font-size:12px">{p1} {prob_j1*100:.1f}%</div>
+                <div style="position:absolute;top:4px;right:10px;color:white;font-weight:bold;font-size:12px">{prob_j2*100:.1f}% {p2}</div>
+            </div>""", unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            nivel = "Alta 🟢" if conf > 0.7 else ("Media 🟡" if conf > 0.6 else "Baja 🔴")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Confianza",  f"{conf*100:.1f}%")
+            m2.metric("Nivel",      nivel)
+            m3.metric("Modelo",     mod_p)
+            m4.metric("Formato",    fmt_p)
+
+            conf_txt = "muy alta" if conf > 0.75 else ("moderada" if conf > 0.6 else "baja")
+            wr1t = f"{stats1['winrate_ac']*100:.1f}%" if stats1 else "?"
+            wr2t = f"{stats2['winrate_ac']*100:.1f}%" if stats2 else "?"
+            st.info(f"""
+**{fav}** es favorito según *{mod_p}* con confianza **{conf_txt}** ({conf*100:.1f}%).
+Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lcat_p}**.
+{"El modelo tiene ventaja estadística clara." if conf > 0.7 else "Stats parejas — cualquier resultado es posible."}
+            """)
+
+            # ── SHAP ──────────────────────────────────────────────────────
+            st.markdown("---")
+            st.markdown("## 🔍 Análisis SHAP")
             try:
                 import shap
-                mod_s = st.selectbox("Modelo SHAP:", list(trained.keys()), key="shap_mod")
-                samp  = X_test.sample(min(300, len(X_test)), random_state=42)
-                with st.spinner("Calculando SHAP..."):
-                    expl = shap.TreeExplainer(trained[mod_s])
-                    sv   = expl.shap_values(samp)
-                    if isinstance(sv, list): sv = sv[1]
-                si = pd.DataFrame({"Feature":feature_cols,"SHAP":np.abs(sv).mean(axis=0)})
-                si = si.sort_values("SHAP", ascending=True).tail(15)
-                fig = px.bar(si, x="SHAP", y="Feature", orientation="h",
-                             title=f"SHAP - {mod_s}", color="SHAP", color_continuous_scale="reds",
-                             labels={"SHAP":"|SHAP| promedio"})
-                fig.update_layout(height=500)
-                st.plotly_chart(fig, use_container_width=True)
-                st.info("Mayor valor SHAP = mas influencia en la prediccion.")
-                st.markdown("#### SHAP individual")
-                idx_s = st.slider("Partida test:", 0, len(samp)-1, 0)
-                sv_r = sv[idx_s]
-                sv_df = pd.DataFrame({"Feature":feature_cols,"SHAP":sv_r}).sort_values("SHAP")
-                colors = ["#e74c3c" if v<0 else "#2ecc71" for v in sv_df["SHAP"]]
-                fig2 = go.Figure(go.Bar(x=sv_df["SHAP"], y=sv_df["Feature"],
-                                        orientation="h", marker_color=colors))
-                fig2.update_layout(title="SHAP - Partida individual", xaxis_title="Contribucion", height=500)
-                st.plotly_chart(fig2, use_container_width=True)
-                st.caption("Verde = favorece J1 | Rojo = favorece J2")
+                expl2 = shap.TreeExplainer(trained[mod_p])
+                sv2   = expl2.shap_values(X_p)
+                if isinstance(sv2, list): sv2 = sv2[1]
+                sv2df = (pd.DataFrame({
+                            "Feature": feature_cols,
+                            "Valor":   X_p.values[0],
+                            "SHAP":    sv2[0]
+                         })
+                         .sort_values("SHAP")
+                         .assign(Direccion=lambda d: d["SHAP"].apply(
+                             lambda v: f"→ favorece {p1}" if v > 0 else f"→ favorece {p2}"
+                         )))
+                clrs2 = ["#e74c3c" if v < 0 else "#2ecc71" for v in sv2df["SHAP"]]
+                fs = go.Figure(go.Bar(
+                    x=sv2df["SHAP"], y=sv2df["Feature"], orientation="h",
+                    marker_color=clrs2,
+                    customdata=np.stack([sv2df["Valor"], sv2df["Direccion"]], axis=1),
+                    hovertemplate="%{y}<br>SHAP: %{x:.4f}<br>Valor: %{customdata[0]:.4f}<br>%{customdata[1]}<extra></extra>"
+                ))
+                fs.update_layout(
+                    title=f"Contribución de cada feature — {mod_p}",
+                    xaxis_title="Contribución SHAP",
+                    height=520,
+                    shapes=[dict(type="line", x0=0, x1=0, y0=-0.5,
+                                 y1=len(sv2df)-0.5, line=dict(color="white", width=1, dash="dot"))]
+                )
+                st.plotly_chart(fs, use_container_width=True)
+                st.caption(f"🟢 Verde = favorece a **{p1}** (J1)  |  🔴 Rojo = favorece a **{p2}** (J2)  |  _x = stats J1  |  _y = stats J2")
+
+                top_pos = sv2df[sv2df["SHAP"] > 0].tail(3)["Feature"].tolist()
+                top_neg = sv2df[sv2df["SHAP"] < 0].head(3)["Feature"].tolist()
+                if top_pos or top_neg:
+                    col_s1, col_s2 = st.columns(2)
+                    with col_s1:
+                        st.markdown(f"**Factores clave a favor de {p1}:**")
+                        for f in reversed(top_pos):
+                            st.markdown(f"- `{f}`")
+                    with col_s2:
+                        st.markdown(f"**Factores clave a favor de {p2}:**")
+                        for f in top_neg:
+                            st.markdown(f"- `{f}`")
             except ImportError:
-                st.warning("Agrega shap al requirements.txt")
+                st.warning("Agrega `shap` al requirements.txt para ver el análisis SHAP.")
             except Exception as e:
                 st.error(f"Error SHAP: {e}")
 
+        # ── Análisis avanzado (oculto, colapsado) ─────────────────────────
         st.markdown("---")
-        st.subheader("Predecir un Combate")
-        all_players = sorted(latest_stats["Jugador"].unique().tolist())
-        c1,c2,c3 = st.columns(3)
-        with c1: p1 = st.selectbox("Jugador 1 (J1)", all_players, key="pp1")
-        with c2: p2 = st.selectbox("Jugador 2 (J2)", [p for p in all_players if p!=p1], key="pp2")
-        with c3: fmt_p = st.selectbox("Formato", ["SINGLES","DOBLES","VGC"], key="pfmt")
-        c4,c5 = st.columns(2)
-        with c4: lcat_p = st.selectbox("Competencia", ["TORNEO","LIGA","ASCENSO","CYPHER"], key="plcat")
-        with c5:
-            best_idx = list(trained.keys()).index(best_name)
-            mod_p = st.selectbox("Modelo", list(trained.keys()), index=best_idx, key="pmod")
+        with st.expander("🔬 Análisis avanzado (Dataset · Correlaciones · Distribuciones · Modelos)", expanded=False):
+            tab1, tab2, tab3, tab4 = st.tabs(["Dataset","Correlaciones","Distribuciones","Modelos"])
 
-        if st.button("Predecir", use_container_width=True, type="primary"):
-            X_p  = make_pred_row(p1, p2, latest_stats, feature_cols)
-            prob = trained[mod_p].predict_proba(X_p)[0]
-            prob_j1, prob_j2 = prob[0], prob[1]
-            conf = max(prob_j1, prob_j2)
-            fav  = p1 if prob_j1 >= prob_j2 else p2
+            with tab1:
+                c1,c2,c3,c4 = st.columns(4)
+                c1.metric("Batallas entrenamiento", len(X))
+                c2.metric("Features", len(feature_cols))
+                c3.metric("Jugadores únicos", latest_stats["Jugador"].nunique())
+                c4.metric("Balance target", f"J1 gana: {(1-y.mean())*100:.1f}%")
+                col1, col2 = st.columns(2)
+                with col1:
+                    jug_g = df_fecha.groupby("Jugador")["Juegos"].sum().sort_values(ascending=False).head(15).reset_index()
+                    fig = px.bar(jug_g, x="Jugador", y="Juegos", title="Top 15 por Partidas",
+                                 color="Juegos", color_continuous_scale="blues")
+                    fig.update_layout(xaxis_tickangle=-40)
+                    st.plotly_chart(fig, use_container_width=True)
+                with col2:
+                    jug_wr = df_fecha[df_fecha["Juegos_Ac"]>=10].groupby("Jugador").last()["Winrate_Ac"].sort_values(ascending=False).head(15).reset_index()
+                    fig = px.bar(jug_wr, x="Jugador", y="Winrate_Ac", title="Top 15 Winrate (min 10 partidas)",
+                                 color="Winrate_Ac", color_continuous_scale="greens")
+                    fig.update_layout(xaxis_tickangle=-40, yaxis_tickformat=".0%")
+                    st.plotly_chart(fig, use_container_width=True)
+                st.markdown("#### Evolución Score Acumulado")
+                top_j  = df_fecha.groupby("Jugador")["Juegos"].sum().nlargest(8).index.tolist()
+                sel_j  = st.multiselect("Jugadores:", df_fecha["Jugador"].unique().tolist(), default=top_j[:5])
+                if sel_j:
+                    dp = df_fecha[df_fecha["Jugador"].isin(sel_j)].copy()
+                    dp["Fecha_dt"] = pd.to_datetime(dp["Fecha"].astype(str), format="%Y%m")
+                    fig = px.line(dp, x="Fecha_dt", y="Score_Ac", color="Jugador",
+                                  title="Score Acumulado por Jugador", markers=True)
+                    st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("---")
-            st.markdown("### Resultado")
-            cw1,cw2,cw3 = st.columns([2,1,2])
-            for col, jug, pjug in [(cw1,p1,prob_j1),(cw3,p2,prob_j2)]:
-                es_fav = pjug == max(prob_j1,prob_j2)
-                clr = "#2ecc71" if es_fav else "#e74c3c"
-                with col:
-                    st.markdown(f"""
-                    <div style="text-align:center;padding:20px;background:{clr}22;
-                                border:2px solid {clr};border-radius:12px">
-                        <div style="font-size:1.4rem;font-weight:bold">{jug}</div>
-                        <div style="font-size:2.5rem;font-weight:bold;color:{clr}">{pjug*100:.1f}%</div>
-                        {"<div>FAVORITO</div>" if es_fav else ""}
-                    </div>""", unsafe_allow_html=True)
-            with cw2:
-                st.markdown("<div style='text-align:center;padding-top:40px;font-size:1.5rem'>VS</div>",
-                            unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown(f"""
-            <div style="background:#e74c3c;border-radius:8px;height:22px;position:relative;overflow:hidden">
-                <div style="background:#2ecc71;width:{prob_j1*100:.1f}%;height:100%"></div>
-                <div style="position:absolute;top:3px;left:8px;color:white;font-weight:bold;font-size:11px">{p1}</div>
-                <div style="position:absolute;top:3px;right:8px;color:white;font-weight:bold;font-size:11px">{p2}</div>
-            </div>""", unsafe_allow_html=True)
-            nivel = "Alta" if conf>0.7 else ("Media" if conf>0.6 else "Baja")
-            m1,m2,m3,m4 = st.columns(4)
-            m1.metric("Confianza", f"{conf*100:.1f}%")
-            m2.metric("Nivel", nivel)
-            m3.metric("Modelo", mod_p)
-            m4.metric("Formato", fmt_p)
+            with tab2:
+                corr = X.join(y.rename("target")).corr()["target"].drop("target").sort_values()
+                fig  = px.bar(x=corr.values, y=corr.index, orientation="h",
+                              title="Correlación Features vs Resultado (positivo = favorece J2)",
+                              color=corr.values, color_continuous_scale="RdYlGn",
+                              labels={"x":"Correlación","y":"Feature"})
+                fig.update_layout(height=600)
+                st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("---")
-            st.markdown("### Comparacion de Stats")
-            def get_disp(jug):
-                r = latest_stats[latest_stats["Jugador"]==jug]
-                if r.empty: return {"Winrate Ac.":"N/A","Score Prom Ac.":"N/A",
-                                    "Eliminatorias":0,"SINGLES":0,"DOBLES":0,"VGC":0}
-                rv = r.iloc[0]
-                return {"Winrate Ac.":f"{rv.get('Winrate_Ac',0)*100:.1f}%",
-                        "Score Prom Ac.":f"{rv.get('Score_Prom_Ac',0):.1f}",
-                        "Eliminatorias":int(rv.get("Fase_Eliminatorias_Ac",0)),
-                        "SINGLES":int(rv.get("Formato_SINGLES_Ac",0)),
-                        "DOBLES":int(rv.get("Formato_DOBLES_Ac",0)),
-                        "VGC":int(rv.get("Formato_VGC_Ac",0))}
-            s1d, s2d = get_disp(p1), get_disp(p2)
-            st.dataframe(pd.DataFrame({"Stat":list(s1d.keys()),p1:list(s1d.values()),p2:list(s2d.values())}),
-                         use_container_width=True, hide_index=True)
+            with tab3:
+                feat_sel = st.selectbox("Feature:", feature_cols)
+                fig = px.histogram(X.join(y.rename("target")), x=feat_sel,
+                                   color=y.map({0:"J1 gana",1:"J2 gana"}),
+                                   barmode="overlay", nbins=40, title=f"Distribución - {feat_sel}",
+                                   color_discrete_map={"J1 gana":"#2ecc71","J2 gana":"#e74c3c"})
+                st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("---")
-            wr1v = latest_stats[latest_stats["Jugador"]==p1]["Winrate_Ac"].values
-            wr2v = latest_stats[latest_stats["Jugador"]==p2]["Winrate_Ac"].values
-            wr1t = f"{wr1v[0]*100:.1f}%" if len(wr1v)>0 else "?"
-            wr2t = f"{wr2v[0]*100:.1f}%" if len(wr2v)>0 else "?"
-            conf_txt = "muy alta" if conf>0.75 else ("moderada" if conf>0.6 else "baja")
-            st.info(f"""
-Prediccion: {fav} es favorito segun {mod_p} con confianza {conf_txt} ({conf*100:.1f}%).
-Stats: {p1} winrate acumulado {wr1t} vs {p2} winrate {wr2t}.
-Contexto: Combate {fmt_p} en {lcat_p}.
-{"El modelo tiene ventaja estadistica clara." if conf>0.7 else "Stats parejas, cualquier resultado es posible."}
-            """)
+            with tab4:
+                valid_r = {k:v for k,v in results.items() if "error" not in v}
+                res_df2 = pd.DataFrame(valid_r).T.reset_index().rename(columns={"index":"Modelo"})
+                res_df2 = res_df2.sort_values("cv_accuracy", ascending=False).reset_index(drop=True)
+                disp    = res_df2.copy()
+                disp["accuracy"]    = (disp["accuracy"]*100).round(2).astype(str)+"%"
+                disp["cv_accuracy"] = (disp["cv_accuracy"]*100).round(2).astype(str)+"%"
+                disp.columns = ["Modelo","Accuracy (Test)","CV Accuracy (5-fold)"]
+                st.dataframe(disp, use_container_width=True, hide_index=True)
 
-            try:
-                import shap
-                with st.expander("SHAP de esta prediccion"):
-                    expl2 = shap.TreeExplainer(trained[mod_p])
-                    sv2   = expl2.shap_values(X_p)
-                    if isinstance(sv2, list): sv2 = sv2[1]
-                    sv2df = pd.DataFrame({"Feature":feature_cols,"Valor":X_p.values[0],"SHAP":sv2[0]}).sort_values("SHAP")
-                    clrs2 = ["#e74c3c" if v<0 else "#2ecc71" for v in sv2df["SHAP"]]
-                    fs = go.Figure(go.Bar(x=sv2df["SHAP"], y=sv2df["Feature"], orientation="h",
-                                         marker_color=clrs2,
-                                         customdata=sv2df["Valor"],
-                                         hovertemplate="%{y}<br>SHAP: %{x:.4f}<br>Valor: %{customdata:.4f}<extra></extra>"))
-                    fs.update_layout(title="Contribucion SHAP", xaxis_title="Contribucion", height=480)
-                    st.plotly_chart(fs, use_container_width=True)
-            except:
-                pass
+                fig = go.Figure()
+                fig.add_trace(go.Bar(name="Test",      x=res_df2["Modelo"], y=res_df2["accuracy"]*100,    marker_color="#3498db"))
+                fig.add_trace(go.Bar(name="CV 5-fold", x=res_df2["Modelo"], y=res_df2["cv_accuracy"]*100, marker_color="#2ecc71"))
+                fig.update_layout(barmode="group", title="Comparación de Modelos",
+                                  yaxis_title="Accuracy (%)", xaxis_tickangle=-20, yaxis_range=[40,100])
+                st.plotly_chart(fig, use_container_width=True)
+                st.success(f"Mejor modelo: {best_name} — CV: {res_df['cv_accuracy'].max()*100:.2f}%")
+
+                st.markdown("#### Importancia de Features")
+                tfi, tshap = st.tabs(["Feature Importance","SHAP (muestra test)"])
+                with tfi:
+                    mod_fi = st.selectbox("Modelo:", list(trained.keys()), key="fi_mod")
+                    if hasattr(trained[mod_fi], "feature_importances_"):
+                        fi = pd.DataFrame({"Feature":feature_cols,"Importance":trained[mod_fi].feature_importances_})
+                        fi = fi.sort_values("Importance", ascending=True).tail(15)
+                        fig = px.bar(fi, x="Importance", y="Feature", orientation="h",
+                                     title=f"Feature Importance - {mod_fi}",
+                                     color="Importance", color_continuous_scale="viridis")
+                        fig.update_layout(height=500)
+                        st.plotly_chart(fig, use_container_width=True)
+                        st.caption("_x = stats J1 | _y = stats J2 | _Ac = acumulado histórico")
+                with tshap:
+                    try:
+                        import shap
+                        mod_s = st.selectbox("Modelo SHAP:", list(trained.keys()), key="shap_mod")
+                        samp  = X_test.sample(min(300, len(X_test)), random_state=42)
+                        with st.spinner("Calculando SHAP..."):
+                            expl = shap.TreeExplainer(trained[mod_s])
+                            sv   = expl.shap_values(samp)
+                            if isinstance(sv, list): sv = sv[1]
+                        si = pd.DataFrame({"Feature":feature_cols,"SHAP":np.abs(sv).mean(axis=0)})
+                        si = si.sort_values("SHAP", ascending=True).tail(15)
+                        fig = px.bar(si, x="SHAP", y="Feature", orientation="h",
+                                     title=f"SHAP - {mod_s}", color="SHAP", color_continuous_scale="reds",
+                                     labels={"SHAP":"|SHAP| promedio"})
+                        fig.update_layout(height=500)
+                        st.plotly_chart(fig, use_container_width=True)
+                        st.info("Mayor valor SHAP = más influencia en la predicción.")
+                        st.markdown("#### SHAP individual")
+                        idx_s = st.slider("Partida test:", 0, len(samp)-1, 0)
+                        sv_r  = sv[idx_s]
+                        sv_df = pd.DataFrame({"Feature":feature_cols,"SHAP":sv_r}).sort_values("SHAP")
+                        colors = ["#e74c3c" if v<0 else "#2ecc71" for v in sv_df["SHAP"]]
+                        fig2 = go.Figure(go.Bar(x=sv_df["SHAP"], y=sv_df["Feature"],
+                                                orientation="h", marker_color=colors))
+                        fig2.update_layout(title="SHAP - Partida individual", xaxis_title="Contribución", height=500)
+                        st.plotly_chart(fig2, use_container_width=True)
+                        st.caption("Verde = favorece J1 | Rojo = favorece J2")
+                    except ImportError:
+                        st.warning("Agrega shap al requirements.txt")
+                    except Exception as e:
+                        st.error(f"Error SHAP: {e}")
 
     except ImportError as e:
-        st.error(f"Libreria no instalada: {e}")
+        st.error(f"Librería no instalada: {e}")
         st.info("Agrega al requirements.txt: xgboost, lightgbm, shap, scikit-learn")
     except Exception as e:
-        st.error(f"Error al entrenar modelos: {e}")
+        st.error(f"Error general: {e}")
         import traceback; st.code(traceback.format_exc())
-
