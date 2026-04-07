@@ -261,6 +261,59 @@ def make_pred_row(j1, j2, latest, feature_cols):
     return row[feature_cols].fillna(0)
 
 
+@st.cache_data(show_spinner=False)
+def _build_df_j(_df_raw):
+    """Reconstruye df_j (una fila por jugador por batalla) desde df_raw."""
+    df = normalize_columns(_df_raw.copy())
+    df = ensure_fields(df)
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df = df[(df["Walkover"] >= 0) & df["winner"].notna()].copy()
+    rows = []
+    for _, row in df.iterrows():
+        ganador  = row["winner"]
+        perdedor = row["player2"] if row["winner"] == row["player1"] else row["player1"]
+        lg   = str(row.get("league", ""))
+        lc   = str(row.get("Ligas_categoria", ""))
+        lcat = lc if (lg == "LIGA" and lc not in ["nan", "No Posee Liga", ""]) else lg
+        tier = str(row.get("Tier", lcat))   # columna Tier del CSV
+        fmt  = str(row.get("Formato", "SINGLES"))
+        fase_raw = str(row.get("Fase_completo", row.get("round", "")))
+        fase = "Eliminatorias"
+        for k, v in [("jornada","JORNADAS"), ("grupos","GRUPOS"), ("suiza","RONDAS"),
+                     ("playoff","Eliminatorias"), ("final","Eliminatorias"),
+                     ("semi","Eliminatorias"), ("cuarto","Eliminatorias")]:
+            if k in fase_raw.lower():
+                fase = v; break
+        for jugador, es_g in [(ganador, True), (perdedor, False)]:
+            rows.append({
+                "Jugador":  jugador,
+                "Formato":  fmt,
+                "Fase":     fase,
+                "Tier":     tier,
+                "League":   lg,
+                "Llave_cat":lcat,
+                "Victoria": 1 if es_g else 0,
+            })
+    return pd.DataFrame(rows)
+
+
+def _calc_winrates_detallados(jug, df_j):
+    """Calcula winrate por Formato, Fase y Tier para un jugador."""
+    d = df_j[df_j["Jugador"] == jug]
+    if d.empty:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+    def wr_by(col):
+        g = d.groupby(col)["Victoria"].agg(["sum", "count"]).reset_index()
+        g.columns = [col, "V", "J"]
+        g = g[g["J"] > 0].copy()
+        g["WR"] = (g["V"] / g["J"] * 100).round(1)
+        g["Label"] = g["WR"].astype(str) + "% (" + g["J"].astype(str) + "j)"
+        return g.sort_values("WR", ascending=True)
+
+    return wr_by("Formato"), wr_by("Fase"), wr_by("Tier")
+
+
 def _get_player_stats(jug, latest_stats, df_fecha):
     """Devuelve un dict con todas las stats relevantes de un jugador."""
     r = latest_stats[latest_stats["Jugador"] == jug]
@@ -318,7 +371,31 @@ def _get_player_stats(jug, latest_stats, df_fecha):
     }
 
 
-def _render_player_card(nombre, stats, color):
+def _wr_bar(df_col, col, color, key):
+    """Gráfico de barras horizontales con winrate % y línea de referencia al 50%."""
+    if df_col.empty:
+        st.caption("Sin datos suficientes.")
+        return
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=df_col["WR"], y=df_col[col], orientation="h",
+        marker_color=[color if w >= 50 else "#e74c3c" for w in df_col["WR"]],
+        text=df_col["Label"], textposition="outside",
+        hovertemplate=f"%{{y}}<br>Winrate: %{{x:.1f}}%<br>Partidas: %{{customdata}}<extra></extra>",
+        customdata=df_col["J"],
+    ))
+    fig.add_vline(x=50, line_dash="dash", line_color="gray", line_width=1)
+    fig.update_layout(
+        height=max(160, len(df_col) * 42),
+        margin=dict(t=6, b=6, l=0, r=90),
+        xaxis=dict(range=[0, 110], title="Winrate %", ticksuffix="%"),
+        yaxis_title="",
+        showlegend=False,
+    )
+    st.plotly_chart(fig, use_container_width=True, key=key)
+
+
+def _render_player_card(nombre, stats, color, df_j):
     """Muestra la card completa de un jugador."""
     wr_pct = stats["winrate_ac"] * 100
     score  = stats["score_prom"]
@@ -352,50 +429,17 @@ def _render_player_card(nombre, stats, color):
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("**Formatos jugados**")
-    fmt_data = {
-        "SINGLES": stats["singles"],
-        "DOBLES":  stats["dobles"],
-        "VGC":     stats["vgc"],
-    }
-    fmt_df = pd.DataFrame(list(fmt_data.items()), columns=["Formato","Partidas"])
-    fig_fmt = px.bar(fmt_df, x="Formato", y="Partidas",
-                     color="Formato",
-                     color_discrete_sequence=[color, "#aaaaaa", "#dddddd"],
-                     text="Partidas")
-    fig_fmt.update_layout(showlegend=False, height=200, margin=dict(t=10,b=10,l=0,r=0))
-    fig_fmt.update_traces(textposition="outside")
-    st.plotly_chart(fig_fmt, use_container_width=True, key=f"fmt_{nombre}")
+    # Winrates detallados desde df_j
+    wr_fmt, wr_fase, wr_tier = _calc_winrates_detallados(nombre, df_j)
 
-    st.markdown("**Tiers / Categorías**")
-    tier_data = {
-        "Ascenso": stats["cat_ascenso"],
-        "Cypher":  stats["cat_cypher"],
-        "Liga":    stats["cat_liga"],
-        "Torneo":  stats["cat_torneo"],
-    }
-    tier_df = pd.DataFrame(list(tier_data.items()), columns=["Tier","Participaciones"])
-    fig_tier = px.pie(tier_df, names="Tier", values="Participaciones",
-                      color_discrete_sequence=px.colors.qualitative.Set2,
-                      hole=0.4)
-    fig_tier.update_layout(height=220, margin=dict(t=10,b=10,l=0,r=0),
-                           legend=dict(orientation="h", y=-0.15))
-    st.plotly_chart(fig_tier, use_container_width=True, key=f"tier_{nombre}")
+    st.markdown("**Winrate por Formato**")
+    _wr_bar(wr_fmt, "Formato", color, key=f"wr_fmt_{nombre}")
 
-    st.markdown("**Fases alcanzadas**")
-    fase_data = {
-        "Eliminatorias": stats["fase_elim"],
-        "Grupos":        stats["fase_grupos"],
-        "Jornadas":      stats["fase_jornadas"],
-        "Rondas":        stats["fase_rondas"],
-    }
-    fase_df = pd.DataFrame(list(fase_data.items()), columns=["Fase","Partidas"])
-    fig_fase = px.bar(fase_df, x="Partidas", y="Fase", orientation="h",
-                      color="Partidas", color_continuous_scale="Blues", text="Partidas")
-    fig_fase.update_layout(showlegend=False, height=200,
-                           margin=dict(t=10,b=10,l=0,r=0), coloraxis_showscale=False)
-    fig_fase.update_traces(textposition="outside")
-    st.plotly_chart(fig_fase, use_container_width=True, key=f"fase_{nombre}")
+    st.markdown("**Winrate por Fase**")
+    _wr_bar(wr_fase, "Fase", color, key=f"wr_fase_{nombre}")
+
+    st.markdown("**Winrate por Tier / Categoría**")
+    _wr_bar(wr_tier, "Tier", color, key=f"wr_tier_{nombre}")
 
     # Evolución del score acumulado
     hist = stats["hist"]
@@ -470,6 +514,9 @@ def show():
     X_test       = cache["X_test"]
     y_test       = cache["y_test"]
 
+    # df_j: una fila por jugador por batalla (para winrates detallados)
+    df_j = _build_df_j(df_raw)
+
     valid     = {k:v for k,v in results.items() if "error" not in v}
     res_df    = pd.DataFrame(valid).T.reset_index().rename(columns={"index":"Modelo"})
     res_df    = res_df.sort_values("cv_accuracy", ascending=False).reset_index(drop=True)
@@ -507,12 +554,12 @@ def show():
         card1, card2 = st.columns(2)
         with card1:
             if stats1:
-                _render_player_card(p1, stats1, "#2ecc71")
+                _render_player_card(p1, stats1, "#2ecc71", df_j)
             else:
                 st.warning(f"Sin datos históricos para {p1}")
         with card2:
             if stats2:
-                _render_player_card(p2, stats2, "#3498db")
+                _render_player_card(p2, stats2, "#3498db", df_j)
             else:
                 st.warning(f"Sin datos históricos para {p2}")
 
