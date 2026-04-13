@@ -310,19 +310,12 @@ def generar_pdf_jugador(
     txt(cv, f"Torneos participados: {len(torneos_jugador)}", xB+8, py-13, size=7.5, col=C_TEXT, font="Helvetica")
 
     # ── WINRATE MENSUAL — dentro de Col B ──────────────────────────
-    wm_top  = py - 26          # empieza justo debajo del texto anterior
-    wm_bot  = BY + 8           # margen inferior del panel
-    wm_h    = wm_top - wm_bot  # altura disponible
+    wm_top = py - 24
+    wm_bot = BY + 8
+    wm_h   = wm_top - wm_bot
 
-    if wm_h > 38:              # solo dibuja si hay espacio razonable
-        # separador
-        hline(cv, xB+6, wm_top + 4, CB_W-12)
-
-        # título sección
-        txt(cv, "WINRATE MENSUAL", xB+CB_W/2, wm_top - 2,
-            size=6.5, col=C_ACCENT, font="Helvetica-Bold", anchor="center")
-
-        # calcular datos
+    if wm_h > 50:
+        # ── calcular datos primero ──────────────────────────────
         wr_mensual = []
         if 'date' in player_matches.columns and player_matches['date'].notna().any():
             _pm = player_matches.copy()
@@ -336,70 +329,153 @@ def generar_pdf_jugador(
                     wr_mensual.append({'mes': str(_mes), 'WR': round(_w/_tot*100,1),
                                        'n': _tot, 'V': _w, 'D': _tot-_w})
 
+        # ── panel con fondo propio ──────────────────────────────
+        PAD = 6
+        rrect(cv, xB+PAD, wm_bot, CB_W-PAD*2, wm_h, r=6, fill_col=C_PANEL2)
+
+        # franja de color en el top del panel
+        rrect(cv, xB+PAD, wm_bot+wm_h-4, CB_W-PAD*2, 4, r=3,
+              fill_col=C_BLUE)
+
+        # título centrado con fondo pill
+        TITLE_H = 12
+        TITLE_Y = wm_bot + wm_h - TITLE_H - 2
+        rrect(cv, xB+PAD+4, TITLE_Y, CB_W-PAD*2-8, TITLE_H, r=4,
+              fill_col=C_PANEL)
+        txt(cv, "📈  WINRATE MENSUAL", xB+CB_W/2, TITLE_Y+3,
+            size=6, col=C_BLUE, font="Helvetica-Bold", anchor="center")
+
         if not wr_mensual:
-            txt(cv, "Sin datos mensuales", xB+CB_W/2, wm_bot + wm_h/2,
+            txt(cv, "Sin datos mensuales", xB+CB_W/2, wm_bot+wm_h/2,
                 size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
         else:
-            MESES_C = {1:'E',2:'F',3:'M',4:'A',5:'M',6:'J',
-                       7:'J',8:'A',9:'S',10:'O',11:'N',12:'D'}
+            N    = len(wr_mensual)
+            # limitar a últimos 18 meses para no saturar
+            if N > 18:
+                wr_mensual = wr_mensual[-18:]
+                N = 18
 
-            N      = len(wr_mensual)
+            # paleta por año — un color distinto por año
+            YEAR_PALETTE = [
+                "#3498DB",  # azul
+                "#9B59B6",  # morado
+                "#E67E22",  # naranja
+                "#1ABC9C",  # verde agua
+                "#E91E8C",  # magenta
+                "#00BCD4",  # cian
+                "#FF5722",  # naranja rojizo
+            ]
+            años_unicos = sorted(set(d['mes'].split('-')[0] for d in wr_mensual))
+            year_color  = {yr: colors.HexColor(YEAR_PALETTE[i % len(YEAR_PALETTE)])
+                           for i, yr in enumerate(años_unicos)}
+            # color brillo (versión más clara del color base)
+            BRILLO_PALETTE = [
+                "#7ec8f5", "#cf9fe8", "#f5ba7e",
+                "#7ee8d4", "#f57ec4", "#7ee8f5",
+                "#ffaa88",
+            ]
+            year_brillo = {yr: colors.HexColor(BRILLO_PALETTE[i % len(BRILLO_PALETTE)])
+                           for i, yr in enumerate(años_unicos)}
+
             # zona de barras
-            GX0    = xB + 8
-            GY0    = wm_bot + 14        # base de barras (deja espacio para etiq mes)
-            GW0    = CB_W - 16
-            GH0    = wm_h - 28          # altura máxima de barras
-            GAP    = GW0 / max(N, 1)
-            BAR_W  = max(3, min(14, GAP * 0.62))
+            GX0  = xB + PAD + 8
+            GW0  = CB_W - PAD*2 - 16
+            GY0  = wm_bot + 18          # base eje X
+            GH0  = wm_h - TITLE_H - 34  # altura disponible para barras
+            GAP  = GW0 / max(N, 1)
+            BW2  = max(4, min(16, GAP * 0.68))
 
-            # línea de referencia 50 %
-            y50 = GY0 + (50/100)*GH0
-            ss(cv, C_ACCENT); cv.setLineWidth(0.5); cv.setDash([3,3],0)
-            cv.line(GX0, y50, GX0+GW0, y50)
-            cv.setDash([],0)
-            txt(cv, "50%", GX0-2, y50-2, size=4.5, col=C_ACCENT, anchor="right")
+            # grid suave 25 / 50 / 75
+            for pct_g in [25, 50, 75]:
+                yg = GY0 + (pct_g/100)*GH0
+                lw_g = 0.8 if pct_g == 50 else 0.3
+                col_g = C_ACCENT if pct_g == 50 else C_LINE
+                ss(cv, col_g); cv.setLineWidth(lw_g)
+                cv.setDash([2,3] if pct_g != 50 else [4,3], 0)
+                cv.line(GX0, yg, GX0+GW0, yg)
+                cv.setDash([], 0)
+                if pct_g == 50:
+                    txt(cv, "50%", GX0+GW0+1, yg-2.5, size=4,
+                        col=C_ACCENT, font="Helvetica-Bold")
 
-            # barras + puntos
+            # eje X base sólido
+            ss(cv, C_SUBTEXT); cv.setLineWidth(0.6); cv.setDash([],0)
+            cv.line(GX0, GY0, GX0+GW0, GY0)
+
+            # leyenda de años (pequeña, esquina superior izquierda del panel)
+            lex = GX0
+            ley = wm_bot + wm_h - TITLE_H - 6
+            for yr_l, col_l in year_color.items():
+                rrect(cv, lex, ley-5, 6, 6, r=1, fill_col=col_l)
+                txt(cv, f"'{yr_l[2:]}", lex+8, ley-1, size=4,
+                    col=C_SUBTEXT, font="Helvetica")
+                lex += 22
+
+            # barras y etiquetas
             pts = []
             for i, d in enumerate(wr_mensual):
+                yr_key = d['mes'].split('-')[0]
+                col_   = year_color.get(yr_key, C_BLUE)
+                bril_  = year_brillo.get(yr_key, C_BLUE)
+
                 bx   = GX0 + i*GAP + GAP/2
-                bh_  = (d['WR']/100)*GH0
-                by_  = GY0
-                col_ = C_GREEN if d['WR'] >= 50 else C_RED
-                rrect(cv, bx-BAR_W/2, by_, BAR_W, bh_, r=2, fill_col=col_)
-                pts.append((bx, by_+bh_))
+                bh_  = max(2, (d['WR']/100)*GH0)
 
-                # etiqueta mes
+                # sombra sutil
+                rrect(cv, bx-BW2/2+1, GY0, BW2, bh_-1, r=2,
+                      fill_col=colors.HexColor("#111111"))
+                # barra principal
+                rrect(cv, bx-BW2/2, GY0, BW2, bh_, r=2, fill_col=col_)
+                # brillo top
+                if bh_ > 5:
+                    rrect(cv, bx-BW2/2, GY0+bh_-3, BW2, 3, r=2, fill_col=bril_)
+
+                pts.append((bx, GY0+bh_))
+
+                # etiqueta mes bajo la barra
                 try:
-                    parts  = d['mes'].split('-')
-                    m_idx  = int(parts[1])
-                    yr2    = parts[0][2:]   # "24"
-                    etiq   = MESES_C.get(m_idx,'?') + yr2
+                    parts_ = d['mes'].split('-')
+                    m_idx_ = int(parts_[1])
+                    # mostrar solo inicial del mes
+                    MESES_INI = {1:'E',2:'F',3:'M',4:'A',5:'M',6:'J',
+                                 7:'J',8:'A',9:'S',10:'O',11:'N',12:'D'}
+                    etiq = MESES_INI.get(m_idx_, '?')
                 except Exception:
-                    etiq = d['mes'][-3:]
-                txt(cv, etiq, bx, GY0-9, size=4.5, col=C_SUBTEXT,
-                    font="Helvetica", anchor="center")
+                    etiq = '?'
+                txt(cv, etiq, bx, GY0-8, size=4.5,
+                    col=col_, font="Helvetica-Bold", anchor="center")
 
-                # % encima de la barra (solo si barra es suficientemente alta)
-                if bh_ > 10:
-                    txt(cv, f"{d['WR']:.0f}", bx, by_+bh_+2,
-                        size=4.5, col=C_TEXT, font="Helvetica-Bold", anchor="center")
+                # % dentro/encima de barra según altura
+                if bh_ >= 14:
+                    txt(cv, f"{d['WR']:.0f}%", bx, GY0+bh_/2-3,
+                        size=4.5, col=C_WHITE, font="Helvetica-Bold",
+                        anchor="center")
+                elif bh_ >= 6:
+                    txt(cv, f"{d['WR']:.0f}%", bx, GY0+bh_+3,
+                        size=4, col=col_, font="Helvetica-Bold",
+                        anchor="center")
 
-            # línea conectora dorada sobre puntos
+            # línea conectora dorada
             if len(pts) >= 2:
-                ss(cv, C_GOLD); cv.setLineWidth(1.0); cv.setDash([],0)
-                p = cv.beginPath()
-                p.moveTo(pts[0][0], pts[0][1])
+                ss(cv, C_GOLD); cv.setLineWidth(1.2); cv.setDash([],0)
+                p_ = cv.beginPath()
+                p_.moveTo(pts[0][0], pts[0][1])
                 for px_, py_ in pts[1:]:
-                    p.lineTo(px_, py_)
-                cv.drawPath(p, stroke=1, fill=0)
-                # puntos
+                    p_.lineTo(px_, py_)
+                cv.drawPath(p_, stroke=1, fill=0)
                 for px_, py_ in pts:
-                    sf(cv, C_GOLD); cv.circle(px_, py_, 2, fill=1, stroke=0)
+                    sf(cv, C_PANEL2); cv.circle(px_, py_, 3.5, fill=1, stroke=0)
+                    sf(cv, C_GOLD);   cv.circle(px_, py_, 2.2, fill=1, stroke=0)
 
-            # eje X base
-            ss(cv, C_LINE); cv.setLineWidth(0.5)
-            cv.line(GX0, GY0, GX0+GW0, GY0)
+            # badge promedio
+            if wr_mensual:
+                avg_wr  = round(sum(d['WR'] for d in wr_mensual)/len(wr_mensual), 1)
+                avg_col = C_GREEN if avg_wr >= 50 else C_RED
+                rrect(cv, xB+CB_W-PAD-28, wm_bot+wm_h-TITLE_H-16, 24, 12,
+                      r=3, fill_col=avg_col)
+                txt(cv, f"Ø {avg_wr:.0f}%",
+                    xB+CB_W-PAD-16, wm_bot+wm_h-TITLE_H-8,
+                    size=5, col=C_WHITE, font="Helvetica-Bold", anchor="center")
 
     # COL C HABILIDADES
     rrect(cv, xC, BY, CC_W, BH, r=8, fill_col=C_PANEL)
