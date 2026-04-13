@@ -441,15 +441,7 @@ def generar_pdf_jugador(
                 txt(cv, etiq, bx, GY0-8, size=4.5,
                     col=col_, font="Helvetica-Bold", anchor="center")
 
-                # % dentro/encima de barra según altura
-                if bh_ >= 14:
-                    txt(cv, f"{d['WR']:.0f}%", bx, GY0+bh_/2-3,
-                        size=4.5, col=C_WHITE, font="Helvetica-Bold",
-                        anchor="center")
-                elif bh_ >= 6:
-                    txt(cv, f"{d['WR']:.0f}%", bx, GY0+bh_+3,
-                        size=4, col=col_, font="Helvetica-Bold",
-                        anchor="center")
+
 
             # línea conectora dorada
             if len(pts) >= 2:
