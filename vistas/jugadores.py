@@ -350,10 +350,6 @@ def generar_pdf_jugador(
                 size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
         else:
             N    = len(wr_mensual)
-            # limitar a últimos 18 meses para no saturar
-            if N > 18:
-                wr_mensual = wr_mensual[-18:]
-                N = 18
 
             # paleta por año — un color distinto por año
             YEAR_PALETTE = [
@@ -383,7 +379,7 @@ def generar_pdf_jugador(
             GY0  = wm_bot + 18          # base eje X
             GH0  = wm_h - TITLE_H - 34  # altura disponible para barras
             GAP  = GW0 / max(N, 1)
-            BW2  = max(4, min(16, GAP * 0.68))
+            BW2  = max(2, min(16, GAP * 0.68))
 
             # grid suave 25 / 50 / 75
             for pct_g in [25, 50, 75]:
@@ -467,14 +463,15 @@ def generar_pdf_jugador(
                     sf(cv, C_PANEL2); cv.circle(px_, py_, 3.5, fill=1, stroke=0)
                     sf(cv, C_GOLD);   cv.circle(px_, py_, 2.2, fill=1, stroke=0)
 
-            # badge promedio
+            # badge promedio últimos 3 meses
             if wr_mensual:
-                avg_wr  = round(sum(d['WR'] for d in wr_mensual)/len(wr_mensual), 1)
-                avg_col = C_GREEN if avg_wr >= 50 else C_RED
-                rrect(cv, xB+CB_W-PAD-28, wm_bot+wm_h-TITLE_H-16, 24, 12,
+                ultimos3  = wr_mensual[-3:]
+                avg_wr    = round(sum(d['WR'] for d in ultimos3) / len(ultimos3), 1)
+                avg_col   = C_GREEN if avg_wr >= 50 else C_RED
+                rrect(cv, xB+CB_W-PAD-36, wm_bot+wm_h-TITLE_H-16, 32, 12,
                       r=3, fill_col=avg_col)
-                txt(cv, f"Ø {avg_wr:.0f}%",
-                    xB+CB_W-PAD-16, wm_bot+wm_h-TITLE_H-8,
+                txt(cv, f"Ø3m {avg_wr:.0f}%",
+                    xB+CB_W-PAD-20, wm_bot+wm_h-TITLE_H-8,
                     size=5, col=C_WHITE, font="Helvetica-Bold", anchor="center")
 
     # COL C HABILIDADES
@@ -966,6 +963,12 @@ def show():
                 #                 campeonatos_torneo.append({'Torneo':62,'Score':0,'Victorias':0})
 
 
+                # ── Reglas especiales de campeones ──────────────────────
+                # Torneos con formato suizo sin ronda "Final" → campeón asignado manualmente
+                CAMPEON_MANUAL = {
+                    46: "Darmanethan",
+                }
+
                 es_chris_fps = "chris fps" in player_query.lower() or player_query.lower() in "chris fps"
                 # st.write(f"player_query: '{player_query}'")
                 # st.write(f"es_chris_fps: {es_chris_fps}")
@@ -973,6 +976,24 @@ def show():
                 # st.write(f"62 en base_torneo_final: {62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]}")
 
                 campeonatos_torneo = []
+                # Casos especiales: torneos sin ronda Final cuyo campeón se asigna manualmente
+                for nt_manual, campeon_manual in CAMPEON_MANUAL.items():
+                    es_campeon_manual = (
+                        player_query.lower() == campeon_manual.lower() if exact_search
+                        else campeon_manual.lower() in player_query.lower() or player_query.lower() in campeon_manual.lower()
+                    )
+                    if es_campeon_manual:
+                        tabla_m = generar_tabla_torneo(base_torneo_final, nt_manual)
+                        if tabla_m is not None and not tabla_m.empty:
+                            mask_m = (tabla_m['AKA'].str.lower() == player_query.lower()
+                                      if exact_search else
+                                      tabla_m['AKA'].str.contains(player_query, case=False, na=False))
+                            j_m = tabla_m[mask_m]
+                            score_m = float(j_m['SCORE'].iloc[0]) if not j_m.empty else 0
+                            vict_m  = int(j_m['Victorias'].iloc[0]) if not j_m.empty else 0
+                        else:
+                            score_m, vict_m = 0, 0
+                        campeonatos_torneo.append({'Torneo': nt_manual, 'Score': score_m, 'Victorias': vict_m})
                 # Caso especial ANTES del loop: Torneo 62 en parejas, Chris FPS también es campeón
                 #if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
                 if es_chris_fps:
@@ -988,6 +1009,8 @@ def show():
                         score_62, vict_62 = 0, 0
                     campeonatos_torneo.append({'Torneo':61,'Score':score_62,'Victorias':vict_62})
                 for nt in base_torneo_final[base_torneo_final['Torneo_Temp'].isin(torneos_con_final)]['Torneo_Temp'].unique():
+                    if int(nt) in CAMPEON_MANUAL:
+                        continue  # ya fue manejado manualmente arriba
                     if int(nt) == 61 and es_chris_fps:
                         continue  # ya fue agregado arriba
                     tabla = generar_tabla_torneo(base_torneo_final, nt)
