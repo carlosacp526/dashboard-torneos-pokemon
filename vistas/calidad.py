@@ -321,20 +321,21 @@ def show():
         # Mapear CALIDAD_LIGA a etiqueta legible
         niveles_map = {5:'🏆 Élite', 4:'🟢 Excelente', 3:'🟡 Buena', 2:'🟠 Regular', 1:'🔴 Débil', 0:'⚫ S/D'}
         tabla_display = tabla.copy()
-
-        # Apply styling BEFORE converting CALIDAD_LIGA to strings,
-        # so color_calidad can still parse numeric values.
-        id_cols_style = ['ID1','ID2','ID3','ID4','ID5','ID6','ID7']
-        styled = tabla_display.style\
-            .map(color_calidad, subset=['CALIDAD_LIGA'] if 'CALIDAD_LIGA' in tabla_display.columns else [])\
-            .map(color_score, subset=[c for c in id_cols_style if c in tabla_display.columns])
-
-        # Convert CALIDAD_LIGA to readable labels for display
         if 'CALIDAD_LIGA' in tabla_display.columns:
-            styled = styled.format(
-                {'CALIDAD_LIGA': lambda x: niveles_map.get(int(x), str(x)) if pd.notna(x) else x}
+            tabla_display['CALIDAD_LIGA'] = tabla_display['CALIDAD_LIGA'].apply(
+                lambda x: niveles_map.get(int(x), str(x)) if pd.notna(x) else x
             )
 
+        id_cols_style = ['ID1','ID2','ID3','ID4','ID5','ID6','ID7']
+        try:
+            # pandas >= 2.1 usa map en vez de applymap
+            styled = tabla_display.style\
+                .map(color_calidad, subset=['CALIDAD_LIGA'] if 'CALIDAD_LIGA' in tabla_display.columns else [])\
+                .map(color_score, subset=[c for c in id_cols_style if c in tabla_display.columns])
+        except AttributeError:
+            styled = tabla_display.style\
+                .applymap(color_calidad, subset=['CALIDAD_LIGA'] if 'CALIDAD_LIGA' in tabla_display.columns else [])\
+                .applymap(color_score, subset=[c for c in id_cols_style if c in tabla_display.columns])
         st.dataframe(styled, use_container_width=True)
 
         csv = tabla.to_csv().encode('utf-8')
