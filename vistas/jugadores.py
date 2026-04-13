@@ -309,6 +309,98 @@ def generar_pdf_jugador(
     txt(cv, f"Ligas participadas:   {len(ligas_jugador)}",   xB+8, py,    size=7.5, col=C_TEXT, font="Helvetica")
     txt(cv, f"Torneos participados: {len(torneos_jugador)}", xB+8, py-13, size=7.5, col=C_TEXT, font="Helvetica")
 
+    # ── WINRATE MENSUAL — dentro de Col B ──────────────────────────
+    wm_top  = py - 26          # empieza justo debajo del texto anterior
+    wm_bot  = BY + 8           # margen inferior del panel
+    wm_h    = wm_top - wm_bot  # altura disponible
+
+    if wm_h > 38:              # solo dibuja si hay espacio razonable
+        # separador
+        hline(cv, xB+6, wm_top + 4, CB_W-12)
+
+        # título sección
+        txt(cv, "WINRATE MENSUAL", xB+CB_W/2, wm_top - 2,
+            size=6.5, col=C_ACCENT, font="Helvetica-Bold", anchor="center")
+
+        # calcular datos
+        wr_mensual = []
+        if 'date' in player_matches.columns and player_matches['date'].notna().any():
+            _pm = player_matches.copy()
+            _pm['date'] = pd.to_datetime(_pm['date'], errors='coerce')
+            _pm = _pm.dropna(subset=['date'])
+            _pm['_mes'] = _pm['date'].dt.to_period('M')
+            for _mes, _grp in _pm.groupby('_mes'):
+                _tot = len(_grp)
+                _w   = int(_grp['winner'].str.contains(player_query, case=False, na=False).sum())
+                if _tot >= 1:
+                    wr_mensual.append({'mes': str(_mes), 'WR': round(_w/_tot*100,1),
+                                       'n': _tot, 'V': _w, 'D': _tot-_w})
+
+        if not wr_mensual:
+            txt(cv, "Sin datos mensuales", xB+CB_W/2, wm_bot + wm_h/2,
+                size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
+        else:
+            MESES_C = {1:'E',2:'F',3:'M',4:'A',5:'M',6:'J',
+                       7:'J',8:'A',9:'S',10:'O',11:'N',12:'D'}
+
+            N      = len(wr_mensual)
+            # zona de barras
+            GX0    = xB + 8
+            GY0    = wm_bot + 14        # base de barras (deja espacio para etiq mes)
+            GW0    = CB_W - 16
+            GH0    = wm_h - 28          # altura máxima de barras
+            GAP    = GW0 / max(N, 1)
+            BAR_W  = max(3, min(14, GAP * 0.62))
+
+            # línea de referencia 50 %
+            y50 = GY0 + (50/100)*GH0
+            ss(cv, C_ACCENT); cv.setLineWidth(0.5); cv.setDash([3,3],0)
+            cv.line(GX0, y50, GX0+GW0, y50)
+            cv.setDash([],0)
+            txt(cv, "50%", GX0-2, y50-2, size=4.5, col=C_ACCENT, anchor="right")
+
+            # barras + puntos
+            pts = []
+            for i, d in enumerate(wr_mensual):
+                bx   = GX0 + i*GAP + GAP/2
+                bh_  = (d['WR']/100)*GH0
+                by_  = GY0
+                col_ = C_GREEN if d['WR'] >= 50 else C_RED
+                rrect(cv, bx-BAR_W/2, by_, BAR_W, bh_, r=2, fill_col=col_)
+                pts.append((bx, by_+bh_))
+
+                # etiqueta mes
+                try:
+                    parts  = d['mes'].split('-')
+                    m_idx  = int(parts[1])
+                    yr2    = parts[0][2:]   # "24"
+                    etiq   = MESES_C.get(m_idx,'?') + yr2
+                except Exception:
+                    etiq = d['mes'][-3:]
+                txt(cv, etiq, bx, GY0-9, size=4.5, col=C_SUBTEXT,
+                    font="Helvetica", anchor="center")
+
+                # % encima de la barra (solo si barra es suficientemente alta)
+                if bh_ > 10:
+                    txt(cv, f"{d['WR']:.0f}", bx, by_+bh_+2,
+                        size=4.5, col=C_TEXT, font="Helvetica-Bold", anchor="center")
+
+            # línea conectora dorada sobre puntos
+            if len(pts) >= 2:
+                ss(cv, C_GOLD); cv.setLineWidth(1.0); cv.setDash([],0)
+                p = cv.beginPath()
+                p.moveTo(pts[0][0], pts[0][1])
+                for px_, py_ in pts[1:]:
+                    p.lineTo(px_, py_)
+                cv.drawPath(p, stroke=1, fill=0)
+                # puntos
+                for px_, py_ in pts:
+                    sf(cv, C_GOLD); cv.circle(px_, py_, 2, fill=1, stroke=0)
+
+            # eje X base
+            ss(cv, C_LINE); cv.setLineWidth(0.5)
+            cv.line(GX0, GY0, GX0+GW0, GY0)
+
     # COL C HABILIDADES
     rrect(cv, xC, BY, CC_W, BH, r=8, fill_col=C_PANEL)
     txt(cv, "RENDIMIENTO POR CATEGORIA", xC+CC_W/2, BY+BH-13, size=8,
@@ -428,177 +520,8 @@ def generar_pdf_jugador(
             txt(cv, fecha, xD+CD_W-5, RY-6.5, size=6, col=C_SUBTEXT, anchor="right")
             RY -= ROW_H
 
-    # FOOTER PÁGINA 1
+    # FOOTER
     txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}",
-        PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
-
-    # ══════════════════════════════════════════════════════════════
-    # PÁGINA 2  —  WINRATE MENSUAL
-    # ══════════════════════════════════════════════════════════════
-    cv.showPage()
-
-    # Fondo
-    sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
-
-    # Header página 2
-    HDR2 = 50
-    rrect(cv, 0, PH-HDR2, PW, HDR2, r=0, fill_col=C_PANEL)
-    sf(cv, C_ACCENT); cv.rect(0, PH-HDR2-2, PW, 2, fill=1, stroke=0)
-    for lp in ["Logo.png","logo.png","LOGO.PNG"]:
-        if os.path.exists(lp):
-            try:
-                cv.drawImage(ImageReader(lp), MARGIN, PH-HDR2+5,
-                             height=40, width=40, preserveAspectRatio=True, mask='auto')
-            except Exception: pass
-            break
-    txt(cv, player_query.upper(), 62, PH-25, size=18, col=C_TEXT, font="Helvetica-Bold")
-    txt(cv, "WINRATE MENSUAL  ·  POKETUBI", 62, PH-40, size=7, col=C_SUBTEXT, font="Helvetica")
-    txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-28, size=8,
-        col=C_SUBTEXT, font="Helvetica", anchor="right")
-
-    # ── Calcular winrate mensual ──────────────────────────────────
-    wr_mensual = []
-    if 'date' in player_matches.columns and player_matches['date'].notna().any():
-        pm2 = player_matches.copy()
-        pm2['date'] = pd.to_datetime(pm2['date'], errors='coerce')
-        pm2 = pm2.dropna(subset=['date'])
-        pm2['mes'] = pm2['date'].dt.to_period('M')
-        for mes, grp in pm2.groupby('mes'):
-            total = len(grp)
-            wins  = int(grp['winner'].str.contains(player_query, case=False, na=False).sum())
-            if total >= 1:
-                wr_mensual.append({
-                    'mes':      str(mes),
-                    'WR':       round(wins / total * 100, 1),
-                    'Partidas': total,
-                    'Victorias':wins,
-                    'Derrotas': total - wins,
-                })
-
-    # ── Área del gráfico ─────────────────────────────────────────
-    P2_MARGIN = MARGIN
-    P2_BY     = P2_MARGIN + 10
-    P2_BH     = PH - HDR2 - 6 - P2_MARGIN*2 - 10
-    P2_BW     = PW - P2_MARGIN*2
-
-    # Panel contenedor
-    rrect(cv, P2_MARGIN, P2_BY, P2_BW, P2_BH, r=8, fill_col=C_PANEL)
-
-    if not wr_mensual:
-        txt(cv, "No hay datos mensuales suficientes.", PW/2, PH/2,
-            size=12, col=C_SUBTEXT, font="Helvetica", anchor="center")
-    else:
-        N     = len(wr_mensual)
-        GX    = P2_MARGIN + 60          # área gráfico — izquierda
-        GY    = P2_BY + 22              # fondo barras
-        GW    = P2_BW - 70             # ancho gráfico
-        GH    = P2_BH - 80             # alto gráfico
-        GX2   = GX + GW               # borde derecho
-        GY2   = GY + GH               # techo barras
-
-        # Título interior
-        txt(cv, "EVOLUCIÓN DE WINRATE POR MES", P2_MARGIN + P2_BW/2,
-            P2_BY + P2_BH - 14, size=9, col=C_ACCENT,
-            font="Helvetica-Bold", anchor="center")
-
-        # ── Grid horizontal (líneas de referencia 0 / 25 / 50 / 75 / 100) ──
-        for pct_ref in [0, 25, 50, 75, 100]:
-            gy_ref = GY + (pct_ref / 100) * GH
-            ss(cv, C_LINE)
-            lw = 1.2 if pct_ref == 50 else 0.3
-            cv.setLineWidth(lw)
-            cv.setDash([4, 4] if pct_ref != 50 else [], 0)
-            cv.line(GX, gy_ref, GX2, gy_ref)
-            cv.setDash([], 0)
-            txt(cv, f"{pct_ref}%", GX-5, gy_ref-3, size=6,
-                col=C_ACCENT if pct_ref==50 else C_SUBTEXT, anchor="right")
-
-        # ── Línea polilínea de winrate ─────────────────────────────
-        BAR_W = max(6, min(28, (GW / N) * 0.60))
-        GAP   = GW / N
-
-        points = []
-        for i, d in enumerate(wr_mensual):
-            bx  = GX + i * GAP + GAP/2
-            wr  = d['WR']
-            by_ = GY + (wr / 100) * GH
-            points.append((bx, by_))
-
-            # Barra
-            bar_col = C_GREEN if wr >= 50 else C_RED
-            rrect(cv, bx - BAR_W/2, GY, BAR_W, (wr/100)*GH, r=3, fill_col=bar_col)
-
-            # Etiqueta % encima
-            txt(cv, f"{wr:.0f}%", bx, by_ + 4,
-                size=5.5, col=C_TEXT, font="Helvetica-Bold", anchor="center")
-
-            # Partidas debajo de la barra
-            txt(cv, f"({d['Partidas']})", bx, GY - 9,
-                size=5, col=C_SUBTEXT, font="Helvetica", anchor="center")
-
-            # Etiqueta mes — rotada manualmente en 2 líneas
-            mes_str = str(d['mes'])   # "2024-03"
-            try:
-                mes_parts = mes_str.split('-')
-                yr  = mes_parts[0][-2:]   # "24"
-                m   = int(mes_parts[1])
-                MESES_CORTOS = {1:'ENE',2:'FEB',3:'MAR',4:'ABR',5:'MAY',6:'JUN',
-                                7:'JUL',8:'AGO',9:'SEP',10:'OCT',11:'NOV',12:'DIC'}
-                etiq = f"{MESES_CORTOS.get(m,'?')}\n'{yr}"
-            except Exception:
-                etiq = mes_str[-5:]
-
-            # Dibuja etiqueta mes en 2 líneas
-            partes = etiq.split('\n')
-            txt(cv, partes[0], bx, GY - 18, size=5, col=C_TEXT, font="Helvetica-Bold", anchor="center")
-            if len(partes) > 1:
-                txt(cv, partes[1], bx, GY - 25, size=5, col=C_SUBTEXT, font="Helvetica", anchor="center")
-
-        # Línea conectora suave sobre las barras
-        if len(points) >= 2:
-            ss(cv, C_GOLD)
-            cv.setLineWidth(1.4)
-            cv.setDash([], 0)
-            p = cv.beginPath()
-            p.moveTo(points[0][0], points[0][1])
-            for px_, py_ in points[1:]:
-                p.lineTo(px_, py_)
-            cv.drawPath(p, stroke=1, fill=0)
-
-            # Puntos sobre la línea
-            for px_, py_ in points:
-                sf(cv, C_GOLD)
-                cv.circle(px_, py_, 3, fill=1, stroke=0)
-
-        # Eje X y Y
-        ss(cv, C_SUBTEXT); cv.setLineWidth(0.8); cv.setDash([], 0)
-        cv.line(GX, GY, GX2, GY)   # eje X
-        cv.line(GX, GY, GX, GY2)   # eje Y
-
-        # ── Panel de resumen estadístico abajo ────────────────────
-        SY = P2_BY + 6
-        SW = (P2_BW - 20) / 6
-        SX0 = P2_MARGIN + 10
-        all_wr   = [d['WR']       for d in wr_mensual]
-        all_part = [d['Partidas'] for d in wr_mensual]
-        best_m   = wr_mensual[all_wr.index(max(all_wr))]
-        worst_m  = wr_mensual[all_wr.index(min(all_wr))]
-        promedio = round(sum(all_wr)/len(all_wr), 1)
-
-        resumen = [
-            ("MESES ACTIVOS",  str(N),                C_BLUE),
-            ("WR PROMEDIO",    f"{promedio:.1f}%",     C_GOLD),
-            ("MEJOR MES WR",   f"{best_m['WR']:.0f}%  ({best_m['mes']})", C_GREEN),
-            ("PEOR MES WR",    f"{worst_m['WR']:.0f}%  ({worst_m['mes']})", C_RED),
-            ("MÁX PARTIDAS",   f"{max(all_part)} en {wr_mensual[all_part.index(max(all_part))]['mes']}", C_PURPLE),
-            ("TOTAL PARTIDAS", str(sum(all_part)),     C_ORANGE),
-        ]
-        for i, (label, value, col) in enumerate(resumen):
-            bx2 = SX0 + i*(SW+4)
-            stat_box(cv, bx2, SY, SW-2, 28, label, value, col=col)
-
-    # Footer página 2
-    txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Página 2",
         PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
     cv.save()
