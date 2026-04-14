@@ -622,36 +622,50 @@ def generar_pdf_jugador(
         total_ok  = sum(desbloqueados.values())
         total_all = len(LOGROS)
         xp_ganado = sum(l['xp'] for l in LOGROS if desbloqueados.get(l['id']))
+        xp_total_posible = sum(l['xp'] for l in LOGROS)
 
-        # barra de progreso
-        PR_X = MARGIN; PR_Y = PH-HDR2-14; PR_W = PW-MARGIN*2; PR_H = 7
+        # barra de progreso — texto SIEMPRE blanco
+        PR_X = MARGIN; PR_Y = PH-HDR2-15; PR_W = PW-MARGIN*2; PR_H = 8
         rrect(cv, PR_X, PR_Y, PR_W, PR_H, r=3, fill_col=C_PANEL2)
         prog_w = max(6, int(PR_W * total_ok / max(total_all, 1)))
         rrect(cv, PR_X, PR_Y, prog_w, PR_H, r=3, fill_col=C_GOLD)
         txt(cv,
-            f"{total_ok} / {total_all} logros desbloqueados  |  {xp_ganado:,} XP  ({round(total_ok/max(total_all,1)*100,1)}%)",
+            f"{total_ok} / {total_all} logros desbloqueados  |  {round(total_ok/max(total_all,1)*100,1)}%",
             PW/2, PR_Y+1.5, size=5.5,
-            col=C_BG if prog_w > PR_W*0.45 else C_TEXT,
+            col=colors.white,
             font="Helvetica-Bold", anchor="center")
 
-        # pastillas por rareza
+        # barra XP — debajo de la barra principal
+        XP_Y = PR_Y - 11
+        rrect(cv, PR_X, XP_Y, PR_W, 7, r=3, fill_col=colors.HexColor("#1a1a2e"))
+        xp_w = max(6, int(PR_W * xp_ganado / max(xp_total_posible, 1)))
+        rrect(cv, PR_X, XP_Y, xp_w, 7, r=3, fill_col=colors.HexColor("#27ae60"))
+        txt(cv,
+            f"XP: {xp_ganado:,} / {xp_total_posible:,}  ({round(xp_ganado/max(xp_total_posible,1)*100,1)}%)",
+            PW/2, XP_Y+1.5, size=5.0,
+            col=colors.white,
+            font="Helvetica-Bold", anchor="center")
+
+        # pastillas por rareza — texto blanco
         RAR_DEFS = [
             ("BRONCE","#cd7f32"), ("PLATA","#b0bec5"),
             ("ORO","#f5c518"),    ("LEGENDARIO","#9c27b0"),
         ]
-        PILL_W = 64; PILL_H = 12; PILL_GAP = 5
+        PILL_W = 70; PILL_H = 13; PILL_GAP = 5
         pill_total_w = len(RAR_DEFS)*(PILL_W+PILL_GAP)-PILL_GAP
         pill_x0 = PW/2 - pill_total_w/2
         for pi, (rlabel, rhex) in enumerate(RAR_DEFS):
-            n_r = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel and desbloqueados.get(l['id']))
-            t_r = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel)
-            px2 = pill_x0 + pi*(PILL_W+PILL_GAP)
-            rrect(cv, px2, PH-HDR2-29, PILL_W, PILL_H, r=4, fill_col=colors.HexColor(rhex))
-            txt(cv, f"{rlabel}  {n_r}/{t_r}", px2+PILL_W/2, PH-HDR2-21,
-                size=5.5, col=C_BG, font="Helvetica-Bold", anchor="center")
+            n_r  = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel and desbloqueados.get(l['id']))
+            t_r  = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel)
+            xp_r = sum(l['xp'] for l in LOGROS if l['rareza'].upper()==rlabel and desbloqueados.get(l['id']))
+            px2  = pill_x0 + pi*(PILL_W+PILL_GAP)
+            rrect(cv, px2, XP_Y-15, PILL_W, PILL_H, r=4, fill_col=colors.HexColor(rhex))
+            txt(cv, f"{rlabel}  {n_r}/{t_r}  |  {xp_r:,}xp",
+                px2+PILL_W/2, XP_Y-15+4,
+                size=5.0, col=colors.white, font="Helvetica-Bold", anchor="center")
 
         # ── layout: 4 franjas por rareza ──────────────────────────
-        GRID_TOP = PH - HDR2 - 34
+        GRID_TOP = PH - HDR2 - 50
         GRID_BOT = MARGIN + 6
         GRID_H   = GRID_TOP - GRID_BOT
         GRID_W   = PW - MARGIN*2
@@ -765,12 +779,13 @@ def generar_pdf_jugador(
                         sf(cv, colors.HexColor("#2a2a2a"))
                         cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
 
-                # nombre debajo si hay espacio
+                # nombre justo debajo de la imagen
                 if CELL_H > 16:
                     name_col = C_TEXT if unlocked else C_SUBTEXT
-                    txt(cv, logro['name'][:12],
-                        cx_, sec_y + AVAIL_H - row_i*CELL_H - 1.5,
-                        size=max(3.0, min(4.2, CELL_W/11)),
+                    img_bottom = cy_ - MEDAL_R * 1.3
+                    txt(cv, logro['name'][:14],
+                        cx_, img_bottom - 1,
+                        size=max(3.0, min(4.5, CELL_W/10)),
                         col=name_col,
                         font="Helvetica-Bold" if unlocked else "Helvetica",
                         anchor="center")
