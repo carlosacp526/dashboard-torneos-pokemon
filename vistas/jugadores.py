@@ -816,7 +816,259 @@ def generar_pdf_jugador(
                         font="Helvetica-Bold", anchor="center")
 
         # ── footer pág 2 ─────────────────────────────────────────
-        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 2 / 2",
+        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 2 / 3",
+            PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
+
+        # ══════════════════════════════════════════════════════════
+        # PÁGINA 3 — GUÍA DE LOGROS
+        # ══════════════════════════════════════════════════════════
+        cv.showPage()
+        sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
+
+        # ── header ───────────────────────────────────────────────
+        HDR3 = 44
+        rrect(cv, 0, PH-HDR3, PW, HDR3, r=0, fill_col=C_PANEL)
+        sf(cv, C_ACCENT); cv.rect(0, PH-HDR3-2, PW, 2, fill=1, stroke=0)
+        for lp in ["Logo.png","logo.png","LOGO.PNG"]:
+            if os.path.exists(lp):
+                try:
+                    cv.drawImage(ImageReader(lp), MARGIN, PH-HDR3+4,
+                                 height=36, width=36, preserveAspectRatio=True, mask='auto')
+                except Exception: pass
+                break
+        txt(cv, "GUÍA DE LOGROS  ·  POKETUBI", 56, PH-22,
+            size=14, col=C_TEXT, font="Helvetica-Bold")
+        txt(cv, player_query.upper(), 56, PH-36,
+            size=7, col=C_SUBTEXT, font="Helvetica")
+        txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-26,
+            size=8, col=C_SUBTEXT, font="Helvetica", anchor="right")
+
+        # ── resumen por categoría ─────────────────────────────────
+        CATS = [
+            ("Participación", "#1976D2"), ("Victorias",   "#c62828"),
+            ("Ranking",       "#f57c00"), ("Estrategia",  "#2e7d32"),
+            ("Torneo",        "#6a1b9a"), ("Ligas",       "#00838f"),
+            ("Social",        "#ad1457"), ("Especial",    "#4527a0"),
+            ("Progresión",    "#37474f"),
+        ]
+        RAR_COL_G = {"Bronce":"#cd7f32","Plata":"#b0bec5","Oro":"#f5c518","Legendario":"#9c27b0"}
+        RAR_TEXT  = {"Bronce":C_BG,     "Plata":C_BG,    "Oro":C_BG,    "Legendario":colors.white}
+
+        # Tabla de todos los logros — layout 2 columnas
+        # Área disponible
+        G_TOP = PH - HDR3 - 8
+        G_BOT = MARGIN + 6
+        G_H   = G_TOP - G_BOT
+        G_W   = PW - MARGIN*2
+        COL_W = (G_W - 6) / 2   # 2 columnas con gap
+        ROW_H = 8.2              # altura de cada fila de logro
+        HDR_H = 10               # altura header de categoría
+
+        # Construir lista ordenada: categoría → logros
+        LOGROS_GUIA = [
+            (1,"Primer Paso","Participación","Bronce",50,"Participa en tu primer torneo oficial"),
+            (2,"De Vuelta al Ruedo","Participación","Bronce",100,"Participa en 5 torneos"),
+            (3,"Veterano","Participación","Plata",500,"Participa en 25 torneos"),
+            (4,"Sin Faltar Uno","Participación","Plata",300,"Participa en 15 torneos"),
+            (5,"Constancia","Participación","Plata",700,"Participa en 30 torneos"),
+            (6,"Leyenda Viviente","Participación","Oro",500,"Participa en 50 torneos"),
+            (7,"Centurión","Participación","Oro",1000,"Participa en 100 torneos"),
+            (8,"Debut Exitoso","Participación","Bronce",75,"Gana tu primera partida en un torneo"),
+            (9,"Explorador","Participación","Bronce",150,"Participa en Liga, Cypher o Ascenso"),
+            (10,"Sin Miedo al Reto","Participación","Bronce",100,"Inscríbete en Singles, Dobles y VGC"),
+            (11,"Primera Victoria","Victorias","Bronce",100,"Gana tu primera partida en Liga"),
+            (12,"Hat Trick","Victorias","Oro",1500,"Gana torneo en Singles, Dobles y VGC"),
+            (13,"Racha Imparable","Victorias","Plata",300,"Gana 10 partidas consecutivas"),
+            (14,"Máquina de Ganar","Victorias","Oro",600,"Gana 15 partidas consecutivas"),
+            (15,"Campeón del Torneo","Victorias","Oro",600,"Gana un torneo completo"),
+            (16,"Bicampeón","Victorias","Oro",800,"Gana 2 torneos"),
+            (17,"Tricampeón","Victorias","Oro",1000,"Gana 3 torneos"),
+            (18,"Pentacampeón","Victorias","Legendario",1600,"Gana 5 torneos"),
+            (19,"Decacampeón","Victorias","Legendario",2000,"Gana 10 torneos"),
+            (20,"Campeón de Campeones","Victorias","Legendario",3000,"Gana más de 10 torneos"),
+            (21,"Dominador","Victorias","Plata",400,"Gana 50 partidas en total"),
+            (22,"Centurión de Batallas","Victorias","Oro",800,"Gana 100 partidas en total"),
+            (23,"Perfección","Victorias","Legendario",1600,"Gana torneo sin perder ninguna partida"),
+            (24,"Verdugo de Élite","Victorias","Plata",350,"Derrota a 5 jugadores campeones"),
+            (25,"Asesino de Gigantes","Victorias","Oro",700,"Derrota a 3 campeones de la PMS"),
+            (26,"Sin Compasión","Victorias","Plata",400,"Gana con 6 Pokémon sobrevivientes"),
+            (27,"Remontada Épica","Victorias","Plata",600,"Gana con 1 Pokémon sobreviviente"),
+            (28,"Clutch","Victorias","Plata",350,"Gana con 0 Pokémon vivos"),
+            (29,"Escalando","Ranking","Bronce",50,"Aumenta WR de un mes a otro en 1%"),
+            (30,"Ascenso Meteórico","Ranking","Plata",400,"Aumenta WR de un mes a otro en 20%"),
+            (31,"Top 100","Ranking","Bronce",200,"Alcanza 10 pts de Score_completo"),
+            (32,"Top 50","Ranking","Plata",400,"Alcanza 20 pts de Score_completo"),
+            (33,"Top 10","Ranking","Oro",800,"Alcanza 30 pts de Score_completo"),
+            (34,"Número Uno","Ranking","Legendario",1600,"Alcanza 50 pts de Score_completo"),
+            (35,"ELO 1000","Ranking","Bronce",100,"Alcanza 1000 pts de ELO en un mes"),
+            (36,"ELO 1500","Ranking","Plata",300,"Alcanza 1200 pts de ELO en un mes"),
+            (37,"ELO 2000","Ranking","Oro",600,"Alcanza 1300 pts de ELO en un mes"),
+            (38,"ELO Máster","Ranking","Legendario",1600,"Alcanza 1500 pts de ELO en un mes"),
+            (39,"Maestro de Tipos","Estrategia","Bronce",50,"Participa en torneo NAT DEX MONOTYPE"),
+            (40,"Mastro del Random","Estrategia","Bronce",150,"Gana torneo de Random Singles"),
+            (41,"Anti-Meta","Estrategia","Bronce",100,"40% WR en un formato (20+ partidas/año)"),
+            (42,"Stall Master","Estrategia","Plata",300,"50% WR en un formato (20+ partidas/año)"),
+            (43,"Hyper Offense","Estrategia","Plata",300,"60% WR en un formato (20+ partidas/año)"),
+            (44,"Maestro del Meta","Estrategia","Oro",900,"70% WR en un formato (20+ partidas/año)"),
+            (45,"Coleccionista","Estrategia","Oro",800,"Juega todos los Formato_esp"),
+            (46,"Fiel a sus Raíces","Estrategia","Bronce",50,"Gana torneo en formato Singles"),
+            (47,"Maestro de OU","Estrategia","Bronce",50,"Gana torneo en Formato_esp OU"),
+            (48,"Maestro de DOU","Estrategia","Bronce",50,"Gana torneo en Formato_esp DOU"),
+            (49,"Maestro de VGC","Estrategia","Bronce",50,"Gana torneo en Formato_esp VGC"),
+            (50,"Maestro de LC","Estrategia","Bronce",50,"Gana torneo en Formato_esp LC"),
+            (51,"Maestro de UBERS","Estrategia","Bronce",50,"Gana torneo en Formato_esp UBERS"),
+            (52,"Campeón OUs","Estrategia","Plata",400,"Gana torneo en OU y DOU"),
+            (53,"Campeón del Caos","Torneo","Bronce",100,"Gana torneo con Random"),
+            (54,"Maestro de Kanto","Torneo","Bronce",200,"Participa en torneo Gen1 (T27, T58)"),
+            (55,"Maestro de Johto","Torneo","Bronce",200,"Participa en torneo Gen2 (T29, T65)"),
+            (56,"Maestro de Hoenn","Torneo","Bronce",200,"Participa en torneo Gen3 (T34, T70)"),
+            (57,"Maestro de Sinnoh","Torneo","Bronce",200,"Participa en torneo Gen4 (T38)"),
+            (58,"Maestro de Unova","Torneo","Bronce",200,"Participa en torneo Gen5 (T44)"),
+            (59,"Maestro de Kalos","Torneo","Bronce",200,"Participa en torneo Gen6 (T50)"),
+            (60,"Maestro de Alola","Torneo","Bronce",200,"Participa en torneo Gen7 (T57)"),
+            (61,"Maestro de Galar","Torneo","Bronce",200,"Participa en torneo Gen8 (T60)"),
+            (62,"Maestro de Paldea","Torneo","Bronce",200,"Participa en torneo Gen9 (T67)"),
+            (63,"Gran Maestro","Torneo","Legendario",2000,"Gana Mundial T46 o T68"),
+            (64,"El Viajero","Ligas","Legendario",2000,"Participa en todas las ligas"),
+            (65,"Bienvenido","Social","Bronce",100,"Participa en la Liga Junior"),
+            (66,"Mentor","Social","Plata",300,"Participa en la Liga Senior"),
+            (67,"Embajador","Social","Oro",600,"Participa en la Liga Master"),
+            (68,"Fair Play","Social","Plata",250,"Sin Walk Over en 6 meses"),
+            (69,"Deportista","Social","Oro",500,"Sin Walk Over en contra en 1 año"),
+            (70,"Atleta","Social","Bronce",150,"Sin Walk Over en contra en 2 años"),
+            (71,"Árbitro Honorario","Social","Plata",300,"Sin Walk Over en contra en 3 años"),
+            (72,"Jugador Honorable","Social","Oro",700,"Sin Walk Over ni a favor en 1 año"),
+            (73,"Leyenda de la Comunidad","Social","Legendario",3000,"Premio al mejor jugador del año"),
+            (74,"Principiante de Suerte","Especial","Oro",1000,"Gana primer torneo en primera participación"),
+            (75,"Regreso del Rey","Especial","Oro",800,"Vuelve a ganar torneo después de 1 año"),
+            (76,"Nemesis","Especial","Plata",400,"Gana 5 veces al mismo rival"),
+            (77,"Duelo de Titanes","Especial","Plata",300,"Gana 10 veces al mismo rival"),
+            (78,"Rivales por Siempre","Especial","Oro",1000,"Gana 20 veces al mismo rival"),
+            (79,"Underdog","Especial","Oro",900,"Gana a un campeón de torneo y liga"),
+            (80,"El Invicto","Especial","Legendario",3000,"Termina un año sin perder ninguna batalla"),
+            (81,"Speedrunner","Especial","Oro",800,"Gana dos torneos en un mes"),
+            (82,"Jugador del Año","Especial","Legendario",2000,"Mayor partidas ganadas en un año"),
+            (83,"Veterano de Guerra","Especial","Oro",1000,"Juega en la misma liga 3 temporadas"),
+            (84,"El Inmortal","Especial","Oro",1000,"Máx. 3 derrotas en liga en una temporada"),
+            (85,"Mortal","Especial","Bronce",100,"Máx. 10 derrotas en liga en una temporada"),
+            (86,"Plebeyo","Especial","Bronce",100,"Máx. 15 derrotas en liga en una temporada"),
+            (87,"El Último en Pie","Especial","Oro",700,"Gana PJS, PES, PSS y PMS"),
+            (88,"Role Play","Especial","Plata",300,"Participa en torneo NAT DEX DOBLES"),
+            (89,"Novato Feliz","Especial","Bronce",100,"Pierde una batalla"),
+            (90,"Leyendas de Ligas","Especial","Legendario",1600,"Participa en la Liga Legends"),
+            (91,"Maestro del Natdex","Estrategia","Bronce",150,"Gana torneo de NAT DEX"),
+            (92,"Coleccionista Bronce","Progresión","Bronce",100,"Desbloquea 10 logros Bronce"),
+            (93,"Coleccionista Plata","Progresión","Plata",300,"Desbloquea 10 logros Plata"),
+            (94,"Coleccionista Oro","Progresión","Oro",600,"Desbloquea 10 logros Oro"),
+            (95,"Completista","Progresión","Oro",800,"Desbloquea 50 logros"),
+            (96,"El Maestro Total","Progresión","Legendario",2000,"Desbloquea 90 logros"),
+            (97,"XP Acumulado 1K","Progresión","Bronce",50,"Acumula 1,000 XP"),
+            (98,"XP Acumulado 10K","Progresión","Plata",250,"Acumula 10,000 XP"),
+            (99,"XP Acumulado 50K","Progresión","Oro",500,"Acumula 15,000 XP"),
+            (100,"XP Acumulado 100K","Progresión","Legendario",1600,"Acumula 20,000 XP"),
+        ]
+
+        # Ordenar por categoría (mismo orden que CATS)
+        cat_order = [c[0] for c in CATS]
+        logros_sorted = sorted(LOGROS_GUIA, key=lambda x: (cat_order.index(x[2]) if x[2] in cat_order else 99, x[0]))
+
+        # Agrupar por categoría para calcular altura total
+        from itertools import groupby
+        grupos = []
+        for cat, grp in groupby(logros_sorted, key=lambda x: x[2]):
+            items = list(grp)
+            cat_hex = dict(CATS).get(cat, "#555")
+            grupos.append((cat, cat_hex, items))
+
+        # Calcular filas totales necesarias: cada cat = 1 header + ceil(n/2) filas
+        # Las ponemos en 2 columnas de página
+        # Construir lista de bloques: (tipo, datos) donde tipo='header'|'row'
+        bloques = []
+        for cat, cat_hex, items in grupos:
+            bloques.append(('header', cat, cat_hex))
+            for i in range(0, len(items), 2):
+                pair = items[i:i+2]
+                bloques.append(('row', pair))
+
+        # Calcular cuántos bloques caben por columna de página
+        # Cada bloque header = HDR_H, cada bloque row = ROW_H
+        def bloque_h(b):
+            return HDR_H if b[0]=='header' else ROW_H
+
+        total_h_bloques = sum(bloque_h(b) for b in bloques)
+        # Dividir en dos mitades verticales de la página
+        mid_h = G_H / 2
+        # Encontrar punto de corte
+        acum = 0
+        split = 0
+        for i, b in enumerate(bloques):
+            acum += bloque_h(b)
+            if acum >= total_h_bloques / 2:
+                split = i + 1
+                break
+
+        col_bloques = [bloques[:split], bloques[split:]]
+
+        for col_i, col_bl in enumerate(col_bloques):
+            cx_off = MARGIN + col_i * (COL_W + 6)
+            cy_cur = G_TOP
+
+            for bloque in col_bl:
+                if bloque[0] == 'header':
+                    _, cat_name, cat_hex = bloque
+                    # Header de categoría
+                    rrect(cv, cx_off, cy_cur - HDR_H, COL_W, HDR_H - 1,
+                          r=3, fill_col=colors.HexColor(cat_hex))
+                    # XP total de esta cat
+                    xp_cat = sum(l[4] for l in LOGROS_GUIA if l[2]==cat_name)
+                    n_cat  = sum(1 for l in LOGROS_GUIA if l[2]==cat_name)
+                    txt(cv, f"{cat_name.upper()}  ·  {n_cat} logros  ·  {xp_cat:,} XP total",
+                        cx_off + COL_W/2, cy_cur - HDR_H + 3,
+                        size=6, col=colors.white, font="Helvetica-Bold", anchor="center")
+                    cy_cur -= HDR_H
+
+                else:  # row
+                    _, pair = bloque
+                    row_y = cy_cur - ROW_H
+                    # Fondo alternado sutil
+                    rrect(cv, cx_off, row_y, COL_W, ROW_H - 0.5,
+                          r=1, fill_col=colors.HexColor("#161c28"))
+
+                    # Cada par de logros lado a lado
+                    cell_w = (COL_W - 2) / 2
+                    for li, logro in enumerate(pair):
+                        num, name, cat, rareza, xp, desc = logro
+                        lx = cx_off + li * (cell_w + 2)
+
+                        # Badge de rareza (pequeño cuadro de color)
+                        rar_hex = RAR_COL_G.get(rareza, "#888")
+                        rar_txt = RAR_TEXT.get(rareza, C_BG)
+                        rrect(cv, lx + 1, row_y + 1.5, 22, ROW_H - 3,
+                              r=1, fill_col=colors.HexColor(rar_hex))
+                        txt(cv, rareza[:3].upper(),
+                            lx + 12, row_y + 2.5,
+                            size=4, col=rar_txt, font="Helvetica-Bold", anchor="center")
+
+                        # Número
+                        txt(cv, f"#{num:03d}",
+                            lx + 25, row_y + 5.5,
+                            size=4, col=C_SUBTEXT, font="Helvetica", anchor="left")
+
+                        # Nombre
+                        name_s = name[:22]
+                        txt(cv, name_s,
+                            lx + 38, row_y + 5.5,
+                            size=5, col=C_TEXT, font="Helvetica-Bold", anchor="left")
+
+                        # XP
+                        txt(cv, f"{xp:,} XP",
+                            lx + cell_w - 2, row_y + 5.5,
+                            size=4.5, col=C_GOLD, font="Helvetica-Bold", anchor="right")
+
+                    cy_cur -= ROW_H
+
+        # ── footer pág 3 ─────────────────────────────────────────
+        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 3 / 3",
             PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
     cv.save()
