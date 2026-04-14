@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bg19" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#3D2410"/>
+      <stop offset="100%" stop-color="#2C1A0E"/>
+    </radialGradient>
+    <radialGradient id="ring19" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#E8A04A"/>
+      <stop offset="100%" stop-color="#CD7F32"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="200" height="200" rx="18" fill="url(#bg19)"/>
+
+  <!-- Anillo exterior decorativo -->
+  <circle cx="100" cy="86" r="58" fill="none" stroke="#CD7F32" stroke-width="2.5" opacity="0.4"/>
+  <circle cx="100" cy="86" r="54" fill="none" stroke="#E8A04A" stroke-width="1" opacity="0.25"/>
+
+  <!-- Círculo principal -->
+  <circle cx="100" cy="86" r="48" fill="url(#ring19)" opacity="0.18"/>
+  <circle cx="100" cy="86" r="44" fill="#3D2410" stroke="#CD7F32" stroke-width="2"/>
+
+  <!-- Destellos en el anillo -->
+  <circle cx="100" cy="42" r="3" fill="#F5C17A" opacity="0.9"/>
+  <circle cx="144" cy="86" r="2.5" fill="#E8A04A" opacity="0.7"/>
+  <circle cx="56"  cy="86" r="2.5" fill="#E8A04A" opacity="0.7"/>
+  <circle cx="100" cy="130" r="2" fill="#F5C17A" opacity="0.5"/>
+
+  <!-- Ícono central -->
+  <g transform="translate(100,86)" fill="#E8A04A" stroke="#CD7F32" stroke-width="0.8">
+    <line x1="0" y1="-16" x2="0" y2="16" stroke-width="2"/><line x1="-14" y1="-8" x2="14" y2="8" stroke-width="2"/><line x1="14" y1="-8" x2="-14" y2="8" stroke-width="2"/><line x1="-6" y1="-14" x2="6" y2="-14" stroke-width="1.5"/><line x1="-6" y1="14" x2="6" y2="14" stroke-width="1.5"/><line x1="-14" y1="-2" x2="-14" y2="2" stroke-width="1.5"/><line x1="14" y1="-2" x2="14" y2="2" stroke-width="1.5"/>
+  </g>
+  
+
+  <!-- Línea decorativa -->
+  <line x1="30" y1="150" x2="170" y2="150" stroke="#CD7F32" stroke-width="0.8" opacity="0.5"/>
+  <circle cx="30"  y1="150" cy="150" r="2" fill="#CD7F32" opacity="0.6"/>
+  <circle cx="170" cy="150" r="2" fill="#CD7F32" opacity="0.6"/>
+
+  <!-- Título -->
+  <text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif"
+        font-size="11" font-weight="bold" fill="#F5DEB3" letter-spacing="0.3">Invierno</text>
+
+  <!-- Subtítulo -->
+  <text x="100" y="180" text-anchor="middle" font-family="Arial,sans-serif"
+        font-size="8.5" fill="#C8A060" letter-spacing="0.2">Juega en temporada fría</text>
+
+  <!-- Número de logro -->
+  <text x="16" y="17" font-family="Arial,sans-serif" font-size="8" fill="#CD7F32" opacity="0.7">#019</text>
+
+  <!-- Tier badge -->
+  <rect x="142" y="6" width="52" height="14" rx="7" fill="#CD7F32" opacity="0.25"/>
+  <text x="168" y="16" text-anchor="middle" font-family="Arial,sans-serif"
+        font-size="8" font-weight="bold" fill="#E8A04A" letter-spacing="0.5">BRONCE</text>
+</svg>
