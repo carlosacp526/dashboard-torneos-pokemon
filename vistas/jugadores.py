@@ -6,7 +6,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, normalize_columns, ensure_fields, compute_player_stats, generar_tabla_temporada, generar_tabla_torneo,
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
                    build_base_liga, build_base_torneo, build_base_jornada)
-from vistas.logros import LOGROS, evaluar_logros, TIER_COLORS, BW_COLORS, _get_icon
+from vistas.logros import (LOGROS, evaluar_logros, RAREZA_COLORS, CAT_COLORS,
+                            CATEGORIAS_ORDEN, BW_COLORS, medal_svg, _logro_img_path, _img_b64)
+from vistas.elo import calcular_elo
 
 
 
@@ -616,166 +618,189 @@ def generar_pdf_jugador(
         txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-26,
             size=8, col=C_SUBTEXT, font="Helvetica", anchor="right")
 
-        # ── totales por tier ──────────────────────────────────────
+        # ── totales generales ─────────────────────────────────────
         total_ok  = sum(desbloqueados.values())
         total_all = len(LOGROS)
-        bro_logros = [l for l in LOGROS if l['tier']=='bronce']
-        pla_logros = [l for l in LOGROS if l['tier']=='plata']
-        oro_logros = [l for l in LOGROS if l['tier']=='oro']
-        bro_ok = sum(1 for l in bro_logros if desbloqueados.get(l['id']))
-        pla_ok = sum(1 for l in pla_logros if desbloqueados.get(l['id']))
-        oro_ok = sum(1 for l in oro_logros if desbloqueados.get(l['id']))
+        xp_ganado = sum(l['xp'] for l in LOGROS if desbloqueados.get(l['id']))
 
         # barra de progreso general
-        PR_X = MARGIN; PR_Y = PH-HDR2-14; PR_W = PW-MARGIN*2; PR_H = 8
-        rrect(cv, PR_X, PR_Y, PR_W, PR_H, r=4, fill_col=C_PANEL2)
-        prog_w = max(8, int(PR_W * total_ok / total_all))
-        rrect(cv, PR_X, PR_Y, prog_w, PR_H, r=4, fill_col=C_GOLD)
-        txt(cv, f"{total_ok} / {total_all} logros desbloqueados  ({round(total_ok/total_all*100,1)}%)",
-            PW/2, PR_Y+1.5, size=5.5, col=C_BG if prog_w > PR_W/2 else C_TEXT,
+        PR_X = MARGIN; PR_Y = PH-HDR2-14; PR_W = PW-MARGIN*2; PR_H = 7
+        rrect(cv, PR_X, PR_Y, PR_W, PR_H, r=3, fill_col=C_PANEL2)
+        prog_w = max(6, int(PR_W * total_ok / max(total_all,1)))
+        rrect(cv, PR_X, PR_Y, prog_w, PR_H, r=3, fill_col=C_GOLD)
+        txt(cv, f"{total_ok} / {total_all} logros  |  {xp_ganado:,} XP  ({round(total_ok/max(total_all,1)*100,1)}%)",
+            PW/2, PR_Y+1.5, size=5.5,
+            col=C_BG if prog_w > PR_W*0.4 else C_TEXT,
             font="Helvetica-Bold", anchor="center")
 
-        # pastillas resumen por tier
-        PILL_W = 68; PILL_H = 14; PILL_GAP = 6
-        pills = [
-            ("🥉 BRONCE", f"{bro_ok}/{len(bro_logros)}", colors.HexColor("#cd7f32")),
-            ("🥈 PLATA",  f"{pla_ok}/{len(pla_logros)}", colors.HexColor("#b0bec5")),
-            ("🥇 ORO",    f"{oro_ok}/{len(oro_logros)}", colors.HexColor("#f5c518")),
+        # pastillas resumen por rareza
+        PILL_W = 62; PILL_H = 12; PILL_GAP = 5
+        RAR_PILLS = [
+            ("BRONCE", "#cd7f32"), ("PLATA", "#b0bec5"),
+            ("ORO", "#f5c518"),    ("LEGENDARIO", "#9c27b0"),
         ]
-        pill_total_w = len(pills)*(PILL_W+PILL_GAP)-PILL_GAP
+        pill_total_w = len(RAR_PILLS)*(PILL_W+PILL_GAP)-PILL_GAP
         pill_x0 = PW/2 - pill_total_w/2
-        for pi, (plabel, pval, pcol) in enumerate(pills):
-            px2 = pill_x0 + pi*(PILL_W+PILL_GAP)
-            rrect(cv, px2, PH-HDR2-32, PILL_W, PILL_H, r=5, fill_col=pcol)
-            txt(cv, f"{plabel}  {pval}", px2+PILL_W/2, PH-HDR2-24,
-                size=6, col=C_BG, font="Helvetica-Bold", anchor="center")
+        for pi, (rlabel, rhex) in enumerate(RAR_PILLS):
+            n_rar = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel and desbloqueados.get(l['id']))
+            t_rar = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel)
+            px2   = pill_x0 + pi*(PILL_W+PILL_GAP)
+            rrect(cv, px2, PH-HDR2-29, PILL_W, PILL_H, r=4, fill_col=colors.HexColor(rhex))
+            txt(cv, f"{rlabel}  {n_rar}/{t_rar}",
+                px2+PILL_W/2, PH-HDR2-21,
+                size=5.5, col=C_BG, font="Helvetica-Bold", anchor="center")
 
-        # ── layout de la grilla ───────────────────────────────────
-        # disponible: de y=MARGIN a y=PH-HDR2-38
-        GRID_TOP = PH - HDR2 - 40
-        GRID_BOT = MARGIN + 8
+        # ── layout grilla por CATEGORÍA ───────────────────────────
+        GRID_TOP = PH - HDR2 - 34
+        GRID_BOT = MARGIN + 6
         GRID_H   = GRID_TOP - GRID_BOT
         GRID_W   = PW - MARGIN*2
+        HEADER_SEC = 12
 
-        # secciones: bronce (40), plata (35), oro (25) — 3 franjas verticales
-        # calculamos proporción de alturas
-        TIER_DEFS = [
-            ("BRONCE", bro_logros, colors.HexColor("#cd7f32"), colors.HexColor("#5a2d00")),
-            ("PLATA",  pla_logros, colors.HexColor("#b0bec5"), colors.HexColor("#37474f")),
-            ("ORO",    oro_logros, colors.HexColor("#f5c518"), colors.HexColor("#3d2e00")),
-        ]
-        # cada sección ocupa su propia franja horizontal
-        # bronce: 40 logros, plata: 35, oro: 25
-        counts = [len(bro_logros), len(pla_logros), len(oro_logros)]
-        total_c = sum(counts)
-        # reservamos HEADER_SEC px por sección + proporcional al contenido
-        HEADER_SEC = 14
-        heights = [int((c/total_c)*(GRID_H - 3*HEADER_SEC)) + HEADER_SEC for c in counts]
-        # ajuste para que sumen exactamente
-        diff = GRID_H - sum(heights)
-        heights[0] += diff
+        cat_groups = [(cat, [l for l in LOGROS if l['cat']==cat])
+                      for cat in CATEGORIAS_ORDEN
+                      if any(l['cat']==cat for l in LOGROS)]
 
-        cur_y = GRID_TOP  # vamos de arriba hacia abajo
+        counts_cat = [len(g) for _, g in cat_groups]
+        total_c    = sum(counts_cat)
+        heights_cat = [max(HEADER_SEC+18,
+                           int((c/total_c)*(GRID_H - len(cat_groups)*HEADER_SEC)) + HEADER_SEC)
+                       for c in counts_cat]
+        diff = GRID_H - sum(heights_cat)
+        heights_cat[0] += diff
 
-        for tier_name, tier_list, tier_col, tier_bg in TIER_DEFS:
-            sec_h   = heights[TIER_DEFS.index((tier_name, tier_list, tier_col, tier_bg))]
-            sec_y   = cur_y - sec_h   # y inferior de la sección
-            cur_y  -= sec_h
+        CAT_HEX = {
+            "Participación":"#1976D2","Victorias":"#c62828","Ranking":"#f57c00",
+            "Estrategia":"#2e7d32","Torneo":"#6a1b9a","Ligas":"#00838f",
+            "Social":"#ad1457","Especial":"#4527a0","Progresión":"#37474f",
+        }
+        CAT_BG = {
+            "Participación":"#0d2a4a","Victorias":"#2a0a0a","Ranking":"#2a1800",
+            "Estrategia":"#0a1f0a","Torneo":"#1a0a2a","Ligas":"#001a1f",
+            "Social":"#2a0a18","Especial":"#100a2a","Progresión":"#101518",
+        }
 
-            # fondo de sección
-            rrect(cv, MARGIN, sec_y, GRID_W, sec_h, r=6, fill_col=tier_bg)
+        # directorio de imágenes (relativo al proyecto)
+        _IMG_DIR_PDF = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "vistas", "imagenes_logros")
 
-            # etiqueta tier
+        def _load_img_pdf(num):
+            import glob as _glob
+            for pat in [f"{num:03d}_*.svg", f"{num:03d}_*.png"]:
+                hits = _glob.glob(os.path.join(_IMG_DIR_PDF, pat))
+                if hits:
+                    return hits[0]
+            return None
+
+        cur_y = GRID_TOP
+
+        for (cat_name, cat_list), sec_h in zip(cat_groups, heights_cat):
+            sec_y  = cur_y - sec_h
+            cur_y -= sec_h
+
+            cat_col = colors.HexColor(CAT_HEX.get(cat_name,"#444"))
+            cat_bg  = colors.HexColor(CAT_BG.get(cat_name,"#111"))
+
+            # fondo sección
+            rrect(cv, MARGIN, sec_y, GRID_W, sec_h, r=5, fill_col=cat_bg)
+            # header categoría
             rrect(cv, MARGIN, sec_y+sec_h-HEADER_SEC, GRID_W, HEADER_SEC,
-                  r=5, fill_col=tier_col)
-            n_ok = sum(1 for l in tier_list if desbloqueados.get(l['id']))
-            txt(cv, f"{tier_name}   {n_ok} / {len(tier_list)}",
-                MARGIN + GRID_W/2, sec_y+sec_h-HEADER_SEC+4,
-                size=7, col=C_BG, font="Helvetica-Bold", anchor="center")
+                  r=4, fill_col=cat_col)
+            n_ok_cat = sum(1 for l in cat_list if desbloqueados.get(l['id']))
+            txt(cv, f"{cat_name.upper()}   {n_ok_cat} / {len(cat_list)}",
+                MARGIN + GRID_W/2, sec_y+sec_h-HEADER_SEC+3,
+                size=6.5, col=C_WHITE, font="Helvetica-Bold", anchor="center")
 
-            # calcular celda de cada logro
-            N_L      = len(tier_list)
-            # columnas y filas que caben
-            AVAIL_H  = sec_h - HEADER_SEC - 4
-            AVAIL_W  = GRID_W - 8
+            N_L     = len(cat_list)
+            AVAIL_H = sec_h - HEADER_SEC - 3
+            AVAIL_W = GRID_W - 6
 
-            # intentamos varias configuraciones de columnas
-            best_cols = 10
-            for try_cols in range(20, 5, -1):
-                try_rows = -(-N_L // try_cols)  # ceil
-                cell_w   = AVAIL_W / try_cols
-                cell_h   = AVAIL_H / try_rows
-                if cell_w >= 14 and cell_h >= 14:
+            # calcular columnas óptimas
+            best_cols = max(N_L, 1)
+            for try_cols in range(min(N_L, 20), 0, -1):
+                try_rows = -(-N_L // try_cols)
+                cw = AVAIL_W / try_cols
+                ch = AVAIL_H / try_rows
+                if cw >= 12 and ch >= 12:
                     best_cols = try_cols
                     break
             NCOLS  = best_cols
             NROWS  = -(-N_L // NCOLS)
             CELL_W = AVAIL_W / NCOLS
             CELL_H = AVAIL_H / NROWS
-            MEDAL_R = min(CELL_W, CELL_H) * 0.38   # radio de medalla
+            MEDAL_R = min(CELL_W, CELL_H) * 0.36
 
-            for idx, logro in enumerate(tier_list):
-                col_i  = idx % NCOLS
-                row_i  = idx // NCOLS
-                cx_    = MARGIN + 4 + col_i*CELL_W + CELL_W/2
-                cy_    = sec_y + AVAIL_H - row_i*CELL_H - CELL_H/2
+            for idx, logro in enumerate(cat_list):
+                col_i = idx % NCOLS
+                row_i = idx // NCOLS
+                cx_   = MARGIN + 3 + col_i*CELL_W + CELL_W/2
+                cy_   = sec_y + AVAIL_H - row_i*CELL_H - CELL_H/2
 
                 unlocked = desbloqueados.get(logro['id'], False)
-                TC = TIER_COLORS[logro['tier']] if unlocked else BW_COLORS
+                RC = RAREZA_COLORS.get(logro['rareza'], RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
 
-                # ── dibujar medalla con ReportLab puro ──────────
-                # cinta arriba
-                ribbon_w = MEDAL_R * 0.35
-                ribbon_h = MEDAL_R * 0.55
-                rrect(cv, cx_-ribbon_w/2, cy_+MEDAL_R*0.55,
-                      ribbon_w, ribbon_h, r=1,
-                      fill_col=colors.HexColor(TC['ribbon']))
+                # ── intentar imagen SVG/PNG desde imagenes_logros/ ──
+                img_drawn = False
+                img_path_pdf = _load_img_pdf(logro['num'])
+                if img_path_pdf and os.path.exists(img_path_pdf):
+                    try:
+                        iw = MEDAL_R * 2.2
+                        ih = MEDAL_R * 2.6
+                        if not unlocked:
+                            # dibujar con opacidad reducida: overlay gris encima
+                            cv.saveState()
+                            cv.setFillColorRGB(0.15, 0.15, 0.15)
+                            cv.drawImage(ImageReader(img_path_pdf),
+                                         cx_-iw/2, cy_-ih*0.55,
+                                         width=iw, height=ih,
+                                         preserveAspectRatio=True, mask='auto')
+                            cv.setFillColorRGB(0.1,0.1,0.1)
+                            cv.setFillAlpha = lambda a: None  # no disponible directo
+                            cv.restoreState()
+                        else:
+                            cv.drawImage(ImageReader(img_path_pdf),
+                                         cx_-iw/2, cy_-ih*0.55,
+                                         width=iw, height=ih,
+                                         preserveAspectRatio=True, mask='auto')
+                        img_drawn = True
+                    except Exception:
+                        img_drawn = False
 
-                # círculo exterior (borde)
-                alpha = 1.0 if unlocked else 0.35
-                ring_col = colors.HexColor(TC['ring'])
-                sf(cv, ring_col)
-                cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
+                # ── fallback: medalla ReportLab ──────────────────
+                if not img_drawn:
+                    rrect(cv, cx_-MEDAL_R*0.22, cy_+MEDAL_R*0.55,
+                          MEDAL_R*0.44, MEDAL_R*0.5, r=1,
+                          fill_col=colors.HexColor(RC['ribbon']))
+                    sf(cv, colors.HexColor(RC['ring']))
+                    cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
+                    sf(cv, colors.HexColor(RC['c1']))
+                    cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
+                    sf(cv, colors.HexColor(RC['shine']))
+                    cv.circle(cx_-MEDAL_R*0.22, cy_+MEDAL_R*0.22, MEDAL_R*0.18, fill=1, stroke=0)
+                    if not unlocked:
+                        sf(cv, colors.HexColor("#333333"))
+                        cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
 
-                # gradiente simulado: círculo c1 encima
-                main_col = colors.HexColor(TC['c1'])
-                sf(cv, main_col)
-                cv.circle(cx_, cy_, MEDAL_R*0.88, fill=1, stroke=0)
-
-                # brillo (círculo pequeño arriba-izquierda)
-                shine_col = colors.HexColor(TC['shine'])
-                sf(cv, shine_col)
-                ss(cv, shine_col); cv.setLineWidth(0)
-                cv.circle(cx_-MEDAL_R*0.25, cy_+MEDAL_R*0.25,
-                          MEDAL_R*0.22, fill=1, stroke=0)
-
-                # icono central — punto o estrella simple
-                icon_col = colors.white if unlocked else colors.HexColor("#666666")
-                sf(cv, icon_col)
-                icon_r = MEDAL_R * 0.28
-                # todos usan un círculo interno simple (PDF no soporta SVG inline)
-                cv.circle(cx_, cy_, icon_r, fill=1, stroke=0)
-
-                # nombre del logro debajo — solo si la celda es suficientemente grande
-                if CELL_H > 20:
+                # nombre debajo
+                if CELL_H > 18:
                     name_col = C_TEXT if unlocked else C_SUBTEXT
-                    name_short = logro['name'][:12]
-                    txt(cv, name_short, cx_, cy_-MEDAL_R-2,
-                        size=max(3.5, min(5, CELL_W/10)),
-                        col=name_col, font="Helvetica-Bold" if unlocked else "Helvetica",
+                    name_short = logro['name'][:11]
+                    txt(cv, name_short, cx_, sec_y + AVAIL_H - row_i*CELL_H - 2,
+                        size=max(3.2, min(4.5, CELL_W/11)),
+                        col=name_col,
+                        font="Helvetica-Bold" if unlocked else "Helvetica",
                         anchor="center")
 
-                # check verde si desbloqueado
-                if unlocked and CELL_H > 16:
+                # check verde desbloqueado
+                if unlocked and CELL_H > 14:
                     sf(cv, C_GREEN)
-                    cv.circle(cx_+MEDAL_R*0.65, cy_+MEDAL_R*0.65,
-                              MEDAL_R*0.28, fill=1, stroke=0)
-                    txt(cv, "✓", cx_+MEDAL_R*0.65, cy_+MEDAL_R*0.55,
-                        size=max(3, MEDAL_R*0.35), col=C_WHITE,
+                    cv.circle(cx_+MEDAL_R*0.6, cy_+MEDAL_R*0.6, MEDAL_R*0.24, fill=1, stroke=0)
+                    txt(cv, "V", cx_+MEDAL_R*0.6, cy_+MEDAL_R*0.52,
+                        size=max(2.8, MEDAL_R*0.28), col=C_WHITE,
                         font="Helvetica-Bold", anchor="center")
 
         # ── footer pág 2 ─────────────────────────────────────────
-        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pág. 2 / 2",
+        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 2 / 2",
             PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
     cv.save()
@@ -1517,11 +1542,16 @@ def show():
             try:
                 _camp_liga_pdf  = campeonatos_liga  if 'campeonatos_liga'  in dir() else []
                 _camp_torn_pdf  = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
+                # Calcular Elo real para los logros de ranking
+                try:
+                    _data_elo_pdf, _, _ = calcular_elo(df_raw)
+                except Exception:
+                    _data_elo_pdf = pd.DataFrame()
                 desbloqueados_pdf = evaluar_logros(
                     player_query        = player_query,
                     player_matches      = player_matches,
                     df_raw              = df_raw,
-                    data_elo            = pd.DataFrame(),   # sin Elo en este contexto
+                    data_elo            = _data_elo_pdf,
                     base2               = base2,
                     base_torneo_final   = base_torneo_final,
                     campeonatos_liga    = _camp_liga_pdf,

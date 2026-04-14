@@ -1,220 +1,177 @@
 """
-logros.py — Sistema de 100 logros para Poketubi
-Integrar en jugadores.py llamando a: mostrar_logros(player_query, player_matches, df_raw, data_elo, base2, base_torneo_final)
+logros.py — Sistema de 100 logros Poketubi (nueva versión)
+Fuente: logros_pokemon.xlsx
 """
 
 import streamlit as st
 import pandas as pd
 import os, base64, glob
 
-# ══════════════════════════════════════════════════════════════════════════════
-# HELPERS PARA IMÁGENES PNG DE LOGROS
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Carpeta de imágenes (vistas/imagenes_logros/) ─────────────────────────────
+_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros")
 
-# Carpeta vistas/logros/ (misma carpeta que este archivo)
-_LOGROS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logros")
-
-def _logro_num(logro_id: str) -> int:
-    """Convierte B01→1, P01→41, O01→76 (numeración secuencial de los PNG)."""
-    tier = logro_id[0]           # 'B', 'P' o 'O'
-    n    = int(logro_id[1:])     # número dentro del tier
-    base = {"B": 0, "P": 40, "O": 75}[tier]
-    return base + n
-
-def _logro_img_path(logro_id: str):
-    """Devuelve el path al PNG del logro, o None si no existe."""
-    num   = _logro_num(logro_id)
-    hits  = glob.glob(os.path.join(_LOGROS_DIR, f"{num:03d}_*.png"))
+def _logro_img_path(num: int):
+    hits = glob.glob(os.path.join(_IMG_DIR, f"{num:03d}_*.svg"))
+    if not hits:
+        hits = glob.glob(os.path.join(_IMG_DIR, f"{num:03d}_*.png"))
     return hits[0] if hits else None
 
 def _img_b64(path: str) -> str:
-    """Convierte un PNG a data URI base64 para usarlo en st.markdown HTML."""
     with open(path, "rb") as f:
-        return "data:image/png;base64," + base64.b64encode(f.read()).decode()
+        data = base64.b64encode(f.read()).decode()
+    ext = os.path.splitext(path)[1].lower()
+    mime = "image/svg+xml" if ext == ".svg" else "image/png"
+    return f"data:{mime};base64,{data}"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DEFINICIÓN DE LOS 100 LOGROS
 # ══════════════════════════════════════════════════════════════════════════════
 
 LOGROS = [
-    # ── BRONCE (40) ──────────────────────────────────────────────────────────
-    {"id":"B01","tier":"bronce","icon":"sword",  "name":"Primera batalla",     "desc":"Jugar tu primera partida"},
-    {"id":"B02","tier":"bronce","icon":"cup",    "name":"Primera victoria",    "desc":"Ganar tu primera partida"},
-    {"id":"B03","tier":"bronce","icon":"flame",  "name":"Racha de 3",          "desc":"3 victorias consecutivas"},
-    {"id":"B04","tier":"bronce","icon":"cal",    "name":"Un mes activo",       "desc":"Jugar en un mismo mes"},
-    {"id":"B05","tier":"bronce","icon":"ctrl",   "name":"10 partidas",         "desc":"Acumular 10 partidas"},
-    {"id":"B06","tier":"bronce","icon":"hand",   "name":"5 rivales distintos", "desc":"Enfrentar 5 oponentes"},
-    {"id":"B07","tier":"bronce","icon":"arena",  "name":"Debut en torneo",     "desc":"Primera partida TORNEO"},
-    {"id":"B08","tier":"bronce","icon":"badge",  "name":"Debut en liga",       "desc":"Primera partida LIGA"},
-    {"id":"B09","tier":"bronce","icon":"bolt",   "name":"WR 50%+",             "desc":"Superar 50% de winrate"},
-    {"id":"B10","tier":"bronce","icon":"book",   "name":"Historial activo",    "desc":"Jugar en 3 meses distintos"},
-    {"id":"B11","tier":"bronce","icon":"star",   "name":"Top 50",              "desc":"Entrar al top 50 Elo"},
-    {"id":"B12","tier":"bronce","icon":"target", "name":"25 partidas",         "desc":"Acumular 25 partidas"},
-    {"id":"B13","tier":"bronce","icon":"shield", "name":"Debut en Ascenso",    "desc":"Primera partida ASCENSO"},
-    {"id":"B14","tier":"bronce","icon":"screen", "name":"Debut en Cypher",     "desc":"Primera partida CYPHER"},
-    {"id":"B15","tier":"bronce","icon":"bars",   "name":"3 formatos",          "desc":"Jugar 3 formatos distintos"},
-    {"id":"B16","tier":"bronce","icon":"spin",   "name":"Racha de 5",          "desc":"5 victorias consecutivas"},
-    {"id":"B17","tier":"bronce","icon":"wings",  "name":"10 rivales",          "desc":"Enfrentar 10 oponentes"},
-    {"id":"B18","tier":"bronce","icon":"months", "name":"6 meses activo",      "desc":"Jugar en 6 meses distintos"},
-    {"id":"B19","tier":"bronce","icon":"gear",   "name":"2 ligas distintas",   "desc":"Jugar en 2 ligas"},
-    {"id":"B20","tier":"bronce","icon":"tent",   "name":"5 torneos",           "desc":"Participar en 5 torneos"},
-    {"id":"B21","tier":"bronce","icon":"fist",   "name":"50 partidas",         "desc":"Acumular 50 partidas"},
-    {"id":"B22","tier":"bronce","icon":"puzzle", "name":"3 tiers",             "desc":"Jugar en 3 tiers distintos"},
-    {"id":"B23","tier":"bronce","icon":"eagle",  "name":"WR 60%+",             "desc":"Superar 60% de winrate"},
-    {"id":"B24","tier":"bronce","icon":"moon",   "name":"Año completo",        "desc":"Jugar en un año calendario"},
-    {"id":"B25","tier":"bronce","icon":"dice",   "name":"10 torneos",          "desc":"Participar en 10 torneos"},
-    {"id":"B26","tier":"bronce","icon":"key",    "name":"Top 30",              "desc":"Entrar al top 30 Elo"},
-    {"id":"B27","tier":"bronce","icon":"weight", "name":"100 partidas",        "desc":"Acumular 100 partidas"},
-    {"id":"B28","tier":"bronce","icon":"wave",   "name":"Racha de 8",          "desc":"8 victorias consecutivas"},
-    {"id":"B29","tier":"bronce","icon":"mask",   "name":"15 rivales",          "desc":"Enfrentar 15 oponentes"},
-    {"id":"B30","tier":"bronce","icon":"magnet", "name":"Revancha",            "desc":"Ganar tras perder con el mismo rival"},
-    {"id":"B31","tier":"bronce","icon":"arc",    "name":"4 tipos de evento",   "desc":"Torneo, Liga, Ascenso y Cypher"},
-    {"id":"B32","tier":"bronce","icon":"note",   "name":"Mes perfecto",        "desc":"100% WR en algún mes (min 4 partidas)"},
-    {"id":"B33","tier":"bronce","icon":"lion",   "name":"Top 20",              "desc":"Entrar al top 20 Elo"},
-    {"id":"B34","tier":"bronce","icon":"rocket", "name":"3 ligas distintas",   "desc":"Jugar en 3 ligas"},
-    {"id":"B35","tier":"bronce","icon":"clock",  "name":"1 año en la escena",  "desc":"Partidas en 2 años distintos"},
-    {"id":"B36","tier":"bronce","icon":"ribbon", "name":"20 torneos",          "desc":"Participar en 20 torneos"},
-    {"id":"B37","tier":"bronce","icon":"gem",    "name":"WR 70%+",             "desc":"Superar 70% de winrate"},
-    {"id":"B38","tier":"bronce","icon":"cube",   "name":"200 partidas",        "desc":"Acumular 200 partidas"},
-    {"id":"B39","tier":"bronce","icon":"flower", "name":"25 rivales",          "desc":"Enfrentar 25 oponentes"},
-    {"id":"B40","tier":"bronce","icon":"build",  "name":"Racha de 10",         "desc":"10 victorias consecutivas"},
-
-    # ── PLATA (35) ───────────────────────────────────────────────────────────
-    {"id":"P01","tier":"plata", "icon":"two",    "name":"Subcampeón de liga",  "desc":"Finalizar 2° en una liga"},
-    {"id":"P02","tier":"plata", "icon":"cup2",   "name":"Campeón de liga",     "desc":"Ganar una temporada de liga"},
-    {"id":"P03","tier":"plata", "icon":"medal",  "name":"Pódium en torneo",    "desc":"Top 3 en un torneo"},
-    {"id":"P04","tier":"plata", "icon":"bolt2",  "name":"Top 10 Elo",          "desc":"Entrar al top 10 Elo"},
-    {"id":"P05","tier":"plata", "icon":"orb",    "name":"Elo 1200+",           "desc":"Alcanzar 1200 de Elo"},
-    {"id":"P06","tier":"plata", "icon":"star2",  "name":"300 partidas",        "desc":"Acumular 300 partidas"},
-    {"id":"P07","tier":"plata", "icon":"fence",  "name":"Racha de 15",         "desc":"15 victorias consecutivas"},
-    {"id":"P08","tier":"plata", "icon":"tent2",  "name":"30 torneos",          "desc":"Participar en 30 torneos"},
-    {"id":"P09","tier":"plata", "icon":"fox",    "name":"WR 65%+ (50 p.)",     "desc":"65% WR con 50+ partidas"},
-    {"id":"P10","tier":"plata", "icon":"cal2",   "name":"12 meses activo",     "desc":"Jugar en 12 meses distintos"},
-    {"id":"P11","tier":"plata", "icon":"brain",  "name":"40 rivales",          "desc":"Enfrentar 40 oponentes"},
-    {"id":"P12","tier":"plata", "icon":"spin2",  "name":"Elo 1300+",           "desc":"Alcanzar 1300 de Elo"},
-    {"id":"P13","tier":"plata", "icon":"arena2", "name":"Final de torneo",     "desc":"Llegar a una final de torneo"},
-    {"id":"P14","tier":"plata", "icon":"flame2", "name":"3 temporadas liga",   "desc":"Jugar 3 temporadas completas"},
-    {"id":"P15","tier":"plata", "icon":"bulb",   "name":"400 partidas",        "desc":"Acumular 400 partidas"},
-    {"id":"P16","tier":"plata", "icon":"tgt2",   "name":"Top 5 Elo",           "desc":"Entrar al top 5 Elo"},
-    {"id":"P17","tier":"plata", "icon":"swords", "name":"Racha de 20",         "desc":"20 victorias consecutivas"},
-    {"id":"P18","tier":"plata", "icon":"wave2",  "name":"50 rivales",          "desc":"Enfrentar 50 oponentes"},
-    {"id":"P19","tier":"plata", "icon":"eagle2", "name":"Elo 1400+",           "desc":"Alcanzar 1400 de Elo"},
-    {"id":"P20","tier":"plata", "icon":"bars2",  "name":"500 partidas",        "desc":"Acumular 500 partidas"},
-    {"id":"P21","tier":"plata", "icon":"mag2",   "name":"2 campeonatos liga",  "desc":"Ganar 2 ligas"},
-    {"id":"P22","tier":"plata", "icon":"mask2",  "name":"5 ligas distintas",   "desc":"Jugar en 5 ligas"},
-    {"id":"P23","tier":"plata", "icon":"arc2",   "name":"Ascenso finalista",   "desc":"Llegar a final en Ascenso"},
-    {"id":"P24","tier":"plata", "icon":"scr2",   "name":"Cypher finalista",    "desc":"Llegar a final en Cypher"},
-    {"id":"P25","tier":"plata", "icon":"key2",   "name":"18 meses activo",     "desc":"18 meses distintos jugados"},
-    {"id":"P26","tier":"plata", "icon":"fl2",    "name":"60 rivales",          "desc":"Enfrentar 60 oponentes"},
-    {"id":"P27","tier":"plata", "icon":"wt2",    "name":"Elo 1500+",           "desc":"Alcanzar 1500 de Elo"},
-    {"id":"P28","tier":"plata", "icon":"note2",  "name":"WR 70%+ (100 p.)",    "desc":"70% WR con 100+ partidas"},
-    {"id":"P29","tier":"plata", "icon":"puz2",   "name":"50 torneos",          "desc":"Participar en 50 torneos"},
-    {"id":"P30","tier":"plata", "icon":"gem2",   "name":"600 partidas",        "desc":"Acumular 600 partidas"},
-    {"id":"P31","tier":"plata", "icon":"lion2",  "name":"3 campeonatos liga",  "desc":"Ganar 3 ligas"},
-    {"id":"P32","tier":"plata", "icon":"rkt2",   "name":"5 campeonatos torneo","desc":"Ganar 5 torneos"},
-    {"id":"P33","tier":"plata", "icon":"bld2",   "name":"Racha de 25",         "desc":"25 victorias consecutivas"},
-    {"id":"P34","tier":"plata", "icon":"clk2",   "name":"3 años activo",       "desc":"Partidas en 3 años distintos"},
-    {"id":"P35","tier":"plata", "icon":"rib2",   "name":"Elo top 3",           "desc":"Entrar al top 3 Elo"},
-
-    # ── ORO (25) ─────────────────────────────────────────────────────────────
-    {"id":"O01","tier":"oro",   "icon":"crown",  "name":"Campeón de torneo",   "desc":"Ganar un torneo completo"},
-    {"id":"O02","tier":"oro",   "icon":"gstar",  "name":"Elo #1",              "desc":"Ser el #1 del ranking Elo"},
-    {"id":"O03","tier":"oro",   "icon":"heart",  "name":"1000 partidas",       "desc":"Acumular 1000 partidas"},
-    {"id":"O04","tier":"oro",   "icon":"trident","name":"Triple corona",        "desc":"Campeón liga, torneo y ascenso"},
-    {"id":"O05","tier":"oro",   "icon":"bolt3",  "name":"Elo 1600+",           "desc":"Alcanzar 1600 de Elo"},
-    {"id":"O06","tier":"oro",   "icon":"cup3",   "name":"5 campeonatos liga",  "desc":"Ganar 5 ligas"},
-    {"id":"O07","tier":"oro",   "icon":"tgt3",   "name":"WR 75%+ (200 p.)",    "desc":"75% WR con 200+ partidas"},
-    {"id":"O08","tier":"oro",   "icon":"orb3",   "name":"Elo 1700+",           "desc":"Alcanzar 1700 de Elo"},
-    {"id":"O09","tier":"oro",   "icon":"egl3",   "name":"10 campeonatos",      "desc":"10 títulos en total"},
-    {"id":"O10","tier":"oro",   "icon":"wave3",  "name":"Racha de 30",         "desc":"30 victorias consecutivas"},
-    {"id":"O11","tier":"oro",   "icon":"brn3",   "name":"100 rivales",         "desc":"Enfrentar 100 oponentes"},
-    {"id":"O12","tier":"oro",   "icon":"arc3",   "name":"Leyenda",             "desc":"5 años activo en la escena"},
-    {"id":"O13","tier":"oro",   "icon":"gem3",   "name":"Colección completa",  "desc":"Ganar todos los tipos de evento"},
-    {"id":"O14","tier":"oro",   "icon":"flm3",   "name":"100 torneos",         "desc":"Participar en 100 torneos"},
-    {"id":"O15","tier":"oro",   "icon":"fnc3",   "name":"Imbatible",           "desc":"Racha de 40 victorias"},
-    {"id":"O16","tier":"oro",   "icon":"fl3",    "name":"Veterano",            "desc":"36 meses distintos jugados"},
-    {"id":"O17","tier":"oro",   "icon":"wt3",    "name":"500 victorias",       "desc":"Acumular 500 victorias"},
-    {"id":"O18","tier":"oro",   "icon":"tnt3",   "name":"El conquistador",     "desc":"10 campeonatos de torneo"},
-    {"id":"O19","tier":"oro",   "icon":"mgt3",   "name":"Dinástico",           "desc":"8 campeonatos de liga"},
-    {"id":"O20","tier":"oro",   "icon":"shd3",   "name":"Indestructible",      "desc":"Perder menos del 20% en toda su carrera"},
-    {"id":"O21","tier":"oro",   "icon":"cal3",   "name":"4 años activo",       "desc":"Partidas en 4 años distintos"},
-    {"id":"O22","tier":"oro",   "icon":"mdl3",   "name":"Salón de la Fama",    "desc":"Campeón en 3 años distintos"},
-    {"id":"O23","tier":"oro",   "icon":"ln3",    "name":"El Inmortal",         "desc":"Alcanzar 1800 de Elo"},
-    {"id":"O24","tier":"oro",   "icon":"eye",    "name":"El Omnisciente",      "desc":"Jugar todos los formatos existentes"},
-    {"id":"O25","tier":"oro",   "icon":"moon3",  "name":"Maestro absoluto",    "desc":"Desbloquear los 99 logros anteriores"},
+    # ── PARTICIPACIÓN (10) ───────────────────────────────────────────────────
+    {"id":"PA01","num":1, "cat":"Participación","rareza":"Bronce",    "icon":"🎮","xp":50,   "name":"Primer Paso",           "desc":"Participa en tu primer torneo oficial"},
+    {"id":"PA02","num":2, "cat":"Participación","rareza":"Bronce",    "icon":"🔄","xp":100,  "name":"De Vuelta al Ruedo",    "desc":"Participa en 5 torneos"},
+    {"id":"PA03","num":3, "cat":"Participación","rareza":"Plata",     "icon":"🏟️","xp":500,  "name":"Veterano",              "desc":"Participa en 25 torneos"},
+    {"id":"PA04","num":4, "cat":"Participación","rareza":"Plata",     "icon":"📅","xp":300,  "name":"Sin Faltar Uno",        "desc":"Participa en 15 torneos"},
+    {"id":"PA05","num":5, "cat":"Participación","rareza":"Plata",     "icon":"📆","xp":700,  "name":"Constancia",            "desc":"Participa en 30 torneos"},
+    {"id":"PA06","num":6, "cat":"Participación","rareza":"Oro",       "icon":"⭐","xp":500,  "name":"Leyenda Viviente",      "desc":"Participa en 50 torneos"},
+    {"id":"PA07","num":7, "cat":"Participación","rareza":"Oro",       "icon":"💯","xp":1000, "name":"Centurión",             "desc":"Participa en 100 torneos"},
+    {"id":"PA08","num":8, "cat":"Participación","rareza":"Bronce",    "icon":"🌟","xp":75,   "name":"Debut Exitoso",         "desc":"Gana tu primera partida en un torneo"},
+    {"id":"PA09","num":9, "cat":"Participación","rareza":"Bronce",    "icon":"🗺️","xp":150,  "name":"Explorador",            "desc":"Participa en un Torneo de Liga, Cypher o Ascenso"},
+    {"id":"PA10","num":10,"cat":"Participación","rareza":"Bronce",    "icon":"💪","xp":100,  "name":"Sin Miedo al Reto",     "desc":"Inscríbete en un torneo Singles, Dobles y VGC"},
+    # ── VICTORIAS (18) ───────────────────────────────────────────────────────
+    {"id":"VI01","num":11,"cat":"Victorias",    "rareza":"Bronce",    "icon":"🥇","xp":100,  "name":"Primera Victoria",      "desc":"Gana tu primera partida en Liga"},
+    {"id":"VI02","num":12,"cat":"Victorias",    "rareza":"Oro",       "icon":"🎩","xp":1500, "name":"Hat Trick",             "desc":"Gana un torneo en Singles, Dobles y VGC"},
+    {"id":"VI03","num":13,"cat":"Victorias",    "rareza":"Plata",     "icon":"🔥","xp":300,  "name":"Racha Imparable",       "desc":"Gana 10 partidas consecutivas"},
+    {"id":"VI04","num":14,"cat":"Victorias",    "rareza":"Oro",       "icon":"⚡","xp":600,  "name":"Máquina de Ganar",      "desc":"Gana 15 partidas consecutivas"},
+    {"id":"VI05","num":15,"cat":"Victorias",    "rareza":"Oro",       "icon":"🏆","xp":600,  "name":"Campeón del Torneo",    "desc":"Gana un torneo completo"},
+    {"id":"VI06","num":16,"cat":"Victorias",    "rareza":"Oro",       "icon":"🥈","xp":800,  "name":"Bicampeón",             "desc":"Gana 2 torneos"},
+    {"id":"VI07","num":17,"cat":"Victorias",    "rareza":"Oro",       "icon":"👑","xp":1000, "name":"Tricampeón",            "desc":"Gana 3 torneos"},
+    {"id":"VI08","num":18,"cat":"Victorias",    "rareza":"Legendario","icon":"👑","xp":1600, "name":"Pentacampeón",          "desc":"Gana 5 torneos"},
+    {"id":"VI09","num":19,"cat":"Victorias",    "rareza":"Legendario","icon":"👑","xp":2000, "name":"Decacampeón",           "desc":"Gana 10 torneos"},
+    {"id":"VI10","num":20,"cat":"Victorias",    "rareza":"Legendario","icon":"👑","xp":3000, "name":"Campeón de Campeones",  "desc":"Gana más de 10 torneos"},
+    {"id":"VI11","num":21,"cat":"Victorias",    "rareza":"Plata",     "icon":"🦁","xp":400,  "name":"Dominador",             "desc":"Gana 50 partidas en total"},
+    {"id":"VI12","num":22,"cat":"Victorias",    "rareza":"Oro",       "icon":"⚔️","xp":800,  "name":"Centurión de Batallas", "desc":"Gana 100 partidas en total"},
+    {"id":"VI13","num":23,"cat":"Victorias",    "rareza":"Legendario","icon":"💎","xp":1600, "name":"Perfección",            "desc":"Gana un torneo sin perder ninguna partida"},
+    {"id":"VI14","num":24,"cat":"Victorias",    "rareza":"Plata",     "icon":"🎯","xp":350,  "name":"Verdugo de Élite",      "desc":"Derrota a 5 jugadores con Campeonato en algún torneo"},
+    {"id":"VI15","num":25,"cat":"Victorias",    "rareza":"Oro",       "icon":"🗡️","xp":700,  "name":"Asesino de Gigantes",   "desc":"Derrota a 3 campeones de la PMS"},
+    {"id":"VI16","num":26,"cat":"Victorias",    "rareza":"Plata",     "icon":"💀","xp":400,  "name":"Sin Compasión",         "desc":"Gana una partida con 6 Pokémon sobrevivientes"},
+    {"id":"VI17","num":27,"cat":"Victorias",    "rareza":"Plata",     "icon":"🔄","xp":600,  "name":"Remontada Épica",       "desc":"Gana una partida con 1 Pokémon sobreviviente"},
+    {"id":"VI18","num":28,"cat":"Victorias",    "rareza":"Plata",     "icon":"😅","xp":350,  "name":"Clutch",                "desc":"Gana una partida con 0 Pokémon vivos"},
+    # ── RANKING (10) ─────────────────────────────────────────────────────────
+    {"id":"RK01","num":29,"cat":"Ranking",      "rareza":"Bronce",    "icon":"📈","xp":50,   "name":"Escalando",             "desc":"Aumenta tu win rate de un mes a otro en 1%"},
+    {"id":"RK02","num":30,"cat":"Ranking",      "rareza":"Plata",     "icon":"🚀","xp":400,  "name":"Ascenso Meteórico",     "desc":"Aumenta tu win rate de un mes a otro en 20%"},
+    {"id":"RK03","num":31,"cat":"Ranking",      "rareza":"Bronce",    "icon":"💯","xp":200,  "name":"Top 100",               "desc":"Alcanza 1000 pts de Score_completo"},
+    {"id":"RK04","num":32,"cat":"Ranking",      "rareza":"Plata",     "icon":"🏅","xp":400,  "name":"Top 50",                "desc":"Alcanza 2000 pts de Score_completo"},
+    {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 3000 pts de Score_completo"},
+    {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 4000 pts de Score_completo"},
+    {"id":"RK07","num":35,"cat":"Ranking",      "rareza":"Bronce",    "icon":"🔢","xp":100,  "name":"ELO 1000",              "desc":"Alcanza 1000 pts de ELO al finalizar un mes"},
+    {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1500",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
+    {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 2000",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
+    {"id":"RK10","num":38,"cat":"Ranking",      "rareza":"Legendario","icon":"🔢","xp":1600, "name":"ELO Máster",            "desc":"Alcanza 1500 pts de ELO al finalizar un mes"},
+    # ── ESTRATEGIA (14) ──────────────────────────────────────────────────────
+    {"id":"ES01","num":39,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🔒","xp":50,   "name":"Maestro de Tipos",      "desc":"Participa en un torneo de NAT DEX MONOTYPE"},
+    {"id":"ES02","num":40,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":150,  "name":"Mastro del Random",     "desc":"Gana un torneo de Random Singles"},
+    {"id":"ES03","num":41,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🛡️","xp":100,  "name":"Anti-Meta",             "desc":"40% WR en un formato con 20+ partidas en un año"},
+    {"id":"ES04","num":42,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⏳","xp":300,  "name":"Stall Master",          "desc":"50% WR en un formato con 20+ partidas en un año"},
+    {"id":"ES05","num":43,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⚡","xp":300,  "name":"Hyper Offense",         "desc":"60% WR en un formato con 20+ partidas en un año"},
+    {"id":"ES06","num":44,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📊","xp":900,  "name":"Maestro del Meta",      "desc":"70% WR en un formato con 20+ partidas en un año"},
+    {"id":"ES07","num":45,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📦","xp":800,  "name":"Coleccionista",         "desc":"Juega todos los Formato_esp"},
+    {"id":"ES08","num":46,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"❤️","xp":50,   "name":"Fiel a sus Raíces",     "desc":"Gana un torneo en formato Singles"},
+    {"id":"ES09","num":47,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🎨","xp":50,   "name":"Maestro de OU",         "desc":"Gana un torneo en Formato_esp de OU"},
+    {"id":"ES10","num":48,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"✨","xp":50,   "name":"Maestro de DOU",        "desc":"Gana un torneo en Formato_esp de DOU"},
+    {"id":"ES11","num":49,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🚫","xp":50,   "name":"Maestro de VGC",        "desc":"Gana un torneo en Formato_esp de VGC"},
+    {"id":"ES12","num":50,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💫","xp":50,   "name":"Maestro de LC",         "desc":"Gana un torneo en Formato_esp de LC"},
+    {"id":"ES13","num":51,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💪","xp":50,   "name":"Maestro de UBERS",      "desc":"Gana un torneo en Formato_esp de UBERS"},
+    {"id":"ES14","num":52,"cat":"Estrategia",   "rareza":"Plata",     "icon":"🌿","xp":400,  "name":"Campeón OUs",           "desc":"Gana un torneo en Formato_esp de OU y DOU"},
+    {"id":"ES15","num":91,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":150,  "name":"Maestro del Natdex",    "desc":"Gana un torneo de Formato_esp de NAT DEX"},
+    # ── TORNEO (12) ──────────────────────────────────────────────────────────
+    {"id":"TO01","num":53,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🎲","xp":100,  "name":"Campeón del Caos",      "desc":"Gana un torneo con Random Battle"},
+    {"id":"TO02","num":54,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🔴","xp":200,  "name":"Maestro de Kanto",      "desc":"Participa en torneo Gen1 (T27, T58)"},
+    {"id":"TO03","num":55,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌿","xp":200,  "name":"Maestro de Johto",      "desc":"Participa en torneo Gen2 (T29, T65)"},
+    {"id":"TO04","num":56,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌊","xp":200,  "name":"Maestro de Hoenn",      "desc":"Participa en torneo Gen3 (T34, T70)"},
+    {"id":"TO05","num":57,"cat":"Torneo",       "rareza":"Bronce",    "icon":"❄️","xp":200,  "name":"Maestro de Sinnoh",     "desc":"Participa en torneo Gen4 (T38)"},
+    {"id":"TO06","num":58,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌆","xp":200,  "name":"Maestro de Unova",      "desc":"Participa en torneo Gen5 (T44)"},
+    {"id":"TO07","num":59,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🗼","xp":200,  "name":"Maestro de Kalos",      "desc":"Participa en torneo Gen6 (T50)"},
+    {"id":"TO08","num":60,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌺","xp":200,  "name":"Maestro de Alola",      "desc":"Participa en torneo Gen7 (T57)"},
+    {"id":"TO09","num":61,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Galar",      "desc":"Participa en torneo Gen8 (T60)"},
+    {"id":"TO10","num":62,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Paldea",     "desc":"Participa en torneo Gen9 (T67)"},
+    {"id":"TO11","num":63,"cat":"Torneo",       "rareza":"Legendario","icon":"🌍","xp":2000, "name":"Gran Maestro",          "desc":"Gana un Mundial (T46 o T68)"},
+    # ── LIGAS (1) ────────────────────────────────────────────────────────────
+    {"id":"LI01","num":64,"cat":"Ligas",        "rareza":"Legendario","icon":"✈️","xp":2000, "name":"El Viajero",            "desc":"Participa en todas las ligas"},
+    # ── SOCIAL (9) ───────────────────────────────────────────────────────────
+    {"id":"SO01","num":65,"cat":"Social",       "rareza":"Bronce",    "icon":"👋","xp":100,  "name":"Bienvenido",            "desc":"Participa en la Liga Junior"},
+    {"id":"SO02","num":66,"cat":"Social",       "rareza":"Plata",     "icon":"🤝","xp":300,  "name":"Mentor",                "desc":"Participa en la Liga Senior"},
+    {"id":"SO03","num":67,"cat":"Social",       "rareza":"Oro",       "icon":"🌟","xp":600,  "name":"Embajador",             "desc":"Participa en la Liga Master"},
+    {"id":"SO04","num":68,"cat":"Social",       "rareza":"Plata",     "icon":"🤜","xp":250,  "name":"Fair Play",             "desc":"Sin Walk Over en 6 meses"},
+    {"id":"SO05","num":69,"cat":"Social",       "rareza":"Oro",       "icon":"😇","xp":500,  "name":"Deportista",            "desc":"Sin Walk Over en contra en un año"},
+    {"id":"SO06","num":70,"cat":"Social",       "rareza":"Bronce",    "icon":"🎙️","xp":150,  "name":"Atleta",                "desc":"Sin Walk Over en contra en dos años"},
+    {"id":"SO07","num":71,"cat":"Social",       "rareza":"Plata",     "icon":"⚖️","xp":300,  "name":"Árbitro Honorario",     "desc":"Sin Walk Over en contra en 3 años"},
+    {"id":"SO08","num":72,"cat":"Social",       "rareza":"Oro",       "icon":"📋","xp":700,  "name":"Jugador Honorable",     "desc":"Sin Walk Over ni a favor ni en contra en 1 año"},
+    {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio al mejor jugador del año"},
+    # ── ESPECIAL (17) ────────────────────────────────────────────────────────
+    {"id":"SP01","num":74,"cat":"Especial",     "rareza":"Oro",       "icon":"🍀","xp":1000, "name":"Principiante de Suerte","desc":"Gana tu primer torneo en tu primera participación"},
+    {"id":"SP02","num":75,"cat":"Especial",     "rareza":"Oro",       "icon":"👑","xp":800,  "name":"Regreso del Rey",       "desc":"Vuelve a ganar un torneo después de un año"},
+    {"id":"SP03","num":76,"cat":"Especial",     "rareza":"Plata",     "icon":"😤","xp":400,  "name":"Nemesis",               "desc":"Gana 5 veces contra el mismo rival"},
+    {"id":"SP04","num":77,"cat":"Especial",     "rareza":"Plata",     "icon":"⚔️","xp":300,  "name":"Duelo de Titanes",      "desc":"Gana 10 veces contra el mismo rival"},
+    {"id":"SP05","num":78,"cat":"Especial",     "rareza":"Oro",       "icon":"🎂","xp":1000, "name":"Rivales por Siempre",   "desc":"Gana 20 veces contra el mismo rival"},
+    {"id":"SP06","num":79,"cat":"Especial",     "rareza":"Oro",       "icon":"🐶","xp":900,  "name":"Underdog",              "desc":"Gana a un jugador que sea campeón de torneo y liga"},
+    {"id":"SP07","num":80,"cat":"Especial",     "rareza":"Legendario","icon":"🛡️","xp":3000, "name":"El Invicto",            "desc":"Termina un año sin perder ningún torneo"},
+    {"id":"SP08","num":81,"cat":"Especial",     "rareza":"Oro",       "icon":"⏱️","xp":800,  "name":"Speedrunner",           "desc":"Gana dos torneos en un mes"},
+    {"id":"SP09","num":82,"cat":"Especial",     "rareza":"Legendario","icon":"🏆","xp":2000, "name":"Jugador del Año",       "desc":"Mayor número de partidas ganadas en un año"},
+    {"id":"SP10","num":83,"cat":"Especial",     "rareza":"Oro",       "icon":"🎖️","xp":1000, "name":"Veterano de Guerra",    "desc":"Juega en la misma liga por 3 temporadas"},
+    {"id":"SP11","num":84,"cat":"Especial",     "rareza":"Oro",       "icon":"💀","xp":1000, "name":"El Inmortal",           "desc":"No pierdas más de 3 partidas en liga en una temporada"},
+    {"id":"SP12","num":85,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌅","xp":100,  "name":"Mortal",                "desc":"No pierdas más de 10 partidas en liga en una temporada"},
+    {"id":"SP13","num":86,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌙","xp":100,  "name":"Plebeyo",               "desc":"No pierdas más de 15 partidas en liga en una temporada"},
+    {"id":"SP14","num":87,"cat":"Especial",     "rareza":"Oro",       "icon":"🏁","xp":700,  "name":"El Último en Pie",      "desc":"Gana la PJS, PES, PSS y PMS"},
+    {"id":"SP15","num":88,"cat":"Especial",     "rareza":"Plata",     "icon":"🦅","xp":300,  "name":"Role Play",             "desc":"Participa en torneo NAT DEX DOBLES"},
+    {"id":"SP16","num":89,"cat":"Especial",     "rareza":"Bronce",    "icon":"💀","xp":100,  "name":"Novato Feliz",          "desc":"Pierde una batalla"},
+    {"id":"SP17","num":90,"cat":"Especial",     "rareza":"Legendario","icon":"💯","xp":1600, "name":"Leyendas de Ligas",     "desc":"Participa en la Liga Legends"},
+    # ── PROGRESIÓN (9) ───────────────────────────────────────────────────────
+    {"id":"PR01","num":92,"cat":"Progresión",   "rareza":"Bronce",    "icon":"🥉","xp":100,  "name":"Coleccionista Bronce",  "desc":"Desbloquea 10 logros de rareza Bronce"},
+    {"id":"PR02","num":93,"cat":"Progresión",   "rareza":"Plata",     "icon":"🥈","xp":300,  "name":"Coleccionista Plata",   "desc":"Desbloquea 10 logros de rareza Plata"},
+    {"id":"PR03","num":94,"cat":"Progresión",   "rareza":"Oro",       "icon":"🥇","xp":600,  "name":"Coleccionista Oro",     "desc":"Desbloquea 10 logros de rareza Oro"},
+    {"id":"PR04","num":95,"cat":"Progresión",   "rareza":"Oro",       "icon":"✅","xp":800,  "name":"Completista",           "desc":"Desbloquea 50 logros en total"},
+    {"id":"PR05","num":96,"cat":"Progresión",   "rareza":"Legendario","icon":"💯","xp":2000, "name":"El Maestro Total",      "desc":"Desbloquea 90 logros"},
+    {"id":"PR06","num":97,"cat":"Progresión",   "rareza":"Bronce",    "icon":"💠","xp":50,   "name":"XP Acumulado 1K",       "desc":"Acumula 1,000 puntos XP"},
+    {"id":"PR07","num":98,"cat":"Progresión",   "rareza":"Plata",     "icon":"💠","xp":250,  "name":"XP Acumulado 10K",      "desc":"Acumula 10,000 puntos XP"},
+    {"id":"PR08","num":99,"cat":"Progresión",   "rareza":"Oro",       "icon":"💠","xp":500,  "name":"XP Acumulado 50K",      "desc":"Acumula 15,000 puntos XP"},
+    {"id":"PR09","num":100,"cat":"Progresión",  "rareza":"Legendario","icon":"💠","xp":1600, "name":"XP Acumulado 100K",     "desc":"Acumula 20,000 puntos XP"},
 ]
 
-# ══════════════════════════════════════════════════════════════════════════════
-# GENERADOR DE MEDALLAS SVG
-# ══════════════════════════════════════════════════════════════════════════════
+# Orden de categorías para mostrar
+CATEGORIAS_ORDEN = ["Participación","Victorias","Ranking","Estrategia","Torneo","Ligas","Social","Especial","Progresión"]
 
-TIER_COLORS = {
-    "bronce": {"c1":"#cd7f32","c2":"#a0522d","c3":"#8B5500","ribbon":"#cd7f32","shine":"#e8a96a","ring":"#8B5500"},
-    "plata":  {"c1":"#b0bec5","c2":"#78909c","c3":"#546e7a","ribbon":"#aab8c2","shine":"#e0eaf0","ring":"#607d8b"},
-    "oro":    {"c1":"#f5c518","c2":"#e6ac00","c3":"#b8860b","ribbon":"#f5c518","shine":"#fff176","ring":"#b8860b"},
+RAREZA_COLORS = {
+    "Bronce":    {"c1":"#cd7f32","c2":"#a0522d","ring":"#8B5500","shine":"#e8a96a","ribbon":"#cd7f32","text":"#fff"},
+    "Plata":     {"c1":"#b0bec5","c2":"#78909c","ring":"#546e7a","shine":"#e0eaf0","ribbon":"#aab8c2","text":"#fff"},
+    "Oro":       {"c1":"#f5c518","c2":"#e6ac00","ring":"#b8860b","shine":"#fff176","ribbon":"#f5c518","text":"#3d2e00"},
+    "Legendario":{"c1":"#9c27b0","c2":"#7b1fa2","ring":"#4a0072","shine":"#e1bee7","ribbon":"#9c27b0","text":"#fff"},
 }
 
-BW_COLORS = {"c1":"#aaa","c2":"#777","c3":"#555","ribbon":"#999","shine":"#ddd","ring":"#555"}
-
-# Formas de iconos SVG (interior de la medalla)
-ICON_SHAPES = {
-    "sword":   lambda w: f'<line x1="28" y1="19" x2="28" y2="41" stroke="{w}" stroke-width="2.5" stroke-linecap="round"/><line x1="21" y1="27" x2="35" y2="27" stroke="{w}" stroke-width="2" stroke-linecap="round"/><polygon points="28,19 26,23 30,23" fill="{w}"/>',
-    "cup":     lambda w: f'<path d="M21 22h14v9a7 7 0 01-14 0z" fill="none" stroke="{w}" stroke-width="2"/><path d="M21 25h-3a3 3 0 003 6" fill="none" stroke="{w}" stroke-width="1.5"/><path d="M35 25h3a3 3 0 01-3 6" fill="none" stroke="{w}" stroke-width="1.5"/><line x1="28" y1="37" x2="28" y2="42" stroke="{w}" stroke-width="2"/><line x1="23" y1="42" x2="33" y2="42" stroke="{w}" stroke-width="1.5"/>',
-    "flame":   lambda w: f'<path d="M28 41c-5 0-8-4-8-8 0-5 3-7 5-11 1 3 0 5 2 7 0-4 3-7 3-10 3 3 6 7 6 12 0 6-3 10-8 10z" fill="{w}" opacity=".85"/>',
-    "star":    lambda w: f'<polygon points="28,19 30.5,26.5 38,26.5 32,31 34.5,38.5 28,34 21.5,38.5 24,31 18,26.5 25.5,26.5" fill="{w}"/>',
-    "shield":  lambda w: f'<path d="M28 20l9 4v9c0 5-9 10-9 10s-9-5-9-10v-9z" fill="none" stroke="{w}" stroke-width="2"/><path d="M28 26l2 4-4 3 4 3 2 4 2-4 4-3-4-3 2-4-4 2z" fill="{w}" opacity=".6"/>',
-    "bolt":    lambda w: f'<polyline points="32,19 24,30 30,30 24,41" fill="none" stroke="{w}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
-    "crown":   lambda w: f'<path d="M18 36l3-14 7 7 6-12 6 12 7-7 3 14z" fill="{w}"/><rect x="18" y="37" width="20" height="3" rx="1" fill="{w}"/><circle cx="18" cy="22" r="2" fill="{w}"/><circle cx="28" cy="19" r="2" fill="{w}"/><circle cx="38" cy="22" r="2" fill="{w}"/>',
-    "gem":     lambda w: f'<polygon points="28,19 38,26 35,39 21,39 18,26" fill="none" stroke="{w}" stroke-width="2"/><line x1="18" y1="26" x2="38" y2="26" stroke="{w}" stroke-width="1.2"/><line x1="22" y1="26" x2="28" y2="19" stroke="{w}" stroke-width="1"/><line x1="34" y1="26" x2="28" y2="19" stroke="{w}" stroke-width="1"/>',
-    "rocket":  lambda w: f'<path d="M28 20c0 0-7 7-7 15h14c0-8-7-15-7-15z" fill="none" stroke="{w}" stroke-width="2"/><path d="M23 35c-1 3-2 5-2 5h14s-1-2-2-5" fill="none" stroke="{w}" stroke-width="1.5"/><circle cx="28" cy="28" r="2.5" fill="{w}"/>',
-    "target":  lambda w: f'<circle cx="28" cy="30" r="9" fill="none" stroke="{w}" stroke-width="2"/><circle cx="28" cy="30" r="5" fill="none" stroke="{w}" stroke-width="2"/><circle cx="28" cy="30" r="2" fill="{w}"/><line x1="28" y1="19" x2="28" y2="23" stroke="{w}" stroke-width="1.5"/><line x1="28" y1="37" x2="28" y2="41" stroke="{w}" stroke-width="1.5"/>',
-    "trident": lambda w: f'<line x1="28" y1="21" x2="28" y2="41" stroke="{w}" stroke-width="2.5" stroke-linecap="round"/><path d="M21 21v7a7 7 0 007 0" fill="none" stroke="{w}" stroke-width="2"/><path d="M35 21v7a7 7 0 01-7 0" fill="none" stroke="{w}" stroke-width="2"/><line x1="21" y1="21" x2="21" y2="26" stroke="{w}" stroke-width="2" stroke-linecap="round"/><line x1="35" y1="21" x2="35" y2="26" stroke="{w}" stroke-width="2" stroke-linecap="round"/>',
-    "wave":    lambda w: f'<path d="M18 30 Q22 24 28 30 Q34 36 38 30" fill="none" stroke="{w}" stroke-width="2.5" stroke-linecap="round"/><path d="M18 35 Q22 29 28 35 Q34 41 38 35" fill="none" stroke="{w}" stroke-width="2" stroke-linecap="round"/><path d="M18 25 Q22 19 28 25 Q34 31 38 25" fill="none" stroke="{w}" stroke-width="1.5" stroke-linecap="round"/>',
-    # genérico para los demás
-    "default": lambda w: f'<circle cx="28" cy="30" r="8" fill="none" stroke="{w}" stroke-width="2"/><circle cx="28" cy="30" r="3" fill="{w}"/>',
+CAT_COLORS = {
+    "Participación": "#1976D2",
+    "Victorias":     "#c62828",
+    "Ranking":       "#f57c00",
+    "Estrategia":    "#2e7d32",
+    "Torneo":        "#6a1b9a",
+    "Ligas":         "#00838f",
+    "Social":        "#ad1457",
+    "Especial":      "#4527a0",
+    "Progresión":    "#37474f",
 }
 
-def _get_icon(icon_key: str, color: str) -> str:
-    # busca la forma más cercana
-    for k in ICON_SHAPES:
-        if k != "default" and icon_key.startswith(k):
-            return ICON_SHAPES[k](color)
-    # grupos especiales
-    if any(icon_key.startswith(x) for x in ["cup","cup2","cup3"]):
-        return ICON_SHAPES["cup"](color)
-    if any(icon_key.startswith(x) for x in ["star","star2","gstar"]):
-        return ICON_SHAPES["star"](color)
-    if any(icon_key.startswith(x) for x in ["bolt","bolt2","bolt3"]):
-        return ICON_SHAPES["bolt"](color)
-    if any(icon_key.startswith(x) for x in ["gem","gem2","gem3"]):
-        return ICON_SHAPES["gem"](color)
-    if any(icon_key.startswith(x) for x in ["wave","wave2","wave3"]):
-        return ICON_SHAPES["wave"](color)
-    if any(icon_key.startswith(x) for x in ["target","tgt2","tgt3"]):
-        return ICON_SHAPES["target"](color)
-    if any(icon_key.startswith(x) for x in ["flame","flame2","flm3"]):
-        return ICON_SHAPES["flame"](color)
-    if any(icon_key.startswith(x) for x in ["shield","shd3"]):
-        return ICON_SHAPES["shield"](color)
-    if any(icon_key.startswith(x) for x in ["crown"]):
-        return ICON_SHAPES["crown"](color)
-    if any(icon_key.startswith(x) for x in ["rocket","rkt2"]):
-        return ICON_SHAPES["rocket"](color)
-    return ICON_SHAPES["default"](color)
+BW_COLORS = {"c1":"#aaa","c2":"#777","ring":"#555","shine":"#ddd","ribbon":"#999","text":"#fff"}
 
 
-def medal_svg(tier: str, icon_key: str, color: bool = True, size: int = 56) -> str:
-    """Genera SVG de la medalla. color=False → blanco y negro."""
-    C = TIER_COLORS[tier] if color else BW_COLORS
-    icon_col = "#ffffff" if color else "#cccccc"
-    uid = f"{tier}_{icon_key}_{'c' if color else 'bw'}"
-    icon_svg = _get_icon(icon_key, icon_col)
+def medal_svg(rareza: str, icon: str, color: bool = True, size: int = 64) -> str:
+    C = RAREZA_COLORS.get(rareza, RAREZA_COLORS["Bronce"]) if color else BW_COLORS
+    uid = f"{rareza}_{icon}_{'c' if color else 'bw'}"
     return f"""<svg width="{size}" height="{size}" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g_{uid}" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="{C['c1']}"/>
-      <stop offset="60%" stop-color="{C['c2']}"/>
-      <stop offset="100%" stop-color="{C['c3']}"/>
+      <stop offset="100%" stop-color="{C['c2']}"/>
     </linearGradient>
   </defs>
   <rect x="24" y="1" width="8" height="15" rx="3" fill="{C['ribbon']}"/>
@@ -222,7 +179,7 @@ def medal_svg(tier: str, icon_key: str, color: bool = True, size: int = 56) -> s
   <circle cx="28" cy="32" r="20" fill="url(#g_{uid})"/>
   <circle cx="28" cy="32" r="20" fill="none" stroke="{C['ring']}" stroke-width="1.8"/>
   <circle cx="28" cy="32" r="16" fill="none" stroke="{C['shine']}" stroke-width="0.8" opacity=".5"/>
-  <g transform="translate(0,2)">{icon_svg}</g>
+  <text x="28" y="38" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif" font-size="16" text-anchor="middle">{icon}</text>
 </svg>"""
 
 
@@ -230,301 +187,343 @@ def medal_svg(tier: str, icon_key: str, color: bool = True, size: int = 56) -> s
 # EVALUADOR DE LOGROS
 # ══════════════════════════════════════════════════════════════════════════════
 
-def calcular_racha_max(player_query: str, player_matches: pd.DataFrame) -> int:
-    """Calcula la racha máxima de victorias consecutivas del jugador."""
-    if player_matches.empty or 'winner' not in player_matches.columns:
-        return 0
-    pm = player_matches.dropna(subset=['date']).sort_values('date')
-    racha_max = racha = 0
-    for _, row in pm.iterrows():
-        winner = str(row.get('winner', '')).strip()
-        gano = player_query.lower() in winner.lower()
-        if gano:
-            racha += 1
-            racha_max = max(racha_max, racha)
-        else:
-            racha = 0
-    return racha_max
-
-
 def evaluar_logros(
     player_query: str,
     player_matches: pd.DataFrame,
     df_raw: pd.DataFrame,
-    data_elo: pd.DataFrame,        # resultado de calcular_elo()
-    base2: pd.DataFrame,           # ligas
+    data_elo: pd.DataFrame,
+    base2: pd.DataFrame,
     base_torneo_final: pd.DataFrame,
     campeonatos_liga: list,
     campeonatos_torneo: list,
     generar_tabla_temporada,
     generar_tabla_torneo,
 ) -> dict:
-    """
-    Evalúa todos los logros del jugador.
-    Retorna dict {logro_id: bool}.
-    """
-    pq = player_query.lower()
+    pq = player_query.lower().strip()
     pm = player_matches.copy()
 
     # ── métricas base ──────────────────────────────────────────────────────
-    total     = len(pm)
+    total = len(pm)
     victorias = int(pm['winner'].str.lower().str.contains(pq, na=False).sum()) if 'winner' in pm.columns else 0
     derrotas  = total - victorias
-    winrate   = round(victorias / total * 100, 2) if total > 0 else 0.0
 
+    # rivales únicos
     rivales = set()
     for _, r in pm.iterrows():
         p1 = str(r.get('player1','')).strip().lower()
         p2 = str(r.get('player2','')).strip().lower()
         if pq in p1: rivales.add(p2)
         elif pq in p2: rivales.add(p1)
-    n_rivales = len(rivales)
 
-    torneos_part = pm[pm['league']=='TORNEO']['N_Torneo'].dropna().nunique() if 'N_Torneo' in pm.columns else 0
-    ligas_part   = pm[pm['league']=='LIGA']['Ligas_categoria'].dropna().nunique() if 'Ligas_categoria' in pm.columns else 0
-
-    # meses únicos jugados
-    meses_unicos = set()
-    años_unicos  = set()
     if 'date' in pm.columns:
         pm['date'] = pd.to_datetime(pm['date'], errors='coerce')
-        for d in pm['date'].dropna():
-            meses_unicos.add(f"{d.year}-{d.month:02d}")
-            años_unicos.add(d.year)
 
-    formatos = pm['Formato'].dropna().nunique() if 'Formato' in pm.columns else 0
-    tiers    = pm['Tier'].dropna().nunique()    if 'Tier'    in pm.columns else 0
+    meses_unicos = set()
+    años_unicos  = set()
+    for d in pm['date'].dropna() if 'date' in pm.columns else []:
+        meses_unicos.add(f"{d.year}-{d.month:02d}")
+        años_unicos.add(d.year)
 
+    torneos_part = pm[pm['league']=='TORNEO']['N_Torneo'].dropna().nunique() if 'N_Torneo' in pm.columns else 0
+    ligas_cat    = pm[pm['league']=='LIGA']['Ligas_categoria'].dropna().nunique() if 'Ligas_categoria' in pm.columns else 0
     tipos_evento = set(pm['league'].dropna().str.upper().unique()) if 'league' in pm.columns else set()
 
-    racha_max = calcular_racha_max(player_query, pm)
+    n_camp_liga   = len(campeonatos_liga)
+    n_camp_torneo = len(campeonatos_torneo)
 
-    # winrate mensual (para mes perfecto)
-    mes_perfecto = False
-    if 'date' in pm.columns:
+    # racha máxima
+    racha_max = 0
+    if not pm.empty and 'winner' in pm.columns and 'date' in pm.columns:
+        pm_s = pm.dropna(subset=['date']).sort_values('date')
+        racha = 0
+        for _, row in pm_s.iterrows():
+            if pq in str(row.get('winner','')).lower():
+                racha += 1
+                racha_max = max(racha_max, racha)
+            else:
+                racha = 0
+
+    # winrate por mes (para logros de WR mensual)
+    def _wr_mensual_max():
+        if 'date' not in pm.columns: return 0.0
         pm['_mes'] = pm['date'].dt.to_period('M')
+        best = 0.0
         for _, grp in pm.groupby('_mes'):
-            if len(grp) >= 4:
+            if len(grp) >= 5:
                 w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
-                if w == len(grp):
-                    mes_perfecto = True
-                    break
+                best = max(best, w/len(grp)*100)
+        return best
 
-    # Elo actual y rank
+    # winrate por formato (20+ partidas en un año)
+    def _wr_por_formato(min_pct):
+        if 'Formato' not in pm.columns or 'date' not in pm.columns: return False
+        pm2 = pm.dropna(subset=['date'])
+        for yr in años_unicos:
+            sub = pm2[pm2['date'].dt.year == yr]
+            for fmt, grp in sub.groupby('Formato'):
+                if len(grp) >= 20:
+                    w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+                    if w/len(grp)*100 >= min_pct:
+                        return True
+        return False
+
+    # WR mejora mes a mes
+    def _wr_aumento_mensual(delta):
+        if 'date' not in pm.columns: return False
+        pm['_mes2'] = pm['date'].dt.to_period('M')
+        meses = sorted(pm.dropna(subset=['date'])['_mes2'].unique())
+        wr_list = []
+        for m in meses:
+            g = pm[pm['_mes2'] == m]
+            if len(g) >= 3:
+                w = g['winner'].str.lower().str.contains(pq, na=False).sum()
+                wr_list.append(w/len(g)*100)
+        for i in range(1, len(wr_list)):
+            if wr_list[i] - wr_list[i-1] >= delta:
+                return True
+        return False
+
+    # score_completo máximo del jugador
+    score_max = 0.0
+    if not base2.empty and 'score_completo' in base2.columns and 'Participante' in base2.columns:
+        jl = base2[base2['Participante'].str.lower().str.contains(pq, na=False)]
+        if not jl.empty:
+            score_max = float(jl['score_completo'].max())
+    if not base_torneo_final.empty and 'score_completo' in base_torneo_final.columns and 'Participante' in base_torneo_final.columns:
+        jt = base_torneo_final[base_torneo_final['Participante'].str.lower().str.contains(pq, na=False)]
+        if not jt.empty:
+            score_max = max(score_max, float(jt['score_completo'].max()))
+
+    # Elo máximo al final de cualquier mes (data_filas no disponible aquí — usamos elo actual)
     elo_actual = 1000
-    elo_rank   = 9999
-    if data_elo is not None and not data_elo.empty:
+    if data_elo is not None and not data_elo.empty and 'Participantes' in data_elo.columns:
         row_elo = data_elo[data_elo['Participantes'].str.lower().str.contains(pq, na=False)]
         if not row_elo.empty:
             elo_actual = int(row_elo['Elo'].iloc[0])
-            elo_rank   = int(row_elo['RANK'].iloc[0])
 
-    # Número total de jugadores para calcular top %
-    total_jugadores = len(data_elo) if data_elo is not None else 9999
+    # Walkovers
+    wo_dados    = 0
+    wo_recibidos= 0
+    if 'Walkover' in df_raw.columns:
+        wo_part = df_raw[
+            (df_raw['Walkover'] == 1) & (
+                df_raw['player1'].str.lower().str.contains(pq, na=False) |
+                df_raw['player2'].str.lower().str.contains(pq, na=False)
+            )
+        ]
+        for _, r in wo_part.iterrows():
+            winner_r = str(r.get('winner','')).lower()
+            if pq in winner_r:
+                wo_recibidos += 1  # ganó por WO = recibió el WO
+            else:
+                wo_dados += 1
 
-    # campeonatos
-    n_camp_liga    = len(campeonatos_liga)
-    n_camp_torneo  = len(campeonatos_torneo)
-    n_camp_total   = n_camp_liga + n_camp_torneo
+    # Formatos únicos del jugador
+    formatos_jugados = set(pm['Formato'].dropna().unique()) if 'Formato' in pm.columns else set()
+    formatos_totales = set(df_raw['Formato'].dropna().unique()) if 'Formato' in df_raw.columns else set()
 
-    # sub-campeón de liga
-    subcampeon_liga = False
-    for lt in (base2['Liga_Temporada'].unique() if not base2.empty and 'Liga_Temporada' in base2.columns else []):
-        tabla = generar_tabla_temporada(base2, lt)
-        if tabla is not None and not tabla.empty:
-            j = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
-            if not j.empty and j['RANK'].iloc[0] == 2:
-                subcampeon_liga = True
-                break
+    # Torneos por número
+    torneos_num = set(pm[pm['league']=='TORNEO']['N_Torneo'].dropna().astype(int).unique()) if 'N_Torneo' in pm.columns else set()
 
-    # finalista de torneo
-    finalista_torneo = False
-    for nt in (base_torneo_final['Torneo_Temp'].unique() if not base_torneo_final.empty else []):
-        tabla = generar_tabla_torneo(base_torneo_final, nt)
-        if tabla is not None and not tabla.empty:
-            j = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
-            if not j.empty and j['RANK'].iloc[0] <= 2:
-                finalista_torneo = True
-                break
+    # Ligas categoría
+    ligas_jugadas = set(pm[pm['league']=='LIGA']['Ligas_categoria'].dropna().unique()) if 'Ligas_categoria' in pm.columns else set()
+    todas_ligas   = set(df_raw['Ligas_categoria'].dropna().unique()) if 'Ligas_categoria' in df_raw.columns else set()
+    todas_ligas_  = {l for l in todas_ligas if str(l) not in ('nan','')}
 
-    # pódium de torneo
-    podium_torneo = False
-    for nt in (base_torneo_final['Torneo_Temp'].unique() if not base_torneo_final.empty else []):
-        tabla = generar_tabla_torneo(base_torneo_final, nt)
-        if tabla is not None and not tabla.empty:
-            j = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
-            if not j.empty and j['RANK'].iloc[0] <= 3:
-                podium_torneo = True
-                break
+    # Torneos con formato
+    def _gano_torneo_formato(fmt_key):
+        if 'Formato_esp' not in pm.columns and 'Formato' not in pm.columns: return False
+        col = 'Formato_esp' if 'Formato_esp' in pm.columns else 'Formato'
+        for camp in campeonatos_torneo:
+            nt = camp.get('Torneo')
+            sub = pm[(pm['league']=='TORNEO') & (pm['N_Torneo']==nt)] if 'N_Torneo' in pm.columns else pd.DataFrame()
+            if not sub.empty:
+                fmts = sub[col].dropna().str.upper().unique()
+                if any(fmt_key.upper() in f for f in fmts):
+                    return True
+        return False
 
-    # temporadas de liga (con al menos 3 partidas)
-    temp_liga_jugadas = 0
-    if not base2.empty and 'Liga_Temporada' in base2.columns:
-        for lt in base2['Liga_Temporada'].unique():
-            subset = base2[
-                (base2['Liga_Temporada'] == lt) &
-                (base2['Participante'].str.lower().str.contains(pq, na=False))
-            ]
-            if len(subset) >= 3:
-                temp_liga_jugadas += 1
-
-    # revancha: ganar contra alguien que te ganó antes
-    revancha = False
-    if 'winner' in pm.columns:
-        derrotas_vs = {}
-        for _, r in pm.sort_values('date').iterrows():
-            w = str(r.get('winner','')).strip().lower()
+    # Rivales vs mismo rival (victorias consecutivas acumuladas)
+    def _max_wins_vs_rival():
+        rival_wins = {}
+        for _, r in pm.iterrows():
             p1 = str(r.get('player1','')).strip().lower()
             p2 = str(r.get('player2','')).strip().lower()
-            rival = p2 if pq in p1 else p1
-            if pq in w:
-                if rival in derrotas_vs:
-                    revancha = True; break
-            else:
-                derrotas_vs[rival] = True
+            winner_r = str(r.get('winner','')).strip().lower()
+            rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+            if rival and pq in winner_r:
+                rival_wins[rival] = rival_wins.get(rival, 0) + 1
+        return max(rival_wins.values()) if rival_wins else 0
 
-    # campeón en años distintos
-    años_campeon = set()
-    for c in campeonatos_liga + campeonatos_torneo:
-        if 'año' in c:
-            años_campeon.add(c['año'])
-    salon_fama = len(años_campeon) >= 3
+    max_wins_rival = _max_wins_vs_rival()
 
-    # triple corona (liga + torneo + ascenso)
-    gano_liga    = n_camp_liga > 0
-    gano_torneo  = n_camp_torneo > 0
-    gano_ascenso = any(
-        str(r.get('league','')).upper() == 'ASCENSO' and
-        str(r.get('winner','')).lower().find(pq) >= 0 and
-        str(r.get('round','')).lower() in ('final','ascenso singles final','ascenso doubles final','ascenso bo3 final','ascenso  final')
-        for _, r in pm.iterrows()
-    ) if 'round' in pm.columns else False
+    # Campeón en primera participación
+    primer_torneo_ganado = False
+    if campeonatos_torneo and 'N_Torneo' in pm.columns:
+        primer_torneo_jugado = pm[pm['league']=='TORNEO']['N_Torneo'].dropna().min() if not pm[pm['league']=='TORNEO'].empty else None
+        if primer_torneo_jugado is not None:
+            primer_torneo_ganado = any(c.get('Torneo') == int(primer_torneo_jugado) for c in campeonatos_torneo)
 
-    # finalista ascenso / cypher
-    finalista_ascenso = False
-    finalista_cypher  = False
-    if 'round' in pm.columns and 'league' in pm.columns and 'winner' in pm.columns:
-        for _, r in pm.iterrows():
-            lg = str(r.get('league','')).upper()
-            rd = str(r.get('round','')).lower()
-            if 'final' in rd:
-                if lg == 'ASCENSO': finalista_ascenso = True
-                if lg == 'CYPHER':  finalista_cypher  = True
+    # Conteo de logros desbloqueados (para PR)
+    # se calcula después de construir resultado base
 
-    # todos los logros desbloqueados (O25 — se evalúa al final)
-    logros_previos_count = 0  # se llenará abajo
+    # ── resultado ─────────────────────────────────────────────────────────────
+    r = {}
 
-    # ── mapa id → condición ───────────────────────────────────────────────
-    resultado = {
-        # BRONCE
-        "B01": total >= 1,
-        "B02": victorias >= 1,
-        "B03": racha_max >= 3,
-        "B04": len(meses_unicos) >= 1,
-        "B05": total >= 10,
-        "B06": n_rivales >= 5,
-        "B07": 'TORNEO' in tipos_evento,
-        "B08": 'LIGA'   in tipos_evento,
-        "B09": winrate >= 50 and total >= 10,
-        "B10": len(meses_unicos) >= 3,
-        "B11": elo_rank <= 50,
-        "B12": total >= 25,
-        "B13": 'ASCENSO' in tipos_evento,
-        "B14": 'CYPHER'  in tipos_evento,
-        "B15": formatos >= 3,
-        "B16": racha_max >= 5,
-        "B17": n_rivales >= 10,
-        "B18": len(meses_unicos) >= 6,
-        "B19": ligas_part >= 2,
-        "B20": torneos_part >= 5,
-        "B21": total >= 50,
-        "B22": tiers >= 3,
-        "B23": winrate >= 60 and total >= 10,
-        "B24": len(años_unicos) >= 1,
-        "B25": torneos_part >= 10,
-        "B26": elo_rank <= 30,
-        "B27": total >= 100,
-        "B28": racha_max >= 8,
-        "B29": n_rivales >= 15,
-        "B30": revancha,
-        "B31": len({'TORNEO','LIGA','ASCENSO','CYPHER'} & tipos_evento) == 4,
-        "B32": mes_perfecto,
-        "B33": elo_rank <= 20,
-        "B34": ligas_part >= 3,
-        "B35": len(años_unicos) >= 2,
-        "B36": torneos_part >= 20,
-        "B37": winrate >= 70 and total >= 10,
-        "B38": total >= 200,
-        "B39": n_rivales >= 25,
-        "B40": racha_max >= 10,
-        # PLATA
-        "P01": subcampeon_liga,
-        "P02": n_camp_liga >= 1,
-        "P03": podium_torneo,
-        "P04": elo_rank <= 10,
-        "P05": elo_actual >= 1200,
-        "P06": total >= 300,
-        "P07": racha_max >= 15,
-        "P08": torneos_part >= 30,
-        "P09": winrate >= 65 and total >= 50,
-        "P10": len(meses_unicos) >= 12,
-        "P11": n_rivales >= 40,
-        "P12": elo_actual >= 1300,
-        "P13": finalista_torneo,
-        "P14": temp_liga_jugadas >= 3,
-        "P15": total >= 400,
-        "P16": elo_rank <= 5,
-        "P17": racha_max >= 20,
-        "P18": n_rivales >= 50,
-        "P19": elo_actual >= 1400,
-        "P20": total >= 500,
-        "P21": n_camp_liga >= 2,
-        "P22": ligas_part >= 5,
-        "P23": finalista_ascenso,
-        "P24": finalista_cypher,
-        "P25": len(meses_unicos) >= 18,
-        "P26": n_rivales >= 60,
-        "P27": elo_actual >= 1500,
-        "P28": winrate >= 70 and total >= 100,
-        "P29": torneos_part >= 50,
-        "P30": total >= 600,
-        "P31": n_camp_liga >= 3,
-        "P32": n_camp_torneo >= 5,
-        "P33": racha_max >= 25,
-        "P34": len(años_unicos) >= 3,
-        "P35": elo_rank <= 3,
-        # ORO
-        "O01": n_camp_torneo >= 1,
-        "O02": elo_rank == 1,
-        "O03": total >= 1000,
-        "O04": gano_liga and gano_torneo and gano_ascenso,
-        "O05": elo_actual >= 1600,
-        "O06": n_camp_liga >= 5,
-        "O07": winrate >= 75 and total >= 200,
-        "O08": elo_actual >= 1700,
-        "O09": n_camp_total >= 10,
-        "O10": racha_max >= 30,
-        "O11": n_rivales >= 100,
-        "O12": len(años_unicos) >= 5,
-        "O13": gano_liga and gano_torneo and gano_ascenso and ('CYPHER' in tipos_evento),
-        "O14": torneos_part >= 100,
-        "O15": racha_max >= 40,
-        "O16": len(meses_unicos) >= 36,
-        "O17": victorias >= 500,
-        "O18": n_camp_torneo >= 10,
-        "O19": n_camp_liga >= 8,
-        "O20": (derrotas / total < 0.20) if total >= 50 else False,
-        "O21": len(años_unicos) >= 4,
-        "O22": salon_fama,
-        "O23": elo_actual >= 1800,
-        "O24": (formatos >= pm['Formato'].dropna().nunique()) if ('Formato' in pm.columns and pm['Formato'].dropna().nunique() > 0) else False,
-        "O25": False,   # se calcula abajo
+    # PARTICIPACIÓN
+    r["PA01"] = total >= 1
+    r["PA02"] = torneos_part >= 5
+    r["PA03"] = torneos_part >= 25
+    r["PA04"] = torneos_part >= 15
+    r["PA05"] = torneos_part >= 30
+    r["PA06"] = torneos_part >= 50
+    r["PA07"] = torneos_part >= 100
+    r["PA08"] = n_camp_torneo >= 1 or victorias >= 1
+    r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
+    r["PA10"] = len(formatos_jugados) >= 3
+
+    # VICTORIAS
+    r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
+    r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
+    r["VI03"] = racha_max >= 10
+    r["VI04"] = racha_max >= 15
+    r["VI05"] = n_camp_torneo >= 1
+    r["VI06"] = n_camp_torneo >= 2
+    r["VI07"] = n_camp_torneo >= 3
+    r["VI08"] = n_camp_torneo >= 5
+    r["VI09"] = n_camp_torneo >= 10
+    r["VI10"] = n_camp_torneo > 10
+    r["VI11"] = victorias >= 50
+    r["VI12"] = victorias >= 100
+    r["VI13"] = False  # necesita dato de si ganó sin perder — manual/observación
+    r["VI14"] = False  # verificar derrotas a 5 campeones — observación
+    r["VI15"] = False  # verificar vs campeones PMS — observación
+    r["VI16"] = False  # dato de Pokémon sobrevivientes no disponible en CSV
+    r["VI17"] = False  # dato de Pokémon sobrevivientes no disponible en CSV
+    r["VI18"] = False  # dato de Pokémon sobrevivientes no disponible en CSV
+
+    # RANKING
+    r["RK01"] = _wr_aumento_mensual(1)
+    r["RK02"] = _wr_aumento_mensual(20)
+    r["RK03"] = score_max >= 1000
+    r["RK04"] = score_max >= 2000
+    r["RK05"] = score_max >= 3000
+    r["RK06"] = score_max >= 4000
+    r["RK07"] = elo_actual >= 1000
+    r["RK08"] = elo_actual >= 1200
+    r["RK09"] = elo_actual >= 1300
+    r["RK10"] = elo_actual >= 1500
+
+    # ESTRATEGIA
+    fmt_esp_col = 'Formato_esp' if 'Formato_esp' in pm.columns else 'Formato'
+    fmts_ganados = set()
+    for camp in campeonatos_torneo:
+        nt = camp.get('Torneo')
+        if 'N_Torneo' in pm.columns:
+            sub = pm[(pm['league']=='TORNEO') & (pm['N_Torneo']==nt)]
+            if not sub.empty and fmt_esp_col in sub.columns:
+                for f in sub[fmt_esp_col].dropna().unique():
+                    fmts_ganados.add(str(f).upper())
+
+    r["ES01"] = any('MONOTYPE' in str(f).upper() or 'NATDEX' in str(f).upper() for f in formatos_jugados)
+    r["ES02"] = any('RANDOM' in str(f).upper() for f in fmts_ganados)
+    r["ES03"] = _wr_por_formato(40)
+    r["ES04"] = _wr_por_formato(50)
+    r["ES05"] = _wr_por_formato(60)
+    r["ES06"] = _wr_por_formato(70)
+    r["ES07"] = formatos_jugados >= formatos_totales and len(formatos_totales) > 0
+    r["ES08"] = any('SINGLES' in str(f).upper() for f in fmts_ganados)
+    r["ES09"] = any(str(f).upper() in ('OU',) for f in fmts_ganados)
+    r["ES10"] = any('DOU' in str(f).upper() for f in fmts_ganados)
+    r["ES11"] = any('VGC' in str(f).upper() for f in fmts_ganados)
+    r["ES12"] = any(str(f).upper() == 'LC' for f in fmts_ganados)
+    r["ES13"] = any('UBERS' in str(f).upper() for f in fmts_ganados)
+    r["ES14"] = any('OU' in str(f).upper() for f in fmts_ganados) and any('DOU' in str(f).upper() for f in fmts_ganados)
+    r["ES15"] = any('NATDEX' in str(f).upper() for f in fmts_ganados)
+
+    # TORNEO
+    TORNEOS_GEN = {
+        "TO02": {27,58}, "TO03": {29,65}, "TO04": {34,70},
+        "TO05": {38},    "TO06": {44},    "TO07": {50},
+        "TO08": {57},    "TO09": {60},    "TO10": {62},
     }
+    r["TO01"] = any('RANDOM' in str(f).upper() for f in fmts_ganados)
+    for kid, nums in TORNEOS_GEN.items():
+        r[kid] = bool(torneos_num & nums)
+    r["TO11"] = bool(torneos_num & {46,68}) and n_camp_torneo >= 1
 
-    logros_previos_count = sum(1 for k,v in resultado.items() if v and k != "O25")
-    resultado["O25"] = (logros_previos_count == 99)
+    # LIGAS
+    ligas_std = {str(l) for l in todas_ligas_}
+    r["LI01"] = len(ligas_jugadas) > 0 and ligas_jugadas >= ligas_std if ligas_std else False
 
-    return resultado
+    # SOCIAL
+    r["SO01"] = any('JUNIOR' in str(l).upper() for l in ligas_jugadas)
+    r["SO02"] = any('SENIOR' in str(l).upper() for l in ligas_jugadas)
+    r["SO03"] = any('MASTER' in str(l).upper() for l in ligas_jugadas)
+
+    def _sin_wo_n_meses(n):
+        if 'date' not in df_raw.columns: return False
+        df2 = df_raw[
+            df_raw['player1'].str.lower().str.contains(pq, na=False) |
+            df_raw['player2'].str.lower().str.contains(pq, na=False)
+        ].copy()
+        df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
+        df2 = df2.dropna(subset=['date']).sort_values('date')
+        if df2.empty: return False
+        fecha_max = df2['date'].max()
+        fecha_min = fecha_max - pd.DateOffset(months=n)
+        sub = df2[df2['date'] >= fecha_min]
+        if 'Walkover' not in sub.columns: return True
+        return (sub['Walkover'] != 1).all()
+
+    r["SO04"] = _sin_wo_n_meses(6)
+    r["SO05"] = _sin_wo_n_meses(12)
+    r["SO06"] = _sin_wo_n_meses(24)
+    r["SO07"] = _sin_wo_n_meses(36)
+    r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
+    r["SO09"] = False  # premio manual
+
+    # ESPECIAL
+    r["SP01"] = primer_torneo_ganado
+    r["SP02"] = False  # necesita fecha del último campeonato — observación
+    r["SP03"] = max_wins_rival >= 5
+    r["SP04"] = max_wins_rival >= 10
+    r["SP05"] = max_wins_rival >= 20
+    r["SP06"] = False  # cruzar campeones — observación
+    r["SP07"] = False  # ganar todos torneos de un año — observación
+    r["SP08"] = False  # ganar 2 torneos en mismo mes — observación compleja
+    r["SP09"] = False  # mayor partidas ganadas del año — comparativo global
+    r["SP10"] = False  # misma liga 3 temporadas — observación
+    r["SP11"] = False  # menos de 3 derrotas en liga — observación por temporada
+    r["SP12"] = False  # menos de 10 derrotas en liga — observación
+    r["SP13"] = False  # menos de 15 derrotas en liga — observación
+    r["SP14"] = (n_camp_liga >= 1 and
+                 any('PJS' in str(l) for l in ligas_jugadas) and
+                 any('PES' in str(l) for l in ligas_jugadas) and
+                 any('PSS' in str(l) for l in ligas_jugadas) and
+                 any('PMS' in str(l) for l in ligas_jugadas))
+    r["SP15"] = any('NATDEX' in str(f).upper() and 'DOBLE' in str(f).upper() for f in formatos_jugados)
+    r["SP16"] = derrotas >= 1
+    r["SP17"] = any('LEGEND' in str(l).upper() for l in ligas_jugadas)
+
+    # PROGRESIÓN — depende del conteo anterior
+    xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
+    desbloq_bronce = sum(1 for l in LOGROS if l['rareza']=='Bronce' and r.get(l['id'],False))
+    desbloq_plata  = sum(1 for l in LOGROS if l['rareza']=='Plata'  and r.get(l['id'],False))
+    desbloq_oro    = sum(1 for l in LOGROS if l['rareza']=='Oro'    and r.get(l['id'],False))
+    desbloq_total  = sum(1 for v in r.values() if v)
+
+    r["PR01"] = desbloq_bronce >= 10
+    r["PR02"] = desbloq_plata  >= 10
+    r["PR03"] = desbloq_oro    >= 10
+    r["PR04"] = desbloq_total  >= 50
+    r["PR05"] = desbloq_total  >= 90
+    r["PR06"] = xp_total >= 1000
+    r["PR07"] = xp_total >= 10000
+    r["PR08"] = xp_total >= 15000
+    r["PR09"] = xp_total >= 20000
+
+    return r
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -543,8 +542,6 @@ def mostrar_logros(
     generar_tabla_temporada,
     generar_tabla_torneo,
 ):
-    """Renderiza el panel de logros en Streamlit."""
-
     st.markdown("---")
     st.markdown("### 🏅 Logros")
 
@@ -556,84 +553,68 @@ def mostrar_logros(
             generar_tabla_temporada, generar_tabla_torneo,
         )
 
-    total_logros  = len(LOGROS)
-    total_unlock  = sum(desbloqueados.values())
-    pct           = round(total_unlock / total_logros * 100, 1)
+    total_logros = len(LOGROS)
+    total_unlock = sum(desbloqueados.values())
+    xp_total = sum(l['xp'] for l in LOGROS if desbloqueados.get(l['id']))
+    pct = round(total_unlock / total_logros * 100, 1)
 
-    # ── barra de progreso general ─────────────────────────────────────────
     col_p, col_n = st.columns([3, 1])
     with col_p:
         st.progress(total_unlock / total_logros)
     with col_n:
         st.markdown(f"**{total_unlock} / {total_logros}** logros ({pct}%)")
 
-    # conteo por tier
-    c1, c2, c3 = st.columns(3)
-    bro_total = sum(1 for l in LOGROS if l['tier']=='bronce')
-    pla_total = sum(1 for l in LOGROS if l['tier']=='plata')
-    oro_total = sum(1 for l in LOGROS if l['tier']=='oro')
-    bro_ok = sum(1 for l in LOGROS if l['tier']=='bronce' and desbloqueados.get(l['id']))
-    pla_ok = sum(1 for l in LOGROS if l['tier']=='plata'  and desbloqueados.get(l['id']))
-    oro_ok = sum(1 for l in LOGROS if l['tier']=='oro'    and desbloqueados.get(l['id']))
-    c1.metric("🥉 Bronce", f"{bro_ok}/{bro_total}")
-    c2.metric("🥈 Plata",  f"{pla_ok}/{pla_total}")
-    c3.metric("🥇 Oro",    f"{oro_ok}/{oro_total}")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("🥉 Bronce", sum(1 for l in LOGROS if l['rareza']=='Bronce' and desbloqueados.get(l['id'])))
+    c2.metric("🥈 Plata",  sum(1 for l in LOGROS if l['rareza']=='Plata'  and desbloqueados.get(l['id'])))
+    c3.metric("🥇 Oro",    sum(1 for l in LOGROS if l['rareza']=='Oro'    and desbloqueados.get(l['id'])))
+    c4.metric("⚡ XP Total", f"{xp_total:,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── tabs por tier ─────────────────────────────────────────────────────
-    tab_bro, tab_pla, tab_oro = st.tabs(["🥉 Bronce (40)", "🥈 Plata (35)", "🥇 Oro (25)"])
+    tabs = st.tabs([f"{'🎮' if c=='Participación' else '⚔️' if c=='Victorias' else '📊' if c=='Ranking' else '🧠' if c=='Estrategia' else '🏟️' if c=='Torneo' else '🏆' if c=='Ligas' else '🤝' if c=='Social' else '✨' if c=='Especial' else '📈'} {c}"
+                    for c in CATEGORIAS_ORDEN])
 
-    TIER_ORDER = {"bronce": tab_bro, "plata": tab_pla, "oro": tab_oro}
-
-    for tier, tab in TIER_ORDER.items():
+    for tab, cat in zip(tabs, CATEGORIAS_ORDEN):
         with tab:
-            tier_logros = [l for l in LOGROS if l['tier'] == tier]
-
-            # opción de filtro
-            filtro = st.radio(
-                "Mostrar:", ["Todos", "Desbloqueados", "Bloqueados"],
-                horizontal=True, key=f"filtro_{tier}"
-            )
+            cat_logros = [l for l in LOGROS if l['cat'] == cat]
+            filtro = st.radio("Mostrar:", ["Todos","Desbloqueados","Bloqueados"],
+                              horizontal=True, key=f"filtro_{cat}")
             if filtro == "Desbloqueados":
-                tier_logros = [l for l in tier_logros if desbloqueados.get(l['id'])]
+                cat_logros = [l for l in cat_logros if desbloqueados.get(l['id'])]
             elif filtro == "Bloqueados":
-                tier_logros = [l for l in tier_logros if not desbloqueados.get(l['id'])]
+                cat_logros = [l for l in cat_logros if not desbloqueados.get(l['id'])]
 
-            # grid de medallas — 5 columnas
             COLS = 5
-            for row_start in range(0, len(tier_logros), COLS):
-                row_logros = tier_logros[row_start:row_start+COLS]
+            for row_start in range(0, len(cat_logros), COLS):
+                row_logros = cat_logros[row_start:row_start+COLS]
                 cols = st.columns(COLS)
                 for i, logro in enumerate(row_logros):
                     with cols[i]:
-                        unlocked  = desbloqueados.get(logro['id'], False)
-                        opacity   = "1" if unlocked else "0.25"
-                        txt_col   = "var(--color-text-primary)" if unlocked else "var(--color-text-secondary)"
-                        check_tag = '<p style="font-size:9px;color:#2ecc71;font-weight:500;">✓ Desbloqueado</p>' if unlocked else ""
+                        unlocked = desbloqueados.get(logro['id'], False)
+                        opacity  = "1" if unlocked else "0.25"
+                        txt_col  = "var(--color-text-primary)" if unlocked else "var(--color-text-secondary)"
+                        check_tag = f'<p style="font-size:9px;color:#2ecc71;font-weight:500;">✓ {logro["xp"]} XP</p>' if unlocked else ""
+                        rar_color = {"Bronce":"#cd7f32","Plata":"#78909c","Oro":"#f5c518","Legendario":"#9c27b0"}.get(logro['rareza'],'#888')
 
-                        # ── PNG de la carpeta vistas/logros/ (fallback → SVG) ──
-                        img_path = _logro_img_path(logro['id'])
+                        # buscar imagen
+                        img_path = _logro_img_path(logro['num'])
                         if img_path:
                             try:
-                                src  = _img_b64(img_path)
+                                src = _img_b64(img_path)
                                 filt = "" if unlocked else "filter:grayscale(100%);"
-                                img_tag = (
-                                    f'<img src="{src}" width="72" height="72" '
-                                    f'style="object-fit:contain;{filt}" />'
-                                )
+                                img_tag = f'<img src="{src}" width="72" height="86" style="object-fit:contain;{filt}" />'
                             except Exception:
-                                img_tag = medal_svg(tier, logro['icon'], color=unlocked, size=72)
+                                img_tag = medal_svg(logro['rareza'], logro['icon'], color=unlocked, size=72)
                         else:
-                            img_tag = medal_svg(tier, logro['icon'], color=unlocked, size=72)
+                            img_tag = medal_svg(logro['rareza'], logro['icon'], color=unlocked, size=72)
 
                         html_badge = (
                             f'<div style="text-align:center;opacity:{opacity}">'
                             f'{img_tag}'
-                            f'<p style="font-size:11px;font-weight:500;margin:4px 0 2px;color:{txt_col};">'
-                            f'{logro["name"]}</p>'
-                            f'<p style="font-size:10px;color:var(--color-text-secondary);line-height:1.3;">'
-                            f'{logro["desc"]}</p>'
+                            f'<p style="font-size:9px;color:{rar_color};font-weight:500;margin:2px 0">{logro["rareza"].upper()}</p>'
+                            f'<p style="font-size:11px;font-weight:500;margin:2px 0;color:{txt_col};">{logro["name"]}</p>'
+                            f'<p style="font-size:10px;color:var(--color-text-secondary);line-height:1.3;">{logro["desc"]}</p>'
                             f'{check_tag}'
                             f'</div>'
                         )
