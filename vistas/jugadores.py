@@ -618,71 +618,68 @@ def generar_pdf_jugador(
         txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-26,
             size=8, col=C_SUBTEXT, font="Helvetica", anchor="right")
 
-        # ── totales generales ─────────────────────────────────────
+        # ── resumen general ───────────────────────────────────────
         total_ok  = sum(desbloqueados.values())
         total_all = len(LOGROS)
         xp_ganado = sum(l['xp'] for l in LOGROS if desbloqueados.get(l['id']))
 
-        # barra de progreso general
+        # barra de progreso
         PR_X = MARGIN; PR_Y = PH-HDR2-14; PR_W = PW-MARGIN*2; PR_H = 7
         rrect(cv, PR_X, PR_Y, PR_W, PR_H, r=3, fill_col=C_PANEL2)
-        prog_w = max(6, int(PR_W * total_ok / max(total_all,1)))
+        prog_w = max(6, int(PR_W * total_ok / max(total_all, 1)))
         rrect(cv, PR_X, PR_Y, prog_w, PR_H, r=3, fill_col=C_GOLD)
-        txt(cv, f"{total_ok} / {total_all} logros  |  {xp_ganado:,} XP  ({round(total_ok/max(total_all,1)*100,1)}%)",
+        txt(cv,
+            f"{total_ok} / {total_all} logros desbloqueados  |  {xp_ganado:,} XP  ({round(total_ok/max(total_all,1)*100,1)}%)",
             PW/2, PR_Y+1.5, size=5.5,
-            col=C_BG if prog_w > PR_W*0.4 else C_TEXT,
+            col=C_BG if prog_w > PR_W*0.45 else C_TEXT,
             font="Helvetica-Bold", anchor="center")
 
-        # pastillas resumen por rareza
-        PILL_W = 62; PILL_H = 12; PILL_GAP = 5
-        RAR_PILLS = [
-            ("BRONCE", "#cd7f32"), ("PLATA", "#b0bec5"),
-            ("ORO", "#f5c518"),    ("LEGENDARIO", "#9c27b0"),
+        # pastillas por rareza
+        RAR_DEFS = [
+            ("BRONCE","#cd7f32"), ("PLATA","#b0bec5"),
+            ("ORO","#f5c518"),    ("LEGENDARIO","#9c27b0"),
         ]
-        pill_total_w = len(RAR_PILLS)*(PILL_W+PILL_GAP)-PILL_GAP
+        PILL_W = 64; PILL_H = 12; PILL_GAP = 5
+        pill_total_w = len(RAR_DEFS)*(PILL_W+PILL_GAP)-PILL_GAP
         pill_x0 = PW/2 - pill_total_w/2
-        for pi, (rlabel, rhex) in enumerate(RAR_PILLS):
-            n_rar = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel and desbloqueados.get(l['id']))
-            t_rar = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel)
-            px2   = pill_x0 + pi*(PILL_W+PILL_GAP)
+        for pi, (rlabel, rhex) in enumerate(RAR_DEFS):
+            n_r = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel and desbloqueados.get(l['id']))
+            t_r = sum(1 for l in LOGROS if l['rareza'].upper()==rlabel)
+            px2 = pill_x0 + pi*(PILL_W+PILL_GAP)
             rrect(cv, px2, PH-HDR2-29, PILL_W, PILL_H, r=4, fill_col=colors.HexColor(rhex))
-            txt(cv, f"{rlabel}  {n_rar}/{t_rar}",
-                px2+PILL_W/2, PH-HDR2-21,
+            txt(cv, f"{rlabel}  {n_r}/{t_r}", px2+PILL_W/2, PH-HDR2-21,
                 size=5.5, col=C_BG, font="Helvetica-Bold", anchor="center")
 
-        # ── layout grilla por CATEGORÍA ───────────────────────────
+        # ── layout: 4 franjas por rareza ──────────────────────────
         GRID_TOP = PH - HDR2 - 34
         GRID_BOT = MARGIN + 6
         GRID_H   = GRID_TOP - GRID_BOT
         GRID_W   = PW - MARGIN*2
-        HEADER_SEC = 12
+        HEADER_SEC = 11
 
-        cat_groups = [(cat, [l for l in LOGROS if l['cat']==cat])
-                      for cat in CATEGORIAS_ORDEN
-                      if any(l['cat']==cat for l in LOGROS)]
+        RAREZA_ORDEN_PDF = ["Bronce","Plata","Oro","Legendario"]
+        RAR_COL  = {"Bronce":"#cd7f32","Plata":"#b0bec5","Oro":"#f5c518","Legendario":"#9c27b0"}
+        RAR_BG   = {"Bronce":"#1a0e00","Plata":"#0a1018","Oro":"#1a1400","Legendario":"#120018"}
 
-        counts_cat = [len(g) for _, g in cat_groups]
-        total_c    = sum(counts_cat)
-        heights_cat = [max(HEADER_SEC+18,
-                           int((c/total_c)*(GRID_H - len(cat_groups)*HEADER_SEC)) + HEADER_SEC)
-                       for c in counts_cat]
-        diff = GRID_H - sum(heights_cat)
-        heights_cat[0] += diff
+        # agrupar logros por rareza, ordenados por num
+        rar_groups = [
+            (rar, sorted([l for l in LOGROS if l['rareza']==rar], key=lambda x: x['num']))
+            for rar in RAREZA_ORDEN_PDF
+        ]
+        counts_r = [len(g) for _, g in rar_groups]
+        total_r  = sum(counts_r)
 
-        CAT_HEX = {
-            "Participación":"#1976D2","Victorias":"#c62828","Ranking":"#f57c00",
-            "Estrategia":"#2e7d32","Torneo":"#6a1b9a","Ligas":"#00838f",
-            "Social":"#ad1457","Especial":"#4527a0","Progresión":"#37474f",
-        }
-        CAT_BG = {
-            "Participación":"#0d2a4a","Victorias":"#2a0a0a","Ranking":"#2a1800",
-            "Estrategia":"#0a1f0a","Torneo":"#1a0a2a","Ligas":"#001a1f",
-            "Social":"#2a0a18","Especial":"#100a2a","Progresión":"#101518",
-        }
+        # altura proporcional al número de logros, mínimo suficiente
+        heights_r = [max(HEADER_SEC+16,
+                         int((c/total_r)*(GRID_H - len(rar_groups)*HEADER_SEC)) + HEADER_SEC)
+                     for c in counts_r]
+        diff_r = GRID_H - sum(heights_r)
+        heights_r[0] += diff_r  # ajuste al primero
 
-        # directorio de imágenes (relativo al proyecto)
-        _IMG_DIR_PDF = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                    "vistas", "imagenes_logros")
+        # directorio de imágenes
+        _IMG_DIR_PDF = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "vistas", "imagenes_logros"
+        )
 
         def _load_img_pdf(num):
             import glob as _glob
@@ -692,36 +689,35 @@ def generar_pdf_jugador(
                     return hits[0]
             return None
 
-        cur_y = GRID_TOP
+        cur_y = GRID_TOP  # de arriba hacia abajo
 
-        for (cat_name, cat_list), sec_h in zip(cat_groups, heights_cat):
+        for (rar_name, rar_list), sec_h in zip(rar_groups, heights_r):
             sec_y  = cur_y - sec_h
             cur_y -= sec_h
 
-            cat_col = colors.HexColor(CAT_HEX.get(cat_name,"#444"))
-            cat_bg  = colors.HexColor(CAT_BG.get(cat_name,"#111"))
+            rar_col = colors.HexColor(RAR_COL[rar_name])
+            rar_bg  = colors.HexColor(RAR_BG[rar_name])
 
-            # fondo sección
-            rrect(cv, MARGIN, sec_y, GRID_W, sec_h, r=5, fill_col=cat_bg)
-            # header categoría
+            # fondo de sección
+            rrect(cv, MARGIN, sec_y, GRID_W, sec_h, r=5, fill_col=rar_bg)
+            # header rareza
             rrect(cv, MARGIN, sec_y+sec_h-HEADER_SEC, GRID_W, HEADER_SEC,
-                  r=4, fill_col=cat_col)
-            n_ok_cat = sum(1 for l in cat_list if desbloqueados.get(l['id']))
-            txt(cv, f"{cat_name.upper()}   {n_ok_cat} / {len(cat_list)}",
+                  r=4, fill_col=rar_col)
+            n_ok_r = sum(1 for l in rar_list if desbloqueados.get(l['id']))
+            txt(cv, f"{rar_name.upper()}   {n_ok_r} / {len(rar_list)}",
                 MARGIN + GRID_W/2, sec_y+sec_h-HEADER_SEC+3,
-                size=6.5, col=C_WHITE, font="Helvetica-Bold", anchor="center")
+                size=6.5, col=C_BG, font="Helvetica-Bold", anchor="center")
 
-            N_L     = len(cat_list)
-            AVAIL_H = sec_h - HEADER_SEC - 3
-            AVAIL_W = GRID_W - 6
+            N_L     = len(rar_list)
+            AVAIL_H = sec_h - HEADER_SEC - 2
+            AVAIL_W = GRID_W - 4
 
-            # calcular columnas óptimas
+            # columnas óptimas
             best_cols = max(N_L, 1)
-            for try_cols in range(min(N_L, 20), 0, -1):
-                try_rows = -(-N_L // try_cols)
+            for try_cols in range(min(N_L, 36), 0, -1):
                 cw = AVAIL_W / try_cols
-                ch = AVAIL_H / try_rows
-                if cw >= 12 and ch >= 12:
+                ch = AVAIL_H / (-(-N_L // try_cols))
+                if cw >= 11 and ch >= 11:
                     best_cols = try_cols
                     break
             NCOLS  = best_cols
@@ -730,73 +726,69 @@ def generar_pdf_jugador(
             CELL_H = AVAIL_H / NROWS
             MEDAL_R = min(CELL_W, CELL_H) * 0.36
 
-            for idx, logro in enumerate(cat_list):
+            for idx, logro in enumerate(rar_list):
                 col_i = idx % NCOLS
                 row_i = idx // NCOLS
-                cx_   = MARGIN + 3 + col_i*CELL_W + CELL_W/2
+                cx_   = MARGIN + 2 + col_i*CELL_W + CELL_W/2
                 cy_   = sec_y + AVAIL_H - row_i*CELL_H - CELL_H/2
 
                 unlocked = desbloqueados.get(logro['id'], False)
-                RC = RAREZA_COLORS.get(logro['rareza'], RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
+                RC = RAREZA_COLORS.get(rar_name, RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
 
-                # ── intentar imagen SVG/PNG desde imagenes_logros/ ──
+                # ── imagen SVG desde imagenes_logros/ ────────────
                 img_drawn = False
                 img_path_pdf = _load_img_pdf(logro['num'])
                 if img_path_pdf and os.path.exists(img_path_pdf):
                     try:
-                        iw = MEDAL_R * 2.2
-                        ih = MEDAL_R * 2.6
+                        iw = MEDAL_R * 2.1
+                        ih = MEDAL_R * 2.5
+                        cv.drawImage(
+                            ImageReader(img_path_pdf),
+                            cx_ - iw/2, cy_ - ih*0.52,
+                            width=iw, height=ih,
+                            preserveAspectRatio=True, mask='auto'
+                        )
+                        # overlay gris si bloqueado
                         if not unlocked:
-                            # dibujar con opacidad reducida: overlay gris encima
+                            sf(cv, colors.HexColor("#111111"))
+                            cv.setFillAlpha = lambda _: None
                             cv.saveState()
-                            cv.setFillColorRGB(0.15, 0.15, 0.15)
-                            cv.drawImage(ImageReader(img_path_pdf),
-                                         cx_-iw/2, cy_-ih*0.55,
-                                         width=iw, height=ih,
-                                         preserveAspectRatio=True, mask='auto')
-                            cv.setFillColorRGB(0.1,0.1,0.1)
-                            cv.setFillAlpha = lambda a: None  # no disponible directo
+                            cv.setFillColorRGB(0.07, 0.07, 0.07)
+                            cv.rect(cx_-iw/2, cy_-ih*0.52, iw, ih, fill=1, stroke=0)
                             cv.restoreState()
-                        else:
-                            cv.drawImage(ImageReader(img_path_pdf),
-                                         cx_-iw/2, cy_-ih*0.55,
-                                         width=iw, height=ih,
-                                         preserveAspectRatio=True, mask='auto')
                         img_drawn = True
                     except Exception:
                         img_drawn = False
 
-                # ── fallback: medalla ReportLab ──────────────────
+                # ── fallback medalla ReportLab ────────────────────
                 if not img_drawn:
-                    rrect(cv, cx_-MEDAL_R*0.22, cy_+MEDAL_R*0.55,
-                          MEDAL_R*0.44, MEDAL_R*0.5, r=1,
+                    rrect(cv, cx_-MEDAL_R*0.2, cy_+MEDAL_R*0.52,
+                          MEDAL_R*0.4, MEDAL_R*0.48, r=1,
                           fill_col=colors.HexColor(RC['ribbon']))
                     sf(cv, colors.HexColor(RC['ring']))
                     cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
                     sf(cv, colors.HexColor(RC['c1']))
                     cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
-                    sf(cv, colors.HexColor(RC['shine']))
-                    cv.circle(cx_-MEDAL_R*0.22, cy_+MEDAL_R*0.22, MEDAL_R*0.18, fill=1, stroke=0)
                     if not unlocked:
-                        sf(cv, colors.HexColor("#333333"))
-                        cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
+                        sf(cv, colors.HexColor("#2a2a2a"))
+                        cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
 
-                # nombre debajo
-                if CELL_H > 18:
+                # nombre debajo si hay espacio
+                if CELL_H > 16:
                     name_col = C_TEXT if unlocked else C_SUBTEXT
-                    name_short = logro['name'][:11]
-                    txt(cv, name_short, cx_, sec_y + AVAIL_H - row_i*CELL_H - 2,
-                        size=max(3.2, min(4.5, CELL_W/11)),
+                    txt(cv, logro['name'][:12],
+                        cx_, sec_y + AVAIL_H - row_i*CELL_H - 1.5,
+                        size=max(3.0, min(4.2, CELL_W/11)),
                         col=name_col,
                         font="Helvetica-Bold" if unlocked else "Helvetica",
                         anchor="center")
 
-                # check verde desbloqueado
-                if unlocked and CELL_H > 14:
+                # check verde
+                if unlocked and CELL_H > 13:
                     sf(cv, C_GREEN)
-                    cv.circle(cx_+MEDAL_R*0.6, cy_+MEDAL_R*0.6, MEDAL_R*0.24, fill=1, stroke=0)
-                    txt(cv, "V", cx_+MEDAL_R*0.6, cy_+MEDAL_R*0.52,
-                        size=max(2.8, MEDAL_R*0.28), col=C_WHITE,
+                    cv.circle(cx_+MEDAL_R*0.58, cy_+MEDAL_R*0.58, MEDAL_R*0.22, fill=1, stroke=0)
+                    txt(cv, "V", cx_+MEDAL_R*0.58, cy_+MEDAL_R*0.50,
+                        size=max(2.5, MEDAL_R*0.25), col=C_WHITE,
                         font="Helvetica-Bold", anchor="center")
 
         # ── footer pág 2 ─────────────────────────────────────────
@@ -1542,7 +1534,6 @@ def show():
             try:
                 _camp_liga_pdf  = campeonatos_liga  if 'campeonatos_liga'  in dir() else []
                 _camp_torn_pdf  = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
-                # Calcular Elo real para los logros de ranking
                 try:
                     _data_elo_pdf, _, _ = calcular_elo(df_raw)
                 except Exception:
