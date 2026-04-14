@@ -74,8 +74,8 @@ LOGROS = [
     {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 3000 pts de Score_completo"},
     {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 4000 pts de Score_completo"},
     {"id":"RK07","num":35,"cat":"Ranking",      "rareza":"Bronce",    "icon":"🔢","xp":100,  "name":"ELO 1000",              "desc":"Alcanza 1000 pts de ELO al finalizar un mes"},
-    {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1200",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
-    {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 1300",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
+    {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1500",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
+    {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 2000",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
     {"id":"RK10","num":38,"cat":"Ranking",      "rareza":"Legendario","icon":"🔢","xp":1600, "name":"ELO Máster",            "desc":"Alcanza 1500 pts de ELO al finalizar un mes"},
     # ── ESTRATEGIA (14) ──────────────────────────────────────────────────────
     {"id":"ES01","num":39,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🔒","xp":50,   "name":"Maestro de Tipos",      "desc":"Participa en un torneo de NAT DEX MONOTYPE"},
@@ -403,20 +403,93 @@ def evaluar_logros(
     r["VI10"] = n_camp_torneo > 10
     r["VI11"] = victorias >= 50
     r["VI12"] = victorias >= 100
-    r["VI13"] = False  # necesita dato de si ganó sin perder — manual/observación
-    r["VI14"] = False  # verificar derrotas a 5 campeones — observación
-    r["VI15"] = False  # verificar vs campeones PMS — observación
-    r["VI16"] = False  # dato de Pokémon sobrevivientes no disponible en CSV
-    r["VI17"] = False  # dato de Pokémon sobrevivientes no disponible en CSV
-    r["VI18"] = False  # dato de Pokémon sobrevivientes no disponible en CSV
+    # VICTORIAS — usando columna 'pokemons Sob' del CSV
+    # pokemons Sob = pokémon sobrevivientes del GANADOR en esa partida
+    def _gano_con_sob(n_sob_exacto):
+        """True si el jugador ganó alguna partida con exactamente n_sob_exacto pokémon sobrevivientes."""
+        if 'pokemons Sob' not in df_raw.columns or 'winner' not in df_raw.columns:
+            return False
+        mis_victorias = df_raw[
+            df_raw['winner'].str.lower().str.contains(pq, na=False)
+        ]
+        return any(mis_victorias['pokemons Sob'].astype(str).str.strip() == str(n_sob_exacto))
+
+    # VI13: Perfección — ganar un torneo ganando TODAS sus partidas sin perder ninguna
+    def _perfeccion():
+        if 'N_Torneo' not in df_raw.columns or 'league' not in df_raw.columns: return False
+        torneos_jugados = df_raw[
+            (df_raw['league'] == 'TORNEO') & (
+                df_raw['player1'].str.lower().str.contains(pq, na=False) |
+                df_raw['player2'].str.lower().str.contains(pq, na=False)
+            )
+        ]['N_Torneo'].dropna().unique()
+        for nt in torneos_jugados:
+            sub = df_raw[
+                (df_raw['N_Torneo'] == nt) & (
+                    df_raw['player1'].str.lower().str.contains(pq, na=False) |
+                    df_raw['player2'].str.lower().str.contains(pq, na=False)
+                )
+            ]
+            if len(sub) < 2: continue
+            ganadas = sub['winner'].str.lower().str.contains(pq, na=False).sum()
+            # Ganó todas sus partidas Y llegó a la final
+            llego_final = sub['round'].str.lower().str.contains('final', na=False).any()
+            if ganadas == len(sub) and llego_final:
+                return True
+        return False
+    r["VI13"] = _perfeccion()
+
+    # VI14: Verdugo de Élite — derrotar a 5 jugadores que son campeones de torneo
+    # Lista de campeones actualizable
+    CAMPEONES_TORNEO = [
+        "Yabadaba", "MaskWolf","Chino","The.Ultracheese","Luigillanos","Renzo","Alechiii","Aikauwu","D'Allfather","Haseo","Joscake","A25","Angello77","Nigga Chan",
+        ,"Davarv","haiseowo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
+        "Mr.Shadowdusk","Chris FPS","Adpg"
+        # agregar más aquí
+    ]
+    def _verdugo_elite():
+        rivales_campeon_derrotados = set()
+        for _, row in pm.iterrows():
+            p1 = str(row.get('player1','')).strip().lower()
+            p2 = str(row.get('player2','')).strip().lower()
+            winner_r = str(row.get('winner','')).strip().lower()
+            if pq not in winner_r: continue  # el jugador no ganó esta partida
+            rival = p2 if pq in p1 else p1
+            for camp in CAMPEONES_TORNEO:
+                if camp in rival:
+                    rivales_campeon_derrotados.add(rival)
+        return len(rivales_campeon_derrotados) >= 5
+    r["VI14"] = _verdugo_elite()
+
+    # VI15: Asesino de Gigantes — derrotar a 3 campeones de la PMS
+    CAMPEONES_PMS = [
+        "Luigillanos", "Joscake","Angello77","Lautaro"
+        # agregar más aquí
+    ]
+    def _asesino_gigantes():
+        derrotados = set()
+        for _, row in pm.iterrows():
+            p1 = str(row.get('player1','')).strip().lower()
+            p2 = str(row.get('player2','')).strip().lower()
+            winner_r = str(row.get('winner','')).strip().lower()
+            if pq not in winner_r: continue
+            rival = p2 if pq in p1 else p1
+            for camp in CAMPEONES_PMS:
+                if camp in rival:
+                    derrotados.add(rival)
+        return len(derrotados) >= 3
+    r["VI15"] = _asesino_gigantes()
+    r["VI16"] = _gano_con_sob(6)   # Sin Compasión: ganó con 6 pokémon sobrevivientes
+    r["VI17"] = _gano_con_sob(1)   # Remontada Épica: ganó con 1 pokémon sobreviviente
+    r["VI18"] = _gano_con_sob(0)   # Clutch: ganó con 0 pokémon vivos
 
     # RANKING
     r["RK01"] = _wr_aumento_mensual(1)
     r["RK02"] = _wr_aumento_mensual(20)
-    r["RK03"] = score_max >= 10
-    r["RK04"] = score_max >= 20
-    r["RK05"] = score_max >= 30
-    r["RK06"] = score_max >= 40
+    r["RK03"] = score_max >= 1000
+    r["RK04"] = score_max >= 2000
+    r["RK05"] = score_max >= 3000
+    r["RK06"] = score_max >= 4000
     r["RK07"] = elo_actual >= 1000
     r["RK08"] = elo_actual >= 1200
     r["RK09"] = elo_actual >= 1300
@@ -493,18 +566,126 @@ def evaluar_logros(
 
     # ESPECIAL
     r["SP01"] = primer_torneo_ganado
-    r["SP02"] = False  # necesita fecha del último campeonato — observación
+
+    # SP02: Regreso del Rey — volver a ganar un torneo después de 1+ año sin ganar
+    def _regreso_del_rey():
+        if len(campeonatos_torneo) < 2: return False
+        if 'N_Torneo' not in df_raw.columns or 'date' not in df_raw.columns: return False
+        fechas_camp = []
+        for camp in campeonatos_torneo:
+            nt = camp.get('Torneo')
+            sub = df_raw[df_raw['N_Torneo'] == nt]['date']
+            sub = pd.to_datetime(sub, errors='coerce').dropna()
+            if not sub.empty:
+                fechas_camp.append(sub.max())
+        if len(fechas_camp) < 2: return False
+        fechas_camp.sort()
+        for i in range(1, len(fechas_camp)):
+            if (fechas_camp[i] - fechas_camp[i-1]).days >= 365:
+                return True
+        return False
+    r["SP02"] = _regreso_del_rey()
+
     r["SP03"] = max_wins_rival >= 5
     r["SP04"] = max_wins_rival >= 10
     r["SP05"] = max_wins_rival >= 20
-    r["SP06"] = False  # cruzar campeones — observación
-    r["SP07"] = False  # ganar todos torneos de un año — observación
-    r["SP08"] = False  # ganar 2 torneos en mismo mes — observación compleja
-    r["SP09"] = False  # mayor partidas ganadas del año — comparativo global
-    r["SP10"] = False  # misma liga 3 temporadas — observación
-    r["SP11"] = False  # menos de 3 derrotas en liga — observación por temporada
-    r["SP12"] = False  # menos de 10 derrotas en liga — observación
-    r["SP13"] = False  # menos de 15 derrotas en liga — observación
+    # SP06: Underdog — ganar a alguien que sea campeón de torneo Y liga
+    LEYENDAS = [
+        "Luigillanos", "Darmanethan", "Ricomam", "Alechiii","Joscake","Angello77","Elin beacil" ,"Akaru"
+        # agregar más aquí
+    ]
+    def _underdog():
+        for _, row in pm.iterrows():
+            p1 = str(row.get('player1','')).strip().lower()
+            p2 = str(row.get('player2','')).strip().lower()
+            winner_r = str(row.get('winner','')).strip().lower()
+            if pq not in winner_r: continue
+            rival = p2 if pq in p1 else p1
+            for leyenda in LEYENDAS:
+                if leyenda in rival:
+                    return True
+        return False
+    r["SP06"] = _underdog()
+
+    # SP07: El Invicto — terminar un año sin perder ninguna partida en torneos
+    def _el_invicto():
+        if 'date' not in pm.columns or 'league' not in pm.columns: return False
+        torneos_pm = pm[pm['league'] == 'TORNEO'].copy()
+        if torneos_pm.empty: return False
+        torneos_pm['_yr'] = torneos_pm['date'].dt.year
+        for yr, grp in torneos_pm.groupby('_yr'):
+            if grp.empty: continue
+            perdio = grp['winner'].str.lower().str.contains(pq, na=False)
+            jugadas = len(grp)
+            ganadas = perdio.sum()
+            if jugadas >= 3 and ganadas == jugadas:  # todas ganadas
+                return True
+        return False
+    r["SP07"] = _el_invicto()
+
+    # SP08: Speedrunner — ganar 2 torneos en el mismo mes
+    def _speedrunner():
+        if len(campeonatos_torneo) < 2: return False
+        if 'N_Torneo' not in df_raw.columns or 'date' not in df_raw.columns: return False
+        meses_camp = []
+        for camp in campeonatos_torneo:
+            nt = camp.get('Torneo')
+            sub = df_raw[df_raw['N_Torneo'] == nt]['date']
+            sub = pd.to_datetime(sub, errors='coerce').dropna()
+            if not sub.empty:
+                d = sub.max()
+                meses_camp.append(f"{d.year}-{d.month:02d}")
+        from collections import Counter
+        return any(v >= 2 for v in Counter(meses_camp).values())
+    r["SP08"] = _speedrunner()
+
+    # SP09: Jugador del Año — mayor partidas ganadas en un año (comparativo global)
+    def _jugador_del_anio():
+        if 'winner' not in df_raw.columns or 'date' not in df_raw.columns: return False
+        df2 = df_raw.copy()
+        df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
+        df2['_yr'] = df2['date'].dt.year
+        for yr, grp in df2.groupby('_yr'):
+            wins = grp['winner'].value_counts()
+            if wins.empty: continue
+            top_player = wins.index[0].strip().lower()
+            top_wins   = wins.iloc[0]
+            mis_wins   = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            if mis_wins >= top_wins and pq in top_player:
+                return True
+        return False
+    r["SP09"] = _jugador_del_anio()
+
+    # SP10: Veterano de Guerra — jugar en la misma liga 3 temporadas
+    def _veterano_guerra():
+        if base2.empty or 'Ligas_categoria' not in base2.columns: return False
+        if 'Participante' not in base2.columns or 'Liga_Temporada' not in base2.columns: return False
+        mis_ligas = base2[base2['Participante'].str.lower().str.contains(pq, na=False)]
+        if mis_ligas.empty: return False
+        # Extraer prefijo de liga (PES, PJS, etc.) y contar temporadas distintas
+        mis_ligas = mis_ligas.copy()
+        mis_ligas['_pref'] = mis_ligas['Ligas_categoria'].str.extract(r'^([A-Z]+)', expand=False)
+        for pref, grp in mis_ligas.groupby('_pref'):
+            if grp['Liga_Temporada'].nunique() >= 3:
+                return True
+        return False
+    r["SP10"] = _veterano_guerra()
+
+    # SP11/SP12/SP13: derrotas en liga en una temporada
+    def _max_derrotas_liga():
+        """Retorna el mínimo de derrotas que tuvo el jugador en alguna temporada de liga."""
+        if base2.empty or 'Participante' not in base2.columns: return 999
+        mis = base2[base2['Participante'].str.lower().str.contains(pq, na=False)]
+        if mis.empty: return 999
+        if 'Derrotas' not in mis.columns: return 999
+        min_d = mis.groupby('Liga_Temporada')['Derrotas'].sum().min()
+        return int(min_d) if not pd.isna(min_d) else 999
+
+    _min_derr = _max_derrotas_liga()
+    r["SP11"] = _min_derr <= 3    # El Inmortal: no más de 3 derrotas en liga en una temporada
+    r["SP12"] = _min_derr <= 10   # Mortal
+    r["SP13"] = _min_derr <= 15   # Plebeyo
+
     r["SP14"] = (n_camp_liga >= 1 and
                  any('PJS' in str(l) for l in ligas_jugadas) and
                  any('PES' in str(l) for l in ligas_jugadas) and
