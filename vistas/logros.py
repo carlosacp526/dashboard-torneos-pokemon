@@ -74,8 +74,8 @@ LOGROS = [
     {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 3000 pts de Score_completo"},
     {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 4000 pts de Score_completo"},
     {"id":"RK07","num":35,"cat":"Ranking",      "rareza":"Bronce",    "icon":"🔢","xp":100,  "name":"ELO 1000",              "desc":"Alcanza 1000 pts de ELO al finalizar un mes"},
-    {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1500",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
-    {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 2000",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
+    {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1200",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
+    {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 1300",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
     {"id":"RK10","num":38,"cat":"Ranking",      "rareza":"Legendario","icon":"🔢","xp":1600, "name":"ELO Máster",            "desc":"Alcanza 1500 pts de ELO al finalizar un mes"},
     # ── ESTRATEGIA (14) ──────────────────────────────────────────────────────
     {"id":"ES01","num":39,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🔒","xp":50,   "name":"Maestro de Tipos",      "desc":"Participa en un torneo de NAT DEX MONOTYPE"},
@@ -413,10 +413,10 @@ def evaluar_logros(
     # RANKING
     r["RK01"] = _wr_aumento_mensual(1)
     r["RK02"] = _wr_aumento_mensual(20)
-    r["RK03"] = score_max >= 1000
-    r["RK04"] = score_max >= 2000
-    r["RK05"] = score_max >= 3000
-    r["RK06"] = score_max >= 4000
+    r["RK03"] = score_max >= 10
+    r["RK04"] = score_max >= 20
+    r["RK05"] = score_max >= 30
+    r["RK06"] = score_max >= 40
     r["RK07"] = elo_actual >= 1000
     r["RK08"] = elo_actual >= 1200
     r["RK09"] = elo_actual >= 1300
