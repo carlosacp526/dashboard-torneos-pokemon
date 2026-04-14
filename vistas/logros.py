@@ -7,15 +7,22 @@ import streamlit as st
 import pandas as pd
 import os, base64, glob
 
-# ── Path de imágenes: vistas/imagenes_logros_png/ relativo al cwd (raíz) ─────
-# app.py corre desde la raíz → cwd = raíz del proyecto
-# La carpeta está en vistas/imagenes_logros_png/
-_IMG_DIR = os.path.join(os.getcwd(), "vistas", "imagenes_logros_png")
+# ── Imágenes embebidas directamente (sin dependencia de paths) ───────────────
+try:
+    from vistas.logros_imagenes import IMAGENES_LOGROS as _IMGS
+except ImportError:
+    try:
+        from logros_imagenes import IMAGENES_LOGROS as _IMGS
+    except ImportError:
+        _IMGS = {}
 
-def _logro_img_path(num: int):
-    """Retorna el path al PNG del logro, o None si no existe."""
-    hits = glob.glob(os.path.join(_IMG_DIR, f"{num:03d}_*.png"))
-    return hits[0] if hits else None
+def _get_img_bytes(num: int):
+    """Retorna bytes PNG del logro num, o None si no está disponible."""
+    b64 = _IMGS.get(num)
+    if b64:
+        import base64 as _b64
+        return _b64.b64decode(b64)
+    return None
 
 def _img_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -546,11 +553,6 @@ def mostrar_logros(
     st.markdown("---")
     st.markdown("### 🏅 Logros")
 
-    # ── DEBUG PATH (quitar cuando funcione) ─────────────────────
-    _test = _logro_img_path(1)
-    st.info(f"📁 Buscando en: `{_IMG_DIR}` | ¿Existe dir?: {os.path.isdir(_IMG_DIR)} | Logro #1: `{_test}`")
-    # ─────────────────────────────────────────────────────────────
-
     with st.spinner("Calculando logros..."):
         desbloqueados = evaluar_logros(
             player_query, player_matches, df_raw, data_elo,
@@ -618,31 +620,28 @@ def mostrar_logros(
                 cols = st.columns(COLS)
                 for i, logro in enumerate(row):
                     with cols[i]:
-                        unlocked = desbloqueados.get(logro["id"], False)
-                        img_path = _logro_img_path(logro["num"])
+                        unlocked  = desbloqueados.get(logro["id"], False)
+                        img_bytes = _get_img_bytes(logro["num"])
 
-                        if img_path:
+                        if img_bytes:
                             try:
                                 from PIL import Image as _PIL
                                 import numpy as _np
-                                img = _PIL.open(img_path).convert("RGBA")
+                                import io as _io
+                                img = _PIL.open(_io.BytesIO(img_bytes)).convert("RGBA")
                                 if not unlocked:
                                     arr = _np.array(img)
                                     gray = (arr[...,0]*0.299 + arr[...,1]*0.587 + arr[...,2]*0.114).astype("uint8")
                                     arr[...,0] = gray; arr[...,1] = gray; arr[...,2] = gray
-                                    arr[...,3] = (arr[...,3] * 0.3).astype("uint8")
+                                    arr[...,3] = (arr[...,3] * 0.35).astype("uint8")
                                     img = _PIL.fromarray(arr, "RGBA")
                                 st.image(img, use_container_width=True)
-                            except Exception:
-                                st.markdown(
-                                    f'<div style="text-align:center;font-size:26px;opacity:{"1" if unlocked else "0.25"}">' +
-                                    logro["icon"] + "</div>",
-                                    unsafe_allow_html=True
-                                )
+                            except Exception as _e:
+                                st.caption(f"err:{_e}")
                         else:
+                            op = "1" if unlocked else "0.25"
                             st.markdown(
-                                f'<div style="text-align:center;font-size:26px;opacity:{"1" if unlocked else "0.25"}">' +
-                                logro["icon"] + "</div>",
+                                f'<div style="text-align:center;font-size:28px;opacity:{op}">{logro["icon"]}</div>',
                                 unsafe_allow_html=True
                             )
 

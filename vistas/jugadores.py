@@ -7,7 +7,7 @@ from utils import (load_data, normalize_columns, ensure_fields, compute_player_s
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
                    build_base_liga, build_base_torneo, build_base_jornada)
 from vistas.logros import (LOGROS, evaluar_logros, RAREZA_COLORS, CAT_COLORS,
-                            CATEGORIAS_ORDEN, BW_COLORS, medal_svg, _logro_img_path, _img_b64)
+                            CATEGORIAS_ORDEN, BW_COLORS, medal_svg, _get_img_bytes)
 from vistas.elo import calcular_elo
 
 
@@ -676,15 +676,11 @@ def generar_pdf_jugador(
         diff_r = GRID_H - sum(heights_r)
         heights_r[0] += diff_r  # ajuste al primero
 
-        # directorio de imágenes PNG (ReportLab no soporta SVG)
-        _IMG_DIR_PDF = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "vistas", "imagenes_logros_png"
-        )
-
         def _load_img_pdf(num):
-            import glob as _glob
-            hits = _glob.glob(os.path.join(_IMG_DIR_PDF, f"{num:03d}_*.png"))
-            return hits[0] if hits else None
+            """Carga imagen PNG del logro desde bytes embebidos."""
+            import io as _io
+            b = _get_img_bytes(num)
+            return _io.BytesIO(b) if b else None
 
         cur_y = GRID_TOP  # de arriba hacia abajo
 
@@ -734,23 +730,22 @@ def generar_pdf_jugador(
 
                 # ── imagen SVG desde imagenes_logros/ ────────────
                 img_drawn = False
-                img_path_pdf = _load_img_pdf(logro['num'])
-                if img_path_pdf and os.path.exists(img_path_pdf):
+                img_buf = _load_img_pdf(logro['num'])
+                if img_buf is not None:
                     try:
                         iw = MEDAL_R * 2.1
                         ih = MEDAL_R * 2.5
+                        img_buf.seek(0)
                         cv.drawImage(
-                            ImageReader(img_path_pdf),
+                            ImageReader(img_buf),
                             cx_ - iw/2, cy_ - ih*0.52,
                             width=iw, height=ih,
                             preserveAspectRatio=True, mask='auto'
                         )
-                        # overlay gris si bloqueado
                         if not unlocked:
-                            sf(cv, colors.HexColor("#111111"))
-                            cv.setFillAlpha = lambda _: None
                             cv.saveState()
-                            cv.setFillColorRGB(0.07, 0.07, 0.07)
+                            cv.setFillColorRGB(0.05, 0.05, 0.05)
+                            cv.setFillAlpha(0.7) if hasattr(cv,'setFillAlpha') else None
                             cv.rect(cx_-iw/2, cy_-ih*0.52, iw, ih, fill=1, stroke=0)
                             cv.restoreState()
                         img_drawn = True
