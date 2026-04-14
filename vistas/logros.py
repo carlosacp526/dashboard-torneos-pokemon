@@ -71,8 +71,8 @@ LOGROS = [
     {"id":"RK02","num":30,"cat":"Ranking",      "rareza":"Plata",     "icon":"🚀","xp":400,  "name":"Ascenso Meteórico",     "desc":"Aumenta tu win rate de un mes a otro en 20%"},
     {"id":"RK03","num":31,"cat":"Ranking",      "rareza":"Bronce",    "icon":"💯","xp":200,  "name":"Top 100",               "desc":"Alcanza 10 pts de Score_completo"},
     {"id":"RK04","num":32,"cat":"Ranking",      "rareza":"Plata",     "icon":"🏅","xp":400,  "name":"Top 50",                "desc":"Alcanza 20 pts de Score_completo"},
-    {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 30 pts de Score_completo"},
-    {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 50 pts de Score_completo"},
+    {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 40 pts de Score_completo"},
+    {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 60 pts de Score_completo"},
     {"id":"RK07","num":35,"cat":"Ranking",      "rareza":"Bronce",    "icon":"🔢","xp":100,  "name":"ELO 1000",              "desc":"Alcanza 1000 pts de ELO al finalizar un mes"},
     {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1200",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
     {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 1300",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
@@ -488,8 +488,8 @@ def evaluar_logros(
     r["RK02"] = _wr_aumento_mensual(20)
     r["RK03"] = score_max >= 10
     r["RK04"] = score_max >= 20
-    r["RK05"] = score_max >= 30
-    r["RK06"] = score_max >= 50
+    r["RK05"] = score_max >= 40
+    r["RK06"] = score_max >= 60
     r["RK07"] = elo_actual >= 1000
     r["RK08"] = elo_actual >= 1200
     r["RK09"] = elo_actual >= 1300
