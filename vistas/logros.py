@@ -7,18 +7,15 @@ import streamlit as st
 import pandas as pd
 import os, base64, glob
 
-# ── Carpeta de imágenes (vistas/imagenes_logros_png/) — PNGs para web y PDF ──
-_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros_png")
-# Fallback a SVG si no hay PNG
-_IMG_DIR_SVG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros")
+# ── Path de imágenes: vistas/imagenes_logros_png/ relativo al cwd (raíz) ─────
+# app.py corre desde la raíz → cwd = raíz del proyecto
+# La carpeta está en vistas/imagenes_logros_png/
+_IMG_DIR = os.path.join(os.getcwd(), "vistas", "imagenes_logros_png")
 
 def _logro_img_path(num: int):
-    """Busca PNG primero (compatible con web+PDF), luego SVG."""
-    for d, ext in [(_IMG_DIR, "png"), (_IMG_DIR_SVG, "svg")]:
-        hits = glob.glob(os.path.join(d, f"{num:03d}_*.{ext}"))
-        if hits:
-            return hits[0]
-    return None
+    """Retorna el path al PNG del logro, o None si no existe."""
+    hits = glob.glob(os.path.join(_IMG_DIR, f"{num:03d}_*.png"))
+    return hits[0] if hits else None
 
 def _img_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -548,6 +545,11 @@ def mostrar_logros(
 ):
     st.markdown("---")
     st.markdown("### 🏅 Logros")
+
+    # ── DEBUG PATH (quitar cuando funcione) ─────────────────────
+    _test = _logro_img_path(1)
+    st.info(f"📁 Buscando en: `{_IMG_DIR}` | ¿Existe dir?: {os.path.isdir(_IMG_DIR)} | Logro #1: `{_test}`")
+    # ─────────────────────────────────────────────────────────────
 
     with st.spinner("Calculando logros..."):
         desbloqueados = evaluar_logros(
