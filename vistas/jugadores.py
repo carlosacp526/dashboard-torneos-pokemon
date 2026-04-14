@@ -1282,9 +1282,9 @@ def show():
         st.markdown("---")
 
         # Tabs del jugador
-        tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8 = st.tabs([
+        tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8,tab9 = st.tabs([
             "📋 Historial","📊 Generales","🏆 Por Evento","🎯 Por Tier",
-            "🎮 Por Formato","📅 Por Mes","📆 Por Año","⚔️ Por Rival"
+            "🎮 Por Formato","📅 Por Mes","📆 Por Año","⚔️ Por Rival","🏅 Logros"
         ])
 
         with tab1:
@@ -1452,6 +1452,29 @@ def show():
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No se encontraron rivales con al menos 4 partidas.")
+
+        # ── Tab 9: Logros ────────────────────────────────────────────────────
+        with tab9:
+            from vistas.logros import mostrar_logros
+            # calcular_elo para logros de ranking
+            try:
+                _data_elo_lg, _, _ = calcular_elo(df_raw)
+            except Exception:
+                _data_elo_lg = pd.DataFrame()
+            _camp_liga_lg   = campeonatos_liga   if 'campeonatos_liga'   in dir() else []
+            _camp_torn_lg   = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
+            mostrar_logros(
+                player_query        = player_query,
+                player_matches      = player_matches,
+                df_raw              = df_raw,
+                data_elo            = _data_elo_lg,
+                base2               = base2,
+                base_torneo_final   = base_torneo_final,
+                campeonatos_liga    = _camp_liga_lg,
+                campeonatos_torneo  = _camp_torn_lg,
+                generar_tabla_temporada = generar_tabla_temporada,
+                generar_tabla_torneo    = generar_tabla_torneo,
+            )
 
         # ── Exportar PDF ────────────────────────────────────────────────────
         st.markdown("---")
