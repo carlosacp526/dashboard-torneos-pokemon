@@ -683,12 +683,21 @@ def generar_pdf_jugador(
         counts_r = [len(g) for _, g in rar_groups]
         total_r  = sum(counts_r)
 
-        # altura proporcional al número de logros, mínimo suficiente
-        heights_r = [max(HEADER_SEC+16,
-                         int((c/total_r)*(GRID_H - len(rar_groups)*HEADER_SEC)) + HEADER_SEC)
-                     for c in counts_r]
+        # Alturas: Bronce/Plata/Oro necesitan 2 filas → más altura
+        # Legendario 1 fila → menos altura
+        heights_r = []
+        for rar_name, rar_list in rar_groups:
+            n = len(rar_list)
+            if rar_name == "Legendario":
+                # 1 fila
+                heights_r.append(max(HEADER_SEC + 30, int(GRID_H * 0.12)))
+            else:
+                # 2 filas → proporción mayor
+                heights_r.append(max(HEADER_SEC + 50, int(GRID_H * 0.29)))
+
+        # Ajustar para que sumen exactamente GRID_H
         diff_r = GRID_H - sum(heights_r)
-        heights_r[0] += diff_r  # ajuste al primero
+        heights_r[0] += diff_r
 
         def _load_img_pdf(num):
             """Carga imagen PNG del logro desde bytes embebidos."""
@@ -719,9 +728,17 @@ def generar_pdf_jugador(
             AVAIL_H = sec_h - HEADER_SEC - 2
             AVAIL_W = GRID_W - 4
 
-            # columnas óptimas
-            best_cols = max(N_L, 1)
-            for try_cols in range(min(N_L, 36), 0, -1):
+            # Máximo de columnas por rareza → forzar 2 filas donde hay muchos logros
+            MAX_COLS = {
+                "Bronce":    18,   # 36 logros → 2 filas de 18
+                "Plata":     12,   # 23 logros → 2 filas de 12
+                "Oro":       14,   # 27 logros → 2 filas de 14
+                "Legendario": 14,  # 14 logros → 1 fila
+            }
+            cap = MAX_COLS.get(rar_name, N_L)
+
+            best_cols = max(1, min(cap, N_L))
+            for try_cols in range(min(cap, N_L), 0, -1):
                 cw = AVAIL_W / try_cols
                 ch = AVAIL_H / (-(-N_L // try_cols))
                 if cw >= 11 and ch >= 11:
