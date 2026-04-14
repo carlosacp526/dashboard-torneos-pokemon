@@ -1009,6 +1009,16 @@ def generar_pdf_jugador(
 
         col_bloques = [bloques[:split], bloques[split:]]
 
+        # Posiciones fijas dentro de cada celda (anchura celda = COL_W/2)
+        # |badge_rar|num|nombre..................|XP|
+        CELL_W2   = COL_W / 2          # ancho de cada celda (2 por fila)
+        B_W       = 18                 # ancho badge rareza
+        B_H       = ROW_H - 2.5       # alto badge
+        NUM_X     = B_W + 4            # x relativa del número
+        NAME_X    = B_W + 18           # x relativa del nombre
+        XP_X      = CELL_W2 - 3        # x relativa del XP (anchor=right)
+        TEXT_Y    = ROW_H * 0.38       # y del texto dentro de la fila (centrado vertical)
+
         for col_i, col_bl in enumerate(col_bloques):
             cx_off = MARGIN + col_i * (COL_W + 6)
             cy_cur = G_TOP
@@ -1016,54 +1026,56 @@ def generar_pdf_jugador(
             for bloque in col_bl:
                 if bloque[0] == 'header':
                     _, cat_name, cat_hex = bloque
-                    # Header de categoría
                     rrect(cv, cx_off, cy_cur - HDR_H, COL_W, HDR_H - 1,
                           r=3, fill_col=colors.HexColor(cat_hex))
-                    # XP total de esta cat
-                    xp_cat = sum(l[4] for l in LOGROS_GUIA if l[2]==cat_name)
-                    n_cat  = sum(1 for l in LOGROS_GUIA if l[2]==cat_name)
-                    txt(cv, f"{cat_name.upper()}  ·  {n_cat} logros  ·  {xp_cat:,} XP total",
+                    xp_cat = sum(l[4] for l in LOGROS_GUIA if l[2] == cat_name)
+                    n_cat  = sum(1 for l in LOGROS_GUIA if l[2] == cat_name)
+                    txt(cv, f"{cat_name.upper()}  ·  {n_cat} logros  ·  {xp_cat:,} XP",
                         cx_off + COL_W/2, cy_cur - HDR_H + 3,
                         size=6, col=colors.white, font="Helvetica-Bold", anchor="center")
                     cy_cur -= HDR_H
 
-                else:  # row
+                else:  # row con hasta 2 logros
                     _, pair = bloque
                     row_y = cy_cur - ROW_H
-                    # Fondo alternado sutil
-                    rrect(cv, cx_off, row_y, COL_W, ROW_H - 0.5,
-                          r=1, fill_col=colors.HexColor("#161c28"))
 
-                    # Cada par de logros lado a lado
-                    cell_w = (COL_W - 2) / 2
+                    # Fondo de fila
+                    rrect(cv, cx_off, row_y, COL_W, ROW_H - 0.4,
+                          r=1, fill_col=colors.HexColor("#161c28"))
+                    # Separador central entre las 2 celdas
+                    sf(cv, colors.HexColor("#2a3040"))
+                    cv.setLineWidth(0.3)
+                    cv.line(cx_off + CELL_W2, row_y, cx_off + CELL_W2, row_y + ROW_H - 0.4)
+
                     for li, logro in enumerate(pair):
                         num, name, cat, rareza, xp, desc = logro
-                        lx = cx_off + li * (cell_w + 2)
+                        lx = cx_off + li * CELL_W2   # inicio de esta celda
 
-                        # Badge de rareza (pequeño cuadro de color)
+                        # Badge de rareza — posición y tamaño fijos
                         rar_hex = RAR_COL_G.get(rareza, "#888")
-                        rar_txt = RAR_TEXT.get(rareza, C_BG)
-                        rrect(cv, lx + 1, row_y + 1.5, 22, ROW_H - 3,
+                        rar_txt = colors.white if rareza == "Legendario" else C_BG
+                        rrect(cv, lx + 1, row_y + 1.2, B_W, B_H,
                               r=1, fill_col=colors.HexColor(rar_hex))
                         txt(cv, rareza[:3].upper(),
-                            lx + 12, row_y + 2.5,
-                            size=4, col=rar_txt, font="Helvetica-Bold", anchor="center")
+                            lx + 1 + B_W/2, row_y + TEXT_Y,
+                            size=3.8, col=rar_txt, font="Helvetica-Bold", anchor="center")
 
-                        # Número
+                        # Número — posición fija
                         txt(cv, f"#{num:03d}",
-                            lx + 25, row_y + 5.5,
-                            size=4, col=C_SUBTEXT, font="Helvetica", anchor="left")
+                            lx + NUM_X, row_y + TEXT_Y,
+                            size=4.0, col=C_SUBTEXT, font="Helvetica", anchor="left")
 
-                        # Nombre
-                        name_s = name[:22]
+                        # Nombre — posición fija, truncar si necesario
+                        max_chars = int((CELL_W2 - NAME_X - 28) / 2.9)
+                        name_s = name if len(name) <= max_chars else name[:max_chars-1] + "…"
                         txt(cv, name_s,
-                            lx + 38, row_y + 5.5,
-                            size=5, col=C_TEXT, font="Helvetica-Bold", anchor="left")
+                            lx + NAME_X, row_y + TEXT_Y,
+                            size=4.8, col=C_TEXT, font="Helvetica-Bold", anchor="left")
 
-                        # XP
-                        txt(cv, f"{xp:,} XP",
-                            lx + cell_w - 2, row_y + 5.5,
-                            size=4.5, col=C_GOLD, font="Helvetica-Bold", anchor="right")
+                        # XP — alineado a la derecha de la celda
+                        txt(cv, f"{xp:,}xp",
+                            lx + XP_X, row_y + TEXT_Y,
+                            size=4.2, col=C_GOLD, font="Helvetica-Bold", anchor="right")
 
                     cy_cur -= ROW_H
 
