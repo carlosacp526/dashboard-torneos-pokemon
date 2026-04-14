@@ -5,6 +5,32 @@ Integrar en jugadores.py llamando a: mostrar_logros(player_query, player_matches
 
 import streamlit as st
 import pandas as pd
+import os, base64, glob
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HELPERS PARA IMÁGENES PNG DE LOGROS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Carpeta vistas/logros/ (misma carpeta que este archivo)
+_LOGROS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logros")
+
+def _logro_num(logro_id: str) -> int:
+    """Convierte B01→1, P01→41, O01→76 (numeración secuencial de los PNG)."""
+    tier = logro_id[0]           # 'B', 'P' o 'O'
+    n    = int(logro_id[1:])     # número dentro del tier
+    base = {"B": 0, "P": 40, "O": 75}[tier]
+    return base + n
+
+def _logro_img_path(logro_id: str):
+    """Devuelve el path al PNG del logro, o None si no existe."""
+    num   = _logro_num(logro_id)
+    hits  = glob.glob(os.path.join(_LOGROS_DIR, f"{num:03d}_*.png"))
+    return hits[0] if hits else None
+
+def _img_b64(path: str) -> str:
+    """Convierte un PNG a data URI base64 para usarlo en st.markdown HTML."""
+    with open(path, "rb") as f:
+        return "data:image/png;base64," + base64.b64encode(f.read()).decode()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DEFINICIÓN DE LOS 100 LOGROS
@@ -581,14 +607,29 @@ def mostrar_logros(
                 cols = st.columns(COLS)
                 for i, logro in enumerate(row_logros):
                     with cols[i]:
-                        unlocked = desbloqueados.get(logro['id'], False)
-                        svg = medal_svg(tier, logro['icon'], color=unlocked, size=64)
-                        opacity = "1" if unlocked else "0.35"
-                        txt_col = "var(--color-text-primary)" if unlocked else "var(--color-text-secondary)"
+                        unlocked  = desbloqueados.get(logro['id'], False)
+                        opacity   = "1" if unlocked else "0.25"
+                        txt_col   = "var(--color-text-primary)" if unlocked else "var(--color-text-secondary)"
                         check_tag = '<p style="font-size:9px;color:#2ecc71;font-weight:500;">✓ Desbloqueado</p>' if unlocked else ""
+
+                        # ── PNG de la carpeta vistas/logros/ (fallback → SVG) ──
+                        img_path = _logro_img_path(logro['id'])
+                        if img_path:
+                            try:
+                                src  = _img_b64(img_path)
+                                filt = "" if unlocked else "filter:grayscale(100%);"
+                                img_tag = (
+                                    f'<img src="{src}" width="72" height="72" '
+                                    f'style="object-fit:contain;{filt}" />'
+                                )
+                            except Exception:
+                                img_tag = medal_svg(tier, logro['icon'], color=unlocked, size=72)
+                        else:
+                            img_tag = medal_svg(tier, logro['icon'], color=unlocked, size=72)
+
                         html_badge = (
                             f'<div style="text-align:center;opacity:{opacity}">'
-                            f'{svg}'
+                            f'{img_tag}'
                             f'<p style="font-size:11px;font-weight:500;margin:4px 0 2px;color:{txt_col};">'
                             f'{logro["name"]}</p>'
                             f'<p style="font-size:10px;color:var(--color-text-secondary);line-height:1.3;">'
