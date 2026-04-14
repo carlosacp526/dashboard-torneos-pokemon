@@ -968,116 +968,93 @@ def generar_pdf_jugador(
             (100,"XP Acumulado 100K","Progresión","Legendario",1600,"Acumula 20,000 XP"),
         ]
 
-        # Ordenar por categoría (mismo orden que CATS)
-        cat_order = [c[0] for c in CATS]
-        logros_sorted = sorted(LOGROS_GUIA, key=lambda x: (cat_order.index(x[2]) if x[2] in cat_order else 99, x[0]))
+        # Ordenar por rareza y construir filas
 
-        # Agrupar por categoría para calcular altura total
-        from itertools import groupby
-        grupos = []
-        for cat, grp in groupby(logros_sorted, key=lambda x: x[2]):
-            items = list(grp)
-            cat_hex = dict(CATS).get(cat, "#555")
-            grupos.append((cat, cat_hex, items))
+        # Ordenar por rareza: Bronce → Plata → Oro → Legendario, luego por num
+        RAR_ORDER = {"Bronce":0,"Plata":1,"Oro":2,"Legendario":3}
+        logros_sorted = sorted(LOGROS_GUIA, key=lambda x: (RAR_ORDER.get(x[3],9), x[0]))
 
-        # Calcular filas totales necesarias: cada cat = 1 header + ceil(n/2) filas
-        # Las ponemos en 2 columnas de página
-        # Construir lista de bloques: (tipo, datos) donde tipo='header'|'row'
-        bloques = []
-        for cat, cat_hex, items in grupos:
-            bloques.append(('header', cat, cat_hex))
-            for i in range(0, len(items), 2):
-                pair = items[i:i+2]
-                bloques.append(('row', pair))
+        # Agrupar de 2 en 2 para filas
+        filas = [logros_sorted[i:i+2] for i in range(0, len(logros_sorted), 2)]
 
-        # Calcular cuántos bloques caben por columna de página
-        # Cada bloque header = HDR_H, cada bloque row = ROW_H
-        def bloque_h(b):
-            return HDR_H if b[0]=='header' else ROW_H
+        # Dividir en 2 columnas de página por mitad de filas
+        mid = len(filas) // 2
+        col_filas = [filas[:mid], filas[mid:]]
 
-        total_h_bloques = sum(bloque_h(b) for b in bloques)
-        # Dividir en dos mitades verticales de la página
-        mid_h = G_H / 2
-        # Encontrar punto de corte
-        acum = 0
-        split = 0
-        for i, b in enumerate(bloques):
-            acum += bloque_h(b)
-            if acum >= total_h_bloques / 2:
-                split = i + 1
-                break
+        # Posiciones fijas dentro de cada celda
+        CELL_W2 = COL_W / 2
+        B_W     = 20       # ancho badge rareza
+        B_H     = ROW_H - 2.5
+        NUM_X   = B_W + 5
+        NAME_X  = B_W + 20
+        XP_X    = CELL_W2 - 3
+        TEXT_Y  = ROW_H * 0.38
 
-        col_bloques = [bloques[:split], bloques[split:]]
-
-        # Posiciones fijas dentro de cada celda (anchura celda = COL_W/2)
-        # |badge_rar|num|nombre..................|XP|
-        CELL_W2   = COL_W / 2          # ancho de cada celda (2 por fila)
-        B_W       = 18                 # ancho badge rareza
-        B_H       = ROW_H - 2.5       # alto badge
-        NUM_X     = B_W + 4            # x relativa del número
-        NAME_X    = B_W + 18           # x relativa del nombre
-        XP_X      = CELL_W2 - 3        # x relativa del XP (anchor=right)
-        TEXT_Y    = ROW_H * 0.38       # y del texto dentro de la fila (centrado vertical)
-
-        for col_i, col_bl in enumerate(col_bloques):
+        for col_i, col_fl in enumerate(col_filas):
             cx_off = MARGIN + col_i * (COL_W + 6)
             cy_cur = G_TOP
 
-            for bloque in col_bl:
-                if bloque[0] == 'header':
-                    _, cat_name, cat_hex = bloque
+            # Header de rareza al inicio de cada bloque
+            rareza_actual = None
+
+            for fila in col_fl:
+                # ¿Cambió la rareza? → dibujar separador de rareza
+                rar_fila = fila[0][3]
+                if rar_fila != rareza_actual:
+                    rareza_actual = rar_fila
+                    rar_hex = RAR_COL_G.get(rareza_actual, "#555")
+                    n_rar   = sum(1 for l in LOGROS_GUIA if l[3] == rareza_actual)
+                    xp_rar  = sum(l[4] for l in LOGROS_GUIA if l[3] == rareza_actual)
                     rrect(cv, cx_off, cy_cur - HDR_H, COL_W, HDR_H - 1,
-                          r=3, fill_col=colors.HexColor(cat_hex))
-                    xp_cat = sum(l[4] for l in LOGROS_GUIA if l[2] == cat_name)
-                    n_cat  = sum(1 for l in LOGROS_GUIA if l[2] == cat_name)
-                    txt(cv, f"{cat_name.upper()}  ·  {n_cat} logros  ·  {xp_cat:,} XP",
+                          r=3, fill_col=colors.HexColor(rar_hex))
+                    txt(cv,
+                        f"{rareza_actual.upper()}  ·  {n_rar} logros  ·  {xp_rar:,} XP",
                         cx_off + COL_W/2, cy_cur - HDR_H + 3,
                         size=6, col=colors.white, font="Helvetica-Bold", anchor="center")
                     cy_cur -= HDR_H
 
-                else:  # row con hasta 2 logros
-                    _, pair = bloque
-                    row_y = cy_cur - ROW_H
+                # Fila de logros
+                row_y = cy_cur - ROW_H
+                rrect(cv, cx_off, row_y, COL_W, ROW_H - 0.4,
+                      r=1, fill_col=colors.HexColor("#161c28"))
+                # Separador central
+                sf(cv, colors.HexColor("#2a3040"))
+                cv.setLineWidth(0.3)
+                cv.line(cx_off + CELL_W2, row_y,
+                        cx_off + CELL_W2, row_y + ROW_H - 0.4)
 
-                    # Fondo de fila
-                    rrect(cv, cx_off, row_y, COL_W, ROW_H - 0.4,
-                          r=1, fill_col=colors.HexColor("#161c28"))
-                    # Separador central entre las 2 celdas
-                    sf(cv, colors.HexColor("#2a3040"))
-                    cv.setLineWidth(0.3)
-                    cv.line(cx_off + CELL_W2, row_y, cx_off + CELL_W2, row_y + ROW_H - 0.4)
+                for li, logro in enumerate(fila):
+                    num, name, cat, rareza, xp, desc = logro
+                    lx = cx_off + li * CELL_W2
 
-                    for li, logro in enumerate(pair):
-                        num, name, cat, rareza, xp, desc = logro
-                        lx = cx_off + li * CELL_W2   # inicio de esta celda
+                    rar_hex = RAR_COL_G.get(rareza, "#888")
+                    rar_txt = colors.white if rareza == "Legendario" else C_BG
 
-                        # Badge de rareza — posición y tamaño fijos
-                        rar_hex = RAR_COL_G.get(rareza, "#888")
-                        rar_txt = colors.white if rareza == "Legendario" else C_BG
-                        rrect(cv, lx + 1, row_y + 1.2, B_W, B_H,
-                              r=1, fill_col=colors.HexColor(rar_hex))
-                        txt(cv, rareza[:3].upper(),
-                            lx + 1 + B_W/2, row_y + TEXT_Y,
-                            size=3.8, col=rar_txt, font="Helvetica-Bold", anchor="center")
+                    # Badge rareza
+                    rrect(cv, lx + 1, row_y + 1.2, B_W, B_H,
+                          r=1, fill_col=colors.HexColor(rar_hex))
+                    txt(cv, rareza[:3].upper(),
+                        lx + 1 + B_W/2, row_y + TEXT_Y,
+                        size=3.8, col=rar_txt, font="Helvetica-Bold", anchor="center")
 
-                        # Número — posición fija
-                        txt(cv, f"#{num:03d}",
-                            lx + NUM_X, row_y + TEXT_Y,
-                            size=4.0, col=C_SUBTEXT, font="Helvetica", anchor="left")
+                    # Número
+                    txt(cv, f"#{num:03d}",
+                        lx + NUM_X, row_y + TEXT_Y,
+                        size=4.0, col=C_SUBTEXT, font="Helvetica", anchor="left")
 
-                        # Nombre — posición fija, truncar si necesario
-                        max_chars = int((CELL_W2 - NAME_X - 28) / 2.9)
-                        name_s = name if len(name) <= max_chars else name[:max_chars-1] + "…"
-                        txt(cv, name_s,
-                            lx + NAME_X, row_y + TEXT_Y,
-                            size=4.8, col=C_TEXT, font="Helvetica-Bold", anchor="left")
+                    # Nombre
+                    max_chars = int((CELL_W2 - NAME_X - 28) / 2.9)
+                    name_s = name if len(name) <= max_chars else name[:max_chars-1] + "…"
+                    txt(cv, name_s,
+                        lx + NAME_X, row_y + TEXT_Y,
+                        size=4.8, col=C_TEXT, font="Helvetica-Bold", anchor="left")
 
-                        # XP — alineado a la derecha de la celda
-                        txt(cv, f"{xp:,}xp",
-                            lx + XP_X, row_y + TEXT_Y,
-                            size=4.2, col=C_GOLD, font="Helvetica-Bold", anchor="right")
+                    # XP
+                    txt(cv, f"{xp:,}xp",
+                        lx + XP_X, row_y + TEXT_Y,
+                        size=4.2, col=C_GOLD, font="Helvetica-Bold", anchor="right")
 
-                    cy_cur -= ROW_H
+                cy_cur -= ROW_H
 
         # ── footer pág 3 ─────────────────────────────────────────
         txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 3 / 3",
