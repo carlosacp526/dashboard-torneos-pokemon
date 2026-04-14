@@ -569,33 +569,35 @@ def mostrar_logros(
     xp_maximo = sum(l["xp"] for l in LOGROS)
     xp_pct    = round(xp_total / xp_maximo * 100, 1) if xp_maximo else 0
 
-    # Barra logros — texto blanco fijo sobre fondo coloreado
+    # ── Barra principal logros ────────────────────────────────────
     st.markdown(f"""
-<div style="position:relative;background:#2a2a2a;border-radius:8px;
-            height:30px;overflow:hidden;margin-bottom:6px">
-  <div style="width:{pct}%;height:100%;border-radius:8px;
+<div style="background:#333;border-radius:8px;height:32px;overflow:hidden;
+            margin-bottom:6px;position:relative">
+  <div style="width:{pct}%;height:100%;
               background:linear-gradient(90deg,#cd7f32,#f5c518,#9c27b0)"></div>
-  <span style="position:absolute;inset:0;display:flex;align-items:center;
-               justify-content:center;color:#ffffff !important;
-               font-weight:700;font-size:13px;text-shadow:0 1px 3px #000">
-    {total_unlock} / {total_logros} logros &nbsp;·&nbsp; {pct}%
-  </span>
+  <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+              display:flex;align-items:center;justify-content:center;
+              color:white;font-weight:700;font-size:14px;
+              text-shadow:1px 1px 4px #000,0 0 8px #000">
+    {total_unlock} / {total_logros} logros desbloqueados &nbsp;·&nbsp; {pct}%
+  </div>
 </div>""", unsafe_allow_html=True)
 
-    # Barra XP — texto blanco fijo
+    # ── Barra XP ──────────────────────────────────────────────────
     st.markdown(f"""
-<div style="position:relative;background:#1a1a2e;border:1px solid #444;
-            border-radius:8px;height:24px;overflow:hidden;margin-bottom:12px">
-  <div style="width:{xp_pct}%;height:100%;border-radius:8px;
-              background:linear-gradient(90deg,#1565c0,#2ecc71)"></div>
-  <span style="position:absolute;inset:0;display:flex;align-items:center;
-               justify-content:center;color:#ffffff !important;
-               font-weight:600;font-size:12px;text-shadow:0 1px 3px #000">
+<div style="background:#111;border:1px solid #555;border-radius:8px;height:26px;
+            overflow:hidden;margin-bottom:14px;position:relative">
+  <div style="width:{xp_pct}%;height:100%;
+              background:linear-gradient(90deg,#1565c0,#27ae60)"></div>
+  <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+              display:flex;align-items:center;justify-content:center;
+              color:white;font-weight:600;font-size:12px;
+              text-shadow:1px 1px 4px #000">
     ⚡ {xp_total:,} / {xp_maximo:,} XP &nbsp;({xp_pct}%)
-  </span>
+  </div>
 </div>""", unsafe_allow_html=True)
 
-    # Métricas por rareza con XP de cada tier
+    # ── Métricas por rareza ───────────────────────────────────────
     bro_ok = sum(1 for l in LOGROS if l["rareza"]=="Bronce"     and desbloqueados.get(l["id"]))
     pla_ok = sum(1 for l in LOGROS if l["rareza"]=="Plata"      and desbloqueados.get(l["id"]))
     oro_ok = sum(1 for l in LOGROS if l["rareza"]=="Oro"        and desbloqueados.get(l["id"]))
@@ -610,15 +612,19 @@ def mostrar_logros(
     c3.metric("🥇 Oro",        f"{oro_ok}/27", f"{oro_xp:,} XP")
     c4.metric("⚡ Legendario", f"{leg_ok}/14", f"{leg_xp:,} XP")
 
+    # ── CSS global ────────────────────────────────────────────────
     st.markdown("""<style>
-.lg-name{font-size:11px;font-weight:700;text-align:center;margin:0;
+/* Nombre del logro: pegado a la imagen, sin margen superior */
+.lg-wrap{margin-top:-10px}
+.lg-name{font-size:11px;font-weight:700;text-align:center;margin:0 0 1px;
          line-height:1.3;color:var(--color-text-primary)}
 .lg-desc{font-size:9px;text-align:center;color:var(--color-text-secondary);
          line-height:1.3;margin:0}
 .lg-xp  {font-size:9px;text-align:center;color:#2ecc71;font-weight:700;margin:1px 0 0}
-.lg-lock{font-size:10px;text-align:center;color:var(--color-text-secondary);margin:0}
-div[data-testid="stImage"] > img{margin-bottom:0 !important}
-div[data-testid="stImage"]{margin-bottom:-14px !important}
+.lg-lock{font-size:9px;text-align:center;color:var(--color-text-secondary);margin:0}
+/* Tabs de rareza: texto siempre visible */
+button[data-baseweb="tab"] p {color:var(--color-text-primary) !important;font-weight:600}
+button[data-baseweb="tab"][aria-selected="true"] p {font-weight:700}
 </style>""", unsafe_allow_html=True)
 
     RAREZA_ORDEN = ["Bronce","Plata","Oro","Legendario"]
@@ -631,12 +637,29 @@ div[data-testid="stImage"]{margin-bottom:-14px !important}
         for r in RAREZA_ORDEN
     ])
 
+    RAR_BG = {"Bronce":"#cd7f32","Plata":"#78909c","Oro":"#b8860b","Legendario":"#7b1fa2"}
+
     for tab, rareza in zip(tabs, RAREZA_ORDEN):
         with tab:
             rar_logros = sorted(
                 [l for l in LOGROS if l["rareza"] == rareza],
                 key=lambda x: x["num"]
             )
+
+            # Contar desbloqueados de esta rareza
+            n_ok  = sum(1 for l in rar_logros if desbloqueados.get(l["id"]))
+            n_tot = len(rar_logros)
+            xp_r  = sum(l["xp"] for l in rar_logros if desbloqueados.get(l["id"]))
+            bg    = RAR_BG[rareza]
+
+            # Header con texto blanco forzado
+            st.markdown(f"""
+<div style="background:{bg};border-radius:8px;padding:8px 16px;margin-bottom:10px;
+            display:flex;align-items:center;justify-content:space-between">
+  <span style="color:#fff;font-weight:700;font-size:15px">{RAR_ICON[rareza]} {rareza.upper()}</span>
+  <span style="color:#fff;font-size:13px;opacity:.9">{n_ok} / {n_tot} desbloqueados &nbsp;·&nbsp; {xp_r:,} XP</span>
+</div>""", unsafe_allow_html=True)
+
             filtro = st.radio(
                 "Mostrar:", ["Todos","Desbloqueados","Bloqueados"],
                 horizontal=True, key=f"f_{rareza}"
@@ -687,8 +710,10 @@ div[data-testid="stImage"]{margin-bottom:-14px !important}
                             '<p class="lg-lock">🔒</p>'
                         )
                         st.markdown(
+                            f'<div class="lg-wrap">'
                             f'<p class="lg-name">{logro["name"]}</p>'
                             f'<p class="lg-desc">{logro["desc"]}</p>'
-                            f'{xp_tag}',
+                            f'{xp_tag}'
+                            f'</div>',
                             unsafe_allow_html=True
                         )
