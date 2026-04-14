@@ -443,7 +443,7 @@ def evaluar_logros(
     # Lista de campeones actualizable
     CAMPEONES_TORNEO = [
         "Yabadaba", "MaskWolf","Chino","The.Ultracheese","Luigillanos","Renzo","Alechiii","Aikauwu","D'Allfather","Haseo","Joscake","A25","Angello77","Nigga Chan",
-        ,"Davarv","haiseowo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
+        "Davarv","haiseowo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
         "Mr.Shadowdusk","Chris FPS","Adpg"
         # agregar más aquí
     ]
