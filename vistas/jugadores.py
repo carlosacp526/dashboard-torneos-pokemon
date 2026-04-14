@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, normalize_columns, ensure_fields, compute_player_stats, generar_tabla_temporada, generar_tabla_torneo,
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
                    build_base_liga, build_base_torneo, build_base_jornada)
+from logros import LOGROS, evaluar_logros, TIER_COLORS, BW_COLORS, _get_icon
 
 
 
@@ -98,6 +99,7 @@ def generar_pdf_jugador(
     ligas_jugador, torneos_jugador,
     campeonatos_liga, campeonatos_torneo,
     wo_partidas, score_ligas_df, score_torneos_df, rivales_df,
+    desbloqueados=None,
 ):
     import pandas as pd
     buf = io.BytesIO()
@@ -585,9 +587,196 @@ def generar_pdf_jugador(
             txt(cv, fecha, xD+CD_W-5, RY-6.5, size=6, col=C_SUBTEXT, anchor="right")
             RY -= ROW_H
 
-    # FOOTER
-    txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}",
+    # FOOTER pág 1
+    txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pág. 1 / 2",
         PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
+
+    # ══════════════════════════════════════════════════════════════
+    # PÁGINA 2 — LOGROS
+    # ══════════════════════════════════════════════════════════════
+    if desbloqueados is not None:
+        cv.showPage()
+
+        # ── fondo ─────────────────────────────────────────────────
+        sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
+
+        # ── header idéntico a pág 1 ───────────────────────────────
+        HDR2 = 44
+        rrect(cv, 0, PH-HDR2, PW, HDR2, r=0, fill_col=C_PANEL)
+        sf(cv, C_ACCENT); cv.rect(0, PH-HDR2-2, PW, 2, fill=1, stroke=0)
+        for lp in ["Logo.png","logo.png","LOGO.PNG"]:
+            if os.path.exists(lp):
+                try:
+                    cv.drawImage(ImageReader(lp), MARGIN, PH-HDR2+4,
+                                 height=36, width=36, preserveAspectRatio=True, mask='auto')
+                except Exception: pass
+                break
+        txt(cv, player_query.upper(), 56, PH-22, size=16, col=C_TEXT, font="Helvetica-Bold")
+        txt(cv, "LOGROS  ·  POKETUBI", 56, PH-36, size=7, col=C_SUBTEXT, font="Helvetica")
+        txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-26,
+            size=8, col=C_SUBTEXT, font="Helvetica", anchor="right")
+
+        # ── totales por tier ──────────────────────────────────────
+        total_ok  = sum(desbloqueados.values())
+        total_all = len(LOGROS)
+        bro_logros = [l for l in LOGROS if l['tier']=='bronce']
+        pla_logros = [l for l in LOGROS if l['tier']=='plata']
+        oro_logros = [l for l in LOGROS if l['tier']=='oro']
+        bro_ok = sum(1 for l in bro_logros if desbloqueados.get(l['id']))
+        pla_ok = sum(1 for l in pla_logros if desbloqueados.get(l['id']))
+        oro_ok = sum(1 for l in oro_logros if desbloqueados.get(l['id']))
+
+        # barra de progreso general
+        PR_X = MARGIN; PR_Y = PH-HDR2-14; PR_W = PW-MARGIN*2; PR_H = 8
+        rrect(cv, PR_X, PR_Y, PR_W, PR_H, r=4, fill_col=C_PANEL2)
+        prog_w = max(8, int(PR_W * total_ok / total_all))
+        rrect(cv, PR_X, PR_Y, prog_w, PR_H, r=4, fill_col=C_GOLD)
+        txt(cv, f"{total_ok} / {total_all} logros desbloqueados  ({round(total_ok/total_all*100,1)}%)",
+            PW/2, PR_Y+1.5, size=5.5, col=C_BG if prog_w > PR_W/2 else C_TEXT,
+            font="Helvetica-Bold", anchor="center")
+
+        # pastillas resumen por tier
+        PILL_W = 68; PILL_H = 14; PILL_GAP = 6
+        pills = [
+            ("🥉 BRONCE", f"{bro_ok}/{len(bro_logros)}", colors.HexColor("#cd7f32")),
+            ("🥈 PLATA",  f"{pla_ok}/{len(pla_logros)}", colors.HexColor("#b0bec5")),
+            ("🥇 ORO",    f"{oro_ok}/{len(oro_logros)}", colors.HexColor("#f5c518")),
+        ]
+        pill_total_w = len(pills)*(PILL_W+PILL_GAP)-PILL_GAP
+        pill_x0 = PW/2 - pill_total_w/2
+        for pi, (plabel, pval, pcol) in enumerate(pills):
+            px2 = pill_x0 + pi*(PILL_W+PILL_GAP)
+            rrect(cv, px2, PH-HDR2-32, PILL_W, PILL_H, r=5, fill_col=pcol)
+            txt(cv, f"{plabel}  {pval}", px2+PILL_W/2, PH-HDR2-24,
+                size=6, col=C_BG, font="Helvetica-Bold", anchor="center")
+
+        # ── layout de la grilla ───────────────────────────────────
+        # disponible: de y=MARGIN a y=PH-HDR2-38
+        GRID_TOP = PH - HDR2 - 40
+        GRID_BOT = MARGIN + 8
+        GRID_H   = GRID_TOP - GRID_BOT
+        GRID_W   = PW - MARGIN*2
+
+        # secciones: bronce (40), plata (35), oro (25) — 3 franjas verticales
+        # calculamos proporción de alturas
+        TIER_DEFS = [
+            ("BRONCE", bro_logros, colors.HexColor("#cd7f32"), colors.HexColor("#5a2d00")),
+            ("PLATA",  pla_logros, colors.HexColor("#b0bec5"), colors.HexColor("#37474f")),
+            ("ORO",    oro_logros, colors.HexColor("#f5c518"), colors.HexColor("#3d2e00")),
+        ]
+        # cada sección ocupa su propia franja horizontal
+        # bronce: 40 logros, plata: 35, oro: 25
+        counts = [len(bro_logros), len(pla_logros), len(oro_logros)]
+        total_c = sum(counts)
+        # reservamos HEADER_SEC px por sección + proporcional al contenido
+        HEADER_SEC = 14
+        heights = [int((c/total_c)*(GRID_H - 3*HEADER_SEC)) + HEADER_SEC for c in counts]
+        # ajuste para que sumen exactamente
+        diff = GRID_H - sum(heights)
+        heights[0] += diff
+
+        cur_y = GRID_TOP  # vamos de arriba hacia abajo
+
+        for tier_name, tier_list, tier_col, tier_bg in TIER_DEFS:
+            sec_h   = heights[TIER_DEFS.index((tier_name, tier_list, tier_col, tier_bg))]
+            sec_y   = cur_y - sec_h   # y inferior de la sección
+            cur_y  -= sec_h
+
+            # fondo de sección
+            rrect(cv, MARGIN, sec_y, GRID_W, sec_h, r=6, fill_col=tier_bg)
+
+            # etiqueta tier
+            rrect(cv, MARGIN, sec_y+sec_h-HEADER_SEC, GRID_W, HEADER_SEC,
+                  r=5, fill_col=tier_col)
+            n_ok = sum(1 for l in tier_list if desbloqueados.get(l['id']))
+            txt(cv, f"{tier_name}   {n_ok} / {len(tier_list)}",
+                MARGIN + GRID_W/2, sec_y+sec_h-HEADER_SEC+4,
+                size=7, col=C_BG, font="Helvetica-Bold", anchor="center")
+
+            # calcular celda de cada logro
+            N_L      = len(tier_list)
+            # columnas y filas que caben
+            AVAIL_H  = sec_h - HEADER_SEC - 4
+            AVAIL_W  = GRID_W - 8
+
+            # intentamos varias configuraciones de columnas
+            best_cols = 10
+            for try_cols in range(20, 5, -1):
+                try_rows = -(-N_L // try_cols)  # ceil
+                cell_w   = AVAIL_W / try_cols
+                cell_h   = AVAIL_H / try_rows
+                if cell_w >= 14 and cell_h >= 14:
+                    best_cols = try_cols
+                    break
+            NCOLS  = best_cols
+            NROWS  = -(-N_L // NCOLS)
+            CELL_W = AVAIL_W / NCOLS
+            CELL_H = AVAIL_H / NROWS
+            MEDAL_R = min(CELL_W, CELL_H) * 0.38   # radio de medalla
+
+            for idx, logro in enumerate(tier_list):
+                col_i  = idx % NCOLS
+                row_i  = idx // NCOLS
+                cx_    = MARGIN + 4 + col_i*CELL_W + CELL_W/2
+                cy_    = sec_y + AVAIL_H - row_i*CELL_H - CELL_H/2
+
+                unlocked = desbloqueados.get(logro['id'], False)
+                TC = TIER_COLORS[logro['tier']] if unlocked else BW_COLORS
+
+                # ── dibujar medalla con ReportLab puro ──────────
+                # cinta arriba
+                ribbon_w = MEDAL_R * 0.35
+                ribbon_h = MEDAL_R * 0.55
+                rrect(cv, cx_-ribbon_w/2, cy_+MEDAL_R*0.55,
+                      ribbon_w, ribbon_h, r=1,
+                      fill_col=colors.HexColor(TC['ribbon']))
+
+                # círculo exterior (borde)
+                alpha = 1.0 if unlocked else 0.35
+                ring_col = colors.HexColor(TC['ring'])
+                sf(cv, ring_col)
+                cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
+
+                # gradiente simulado: círculo c1 encima
+                main_col = colors.HexColor(TC['c1'])
+                sf(cv, main_col)
+                cv.circle(cx_, cy_, MEDAL_R*0.88, fill=1, stroke=0)
+
+                # brillo (círculo pequeño arriba-izquierda)
+                shine_col = colors.HexColor(TC['shine'])
+                sf(cv, shine_col)
+                ss(cv, shine_col); cv.setLineWidth(0)
+                cv.circle(cx_-MEDAL_R*0.25, cy_+MEDAL_R*0.25,
+                          MEDAL_R*0.22, fill=1, stroke=0)
+
+                # icono central — punto o estrella simple
+                icon_col = colors.white if unlocked else colors.HexColor("#666666")
+                sf(cv, icon_col)
+                icon_r = MEDAL_R * 0.28
+                # todos usan un círculo interno simple (PDF no soporta SVG inline)
+                cv.circle(cx_, cy_, icon_r, fill=1, stroke=0)
+
+                # nombre del logro debajo — solo si la celda es suficientemente grande
+                if CELL_H > 20:
+                    name_col = C_TEXT if unlocked else C_SUBTEXT
+                    name_short = logro['name'][:12]
+                    txt(cv, name_short, cx_, cy_-MEDAL_R-2,
+                        size=max(3.5, min(5, CELL_W/10)),
+                        col=name_col, font="Helvetica-Bold" if unlocked else "Helvetica",
+                        anchor="center")
+
+                # check verde si desbloqueado
+                if unlocked and CELL_H > 16:
+                    sf(cv, C_GREEN)
+                    cv.circle(cx_+MEDAL_R*0.65, cy_+MEDAL_R*0.65,
+                              MEDAL_R*0.28, fill=1, stroke=0)
+                    txt(cv, "✓", cx_+MEDAL_R*0.65, cy_+MEDAL_R*0.55,
+                        size=max(3, MEDAL_R*0.35), col=C_WHITE,
+                        font="Helvetica-Bold", anchor="center")
+
+        # ── footer pág 2 ─────────────────────────────────────────
+        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pág. 2 / 2",
+            PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
     cv.save()
     buf.seek(0)
@@ -1324,6 +1513,25 @@ def show():
             ligas_j   = player_matches[player_matches['league']=='LIGA']['Ligas_categoria'].dropna().unique().tolist()
             torneos_j = player_matches[player_matches['league']=='TORNEO']['N_Torneo'].dropna().unique().tolist()
 
+            # Calcular logros
+            try:
+                _camp_liga_pdf  = campeonatos_liga  if 'campeonatos_liga'  in dir() else []
+                _camp_torn_pdf  = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
+                desbloqueados_pdf = evaluar_logros(
+                    player_query        = player_query,
+                    player_matches      = player_matches,
+                    df_raw              = df_raw,
+                    data_elo            = pd.DataFrame(),   # sin Elo en este contexto
+                    base2               = base2,
+                    base_torneo_final   = base_torneo_final,
+                    campeonatos_liga    = _camp_liga_pdf,
+                    campeonatos_torneo  = _camp_torn_pdf,
+                    generar_tabla_temporada = generar_tabla_temporada,
+                    generar_tabla_torneo    = generar_tabla_torneo,
+                )
+            except Exception:
+                desbloqueados_pdf = None
+
             try:
                 pdf_bytes = generar_pdf_jugador(
                     player_query      = player_query,
@@ -1337,6 +1545,7 @@ def show():
                     score_ligas_df    = score_l,
                     score_torneos_df  = score_t,
                     rivales_df        = rivales_df_pdf,
+                    desbloqueados     = desbloqueados_pdf,
                 )
                 nombre_archivo = f"cartilla_{player_query.replace(' ','_')}.pdf"
                 st.download_button(
