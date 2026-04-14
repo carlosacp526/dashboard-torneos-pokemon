@@ -566,23 +566,57 @@ def mostrar_logros(
     xp_total     = sum(l["xp"] for l in LOGROS if desbloqueados.get(l["id"]))
     pct          = round(total_unlock / total_logros * 100, 1)
 
-    cp, cn = st.columns([3, 1])
-    with cp: st.progress(total_unlock / total_logros)
-    with cn: st.markdown(f"**{total_unlock}/{total_logros}** ({pct}%)")
+    # ── XP máximo posible ────────────────────────────────────────
+    xp_maximo = sum(l["xp"] for l in LOGROS)
+    xp_pct    = round(xp_total / xp_maximo * 100, 1) if xp_maximo else 0
 
+    # ── Barra de logros (letra blanca, fondo coloreado) ──────────
+    st.markdown(f"""
+<div style="position:relative;background:#333;border-radius:8px;height:28px;overflow:hidden;margin-bottom:4px">
+  <div style="width:{pct}%;background:linear-gradient(90deg,#cd7f32,#f5c518,#9c27b0);
+              height:100%;border-radius:8px;transition:width .4s"></div>
+  <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+               color:#ffffff;font-weight:700;font-size:13px;white-space:nowrap">
+    {total_unlock} / {total_logros} logros &nbsp;·&nbsp; {pct}%
+  </span>
+</div>""", unsafe_allow_html=True)
+
+    # ── Barra de XP acumulados ────────────────────────────────────
+    st.markdown(f"""
+<div style="position:relative;background:#1a1a2e;border:1px solid #444;border-radius:8px;
+            height:22px;overflow:hidden;margin-bottom:10px">
+  <div style="width:{xp_pct}%;background:linear-gradient(90deg,#1565c0,#2ecc71);
+              height:100%;border-radius:8px"></div>
+  <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+               color:#ffffff;font-weight:600;font-size:12px;white-space:nowrap">
+    ⚡ {xp_total:,} / {xp_maximo:,} XP &nbsp;({xp_pct}%)
+  </span>
+</div>""", unsafe_allow_html=True)
+
+    # ── Métricas por rareza ───────────────────────────────────────
     c1,c2,c3,c4 = st.columns(4)
-    c1.metric("🥉 Bronce",    sum(1 for l in LOGROS if l["rareza"]=="Bronce"    and desbloqueados.get(l["id"])))
-    c2.metric("🥈 Plata",     sum(1 for l in LOGROS if l["rareza"]=="Plata"     and desbloqueados.get(l["id"])))
-    c3.metric("🥇 Oro",       sum(1 for l in LOGROS if l["rareza"]=="Oro"       and desbloqueados.get(l["id"])))
-    c4.metric("⚡ XP",        f"{xp_total:,}")
+    bro_ok = sum(1 for l in LOGROS if l["rareza"]=="Bronce"    and desbloqueados.get(l["id"]))
+    pla_ok = sum(1 for l in LOGROS if l["rareza"]=="Plata"     and desbloqueados.get(l["id"]))
+    oro_ok = sum(1 for l in LOGROS if l["rareza"]=="Oro"       and desbloqueados.get(l["id"]))
+    leg_ok = sum(1 for l in LOGROS if l["rareza"]=="Legendario" and desbloqueados.get(l["id"]))
+    bro_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Bronce"    and desbloqueados.get(l["id"]))
+    pla_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Plata"     and desbloqueados.get(l["id"]))
+    oro_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Oro"       and desbloqueados.get(l["id"]))
+    leg_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Legendario" and desbloqueados.get(l["id"]))
+    c1.metric("🥉 Bronce",    f"{bro_ok}/36",  f"{bro_xp:,} XP")
+    c2.metric("🥈 Plata",     f"{pla_ok}/23",  f"{pla_xp:,} XP")
+    c3.metric("🥇 Oro",       f"{oro_ok}/27",  f"{oro_xp:,} XP")
+    c4.metric("⚡ Legendario", f"{leg_ok}/14",  f"{leg_xp:,} XP")
 
     st.markdown("""<style>
-.lg-name{font-size:11px;font-weight:600;text-align:center;margin:3px 0 1px;
+.lg-name{font-size:11px;font-weight:700;text-align:center;margin:0;
          line-height:1.3;color:var(--color-text-primary)}
 .lg-desc{font-size:9px;text-align:center;color:var(--color-text-secondary);
          line-height:1.3;margin:0}
-.lg-xp  {font-size:9px;text-align:center;color:#2ecc71;font-weight:600;margin:2px 0 0}
-.lg-lock{font-size:10px;text-align:center;color:var(--color-text-secondary);margin:1px 0 0}
+.lg-xp  {font-size:9px;text-align:center;color:#2ecc71;font-weight:700;margin:1px 0 0}
+.lg-lock{font-size:10px;text-align:center;color:var(--color-text-secondary);margin:0}
+/* Quitar margin-bottom que Streamlit añade entre st.image y st.markdown */
+[data-testid="stImage"]{margin-bottom:-12px !important}
 </style>""", unsafe_allow_html=True)
 
     RAREZA_ORDEN = ["Bronce","Plata","Oro","Legendario"]
