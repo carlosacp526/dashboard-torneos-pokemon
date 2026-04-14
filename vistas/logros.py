@@ -7,14 +7,18 @@ import streamlit as st
 import pandas as pd
 import os, base64, glob
 
-# ── Carpeta de imágenes (vistas/imagenes_logros/) ─────────────────────────────
-_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros")
+# ── Carpeta de imágenes (vistas/imagenes_logros_png/) — PNGs para web y PDF ──
+_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros_png")
+# Fallback a SVG si no hay PNG
+_IMG_DIR_SVG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros")
 
 def _logro_img_path(num: int):
-    hits = glob.glob(os.path.join(_IMG_DIR, f"{num:03d}_*.svg"))
-    if not hits:
-        hits = glob.glob(os.path.join(_IMG_DIR, f"{num:03d}_*.png"))
-    return hits[0] if hits else None
+    """Busca PNG primero (compatible con web+PDF), luego SVG."""
+    for d, ext in [(_IMG_DIR, "png"), (_IMG_DIR_SVG, "svg")]:
+        hits = glob.glob(os.path.join(d, f"{num:03d}_*.{ext}"))
+        if hits:
+            return hits[0]
+    return None
 
 def _img_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -570,19 +574,52 @@ def mostrar_logros(
     c3.metric("🥇 Oro",    sum(1 for l in LOGROS if l['rareza']=='Oro'    and desbloqueados.get(l['id'])))
     c4.metric("⚡ XP Total", f"{xp_total:,}")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+<style>
+.logro-grid{display:grid;gap:6px;margin-bottom:8px}
+.logro-card{
+  background:var(--color-background-secondary);
+  border:0.5px solid var(--color-border-tertiary);
+  border-radius:8px;
+  padding:6px 4px 4px;
+  text-align:center;
+  transition:border-color .15s;
+}
+.logro-card.unlocked{border-color:var(--color-border-secondary)}
+.logro-card.locked{opacity:0.3}
+.logro-card img{width:64px;height:77px;object-fit:contain;display:block;margin:0 auto 4px}
+.logro-card .rar{font-size:9px;font-weight:600;margin:0 0 2px}
+.logro-card .cat{font-size:9px;color:var(--color-text-secondary);margin:0 0 2px}
+.logro-card .nm{font-size:11px;font-weight:500;color:var(--color-text-primary);margin:0 0 2px;line-height:1.2}
+.logro-card .desc{font-size:9px;color:var(--color-text-secondary);line-height:1.3;margin:0}
+.logro-card .xp{font-size:9px;color:#2ecc71;font-weight:600;margin:3px 0 0}
+.logro-card.locked img{filter:grayscale(100%)}
+</style>
+""", unsafe_allow_html=True)
 
     RAREZA_ORDEN  = ["Bronce","Plata","Oro","Legendario"]
-    RAREZA_LABELS = {"Bronce":"🥉 Bronce (36)","Plata":"🥈 Plata (23)","Oro":"🥇 Oro (27)","Legendario":"⚡ Legendario (14)"}
-    RAREZA_HEX    = {"Bronce":"#cd7f32","Plata":"#78909c","Oro":"#f5c518","Legendario":"#9c27b0"}
+    RAREZA_LABELS = {
+        "Bronce":    f"🥉 Bronce ({sum(1 for l in LOGROS if l['rareza']=='Bronce')})",
+        "Plata":     f"🥈 Plata ({sum(1 for l in LOGROS if l['rareza']=='Plata')})",
+        "Oro":       f"🥇 Oro ({sum(1 for l in LOGROS if l['rareza']=='Oro')})",
+        "Legendario":f"⚡ Legendario ({sum(1 for l in LOGROS if l['rareza']=='Legendario')})",
+    }
+    RAREZA_HEX = {"Bronce":"#cd7f32","Plata":"#78909c","Oro":"#f5c518","Legendario":"#9c27b0"}
 
-    tab_bro, tab_pla, tab_oro, tab_leg = st.tabs([RAREZA_LABELS[r] for r in RAREZA_ORDEN])
+    tab_bro, tab_pla, tab_oro, tab_leg = st.tabs(
+        [RAREZA_LABELS[r] for r in RAREZA_ORDEN]
+    )
 
     for tab, rareza in zip([tab_bro, tab_pla, tab_oro, tab_leg], RAREZA_ORDEN):
         with tab:
-            rar_logros = sorted([l for l in LOGROS if l['rareza'] == rareza], key=lambda x: x['num'])
-            filtro = st.radio("Mostrar:", ["Todos","Desbloqueados","Bloqueados"],
-                              horizontal=True, key=f"filtro_{rareza}")
+            rar_logros = sorted(
+                [l for l in LOGROS if l['rareza'] == rareza],
+                key=lambda x: x['num']
+            )
+            filtro = st.radio(
+                "Mostrar:", ["Todos", "Desbloqueados", "Bloqueados"],
+                horizontal=True, key=f"filtro_{rareza}"
+            )
             if filtro == "Desbloqueados":
                 rar_logros = [l for l in rar_logros if desbloqueados.get(l['id'])]
             elif filtro == "Bloqueados":
@@ -591,40 +628,32 @@ def mostrar_logros(
             rar_color = RAREZA_HEX[rareza]
             COLS = 6
             for row_start in range(0, len(rar_logros), COLS):
-                row_logros = rar_logros[row_start:row_start+COLS]
+                row_logros = rar_logros[row_start:row_start + COLS]
                 cols = st.columns(COLS)
                 for i, logro in enumerate(row_logros):
                     with cols[i]:
-                        unlocked  = desbloqueados.get(logro['id'], False)
-                        opacity   = "1" if unlocked else "0.25"
-                        txt_col   = "var(--color-text-primary)" if unlocked else "var(--color-text-secondary)"
-                        check_tag = f'<p style="font-size:9px;color:#2ecc71;font-weight:500;">✓ {logro["xp"]} XP</p>' if unlocked else ""
-                        cat_small = f'<p style="font-size:9px;color:var(--color-text-secondary);margin:1px 0">{logro["cat"]}</p>'
+                        unlocked   = desbloqueados.get(logro['id'], False)
+                        card_class = "logro-card unlocked" if unlocked else "logro-card locked"
+                        xp_tag     = f'<p class="xp">✓ {logro["xp"]} XP</p>' if unlocked else ""
 
-                        # imagen SVG de imagenes_logros/ por número secuencial
                         img_path = _logro_img_path(logro['num'])
                         if img_path:
                             try:
-                                src  = _img_b64(img_path)
-                                filt = "" if unlocked else "filter:grayscale(100%) opacity(0.4);"
-                                img_tag = (f'<img src="{src}" width="72" height="86" '
-                                           f'style="object-fit:contain;{filt}" />')
+                                src     = _img_b64(img_path)
+                                img_tag = f'<img src="{src}" alt="{logro["name"]}">'
                             except Exception:
-                                img_tag = medal_svg(rareza, logro['icon'], color=unlocked, size=72)
+                                img_tag = medal_svg(rareza, logro['icon'], color=unlocked, size=64)
                         else:
-                            img_tag = medal_svg(rareza, logro['icon'], color=unlocked, size=72)
+                            img_tag = medal_svg(rareza, logro['icon'], color=unlocked, size=64)
 
-                        html_badge = (
-                            f'<div style="text-align:center;opacity:{opacity};padding:4px 2px">'
+                        st.markdown(
+                            f'<div class="{card_class}">'
                             f'{img_tag}'
-                            f'<p style="font-size:9px;color:{rar_color};font-weight:500;margin:3px 0 1px">'
-                            f'{rareza.upper()}</p>'
-                            f'{cat_small}'
-                            f'<p style="font-size:11px;font-weight:500;margin:2px 0;color:{txt_col};">'
-                            f'{logro["name"]}</p>'
-                            f'<p style="font-size:10px;color:var(--color-text-secondary);line-height:1.3;">'
-                            f'{logro["desc"]}</p>'
-                            f'{check_tag}'
-                            f'</div>'
+                            f'<p class="rar" style="color:{rar_color}">{rareza.upper()}</p>'
+                            f'<p class="cat">{logro["cat"]}</p>'
+                            f'<p class="nm">{logro["name"]}</p>'
+                            f'<p class="desc">{logro["desc"]}</p>'
+                            f'{xp_tag}'
+                            f'</div>',
+                            unsafe_allow_html=True
                         )
-                        st.markdown(html_badge, unsafe_allow_html=True)

@@ -676,18 +676,15 @@ def generar_pdf_jugador(
         diff_r = GRID_H - sum(heights_r)
         heights_r[0] += diff_r  # ajuste al primero
 
-        # directorio de imágenes
+        # directorio de imágenes PNG (ReportLab no soporta SVG)
         _IMG_DIR_PDF = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "vistas", "imagenes_logros"
+            os.path.dirname(os.path.abspath(__file__)), "vistas", "imagenes_logros_png"
         )
 
         def _load_img_pdf(num):
             import glob as _glob
-            for pat in [f"{num:03d}_*.svg", f"{num:03d}_*.png"]:
-                hits = _glob.glob(os.path.join(_IMG_DIR_PDF, pat))
-                if hits:
-                    return hits[0]
-            return None
+            hits = _glob.glob(os.path.join(_IMG_DIR_PDF, f"{num:03d}_*.png"))
+            return hits[0] if hits else None
 
         cur_y = GRID_TOP  # de arriba hacia abajo
 
