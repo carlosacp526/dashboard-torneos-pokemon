@@ -50,8 +50,8 @@ LOGROS = [
     # ── VICTORIAS (18) ───────────────────────────────────────────────────────
     {"id":"VI01","num":11,"cat":"Victorias",    "rareza":"Bronce",    "icon":"🥇","xp":100,  "name":"Primera Victoria",      "desc":"Gana tu primera partida en Liga"},
     {"id":"VI02","num":12,"cat":"Victorias",    "rareza":"Oro",       "icon":"🎩","xp":1500, "name":"Hat Trick",             "desc":"Gana un torneo en Singles, Dobles y VGC"},
-    {"id":"VI03","num":13,"cat":"Victorias",    "rareza":"Plata",     "icon":"🔥","xp":300,  "name":"Racha Imparable",       "desc":"Gana 10 partidas consecutivas"},
-    {"id":"VI04","num":14,"cat":"Victorias",    "rareza":"Oro",       "icon":"⚡","xp":600,  "name":"Máquina de Ganar",      "desc":"Gana 15 partidas consecutivas"},
+    {"id":"VI03","num":13,"cat":"Victorias",    "rareza":"Plata",     "icon":"🔥","xp":300,  "name":"Racha Imparable",       "desc":"Gana 3 partidas consecutivas"},
+    {"id":"VI04","num":14,"cat":"Victorias",    "rareza":"Oro",       "icon":"⚡","xp":600,  "name":"Máquina de Ganar",      "desc":"Gana 5 partidas consecutivas"},
     {"id":"VI05","num":15,"cat":"Victorias",    "rareza":"Oro",       "icon":"🏆","xp":600,  "name":"Campeón del Torneo",    "desc":"Gana un torneo completo"},
     {"id":"VI06","num":16,"cat":"Victorias",    "rareza":"Oro",       "icon":"🥈","xp":800,  "name":"Bicampeón",             "desc":"Gana 2 torneos"},
     {"id":"VI07","num":17,"cat":"Victorias",    "rareza":"Oro",       "icon":"👑","xp":1000, "name":"Tricampeón",            "desc":"Gana 3 torneos"},
@@ -405,8 +405,8 @@ def evaluar_logros(
     r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
     ##r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
     r["VI02"] = player_query.strip() in HAT_TRICK_PLAYERS
-    r["VI03"] = racha_max >= 10
-    r["VI04"] = racha_max >= 15
+    r["VI03"] = racha_max >= 3
+    r["VI04"] = racha_max >= 5
     r["VI05"] = n_camp_torneo >= 1
     r["VI06"] = n_camp_torneo >= 2
     r["VI07"] = n_camp_torneo >= 3
