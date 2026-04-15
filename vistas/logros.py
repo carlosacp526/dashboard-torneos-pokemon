@@ -506,7 +506,7 @@ def evaluar_logros(
                 for f in sub[fmt_esp_col].dropna().unique():
                     fmts_ganados.add(str(f).upper())
 
-    r["ES01"] = any('MONOTYPE' in str(f).upper() or 'NAT DEX' in str(f).upper() for f in formatos_jugados)
+    r["ES01"] = any('MONOTYPE' in str(f).upper() for f in formatos_jugados)
     r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in fmts_ganados)
     r["ES03"] = _wr_por_formato(40)
     r["ES04"] = _wr_por_formato(50)
