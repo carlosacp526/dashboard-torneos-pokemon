@@ -693,7 +693,7 @@ def evaluar_logros(
                  any('PMS' in str(l) for l in ligas_jugadas))
     r["SP15"] = any('NATDEX' in str(f).upper() and 'DOBLE' in str(f).upper() for f in formatos_jugados)
     r["SP16"] = derrotas >= 1
-    r["SP17"] = any('LEGEND' in str(l).upper() for l in ligas_jugadas)
+    r["SP17"] = any('PLS' in str(l).upper() for l in ligas_jugadas)
 
     # PROGRESIÓN — depende del conteo anterior
     xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
