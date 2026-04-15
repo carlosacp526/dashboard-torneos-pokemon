@@ -675,19 +675,19 @@ def evaluar_logros(
     r["SP07"] = _el_invicto()
 
     # SP08: Speedrunner — ganar 2 torneos en el mismo mes
+# SP08: Speedrunner — ganar 2 torneos en el mismo año
     def _speedrunner():
         if len(campeonatos_torneo) < 2: return False
         if 'N_Torneo' not in df_raw.columns or 'date' not in df_raw.columns: return False
-        meses_camp = []
+        años_camp = []
         for camp in campeonatos_torneo:
             nt = camp.get('Torneo')
             sub = df_raw[df_raw['N_Torneo'] == nt]['date']
             sub = pd.to_datetime(sub, errors='coerce').dropna()
             if not sub.empty:
-                d = sub.max()
-                meses_camp.append(f"{d.year}-{d.month:02d}")
+                años_camp.append(sub.max().year)
         from collections import Counter
-        return any(v >= 2 for v in Counter(meses_camp).values())
+        return any(v >= 2 for v in Counter(años_camp).values())
     r["SP08"] = _speedrunner()
 
     # SP09: Jugador del Año — mayor partidas ganadas en un año (comparativo global)
@@ -708,20 +708,20 @@ def evaluar_logros(
     r["SP09"] = _jugador_del_anio()
 
     # SP10: Veterano de Guerra — jugar en la misma liga 3 temporadas
+    # SP10: Veterano de Guerra — jugar en la misma liga por 3 temporadas
     def _veterano_guerra():
-        if base2.empty or 'Ligas_categoria' not in base2.columns: return False
-        if 'Participante' not in base2.columns or 'Liga_Temporada' not in base2.columns: return False
-        mis_ligas = base2[base2['Participante'].str.lower().str.contains(pq, na=False)]
-        if mis_ligas.empty: return False
-        # Extraer prefijo de liga (PES, PJS, etc.) y contar temporadas distintas
-        mis_ligas = mis_ligas.copy()
-        mis_ligas['_pref'] = mis_ligas['Ligas_categoria'].str.extract(r'^([A-Z]+)', expand=False)
-        for pref, grp in mis_ligas.groupby('_pref'):
-            if grp['Liga_Temporada'].nunique() >= 3:
+        if 'league' not in pm.columns or 'Ligas_categoria' not in pm.columns: return False
+        solo_liga = pm[pm['league'] == 'LIGA'].copy()
+        if solo_liga.empty: return False
+        # extraer prefijo: PMST1 -> PMS, PEST2 -> PES
+        solo_liga['_pref'] = solo_liga['Ligas_categoria'].str.extract(r'^([A-Z]+)T', expand=False)
+        solo_liga = solo_liga.dropna(subset=['_pref'])
+        for pref, grp in solo_liga.groupby('_pref'):
+            temps = grp['Ligas_categoria'].dropna().unique()
+            if len(temps) >= 3:
                 return True
         return False
     r["SP10"] = _veterano_guerra()
-
     # SP11/SP12/SP13: derrotas en liga en una temporada
     def _max_derrotas_liga():
         """Retorna el mínimo de derrotas que tuvo el jugador en alguna temporada de liga."""
