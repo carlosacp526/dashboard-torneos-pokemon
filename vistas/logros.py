@@ -570,7 +570,12 @@ def evaluar_logros(
     ##r["SO09"] = False  # premio manual
     nombres_validos = {"FUR4NKO", "ELIN BEACIL", "HASEO", "LUIGILLANOS"}
 
-    r["SO09"] = str(r["player_query"]).upper() in nombres_validos
+    r["SO09"] = str(r.get("player_query", "")).upper() in nombres_validos
+
+
+
+
+
     # ESPECIAL
     r["SP01"] = primer_torneo_ganado
 
