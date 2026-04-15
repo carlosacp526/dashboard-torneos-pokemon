@@ -85,14 +85,14 @@ LOGROS = [
     {"id":"ES05","num":43,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⚡","xp":300,  "name":"Hyper Offense",         "desc":"60% WR en un formato con 20+ partidas en un año"},
     {"id":"ES06","num":44,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📊","xp":900,  "name":"Maestro del Meta",      "desc":"70% WR en un formato con 20+ partidas en un año"},
     {"id":"ES07","num":45,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📦","xp":800,  "name":"Coleccionista",         "desc":"Juega todos los Formato_esp"},
-    {"id":"ES08","num":46,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"❤️","xp":50,   "name":"Fiel a sus Raíces",     "desc":"Gana un torneo en formato Singles"},
-    {"id":"ES09","num":47,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🎨","xp":50,   "name":"Maestro de OU",         "desc":"Gana un torneo en Formato_esp de OU"},
-    {"id":"ES10","num":48,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"✨","xp":50,   "name":"Maestro de DOU",        "desc":"Gana un torneo en Formato_esp de DOU"},
-    {"id":"ES11","num":49,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🚫","xp":50,   "name":"Maestro de VGC",        "desc":"Gana un torneo en Formato_esp de VGC"},
-    {"id":"ES12","num":50,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💫","xp":50,   "name":"Maestro de LC",         "desc":"Gana un torneo en Formato_esp de LC"},
-    {"id":"ES13","num":51,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💪","xp":50,   "name":"Maestro de UBERS",      "desc":"Gana un torneo en Formato_esp de UBERS"},
-    {"id":"ES14","num":52,"cat":"Estrategia",   "rareza":"Plata",     "icon":"🌿","xp":400,  "name":"Campeón OUs",           "desc":"Gana un torneo en Formato_esp de OU y DOU"},
-    {"id":"ES15","num":91,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":150,  "name":"Maestro del Natdex",    "desc":"Gana un torneo de Formato_esp de NAT DEX"},
+    {"id":"ES08","num":46,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"❤️","xp":50,   "name":"Fiel a sus Raíces",     "desc":"Participa un torneo en formato Singles"},
+    {"id":"ES09","num":47,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🎨","xp":50,   "name":"Maestro de OU",         "desc":"Participa un torneo en Formato_esp de OU"},
+    {"id":"ES10","num":48,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"✨","xp":50,   "name":"Maestro de DOU",        "desc":"Participa un torneo en Formato_esp de DOU"},
+    {"id":"ES11","num":49,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🚫","xp":50,   "name":"Maestro de VGC",        "desc":"Participa un torneo en Formato_esp de VGC"},
+    {"id":"ES12","num":50,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💫","xp":50,   "name":"Maestro de LC",         "desc":"Participa un torneo en Formato_esp de LC"},
+    {"id":"ES13","num":51,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💪","xp":50,   "name":"Maestro de UBERS",      "desc":"Participa un torneo en Formato_esp de UBERS"},
+    {"id":"ES14","num":52,"cat":"Estrategia",   "rareza":"Plata",     "icon":"🌿","xp":400,  "name":"Campeón OUs",           "desc":"Participa un torneo en Formato_esp de OU y DOU"},
+    {"id":"ES15","num":91,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":150,  "name":"Maestro del Natdex",    "desc":"Participa un torneo de Formato_esp de NAT DEX"},
     # ── TORNEO (12) ──────────────────────────────────────────────────────────
     {"id":"TO01","num":53,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🎲","xp":100,  "name":"Campeón del Caos",      "desc":"Gana un torneo con Random Battle"},
     {"id":"TO02","num":54,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🔴","xp":200,  "name":"Maestro de Kanto",      "desc":"Participa en torneo Gen1 (T27, T58)"},
@@ -507,20 +507,20 @@ def evaluar_logros(
                     fmts_ganados.add(str(f).upper())
 
     r["ES01"] = any('MONOTYPE' in str(f).upper() for f in formatos_jugados)
-    r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in fmts_ganados)
+    r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados)
     r["ES03"] = _wr_por_formato(40)
     r["ES04"] = _wr_por_formato(50)
     r["ES05"] = _wr_por_formato(60)
     r["ES06"] = _wr_por_formato(70)
     r["ES07"] = formatos_jugados >= formatos_totales and len(formatos_totales) > 0
-    r["ES08"] = any('SINGLES' in str(f).upper() for f in fmts_ganados)
-    r["ES09"] = any(str(f).upper() in ('OU',) for f in fmts_ganados)
-    r["ES10"] = any('DOU' in str(f).upper() for f in fmts_ganados)
-    r["ES11"] = any('VGC' in str(f).upper() for f in fmts_ganados)
-    r["ES12"] = any(str(f).upper() == 'LC' for f in fmts_ganados)
-    r["ES13"] = any('UBERS' in str(f).upper() for f in fmts_ganados)
-    r["ES14"] = any('OU' in str(f).upper() for f in fmts_ganados) and any('DOU' in str(f).upper() for f in fmts_ganados)
-    r["ES15"] = any('NAT DEX' in str(f).upper() for f in fmts_ganados)
+    r["ES08"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
+    r["ES09"] = any(str(f).upper() in ('OU',) for f in formatos_jugados)
+    r["ES10"] = any('DOU' in str(f).upper() for f in formatos_jugados)
+    r["ES11"] = any('VGC' in str(f).upper() for f in formatos_jugados)
+    r["ES12"] = any(str(f).upper() == 'LC' for f in formatos_jugados)
+    r["ES13"] = any('UBERS' in str(f).upper() for f in formatos_jugados)
+    r["ES14"] = any('OU' in str(f).upper() for f in formatos_jugados) and any('DOU' in str(f).upper() for f in formatos_jugados)
+    r["ES15"] = any('NAT DEX' in str(f).upper() for f in formatos_jugados)
 
     # TORNEO
     TORNEOS_GEN = {
