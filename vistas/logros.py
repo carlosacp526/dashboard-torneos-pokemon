@@ -111,10 +111,10 @@ LOGROS = [
     {"id":"SO01","num":65,"cat":"Social",       "rareza":"Bronce",    "icon":"👋","xp":100,  "name":"Bienvenido",            "desc":"Participa en la Liga Junior"},
     {"id":"SO02","num":66,"cat":"Social",       "rareza":"Plata",     "icon":"🤝","xp":300,  "name":"Mentor",                "desc":"Participa en la Liga Senior"},
     {"id":"SO03","num":67,"cat":"Social",       "rareza":"Oro",       "icon":"🌟","xp":600,  "name":"Embajador",             "desc":"Participa en la Liga Master"},
-    {"id":"SO04","num":68,"cat":"Social",       "rareza":"Plata",     "icon":"🤜","xp":250,  "name":"Fair Play",             "desc":"Sin Walk Over en 6 meses"},
-    {"id":"SO05","num":69,"cat":"Social",       "rareza":"Oro",       "icon":"😇","xp":500,  "name":"Deportista",            "desc":"Sin Walk Over en contra en un año"},
-    {"id":"SO06","num":70,"cat":"Social",       "rareza":"Bronce",    "icon":"🎙️","xp":150,  "name":"Atleta",                "desc":"Sin Walk Over en contra en dos años"},
-    {"id":"SO07","num":71,"cat":"Social",       "rareza":"Plata",     "icon":"⚖️","xp":300,  "name":"Árbitro Honorario",     "desc":"Sin Walk Over en contra en 3 años"},
+    {"id":"SO04","num":68,"cat":"Social",       "rareza":"Plata",     "icon":"🤜","xp":250,  "name":"Fair Play",             "desc":"Sin Walk Over en 5 meses"},
+    {"id":"SO05","num":69,"cat":"Social",       "rareza":"Oro",       "icon":"😇","xp":500,  "name":"Deportista",            "desc":"Sin Walk Over en contra en 6 meses"},
+    {"id":"SO06","num":70,"cat":"Social",       "rareza":"Bronce",    "icon":"🎙️","xp":150,  "name":"Atleta",                "desc":"Sin Walk Over en contra en 1 un mes"},
+    {"id":"SO07","num":71,"cat":"Social",       "rareza":"Plata",     "icon":"⚖️","xp":300,  "name":"Árbitro Honorario",     "desc":"Sin Walk Over en contra en 3  meses"},
     {"id":"SO08","num":72,"cat":"Social",       "rareza":"Oro",       "icon":"📋","xp":700,  "name":"Jugador Honorable",     "desc":"Sin Walk Over ni a favor ni en contra en 1 año"},
     {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio al mejor jugador del año"},
     # ── ESPECIAL (17) ────────────────────────────────────────────────────────
@@ -550,8 +550,25 @@ def evaluar_logros(
     if any('PMS' in str(l).upper() for l in ligas_jugadas):
                 r["SO01"] = True
                 r["SO02"] = True
+    # def _sin_wo_n_meses(n):
+    #     if 'date' not in df_raw.columns: return False
+    #     df2 = df_raw[
+    #         df_raw['player1'].str.lower().str.contains(pq, na=False) |
+    #         df_raw['player2'].str.lower().str.contains(pq, na=False)
+    #     ].copy()
+    #     df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
+    #     df2 = df2.dropna(subset=['date']).sort_values('date')
+    #     if df2.empty: return False
+    #     fecha_max = df2['date'].max()
+    #     fecha_min = fecha_max - pd.DateOffset(months=n)
+    #     sub = df2[df2['date'] >= fecha_min]
+    #     if 'Walkover' not in sub.columns: return True
+    #     return (sub['Walkover'] != 1).all()
+    
+
     def _sin_wo_n_meses(n):
         if 'date' not in df_raw.columns: return False
+        if 'Walkover' not in df_raw.columns: return True
         df2 = df_raw[
             df_raw['player1'].str.lower().str.contains(pq, na=False) |
             df_raw['player2'].str.lower().str.contains(pq, na=False)
@@ -559,17 +576,35 @@ def evaluar_logros(
         df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
         df2 = df2.dropna(subset=['date']).sort_values('date')
         if df2.empty: return False
-        fecha_max = df2['date'].max()
-        fecha_min = fecha_max - pd.DateOffset(months=n)
+        fecha_min = pd.Timestamp.now() - pd.DateOffset(months=n)
         sub = df2[df2['date'] >= fecha_min]
-        if 'Walkover' not in sub.columns: return True
-        return (sub['Walkover'] != 1).all()
+        if sub.empty: return False
+        wo_sub = sub[sub['Walkover'] == 1]
+        if wo_sub.empty: return True
+        # WO dado: es perdedor (no está en winner)
+        wo_dado     = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
+        # WO recibido: es ganador (está en winner)
+        wo_recibido = wo_sub[wo_sub['winner'].str.contains(pq, case=False, na=False)]
+        return wo_dado.empty and wo_recibido.empty
 
-    r["SO04"] = _sin_wo_n_meses(6)
-    r["SO05"] = _sin_wo_n_meses(12)
-    r["SO06"] = _sin_wo_n_meses(24)
-    r["SO07"] = _sin_wo_n_meses(36)
+    r["SO04"] = _sin_wo_n_meses(5)
+    r["SO05"] = _sin_wo_n_meses(6)
+    r["SO06"] = _sin_wo_n_meses(1)
+    r["SO07"] = _sin_wo_n_meses(3)
+    ##r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
+
+    # antes
     r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
+
+    # después
+    _so08 = False
+    if 'date' in df2.columns and 'Walkover' in df2.columns:
+        for _anio in df2['date'].dt.year.dropna().unique():
+            _sub = df2[df2['date'].dt.year == _anio]
+            if (_sub['Walkover'].fillna(0) != 1).all():
+                _so08 = True
+                break
+    r["SO08"] = _so08
     ##MEJORES_JUGADORES=["Fur4nko","Elin beacil","Luigillanos","Haseo"]
     ##r["SO09"] = False  # premio manual
     nombres_validos = {"FUR4NKO", "ELIN BEACIL", "HASEO", "LUIGILLANOS"}
