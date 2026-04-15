@@ -737,11 +737,26 @@ def evaluar_logros(
     r["SP12"] = _min_derr <= 10   # Mortal
     r["SP13"] = _min_derr <= 15   # Plebeyo
 
-    r["SP14"] = (n_camp_liga >= 1 and
-                 any('PJS' in str(l) for l in ligas_jugadas) and
-                 any('PES' in str(l) for l in ligas_jugadas) and
-                 any('PSS' in str(l) for l in ligas_jugadas) and
-                 any('PMS' in str(l) for l in ligas_jugadas))
+    # r["SP14"] = (n_camp_liga >= 1 and
+    #              any('PJS' in str(l) for l in ligas_jugadas) and
+    #              any('PES' in str(l) for l in ligas_jugadas) and
+    #              any('PSS' in str(l) for l in ligas_jugadas) and
+    #              any('PMS' in str(l) for l in ligas_jugadas))
+    
+    GANADORES_LIGA = {
+        "PJS": {"lautaro","alonso26ca", "alechiii","lexodia","porygon z"},
+        "PES": {"caradecoso","chescor"},
+        "PSS": {"ricomam","haseo","elin beacil","roy kasoy","akaru"},
+        "PMS": {"luigillanos","joscake","angello77","lautaro","darmanethan"},
+        "PLS": {"Car10seduard0"}
+    }
+
+    r["SP14"] = all(
+            player_query.strip().lower() in GANADORES_LIGA.get(liga, set())
+            for liga in ["PJS", "PES", "PSS", "PMS", "PLS"]
+        )
+
+
     r["SP15"] = any('NAT DEX DOBLES' in str(f).upper() for f in formatos_jugados_esp)
     r["SP16"] = derrotas >= 1
     r["SP17"] = any('PLS' in str(l).upper() for l in ligas_jugadas)
