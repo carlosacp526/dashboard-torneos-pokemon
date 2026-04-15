@@ -706,7 +706,7 @@ def evaluar_logros(
                  any('PES' in str(l) for l in ligas_jugadas) and
                  any('PSS' in str(l) for l in ligas_jugadas) and
                  any('PMS' in str(l) for l in ligas_jugadas))
-    r["SP15"] = any('NATDEX' in str(f).upper() and 'DOBLE' in str(f).upper() for f in formatos_jugados)
+    r["SP15"] = any('NAT DEX DOBLES' in str(f).upper() for f in formatos_jugados_esp)
     r["SP16"] = derrotas >= 1
     r["SP17"] = any('PLS' in str(l).upper() for l in ligas_jugadas)
     if any('PLS' in str(l).upper() for l in ligas_jugadas):
