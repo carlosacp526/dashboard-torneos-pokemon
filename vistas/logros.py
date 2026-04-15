@@ -616,6 +616,7 @@ def evaluar_logros(
     r["SP01"] = primer_torneo_ganado
 
     # SP02: Regreso del Rey — volver a ganar un torneo después de 1+ año sin ganar
+#   SP02: Regreso del Rey — volver a ganar un torneo después de 1+ año sin ganar
     def _regreso_del_rey():
         if len(campeonatos_torneo) < 2: return False
         if 'N_Torneo' not in df_raw.columns or 'date' not in df_raw.columns: return False
@@ -628,9 +629,11 @@ def evaluar_logros(
                 fechas_camp.append(sub.max())
         if len(fechas_camp) < 2: return False
         fechas_camp.sort()
-        for i in range(1, len(fechas_camp)):
-            if (fechas_camp[i] - fechas_camp[i-1]).days >= 365:
-                return True
+        # compara cualquier par de victorias, no solo consecutivas
+        for i in range(len(fechas_camp)):
+            for j in range(i+1, len(fechas_camp)):
+                if (fechas_camp[j] - fechas_camp[i]).days >= 365:
+                    return True
         return False
     r["SP02"] = _regreso_del_rey()
 
