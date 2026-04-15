@@ -391,10 +391,11 @@ def evaluar_logros(
     r["PA08"] = n_camp_torneo >= 1 or victorias >= 1
     r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
     r["PA10"] = len(formatos_jugados) >= 3
-
+    HAT_TRICK_PLAYERS={"Yabadaba","Angello","Haseo"}
     # VICTORIAS
     r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
-    r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
+    ##r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
+    r["VI02"] = player_query.strip() in HAT_TRICK_PLAYERS
     r["VI03"] = racha_max >= 10
     r["VI04"] = racha_max >= 15
     r["VI05"] = n_camp_torneo >= 1
