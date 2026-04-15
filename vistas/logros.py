@@ -707,18 +707,18 @@ def evaluar_logros(
         return False
     r["SP09"] = _jugador_del_anio()
 
-    # SP10: Veterano de Guerra — jugar en la misma liga 3 temporadas
-    # SP10: Veterano de Guerra — jugar en la misma liga por 3 temporadas
+
+# SP10: Veterano de Guerra — jugar en la misma liga por 3 temporadas
     def _veterano_guerra():
-        if 'league' not in pm.columns or 'Ligas_categoria' not in pm.columns: return False
+        if 'league' not in pm.columns or 'Fase_completo' not in pm.columns: return False
         solo_liga = pm[pm['league'] == 'LIGA'].copy()
         if solo_liga.empty: return False
-        # extraer prefijo: PMST1 -> PMS, PEST2 -> PES
-        solo_liga['_pref'] = solo_liga['Ligas_categoria'].str.extract(r'^([A-Z]+)T', expand=False)
-        solo_liga = solo_liga.dropna(subset=['_pref'])
-        for pref, grp in solo_liga.groupby('_pref'):
-            temps = grp['Ligas_categoria'].dropna().unique()
-            if len(temps) >= 3:
+        # Extraer liga y temporada de "PES T2 J1" → liga=PES, temp=T2
+        solo_liga['_liga'] = solo_liga['Fase_completo'].str.extract(r'^([A-Z]+)', expand=False)
+        solo_liga['_temp'] = solo_liga['Fase_completo'].str.extract(r'(T\d+)', expand=False)
+        solo_liga = solo_liga.dropna(subset=['_liga','_temp'])
+        for pref, grp in solo_liga.groupby('_liga'):
+            if grp['_temp'].nunique() >= 3:
                 return True
         return False
     r["SP10"] = _veterano_guerra()
