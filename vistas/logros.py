@@ -507,7 +507,7 @@ def evaluar_logros(
                     fmts_ganados.add(str(f).upper())
 
     r["ES01"] = any('MONOTYPE' in str(f).upper() or 'NATDEX' in str(f).upper() for f in formatos_jugados)
-    r["ES02"] = any('RANDOM' in str(f).upper() for f in fmts_ganados)
+    r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in fmts_ganados)
     r["ES03"] = _wr_por_formato(40)
     r["ES04"] = _wr_por_formato(50)
     r["ES05"] = _wr_por_formato(60)
@@ -520,7 +520,7 @@ def evaluar_logros(
     r["ES12"] = any(str(f).upper() == 'LC' for f in fmts_ganados)
     r["ES13"] = any('UBERS' in str(f).upper() for f in fmts_ganados)
     r["ES14"] = any('OU' in str(f).upper() for f in fmts_ganados) and any('DOU' in str(f).upper() for f in fmts_ganados)
-    r["ES15"] = any('NATDEX' in str(f).upper() for f in fmts_ganados)
+    r["ES15"] = any('NAT DEX' in str(f).upper() for f in fmts_ganados)
 
     # TORNEO
     TORNEOS_GEN = {
