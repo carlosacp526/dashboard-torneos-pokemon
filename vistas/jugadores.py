@@ -938,7 +938,7 @@ def generar_pdf_jugador(
             (70,"Atleta","Social","Bronce",150,"Sin Walk Over en contra en 6 meses"),
             (71,"Árbitro Honorario","Social","Plata",300,"Sin Walk Over en contra en 3  meses"),
             (72,"Jugador Honorable","Social","Oro",700,"Sin Walk Over ni a favor en 1 año"),
-            (73,"Leyenda de la Comunidad","Social","Legendario",3000,"Premio al mejor jugador del año"),
+            (73,"Leyenda de la Comunidad","Social","Legendario",3000,"Premio al mejor jugador del año o tener mas de 300 partidas"),
             (74,"Principiante de Suerte","Especial","Oro",1000,"Gana primer torneo en primera participación"),
             (75,"Regreso del Rey","Especial","Oro",800,"Vuelve a ganar torneo después de 1 año"),
             (76,"Nemesis","Especial","Plata",400,"Gana 5 veces al mismo rival"),

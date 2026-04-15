@@ -116,7 +116,7 @@ LOGROS = [
     {"id":"SO06","num":70,"cat":"Social",       "rareza":"Bronce",    "icon":"🎙️","xp":150,  "name":"Atleta",                "desc":"Sin Walk Over en contra en 1 un mes"},
     {"id":"SO07","num":71,"cat":"Social",       "rareza":"Plata",     "icon":"⚖️","xp":300,  "name":"Árbitro Honorario",     "desc":"Sin Walk Over en contra en 3  meses"},
     {"id":"SO08","num":72,"cat":"Social",       "rareza":"Oro",       "icon":"📋","xp":700,  "name":"Jugador Honorable",     "desc":"Sin Walk Over ni a favor ni en contra en 1 año"},
-    {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio al mejor jugador del año"},
+    {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio al mejor jugador del año o tener mas de 300 partidas"},
     # ── ESPECIAL (17) ────────────────────────────────────────────────────────
     {"id":"SP01","num":74,"cat":"Especial",     "rareza":"Oro",       "icon":"🍀","xp":1000, "name":"Principiante de Suerte","desc":"Gana tu primer torneo en tu primera participación"},
     {"id":"SP02","num":75,"cat":"Especial",     "rareza":"Oro",       "icon":"👑","xp":800,  "name":"Regreso del Rey",       "desc":"Vuelve a ganar un torneo después de un año"},
@@ -606,12 +606,13 @@ def evaluar_logros(
                 break
     r["SO08"] = _so08
     ##MEJORES_JUGADORES=["Fur4nko","Elin beacil","Luigillanos","Haseo"]
-    ##r["SO09"] = False  # premio manual
-    nombres_validos = {"FUR4NKO", "ELIN BEACIL", "HASEO", "LUIGILLANOS"}
+    ##r["SO09"] = False  # premio manual MEJOR DE LA COMUNIDAD O TENER 500 JUEGOS
+    LEYENDA_COMUNIDAD = {"fur4nko", "elin beacil", "haseo", "luigillanos","yabadaba"}
 
-    r["SO09"] = str(r.get("player_query", "")).upper() in nombres_validos
-
-
+    r["SO09"] = (
+        player_query.strip().lower() in LEYENDA_COMUNIDAD or
+        total >= 300
+    )
 
 
 
