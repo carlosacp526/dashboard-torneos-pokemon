@@ -124,7 +124,7 @@ LOGROS = [
     {"id":"SP04","num":77,"cat":"Especial",     "rareza":"Plata",     "icon":"⚔️","xp":300,  "name":"Duelo de Titanes",      "desc":"Gana 10 veces contra el mismo rival"},
     {"id":"SP05","num":78,"cat":"Especial",     "rareza":"Oro",       "icon":"🎂","xp":1000, "name":"Rivales por Siempre",   "desc":"Gana 20 veces contra el mismo rival"},
     {"id":"SP06","num":79,"cat":"Especial",     "rareza":"Oro",       "icon":"🐶","xp":900,  "name":"Underdog",              "desc":"Gana a un jugador que sea campeón de torneo y liga"},
-    {"id":"SP07","num":80,"cat":"Especial",     "rareza":"Legendario","icon":"🛡️","xp":3000, "name":"El Invicto",            "desc":"Termina un año sin perder ningún torneo"},
+    {"id":"SP07","num":80,"cat":"Especial",     "rareza":"Legendario","icon":"🛡️","xp":3000, "name":"El Invicto",            "desc":"terminar un mes sin perder ninguna partida en torneos (mín 10)"},
     {"id":"SP08","num":81,"cat":"Especial",     "rareza":"Oro",       "icon":"⏱️","xp":800,  "name":"Speedrunner",           "desc":"Gana dos torneos en un mes"},
     {"id":"SP09","num":82,"cat":"Especial",     "rareza":"Legendario","icon":"🏆","xp":2000, "name":"Jugador del Año",       "desc":"Mayor número de partidas ganadas en un año"},
     {"id":"SP10","num":83,"cat":"Especial",     "rareza":"Oro",       "icon":"🎖️","xp":1000, "name":"Veterano de Guerra",    "desc":"Juega en la misma liga por 3 temporadas"},
@@ -661,18 +661,17 @@ def evaluar_logros(
         return False
     r["SP06"] = _underdog()
 
-    # SP07: El Invicto — terminar un año sin perder ninguna partida en torneos
+    
+# SP07: El Invicto — terminar un mes sin perder ninguna partida en torneos (mín 10)
     def _el_invicto():
         if 'date' not in pm.columns or 'league' not in pm.columns: return False
         torneos_pm = pm[pm['league'] == 'TORNEO'].copy()
         if torneos_pm.empty: return False
-        torneos_pm['_yr'] = torneos_pm['date'].dt.year
-        for yr, grp in torneos_pm.groupby('_yr'):
-            if grp.empty: continue
-            perdio = grp['winner'].str.lower().str.contains(pq, na=False)
-            jugadas = len(grp)
-            ganadas = perdio.sum()
-            if jugadas >= 3 and ganadas == jugadas:  # todas ganadas
+        torneos_pm['_mes'] = torneos_pm['date'].dt.to_period('M')
+        for mes, grp in torneos_pm.groupby('_mes'):
+            if len(grp) < 10: continue
+            ganadas = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            if ganadas == len(grp):
                 return True
         return False
     r["SP07"] = _el_invicto()

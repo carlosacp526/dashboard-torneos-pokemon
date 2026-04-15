@@ -945,7 +945,7 @@ def generar_pdf_jugador(
             (77,"Duelo de Titanes","Especial","Plata",300,"Gana 10 veces al mismo rival"),
             (78,"Rivales por Siempre","Especial","Oro",1000,"Gana 20 veces al mismo rival"),
             (79,"Underdog","Especial","Oro",900,"Gana a un campeón de torneo y liga"),
-            (80,"El Invicto","Especial","Legendario",3000,"Termina un año sin perder ninguna batalla"),
+            (80,"El Invicto","Especial","Legendario",3000,"terminar un mes sin perder ninguna partida en torneos (mín 10)"),
             (81,"Speedrunner","Especial","Oro",800,"Gana dos torneos en un mes"),
             (82,"Jugador del Año","Especial","Legendario",2000,"Mayor partidas ganadas en un año"),
             (83,"Veterano de Guerra","Especial","Oro",1000,"Juega en la misma liga 3 temporadas"),
