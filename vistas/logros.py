@@ -564,9 +564,7 @@ def evaluar_logros(
     #     sub = df2[df2['date'] >= fecha_min]
     #     if 'Walkover' not in sub.columns: return True
     #     return (sub['Walkover'] != 1).all()
-    
-
-    def _sin_wo_n_meses(n):
+    def _meses_sin_wo(n):
         if 'date' not in df_raw.columns: return False
         if 'Walkover' not in df_raw.columns: return True
         df2 = df_raw[
@@ -574,23 +572,44 @@ def evaluar_logros(
             df_raw['player2'].str.lower().str.contains(pq, na=False)
         ].copy()
         df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
-        df2 = df2.dropna(subset=['date']).sort_values('date')
+        df2 = df2.dropna(subset=['date'])
         if df2.empty: return False
-        fecha_min = pd.Timestamp.now() - pd.DateOffset(months=n)
-        sub = df2[df2['date'] >= fecha_min]
-        if sub.empty: return False
-        wo_sub = sub[sub['Walkover'] == 1]
-        if wo_sub.empty: return True
-        # WO dado: es perdedor (no está en winner)
-        wo_dado     = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
-        # WO recibido: es ganador (está en winner)
-        wo_recibido = wo_sub[wo_sub['winner'].str.contains(pq, case=False, na=False)]
-        return wo_dado.empty and wo_recibido.empty
+        df2['_mes'] = df2['date'].dt.to_period('M')
+        meses_limpios = 0
+        for _mes in df2['_mes'].unique():
+            sub = df2[df2['_mes'] == _mes]
+            wo_sub = sub[sub['Walkover'] == 1]
+            # solo cuenta WO si el jugador es el perdedor (no está en winner)
+            wo_dado = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
+            if wo_dado.empty:
+                meses_limpios += 1
+        return meses_limpios >= n    
 
-    r["SO04"] = _sin_wo_n_meses(5)
-    r["SO05"] = _sin_wo_n_meses(6)
-    r["SO06"] = _sin_wo_n_meses(1)
-    r["SO07"] = _sin_wo_n_meses(3)
+    # def _sin_wo_n_meses(n):
+    #     if 'date' not in df_raw.columns: return False
+    #     if 'Walkover' not in df_raw.columns: return True
+    #     df2 = df_raw[
+    #         df_raw['player1'].str.lower().str.contains(pq, na=False) |
+    #         df_raw['player2'].str.lower().str.contains(pq, na=False)
+    #     ].copy()
+    #     df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
+    #     df2 = df2.dropna(subset=['date']).sort_values('date')
+    #     if df2.empty: return False
+    #     fecha_min = pd.Timestamp.now() - pd.DateOffset(months=n)
+    #     sub = df2[df2['date'] >= fecha_min]
+    #     if sub.empty: return False
+    #     wo_sub = sub[sub['Walkover'] == 1]
+    #     if wo_sub.empty: return True
+    #     # WO dado: es perdedor (no está en winner)
+    #     wo_dado     = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
+    #     # WO recibido: es ganador (está en winner)
+    #     wo_recibido = wo_sub[wo_sub['winner'].str.contains(pq, case=False, na=False)]
+    #     return wo_dado.empty and wo_recibido.empty
+
+    r["SO04"] = _meses_sin_wo(5)
+    r["SO05"] = _meses_sin_wo(6)
+    r["SO06"] = _meses_sin_wo(1)
+    r["SO07"] = _meses_sin_wo(3)
     ##r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
 
     # antes
