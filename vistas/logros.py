@@ -78,7 +78,7 @@ LOGROS = [
     {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 1300",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
     {"id":"RK10","num":38,"cat":"Ranking",      "rareza":"Legendario","icon":"🔢","xp":1600, "name":"ELO Máster",            "desc":"Alcanza 1500 pts de ELO al finalizar un mes"},
     # ── ESTRATEGIA (14) ──────────────────────────────────────────────────────
-    {"id":"ES01","num":39,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🔒","xp":50,   "name":"Maestro de Tipos",      "desc":"Participa en un torneo de NAT DEX MONOTYPE"},
+    {"id":"ES01","num":39,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🔒","xp":50,   "name":"Maestro de Tipos",      "desc":"Participa en un torneo de MONOTYPE"},
     {"id":"ES02","num":40,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":150,  "name":"Mastro del Random",     "desc":"Gana un torneo de Random Singles"},
     {"id":"ES03","num":41,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🛡️","xp":100,  "name":"Anti-Meta",             "desc":"40% WR en un formato con 20+ partidas en un año"},
     {"id":"ES04","num":42,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⏳","xp":300,  "name":"Stall Master",          "desc":"50% WR en un formato con 20+ partidas en un año"},
@@ -506,7 +506,7 @@ def evaluar_logros(
                 for f in sub[fmt_esp_col].dropna().unique():
                     fmts_ganados.add(str(f).upper())
 
-    r["ES01"] = any('MONOTYPE' in str(f).upper() for f in formatos_jugados)
+    r["ES01"] = any('NAT DEX MONOTYPE' in str(f).upper() for f in formatos_jugados)
     r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados)
     r["ES03"] = _wr_por_formato(40)
     r["ES04"] = _wr_por_formato(50)
