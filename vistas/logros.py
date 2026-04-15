@@ -328,6 +328,8 @@ def evaluar_logros(
 
     # Formatos únicos del jugador
     formatos_jugados = set(pm['Formato'].dropna().unique()) if 'Formato' in pm.columns else set()
+    formatos_jugados_esp = set(pm['Formato_esp'].dropna().unique()) if 'Formato' in pm.columns else set()
+
     formatos_totales = set(df_raw['Formato'].dropna().unique()) if 'Formato' in df_raw.columns else set()
 
     # Torneos por número
@@ -506,8 +508,8 @@ def evaluar_logros(
                 for f in sub[fmt_esp_col].dropna().unique():
                     fmts_ganados.add(str(f).upper())
 
-    r["ES01"] = any('NAT DEX MONOTYPE' in str(f).upper() for f in formatos_jugados)
-    r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados)
+    r["ES01"] = any('NAT DEX MONOTYPE' in str(f).upper() for f in formatos_jugados_esp)
+    r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados_esp)
     r["ES03"] = _wr_por_formato(40)
     r["ES04"] = _wr_por_formato(50)
     r["ES05"] = _wr_por_formato(60)
@@ -515,12 +517,12 @@ def evaluar_logros(
     r["ES07"] = formatos_jugados >= formatos_totales and len(formatos_totales) > 0
     r["ES08"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
     r["ES09"] = any(str(f).upper() in ('OU',) for f in formatos_jugados)
-    r["ES10"] = any('DOU' in str(f).upper() for f in formatos_jugados)
-    r["ES11"] = any('VGC' in str(f).upper() for f in formatos_jugados)
-    r["ES12"] = any(str(f).upper() == 'LC' for f in formatos_jugados)
-    r["ES13"] = any('UBERS' in str(f).upper() for f in formatos_jugados)
-    r["ES14"] = any('OU' in str(f).upper() for f in formatos_jugados) and any('DOU' in str(f).upper() for f in formatos_jugados)
-    r["ES15"] = any('NAT DEX' in str(f).upper() for f in formatos_jugados)
+    r["ES10"] = any('DOU' in str(f).upper() for f in formatos_jugados_esp)
+    r["ES11"] = any('VGC' in str(f).upper() for f in formatos_jugados_esp)
+    r["ES12"] = any(str(f).upper() == 'LC' for f in formatos_jugados_esp)
+    r["ES13"] = any('UBERS' in str(f).upper() for f in formatos_jugados_esp)
+    r["ES14"] = any('OU' in str(f).upper() for f in formatos_jugados_esp) and any('DOU' in str(f).upper() for f in formatos_jugados_esp)
+    r["ES15"] = any('NAT DEX' in str(f).upper() for f in formatos_jugados_esp)
 
     # TORNEO
     TORNEOS_GEN = {
