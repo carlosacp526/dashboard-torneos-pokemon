@@ -455,7 +455,7 @@ def evaluar_logros(
             winner_r = str(row.get('winner','')).strip().lower()
             if pq not in winner_r: continue  # el jugador no ganó esta partida
             rival = p2 if pq in p1 else p1
-            for camp in CAMPEONES_TORNEO.strip().lower():
+            for camp in CAMPEONES_TORNEO:
                 if camp.lower() in rival:
                     rivales_campeon_derrotados.add(rival)
         return len(rivales_campeon_derrotados) >= 5
