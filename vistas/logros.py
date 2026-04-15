@@ -538,9 +538,9 @@ def evaluar_logros(
     r["LI01"] = len(ligas_jugadas) > 0 and ligas_jugadas >= ligas_std if ligas_std else False
 
     # SOCIAL
-    r["SO01"] = any('JUNIOR' in str(l).upper() for l in ligas_jugadas)
-    r["SO02"] = any('SENIOR' in str(l).upper() for l in ligas_jugadas)
-    r["SO03"] = any('MASTER' in str(l).upper() for l in ligas_jugadas)
+    r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
+    r["SO02"] = any('PSS' in str(l).upper() for l in ligas_jugadas)
+    r["SO03"] = any('PMS' in str(l).upper() for l in ligas_jugadas)
 
     def _sin_wo_n_meses(n):
         if 'date' not in df_raw.columns: return False
