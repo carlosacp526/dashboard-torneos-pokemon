@@ -956,7 +956,7 @@ def generar_pdf_jugador(
             (88,"Role Play","Especial","Plata",300,"Participa en torneo NAT DEX DOBLES"),
             (89,"Novato Feliz","Especial","Bronce",100,"Pierde una batalla"),
             (90,"Leyendas de Ligas","Especial","Legendario",1600,"Participa en la Liga Legends"),
-            (91,"Maestro del Natdex","Estrategia","Bronce",150,"Gana torneo de NAT DEX"),
+            (91,"Maestro del Natdex","Estrategia","Bronce",150,"Participa un torneo de NAT DEX"),
             (92,"Coleccionista Bronce","Progresión","Bronce",100,"Desbloquea 10 logros Bronce"),
             (93,"Coleccionista Plata","Progresión","Plata",300,"Desbloquea 10 logros Plata"),
             (94,"Coleccionista Oro","Progresión","Oro",600,"Desbloquea 10 logros Oro"),
