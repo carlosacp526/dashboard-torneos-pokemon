@@ -456,7 +456,7 @@ def evaluar_logros(
             if pq not in winner_r: continue  # el jugador no ganó esta partida
             rival = p2 if pq in p1 else p1
             for camp in CAMPEONES_TORNEO.strip().lower():
-                if camp in rival:
+                if camp.lower() in rival:
                     rivales_campeon_derrotados.add(rival)
         return len(rivales_campeon_derrotados) >= 5
     r["VI14"] = _verdugo_elite()
@@ -598,7 +598,7 @@ def evaluar_logros(
     r["SP05"] = max_wins_rival >= 20
     # SP06: Underdog — ganar a alguien que sea campeón de torneo Y liga
     LEYENDAS = [
-        "Luigillanos", "Darmanethan", "Ricomam", "Alechiii","Joscake","Angello77","Elin beacil" ,"Akaru"
+        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru"
         # agregar más aquí
     ]
     def _underdog():
@@ -608,7 +608,7 @@ def evaluar_logros(
             winner_r = str(row.get('winner','')).strip().lower()
             if pq not in winner_r: continue
             rival = p2 if pq in p1 else p1
-            for leyenda in LEYENDAS.strip().lower():
+            for leyenda in LEYENDAS:
                 if leyenda in rival:
                     return True
         return False
