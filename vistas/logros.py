@@ -594,14 +594,28 @@ def evaluar_logros(
     ##r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
 
     # antes
-    r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
+    #r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
 
     # después
+    
+    # SO08 — al menos 1 año calendario sin ningún WO (dado ni recibido)
     _so08 = False
-    if 'date' in df2.columns and 'Walkover' in df2.columns:
-        for _anio in df2['date'].dt.year.dropna().unique():
-            _sub = df2[df2['date'].dt.year == _anio]
-            if (_sub['Walkover'].fillna(0) != 1).all():
+    if 'date' in df_raw.columns and 'Walkover' in df_raw.columns:
+        _df2 = df_raw[
+            df_raw['player1'].str.lower().str.contains(pq, na=False) |
+            df_raw['player2'].str.lower().str.contains(pq, na=False)
+        ].copy()
+        _df2['date'] = pd.to_datetime(_df2['date'], errors='coerce')
+        _df2 = _df2.dropna(subset=['date'])
+        for _anio in _df2['date'].dt.year.dropna().unique():
+            _sub = _df2[_df2['date'].dt.year == _anio]
+            _wo = _sub[_sub['Walkover'] == 1]
+            if _wo.empty:
+                _so08 = True
+                break
+            wo_dado     = _wo[~_wo['winner'].str.contains(pq, case=False, na=False)]
+            wo_recibido = _wo[_wo['winner'].str.contains(pq, case=False, na=False)]
+            if wo_dado.empty and wo_recibido.empty:
                 _so08 = True
                 break
     r["SO08"] = _so08
