@@ -952,7 +952,7 @@ def generar_pdf_jugador(
             (84,"El Inmortal","Especial","Oro",1000,"Máx. 3 derrotas en liga en una temporada"),
             (85,"Mortal","Especial","Bronce",100,"Máx. 10 derrotas en liga en una temporada"),
             (86,"Plebeyo","Especial","Bronce",100,"Máx. 15 derrotas en liga en una temporada"),
-            (87,"El Último en Pie","Especial","Oro",700,"Gana PJS, PES, PSS y PMS"),
+            (87,"El Último en Pie","Especial","Oro",700,"Gana una de las ligas PJS, PES, PSS , PMS o PLS"),
             (88,"Role Play","Especial","Plata",300,"Participa en torneo NAT DEX DOBLES"),
             (89,"Novato Feliz","Especial","Bronce",100,"Pierde una batalla"),
             (90,"Leyendas de Ligas","Especial","Legendario",1600,"Participa en la Liga Legends"),

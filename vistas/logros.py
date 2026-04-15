@@ -131,7 +131,7 @@ LOGROS = [
     {"id":"SP11","num":84,"cat":"Especial",     "rareza":"Oro",       "icon":"💀","xp":1000, "name":"El Inmortal",           "desc":"No pierdas más de 3 partidas en liga en una temporada"},
     {"id":"SP12","num":85,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌅","xp":100,  "name":"Mortal",                "desc":"No pierdas más de 10 partidas en liga en una temporada"},
     {"id":"SP13","num":86,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌙","xp":100,  "name":"Plebeyo",               "desc":"No pierdas más de 15 partidas en liga en una temporada"},
-    {"id":"SP14","num":87,"cat":"Especial",     "rareza":"Oro",       "icon":"🏁","xp":700,  "name":"El Último en Pie",      "desc":"Gana la PJS, PES, PSS y PMS"},
+    {"id":"SP14","num":87,"cat":"Especial",     "rareza":"Oro",       "icon":"🏁","xp":700,  "name":"El Último en Pie",      "desc":"Gana una de las ligas PJS, PES, PSS , PMS o PLS"},
     {"id":"SP15","num":88,"cat":"Especial",     "rareza":"Plata",     "icon":"🦅","xp":300,  "name":"Role Play",             "desc":"Participa en torneo NAT DEX DOBLES"},
     {"id":"SP16","num":89,"cat":"Especial",     "rareza":"Bronce",    "icon":"💀","xp":100,  "name":"Novato Feliz",          "desc":"Pierde una batalla"},
     {"id":"SP17","num":90,"cat":"Especial",     "rareza":"Legendario","icon":"💯","xp":1600, "name":"Leyendas de Ligas",     "desc":"Participa en la Liga Legends"},
@@ -548,8 +548,11 @@ def evaluar_logros(
 
     # LIGAS
     ligas_std = {str(l) for l in todas_ligas_}
-    r["LI01"] = len(ligas_jugadas) > 0 and ligas_jugadas >= ligas_std if ligas_std else False
-
+    #r["LI01"] = len(ligas_jugadas) > 0 and ligas_jugadas >= ligas_std if ligas_std else False
+    r["LI01"] = len({
+        liga for liga in ["PJS", "PES", "PSS", "PMS", "PLS"]
+        if any(liga in str(l).upper() for l in ligas_jugadas)
+     }) >= 2
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     r["SO02"] = any('PSS' in str(l).upper() for l in ligas_jugadas)
@@ -751,7 +754,7 @@ def evaluar_logros(
         "PLS": {"Car10seduard0"}
     }
 
-    r["SP14"] = all(
+    r["SP14"] = any(
             player_query.strip().lower() in GANADORES_LIGA.get(liga, set())
             for liga in ["PJS", "PES", "PSS", "PMS", "PLS"]
         )
