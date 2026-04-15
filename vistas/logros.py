@@ -328,9 +328,9 @@ def evaluar_logros(
 
     # Formatos únicos del jugador
     formatos_jugados = set(pm['Formato'].dropna().unique()) if 'Formato' in pm.columns else set()
-    formatos_jugados_esp = set(pm['Formato_esp'].dropna().unique()) if 'Formato' in pm.columns else set()
-
-    formatos_totales = set(df_raw['Formato'].dropna().unique()) if 'Formato' in df_raw.columns else set()
+    formatos_jugados_esp = set(pm['Formato_esp'].dropna().unique()) if 'Formato_esp' in pm.columns else set()
+    ormatos_totales = set(df_raw['Formato'].dropna().unique()) if 'Formato' in df_raw.columns else set()
+    formatos_totales_esp = set(df_raw['Formato_esp'].dropna().unique()) if 'Formato_esp' in df_raw.columns else set()
 
     # Torneos por número
     torneos_num = set(pm[pm['league']=='TORNEO']['N_Torneo'].dropna().astype(int).unique()) if 'N_Torneo' in pm.columns else set()
@@ -514,9 +514,9 @@ def evaluar_logros(
     r["ES04"] = _wr_por_formato(50)
     r["ES05"] = _wr_por_formato(60)
     r["ES06"] = _wr_por_formato(70)
-    r["ES07"] = formatos_jugados >= formatos_totales and len(formatos_totales) > 0
+    r["ES07"] = formatos_jugados_esp >= formatos_totales_esp and len(formatos_totales_esp) > 0
     r["ES08"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
-    r["ES09"] = any(str(f).upper() in ('OU',) for f in formatos_jugados)
+    r["ES09"] = any(str(f).upper() in ('OU',) for f in formatos_jugados_esp)
     r["ES10"] = any('DOU' in str(f).upper() for f in formatos_jugados_esp)
     r["ES11"] = any('VGC' in str(f).upper() for f in formatos_jugados_esp)
     r["ES12"] = any(str(f).upper() == 'LC' for f in formatos_jugados_esp)
@@ -530,7 +530,8 @@ def evaluar_logros(
         "TO05": {38},    "TO06": {44},    "TO07": {50},
         "TO08": {57},    "TO09": {60},    "TO10": {66}
     }
-    r["TO01"] = any('RANDOM' in str(f).upper() for f in fmts_ganados)
+    r["TO01"] = any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM DOUBLES' in str(f).upper() for f in formatos_jugados_esp)
+    #r["TO01"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
     for kid, nums in TORNEOS_GEN.items():
         r[kid] = bool(torneos_num & nums)
     r["TO11"] = bool(torneos_num & {46,68}) and n_camp_torneo >= 1
