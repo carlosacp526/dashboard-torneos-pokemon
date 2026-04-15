@@ -474,8 +474,8 @@ def evaluar_logros(
             winner_r = str(row.get('winner','')).strip().lower()
             if pq not in winner_r: continue
             rival = p2 if pq in p1 else p1
-            for camp in CAMPEONES_PMS.strip().lower():
-                if camp in rival:
+            for camp in CAMPEONES_PMS:
+                if camp.lower() in rival:
                     derrotados.add(rival)
         return len(derrotados) >= 3
     r["VI15"] = _asesino_gigantes()
