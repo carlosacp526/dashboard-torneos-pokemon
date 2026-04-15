@@ -106,7 +106,7 @@ LOGROS = [
     {"id":"TO10","num":62,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Paldea",     "desc":"Participa en torneo Gen9 (T66)"},
     {"id":"TO11","num":63,"cat":"Torneo",       "rareza":"Legendario","icon":"🌍","xp":2000, "name":"Gran Maestro",          "desc":"Gana un Mundial (T46 o T68)"},
     # ── LIGAS (1) ────────────────────────────────────────────────────────────
-    {"id":"LI01","num":64,"cat":"Ligas",        "rareza":"Legendario","icon":"✈️","xp":2000, "name":"El Viajero",            "desc":"Participa en todas las ligas"},
+    {"id":"LI01","num":64,"cat":"Ligas",        "rareza":"Legendario","icon":"✈️","xp":2000, "name":"El Viajero",            "desc":"Participa en al menos 2 ligas"},
     # ── SOCIAL (9) ───────────────────────────────────────────────────────────
     {"id":"SO01","num":65,"cat":"Social",       "rareza":"Bronce",    "icon":"👋","xp":100,  "name":"Bienvenido",            "desc":"Participa en la Liga Junior"},
     {"id":"SO02","num":66,"cat":"Social",       "rareza":"Plata",     "icon":"🤝","xp":300,  "name":"Mentor",                "desc":"Participa en la Liga Senior"},
@@ -126,7 +126,7 @@ LOGROS = [
     {"id":"SP06","num":79,"cat":"Especial",     "rareza":"Oro",       "icon":"🐶","xp":900,  "name":"Underdog",              "desc":"Gana a un jugador que sea campeón de torneo y liga"},
     {"id":"SP07","num":80,"cat":"Especial",     "rareza":"Legendario","icon":"🛡️","xp":3000, "name":"El Invicto",            "desc":"terminar un mes sin perder ninguna partida en torneos (mín 10)"},
     {"id":"SP08","num":81,"cat":"Especial",     "rareza":"Oro",       "icon":"⏱️","xp":800,  "name":"Speedrunner",           "desc":"Gana dos torneos en un mes"},
-    {"id":"SP09","num":82,"cat":"Especial",     "rareza":"Legendario","icon":"🏆","xp":2000, "name":"Jugador del Año",       "desc":"Mayor número de partidas ganadas en un año"},
+    {"id":"SP09","num":82,"cat":"Especial",     "rareza":"Legendario","icon":"🏆","xp":2000, "name":"Jugador del Año",       "desc":"gana 50 partidas en un año"},
     {"id":"SP10","num":83,"cat":"Especial",     "rareza":"Oro",       "icon":"🎖️","xp":1000, "name":"Veterano de Guerra",    "desc":"Juega en la misma liga por 3 temporadas"},
     {"id":"SP11","num":84,"cat":"Especial",     "rareza":"Oro",       "icon":"💀","xp":1000, "name":"El Inmortal",           "desc":"No pierdas más de 3 partidas en liga en una temporada"},
     {"id":"SP12","num":85,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌅","xp":100,  "name":"Mortal",                "desc":"No pierdas más de 10 partidas en liga en una temporada"},
@@ -693,18 +693,15 @@ def evaluar_logros(
     r["SP08"] = _speedrunner()
 
     # SP09: Jugador del Año — mayor partidas ganadas en un año (comparativo global)
+# SP09: Jugador del Año — gana 50 partidas en un año
     def _jugador_del_anio():
-        if 'winner' not in df_raw.columns or 'date' not in df_raw.columns: return False
-        df2 = df_raw.copy()
-        df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
-        df2['_yr'] = df2['date'].dt.year
-        for yr, grp in df2.groupby('_yr'):
-            wins = grp['winner'].value_counts()
-            if wins.empty: continue
-            top_player = wins.index[0].strip().lower()
-            top_wins   = wins.iloc[0]
-            mis_wins   = grp['winner'].str.lower().str.contains(pq, na=False).sum()
-            if mis_wins >= top_wins and pq in top_player:
+        if 'winner' not in pm.columns or 'date' not in pm.columns: return False
+        pm2 = pm.copy()
+        pm2['date'] = pd.to_datetime(pm2['date'], errors='coerce')
+        pm2['_yr'] = pm2['date'].dt.year
+        for yr, grp in pm2.groupby('_yr'):
+            wins = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            if wins >= 50:
                 return True
         return False
     r["SP09"] = _jugador_del_anio()
