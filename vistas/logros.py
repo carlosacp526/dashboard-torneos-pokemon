@@ -103,7 +103,7 @@ LOGROS = [
     {"id":"TO07","num":59,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🗼","xp":200,  "name":"Maestro de Kalos",      "desc":"Participa en torneo Gen6 (T50)"},
     {"id":"TO08","num":60,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌺","xp":200,  "name":"Maestro de Alola",      "desc":"Participa en torneo Gen7 (T57)"},
     {"id":"TO09","num":61,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Galar",      "desc":"Participa en torneo Gen8 (T60)"},
-    {"id":"TO10","num":62,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Paldea",     "desc":"Participa en torneo Gen9 (T67)"},
+    {"id":"TO10","num":62,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Paldea",     "desc":"Participa en torneo Gen9 (T66)"},
     {"id":"TO11","num":63,"cat":"Torneo",       "rareza":"Legendario","icon":"🌍","xp":2000, "name":"Gran Maestro",          "desc":"Gana un Mundial (T46 o T68)"},
     # ── LIGAS (1) ────────────────────────────────────────────────────────────
     {"id":"LI01","num":64,"cat":"Ligas",        "rareza":"Legendario","icon":"✈️","xp":2000, "name":"El Viajero",            "desc":"Participa en todas las ligas"},
@@ -371,7 +371,7 @@ def evaluar_logros(
         primer_torneo_jugado = pm[pm['league']=='TORNEO']['N_Torneo'].dropna().min() if not pm[pm['league']=='TORNEO'].empty else None
         if primer_torneo_jugado is not None:
             primer_torneo_ganado = any(c.get('Torneo') == int(primer_torneo_jugado) for c in campeonatos_torneo)
-
+    #campeonatos_torneo=CAMPEONES_TORNEO
     # Conteo de logros desbloqueados (para PR)
     # se calcula después de construir resultado base
 
@@ -463,7 +463,7 @@ def evaluar_logros(
 
     # VI15: Asesino de Gigantes — derrotar a 3 campeones de la PMS
     CAMPEONES_PMS = [
-        "Luigillanos", "Joscake","Angello77","Lautaro"
+        "Luigillanos", "Joscake","Angello77","Lautaro","Darmanethan"
         # agregar más aquí
     ]
     def _asesino_gigantes():
@@ -506,7 +506,7 @@ def evaluar_logros(
                 for f in sub[fmt_esp_col].dropna().unique():
                     fmts_ganados.add(str(f).upper())
 
-    r["ES01"] = any('MONOTYPE' in str(f).upper() or 'NATDEX' in str(f).upper() for f in formatos_jugados)
+    r["ES01"] = any('MONOTYPE' in str(f).upper() or 'NAT DEX' in str(f).upper() for f in formatos_jugados)
     r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in fmts_ganados)
     r["ES03"] = _wr_por_formato(40)
     r["ES04"] = _wr_por_formato(50)
@@ -526,7 +526,7 @@ def evaluar_logros(
     TORNEOS_GEN = {
         "TO02": {27,58}, "TO03": {29,65}, "TO04": {34,70},
         "TO05": {38},    "TO06": {44},    "TO07": {50},
-        "TO08": {57},    "TO09": {60},    "TO10": {62},
+        "TO08": {57},    "TO09": {60},    "TO10": {66}
     }
     r["TO01"] = any('RANDOM' in str(f).upper() for f in fmts_ganados)
     for kid, nums in TORNEOS_GEN.items():
@@ -540,8 +540,12 @@ def evaluar_logros(
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     r["SO02"] = any('PSS' in str(l).upper() for l in ligas_jugadas)
+    if any('PSS' in str(l).upper() for l in ligas_jugadas):
+                r["SO01"] = True
     r["SO03"] = any('PMS' in str(l).upper() for l in ligas_jugadas)
-
+    if any('PMS' in str(l).upper() for l in ligas_jugadas):
+                r["SO01"] = True
+                r["SO02"] = True
     def _sin_wo_n_meses(n):
         if 'date' not in df_raw.columns: return False
         df2 = df_raw[
@@ -694,6 +698,10 @@ def evaluar_logros(
     r["SP15"] = any('NATDEX' in str(f).upper() and 'DOBLE' in str(f).upper() for f in formatos_jugados)
     r["SP16"] = derrotas >= 1
     r["SP17"] = any('PLS' in str(l).upper() for l in ligas_jugadas)
+    if any('PLS' in str(l).upper() for l in ligas_jugadas):
+                r["SO01"] = True
+                r["SO02"] = True
+                r["SO03"] = True
 
     # PROGRESIÓN — depende del conteo anterior
     xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
