@@ -206,6 +206,7 @@ def evaluar_logros(
     campeonatos_torneo: list,
     generar_tabla_temporada,
     generar_tabla_torneo,
+    data_filas: pd.DataFrame = None,
 ) -> dict:
     pq = player_query.lower().strip()
     pm = player_matches.copy()
@@ -302,12 +303,20 @@ def evaluar_logros(
         if not jt.empty:
             score_max = max(score_max, float(jt['score_completo'].max()))
 
-    # Elo máximo al final de cualquier mes (data_filas no disponible aquí — usamos elo actual)
-    elo_actual = 1000
-    if data_elo is not None and not data_elo.empty and 'Participantes' in data_elo.columns:
+    # Elo máximo histórico — usa data_filas si está disponible, sino elo actual
+    elo_maximo = 1000
+    if data_filas is not None and not data_filas.empty:
+        _hist_a = data_filas[data_filas['Jugador_A'].str.lower().str.contains(pq, na=False)]['Rating_A_NEW']
+        _hist_b = data_filas[data_filas['Jugador_B'].str.lower().str.contains(pq, na=False)]['Rating_B_NEW']
+        _max_a  = _hist_a.max() if not _hist_a.empty else 1000
+        _max_b  = _hist_b.max() if not _hist_b.empty else 1000
+        elo_maximo = int(max(_max_a, _max_b))
+    elif data_elo is not None and not data_elo.empty and 'Participantes' in data_elo.columns:
         row_elo = data_elo[data_elo['Participantes'].str.lower().str.contains(pq, na=False)]
         if not row_elo.empty:
-            elo_actual = int(row_elo['Elo'].iloc[0])
+            elo_maximo = int(row_elo['Elo'].iloc[0])
+
+            
 
     # Walkovers
     wo_dados    = 0
@@ -493,10 +502,10 @@ def evaluar_logros(
     r["RK04"] = score_max >= 20
     r["RK05"] = score_max >= 40
     r["RK06"] = score_max >= 60
-    r["RK07"] = elo_actual >= 1000
-    r["RK08"] = elo_actual >= 1200
-    r["RK09"] = elo_actual >= 1300
-    r["RK10"] = elo_actual >= 1500
+    r["RK07"] = elo_maximo >= 1000
+    r["RK08"] = elo_maximo >= 1200
+    r["RK09"] = elo_maximo >= 1300
+    r["RK10"] = elo_maximo >= 1500
 
     # ESTRATEGIA
     fmt_esp_col = 'Formato_esp' if 'Formato_esp' in pm.columns else 'Formato'
@@ -550,20 +559,6 @@ def evaluar_logros(
     if any('PMS' in str(l).upper() for l in ligas_jugadas):
                 r["SO01"] = True
                 r["SO02"] = True
-    # def _sin_wo_n_meses(n):
-    #     if 'date' not in df_raw.columns: return False
-    #     df2 = df_raw[
-    #         df_raw['player1'].str.lower().str.contains(pq, na=False) |
-    #         df_raw['player2'].str.lower().str.contains(pq, na=False)
-    #     ].copy()
-    #     df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
-    #     df2 = df2.dropna(subset=['date']).sort_values('date')
-    #     if df2.empty: return False
-    #     fecha_max = df2['date'].max()
-    #     fecha_min = fecha_max - pd.DateOffset(months=n)
-    #     sub = df2[df2['date'] >= fecha_min]
-    #     if 'Walkover' not in sub.columns: return True
-    #     return (sub['Walkover'] != 1).all()
     def _meses_sin_wo(n):
         if 'date' not in df_raw.columns: return False
         if 'Walkover' not in df_raw.columns: return True
@@ -577,47 +572,20 @@ def evaluar_logros(
         df2['_mes'] = df2['date'].dt.to_period('M')
         meses_limpios = 0
         for _mes in df2['_mes'].unique():
-            sub = df2[df2['_mes'] == _mes]
+            sub    = df2[df2['_mes'] == _mes]
             wo_sub = sub[sub['Walkover'] == 1]
             # solo cuenta WO si el jugador es el perdedor (no está en winner)
             wo_dado = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
             if wo_dado.empty:
                 meses_limpios += 1
-        return meses_limpios >= n    
-
-    # def _sin_wo_n_meses(n):
-    #     if 'date' not in df_raw.columns: return False
-    #     if 'Walkover' not in df_raw.columns: return True
-    #     df2 = df_raw[
-    #         df_raw['player1'].str.lower().str.contains(pq, na=False) |
-    #         df_raw['player2'].str.lower().str.contains(pq, na=False)
-    #     ].copy()
-    #     df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
-    #     df2 = df2.dropna(subset=['date']).sort_values('date')
-    #     if df2.empty: return False
-    #     fecha_min = pd.Timestamp.now() - pd.DateOffset(months=n)
-    #     sub = df2[df2['date'] >= fecha_min]
-    #     if sub.empty: return False
-    #     wo_sub = sub[sub['Walkover'] == 1]
-    #     if wo_sub.empty: return True
-    #     # WO dado: es perdedor (no está en winner)
-    #     wo_dado     = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
-    #     # WO recibido: es ganador (está en winner)
-    #     wo_recibido = wo_sub[wo_sub['winner'].str.contains(pq, case=False, na=False)]
-    #     return wo_dado.empty and wo_recibido.empty
+        return meses_limpios >= n
 
     r["SO04"] = _meses_sin_wo(5)
     r["SO05"] = _meses_sin_wo(6)
     r["SO06"] = _meses_sin_wo(1)
     r["SO07"] = _meses_sin_wo(3)
-    ##r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
 
-    # antes
-    #r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
-
-    # después
-    
-    # SO08 — al menos 1 año calendario sin ningún WO (dado ni recibido)
+    # SO08 — al menos 1 año calendario sin ningún WO dado (jugador es perdedor)
     _so08 = False
     if 'date' in df_raw.columns and 'Walkover' in df_raw.columns:
         _df2 = df_raw[
@@ -627,14 +595,10 @@ def evaluar_logros(
         _df2['date'] = pd.to_datetime(_df2['date'], errors='coerce')
         _df2 = _df2.dropna(subset=['date'])
         for _anio in _df2['date'].dt.year.dropna().unique():
-            _sub = _df2[_df2['date'].dt.year == _anio]
-            _wo = _sub[_sub['Walkover'] == 1]
-            if _wo.empty:
-                _so08 = True
-                break
-            wo_dado     = _wo[~_wo['winner'].str.contains(pq, case=False, na=False)]
-            wo_recibido = _wo[_wo['winner'].str.contains(pq, case=False, na=False)]
-            if wo_dado.empty and wo_recibido.empty:
+            _sub    = _df2[_df2['date'].dt.year == _anio]
+            _wo     = _sub[_sub['Walkover'] == 1]
+            wo_dado = _wo[~_wo['winner'].str.contains(pq, case=False, na=False)]
+            if wo_dado.empty:
                 _so08 = True
                 break
     r["SO08"] = _so08
@@ -818,6 +782,7 @@ def mostrar_logros(
     campeonatos_torneo: list,
     generar_tabla_temporada,
     generar_tabla_torneo,
+    data_filas: pd.DataFrame = None,
 ):
     st.markdown("---")
     st.markdown("### 🏅 Logros")
@@ -828,6 +793,7 @@ def mostrar_logros(
             base2, base_torneo_final,
             campeonatos_liga, campeonatos_torneo,
             generar_tabla_temporada, generar_tabla_torneo,
+            data_filas=data_filas,
         )
 
     total_logros = len(LOGROS)

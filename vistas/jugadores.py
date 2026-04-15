@@ -1740,9 +1740,18 @@ def show():
             from vistas.logros import mostrar_logros
             # calcular_elo para logros de ranking
             try:
-                _data_elo_lg, _, _ = calcular_elo(df_raw)
+                _data_elo_lg, _data_filas_lg, _ = calcular_elo(df_raw)
+
+
+
             except Exception:
-                _data_elo_lg = pd.DataFrame()
+                st.warning(f"Error calcular_elo: {e}")
+                _data_elo_lg   = pd.DataFrame()
+                _data_filas_lg = pd.DataFrame()
+
+
+
+
             _camp_liga_lg   = campeonatos_liga   if 'campeonatos_liga'   in dir() else []
             _camp_torn_lg   = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
             mostrar_logros(
@@ -1750,6 +1759,7 @@ def show():
                 player_matches      = player_matches,
                 df_raw              = df_raw,
                 data_elo            = _data_elo_lg,
+                data_filas          = _data_filas_lg,
                 base2               = base2,
                 base_torneo_final   = base_torneo_final,
                 campeonatos_liga    = _camp_liga_lg,
@@ -1832,14 +1842,16 @@ def show():
                 _camp_liga_pdf  = campeonatos_liga  if 'campeonatos_liga'  in dir() else []
                 _camp_torn_pdf  = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
                 try:
-                    _data_elo_pdf, _, _ = calcular_elo(df_raw)
+                    _data_elo_pdf, _data_filas_pdf, _ = calcular_elo(df_raw)
                 except Exception:
-                    _data_elo_pdf = pd.DataFrame()
+                    _data_elo_pdf   = pd.DataFrame()
+                    _data_filas_pdf = pd.DataFrame()
                 desbloqueados_pdf = evaluar_logros(
                     player_query        = player_query,
                     player_matches      = player_matches,
                     df_raw              = df_raw,
                     data_elo            = _data_elo_pdf,
+                    data_filas          = _data_filas_pdf,
                     base2               = base2,
                     base_torneo_final   = base_torneo_final,
                     campeonatos_liga    = _camp_liga_pdf,
