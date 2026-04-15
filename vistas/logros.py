@@ -455,7 +455,7 @@ def evaluar_logros(
             winner_r = str(row.get('winner','')).strip().lower()
             if pq not in winner_r: continue  # el jugador no ganó esta partida
             rival = p2 if pq in p1 else p1
-            for camp in CAMPEONES_TORNEO:
+            for camp in CAMPEONES_TORNEO.strip().lower():
                 if camp in rival:
                     rivales_campeon_derrotados.add(rival)
         return len(rivales_campeon_derrotados) >= 5
@@ -474,7 +474,7 @@ def evaluar_logros(
             winner_r = str(row.get('winner','')).strip().lower()
             if pq not in winner_r: continue
             rival = p2 if pq in p1 else p1
-            for camp in CAMPEONES_PMS:
+            for camp in CAMPEONES_PMS.strip().lower():
                 if camp in rival:
                     derrotados.add(rival)
         return len(derrotados) >= 3
@@ -566,8 +566,11 @@ def evaluar_logros(
     r["SO06"] = _sin_wo_n_meses(24)
     r["SO07"] = _sin_wo_n_meses(36)
     r["SO08"] = (wo_dados == 0 and wo_recibidos == 0 and len(años_unicos) >= 1)
-    r["SO09"] = False  # premio manual
+    ##MEJORES_JUGADORES=["Fur4nko","Elin beacil","Luigillanos","Haseo"]
+    ##r["SO09"] = False  # premio manual
+    nombres_validos = {"FUR4NKO", "ELIN BEACIL", "HASEO", "LUIGILLANOS"}
 
+    r["SO09"] = str(r["player_query"]).upper() in nombres_validos
     # ESPECIAL
     r["SP01"] = primer_torneo_ganado
 
@@ -605,7 +608,7 @@ def evaluar_logros(
             winner_r = str(row.get('winner','')).strip().lower()
             if pq not in winner_r: continue
             rival = p2 if pq in p1 else p1
-            for leyenda in LEYENDAS:
+            for leyenda in LEYENDAS.strip().lower():
                 if leyenda in rival:
                     return True
         return False
