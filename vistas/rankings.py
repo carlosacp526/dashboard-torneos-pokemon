@@ -199,10 +199,10 @@ def show():
         try:
             ranking_completo = pd.read_csv("score_mundial.csv")
             ranking_completo["Puntaje"] = ranking_completo.Puntaje.apply(lambda x: int(x))
-            clasificados = ranking_completo[ranking_completo.Rank < 17]
-            resto = ranking_completo[ranking_completo.Rank >= 17]
+            clasificados = ranking_completo[ranking_completo.Rank < 18]
+            resto = ranking_completo[ranking_completo.Rank >= 18]
 
-            st.subheader("🏆 CLASIFICADOS TOP 16")
+            st.subheader("🏆 CLASIFICADOS TOP 17")
             def highlight_top3(row):
                 if row['Rank']==1: return ['background-color:#004C99;font-weight:bold']*len(row)
                 if row['Rank']==2: return ['background-color:#0066CC;font-weight:bold']*len(row)
