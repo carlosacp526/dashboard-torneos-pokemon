@@ -946,7 +946,7 @@ def generar_pdf_jugador(
             (78,"Rivales por Siempre","Especial","Oro",1000,"Gana 20 veces al mismo rival"),
             (79,"Underdog","Especial","Oro",900,"Gana a un campeón de torneo y liga"),
             (80,"El Invicto","Especial","Legendario",3000,"terminar un mes sin perder ninguna partida en torneos (mín 10)"),
-            (81,"Speedrunner","Especial","Oro",800,"Gana dos torneos en un mes"),
+            (81,"Speedrunner","Especial","Oro",800,"Gana dos torneos en el mismo año"),
             (82,"Jugador del Año","Especial","Legendario",2000,"gana 50 partidas en un año"),
             (83,"Veterano de Guerra","Especial","Oro",1000,"Juega en la misma liga 3 temporadas"),
             (84,"El Inmortal","Especial","Oro",1000,"Máx. 3 derrotas en liga en una temporada"),

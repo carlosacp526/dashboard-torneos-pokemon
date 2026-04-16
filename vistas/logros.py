@@ -125,7 +125,7 @@ LOGROS = [
     {"id":"SP05","num":78,"cat":"Especial",     "rareza":"Oro",       "icon":"🎂","xp":1000, "name":"Rivales por Siempre",   "desc":"Gana 20 veces contra el mismo rival"},
     {"id":"SP06","num":79,"cat":"Especial",     "rareza":"Oro",       "icon":"🐶","xp":900,  "name":"Underdog",              "desc":"Gana a un jugador que sea campeón de torneo y liga"},
     {"id":"SP07","num":80,"cat":"Especial",     "rareza":"Legendario","icon":"🛡️","xp":3000, "name":"El Invicto",            "desc":"terminar un mes sin perder ninguna partida en torneos (mín 10)"},
-    {"id":"SP08","num":81,"cat":"Especial",     "rareza":"Oro",       "icon":"⏱️","xp":800,  "name":"Speedrunner",           "desc":"Gana dos torneos en un mes"},
+    {"id":"SP08","num":81,"cat":"Especial",     "rareza":"Oro",       "icon":"⏱️","xp":800,  "name":"Speedrunner",           "desc":"Gana dos torneos en un año"},
     {"id":"SP09","num":82,"cat":"Especial",     "rareza":"Legendario","icon":"🏆","xp":2000, "name":"Jugador del Año",       "desc":"gana 50 partidas en un año"},
     {"id":"SP10","num":83,"cat":"Especial",     "rareza":"Oro",       "icon":"🎖️","xp":1000, "name":"Veterano de Guerra",    "desc":"Juega en la misma liga por 3 temporadas"},
     {"id":"SP11","num":84,"cat":"Especial",     "rareza":"Oro",       "icon":"💀","xp":1000, "name":"El Inmortal",           "desc":"No pierdas más de 3 partidas en liga en una temporada"},
@@ -544,8 +544,14 @@ def evaluar_logros(
     #r["TO01"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
     for kid, nums in TORNEOS_GEN.items():
         r[kid] = bool(torneos_num & nums)
-    r["TO11"] = bool(torneos_num & {46,68}) and n_camp_torneo >= 1
+    
+    #r["TO11"] = bool(torneos_num & {46,68}) and n_camp_torneo >= 1
 
+    CAMPEONES_mundial={"Darmanethan"}
+    # VICTORIAS
+    #r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
+    ##r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
+    r["TO11"] = player_query.strip() in CAMPEONES_mundial
     # LIGAS
     ligas_std = {str(l) for l in todas_ligas_}
     #r["LI01"] = len(ligas_jugadas) > 0 and ligas_jugadas >= ligas_std if ligas_std else False
@@ -677,7 +683,7 @@ def evaluar_logros(
         return False
     r["SP07"] = _el_invicto()
 
-    # SP08: Speedrunner — ganar 2 torneos en el mismo mes
+
 # SP08: Speedrunner — ganar 2 torneos en el mismo año
     def _speedrunner():
         if len(campeonatos_torneo) < 2: return False
