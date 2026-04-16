@@ -561,6 +561,9 @@ def evaluar_logros(
      }) >= 2
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
+    if any('PES' in str(l).upper() for l in ligas_jugadas):
+                r["SO01"] = True  
+                 
     r["SO02"] = any('PSS' in str(l).upper() for l in ligas_jugadas)
     if any('PSS' in str(l).upper() for l in ligas_jugadas):
                 r["SO01"] = True
