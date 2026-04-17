@@ -116,9 +116,9 @@ LOGROS = [
     {"id":"SO06","num":70,"cat":"Social",       "rareza":"Bronce",    "icon":"🎙️","xp":150,  "name":"Atleta",                "desc":"Sin Walk Over en contra en 1 un mes"},
     {"id":"SO07","num":71,"cat":"Social",       "rareza":"Plata",     "icon":"⚖️","xp":300,  "name":"Árbitro Honorario",     "desc":"Sin Walk Over en contra en 3  meses"},
     {"id":"SO08","num":72,"cat":"Social",       "rareza":"Oro",       "icon":"📋","xp":700,  "name":"Jugador Honorable",     "desc":"Sin Walk Over ni a favor ni en contra en 1 año"},
-    {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio al mejor jugador del año o tener mas de 300 partidas"},
+    {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio BP del año o  300 partidas"},
     # ── ESPECIAL (17) ────────────────────────────────────────────────────────
-    {"id":"SP01","num":74,"cat":"Especial",     "rareza":"Oro",       "icon":"🍀","xp":1000, "name":"Principiante de Suerte","desc":"Gana tu primer torneo en tu primera participación"},
+    {"id":"SP01","num":74,"cat":"Especial",     "rareza":"Oro",       "icon":"🍀","xp":1000, "name":"Principiante de Suerte","desc":"Gana 10 batallas"},
     {"id":"SP02","num":75,"cat":"Especial",     "rareza":"Oro",       "icon":"👑","xp":800,  "name":"Regreso del Rey",       "desc":"Vuelve a ganar un torneo después de un año"},
     {"id":"SP03","num":76,"cat":"Especial",     "rareza":"Plata",     "icon":"😤","xp":400,  "name":"Nemesis",               "desc":"Gana 5 veces contra el mismo rival"},
     {"id":"SP04","num":77,"cat":"Especial",     "rareza":"Plata",     "icon":"⚔️","xp":300,  "name":"Duelo de Titanes",      "desc":"Gana 10 veces contra el mismo rival"},
@@ -626,7 +626,7 @@ def evaluar_logros(
 
 
     # ESPECIAL
-    r["SP01"] = primer_torneo_ganado
+    r["SP01"] = victorias>=10
 
     # SP02: Regreso del Rey — volver a ganar un torneo después de 1+ año sin ganar
 #   SP02: Regreso del Rey — volver a ganar un torneo después de 1+ año sin ganar
