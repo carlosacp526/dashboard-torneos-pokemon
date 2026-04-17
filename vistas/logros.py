@@ -143,9 +143,9 @@ LOGROS = [
     {"id":"SP08","num":81,"cat":"Especial",     "rareza":"Oro",       "icon":"⏱️","xp":800,  "name":"Speedrunner",           "desc":"Gana dos torneos en un año"},
     {"id":"SP09","num":82,"cat":"Especial",     "rareza":"Legendario","icon":"🏆","xp":2000, "name":"Jugador del Año",       "desc":"gana 50 partidas en un año"},
     {"id":"SP10","num":83,"cat":"Especial",     "rareza":"Oro",       "icon":"🎖️","xp":1000, "name":"Veterano de Guerra",    "desc":"Juega en la misma liga por 3 temporadas"},
-    {"id":"SP11","num":84,"cat":"Especial",     "rareza":"Oro",       "icon":"💀","xp":1000, "name":"El Inmortal",           "desc":"No pierdas más de 3 partidas en liga en una temporada"},
-    {"id":"SP12","num":85,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌅","xp":100,  "name":"Mortal",                "desc":"No pierdas más de 10 partidas en liga en una temporada"},
-    {"id":"SP13","num":86,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌙","xp":100,  "name":"Plebeyo",               "desc":"No pierdas más de 15 partidas en liga en una temporada"},
+    {"id":"SP11","num":84,"cat":"Especial",     "rareza":"Oro",       "icon":"💀","xp":1000, "name":"El Inmortal",           "desc":"No pierdas más de 10 partidas en liga en una temporada"},
+    {"id":"SP12","num":85,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌅","xp":100,  "name":"Mortal",                "desc":"No pierdas más de 15 partidas en liga en una temporada"},
+    {"id":"SP13","num":86,"cat":"Especial",     "rareza":"Bronce",    "icon":"🌙","xp":100,  "name":"Plebeyo",               "desc":"No pierdas más de 20 partidas en liga en una temporada"},
     {"id":"SP14","num":87,"cat":"Especial",     "rareza":"Oro",       "icon":"🏁","xp":700,  "name":"El Último en Pie",      "desc":"Gana una de las ligas PJS, PES, PSS , PMS o PLS"},
     {"id":"SP15","num":88,"cat":"Especial",     "rareza":"Plata",     "icon":"🦅","xp":300,  "name":"Role Play",             "desc":"Participa en torneo NAT DEX DOBLES"},
     {"id":"SP16","num":89,"cat":"Especial",     "rareza":"Bronce",    "icon":"💀","xp":100,  "name":"Novato Feliz",          "desc":"Pierde una batalla"},
@@ -757,9 +757,9 @@ def evaluar_logros(
         return int(min_d) if not pd.isna(min_d) else 999
 
     _min_derr = _max_derrotas_liga()
-    r["SP11"] = _min_derr <= 3    # El Inmortal: no más de 3 derrotas en liga en una temporada
-    r["SP12"] = _min_derr <= 10   # Mortal
-    r["SP13"] = _min_derr <= 15   # Plebeyo
+    r["SP11"] = _min_derr <= 10    # El Inmortal: no más de 3 derrotas en liga en una temporada
+    r["SP12"] = _min_derr <= 15   # Mortal
+    r["SP13"] = _min_derr <= 20   # Plebeyo
 
     # r["SP14"] = (n_camp_liga >= 1 and
     #              any('PJS' in str(l) for l in ligas_jugadas) and
