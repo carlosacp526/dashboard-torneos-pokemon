@@ -140,11 +140,11 @@ LOGROS = [
     {"id":"PR02","num":93,"cat":"Progresión",   "rareza":"Plata",     "icon":"🥈","xp":300,  "name":"Coleccionista Plata",   "desc":"Desbloquea 10 logros de rareza Plata"},
     {"id":"PR03","num":94,"cat":"Progresión",   "rareza":"Oro",       "icon":"🥇","xp":600,  "name":"Coleccionista Oro",     "desc":"Desbloquea 10 logros de rareza Oro"},
     {"id":"PR04","num":95,"cat":"Progresión",   "rareza":"Oro",       "icon":"✅","xp":800,  "name":"Completista",           "desc":"Desbloquea 50 logros en total"},
-    {"id":"PR05","num":96,"cat":"Progresión",   "rareza":"Legendario","icon":"💯","xp":2000, "name":"El Maestro Total",      "desc":"Desbloquea 90 logros"},
+    {"id":"PR05","num":96,"cat":"Progresión",   "rareza":"Legendario","icon":"💯","xp":2000, "name":"El Maestro Total",      "desc":"Desbloquea 80 logros"},
     {"id":"PR06","num":97,"cat":"Progresión",   "rareza":"Bronce",    "icon":"💠","xp":50,   "name":"XP Acumulado 1K",       "desc":"Acumula 1,000 puntos XP"},
     {"id":"PR07","num":98,"cat":"Progresión",   "rareza":"Plata",     "icon":"💠","xp":250,  "name":"XP Acumulado 10K",      "desc":"Acumula 10,000 puntos XP"},
-    {"id":"PR08","num":99,"cat":"Progresión",   "rareza":"Oro",       "icon":"💠","xp":500,  "name":"XP Acumulado 50K",      "desc":"Acumula 15,000 puntos XP"},
-    {"id":"PR09","num":100,"cat":"Progresión",  "rareza":"Legendario","icon":"💠","xp":1600, "name":"XP Acumulado 100K",     "desc":"Acumula 20,000 puntos XP"},
+    {"id":"PR08","num":99,"cat":"Progresión",   "rareza":"Oro",       "icon":"💠","xp":500,  "name":"XP Acumulado 15K",      "desc":"Acumula 15,000 puntos XP"},
+    {"id":"PR09","num":100,"cat":"Progresión",  "rareza":"Legendario","icon":"💠","xp":1600, "name":"XP Acumulado 20K",     "desc":"Acumula 20,000 puntos XP"},
 ]
 
 # Orden de categorías para mostrar
@@ -785,7 +785,7 @@ def evaluar_logros(
     r["PR02"] = desbloq_plata  >= 10
     r["PR03"] = desbloq_oro    >= 10
     r["PR04"] = desbloq_total  >= 50
-    r["PR05"] = desbloq_total  >= 90
+    r["PR05"] = desbloq_total  >= 80
     r["PR06"] = xp_total >= 1000
     r["PR07"] = xp_total >= 10000
     r["PR08"] = xp_total >= 15000

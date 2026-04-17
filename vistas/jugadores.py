@@ -934,8 +934,8 @@ def generar_pdf_jugador(
             (66,"Mentor","Social","Plata",300,"Participa en la Liga Senior"),
             (67,"Embajador","Social","Oro",600,"Participa en la Liga Master"),
             (68,"Fair Play","Social","Plata",250,"Sin Walk Over  en 5 meses"),
-            (69,"Deportista","Social","Oro",500,"Sin Walk Over en contra  en 5 meses"),
-            (70,"Atleta","Social","Bronce",150,"Sin Walk Over en contra en 6 meses"),
+            (69,"Deportista","Social","Oro",500,"Sin Walk Over en contra  en 6 meses"),
+            (70,"Atleta","Social","Bronce",150,"Sin Walk Over en contra en 1 mes"),
             (71,"Árbitro Honorario","Social","Plata",300,"Sin Walk Over en contra en 3  meses"),
             (72,"Jugador Honorable","Social","Oro",700,"Sin Walk Over ni a favor en 1 año"),
             (73,"Leyenda de la Comunidad","Social","Legendario",3000,"Premio al mejor jugador del año o tener mas de 300 partidas"),
@@ -961,11 +961,11 @@ def generar_pdf_jugador(
             (93,"Coleccionista Plata","Progresión","Plata",300,"Desbloquea 10 logros Plata"),
             (94,"Coleccionista Oro","Progresión","Oro",600,"Desbloquea 10 logros Oro"),
             (95,"Completista","Progresión","Oro",800,"Desbloquea 50 logros"),
-            (96,"El Maestro Total","Progresión","Legendario",2000,"Desbloquea 90 logros"),
+            (96,"El Maestro Total","Progresión","Legendario",2000,"Desbloquea 80 logros"),
             (97,"XP Acumulado 1K","Progresión","Bronce",50,"Acumula 1,000 XP"),
             (98,"XP Acumulado 10K","Progresión","Plata",250,"Acumula 10,000 XP"),
-            (99,"XP Acumulado 50K","Progresión","Oro",500,"Acumula 15,000 XP"),
-            (100,"XP Acumulado 100K","Progresión","Legendario",1600,"Acumula 20,000 XP"),
+            (99,"XP Acumulado 15K","Progresión","Oro",500,"Acumula 15,000 XP"),
+            (100,"XP Acumulado 20K","Progresión","Legendario",1600,"Acumula 20,000 XP"),
         ]
 
         # Ordenar por rareza y construir filas
