@@ -71,8 +71,8 @@ LOGROS = [
     {"id":"RK02","num":30,"cat":"Ranking",      "rareza":"Plata",     "icon":"🚀","xp":400,  "name":"Ascenso Meteórico",     "desc":"Aumenta tu win rate de un mes a otro en 20%"},
     {"id":"RK03","num":31,"cat":"Ranking",      "rareza":"Bronce",    "icon":"💯","xp":200,  "name":"Top 100",               "desc":"Alcanza 10 pts de Score_completo"},
     {"id":"RK04","num":32,"cat":"Ranking",      "rareza":"Plata",     "icon":"🏅","xp":400,  "name":"Top 50",                "desc":"Alcanza 20 pts de Score_completo"},
-    {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 40 pts de Score_completo"},
-    {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 60 pts de Score_completo"},
+    {"id":"RK05","num":33,"cat":"Ranking",      "rareza":"Oro",       "icon":"🌠","xp":800,  "name":"Top 10",                "desc":"Alcanza 30 pts de Score_completo"},
+    {"id":"RK06","num":34,"cat":"Ranking",      "rareza":"Legendario","icon":"👑","xp":1600, "name":"Número Uno",            "desc":"Alcanza 50 pts de Score_completo"},
     {"id":"RK07","num":35,"cat":"Ranking",      "rareza":"Bronce",    "icon":"🔢","xp":100,  "name":"ELO 1000",              "desc":"Alcanza 1000 pts de ELO al finalizar un mes"},
     {"id":"RK08","num":36,"cat":"Ranking",      "rareza":"Plata",     "icon":"🔢","xp":300,  "name":"ELO 1200",              "desc":"Alcanza 1200 pts de ELO al finalizar un mes"},
     {"id":"RK09","num":37,"cat":"Ranking",      "rareza":"Oro",       "icon":"🔢","xp":600,  "name":"ELO 1300",              "desc":"Alcanza 1300 pts de ELO al finalizar un mes"},
@@ -80,10 +80,10 @@ LOGROS = [
     # ── ESTRATEGIA (14) ──────────────────────────────────────────────────────
     {"id":"ES01","num":39,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🔒","xp":50,   "name":"Maestro de Tipos",      "desc":"Participa en un torneo de MONOTYPE"},
     {"id":"ES02","num":40,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":150,  "name":"Mastro del Random",     "desc":"Gana un torneo de Random Singles"},
-    {"id":"ES03","num":41,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🛡️","xp":100,  "name":"Anti-Meta",             "desc":"40% WR en un formato con 20+ partidas en un año"},
-    {"id":"ES04","num":42,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⏳","xp":300,  "name":"Stall Master",          "desc":"50% WR en un formato con 20+ partidas en un año"},
-    {"id":"ES05","num":43,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⚡","xp":300,  "name":"Hyper Offense",         "desc":"60% WR en un formato con 20+ partidas en un año"},
-    {"id":"ES06","num":44,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📊","xp":900,  "name":"Maestro del Meta",      "desc":"70% WR en un formato con 20+ partidas en un año"},
+    {"id":"ES03","num":41,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🛡️","xp":100,  "name":"Anti-Meta",             "desc":"30% WR en un formato con 5+ partidas en un mes"},
+    {"id":"ES04","num":42,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⏳","xp":300,  "name":"Stall Master",          "desc":"40% WR en un formato con 5+ partidas en un mes"},
+    {"id":"ES05","num":43,"cat":"Estrategia",   "rareza":"Plata",     "icon":"⚡","xp":300,  "name":"Hyper Offense",         "desc":"50% WR en un formato con 5+ partidas en un mes"},
+    {"id":"ES06","num":44,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📊","xp":900,  "name":"Maestro del Meta",      "desc":"60% WR en un formato con 5+ partidas en un mes"},
     {"id":"ES07","num":45,"cat":"Estrategia",   "rareza":"Oro",       "icon":"📦","xp":800,  "name":"Coleccionista",         "desc":"Juega todos los Formato_esp"},
     {"id":"ES08","num":46,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"❤️","xp":50,   "name":"Fiel a sus Raíces",     "desc":"Participa una batalla en formato Singles"},
     {"id":"ES09","num":47,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🎨","xp":50,   "name":"Maestro de OU",         "desc":"Participa una batalla en Formato_esp de OU"},
@@ -266,11 +266,11 @@ def evaluar_logros(
     # winrate por formato (20+ partidas en un año)
     def _wr_por_formato(min_pct):
         if 'Formato' not in pm.columns or 'date' not in pm.columns: return False
-        pm2 = pm.dropna(subset=['date'])
-        for yr in años_unicos:
-            sub = pm2[pm2['date'].dt.year == yr]
+        pm2 = pm.dropna(subset=['date']).copy()
+        pm2['_mes'] = pm2['date'].dt.to_period('M')
+        for mes, sub in pm2.groupby('_mes'):
             for fmt, grp in sub.groupby('Formato'):
-                if len(grp) >= 20:
+                if len(grp) > 5:
                     w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
                     if w/len(grp)*100 >= min_pct:
                         return True
@@ -500,8 +500,8 @@ def evaluar_logros(
     r["RK02"] = _wr_aumento_mensual(20)
     r["RK03"] = score_max >= 10
     r["RK04"] = score_max >= 20
-    r["RK05"] = score_max >= 40
-    r["RK06"] = score_max >= 60
+    r["RK05"] = score_max >= 30
+    r["RK06"] = score_max >= 50
     r["RK07"] = elo_maximo >= 1000
     r["RK08"] = elo_maximo >= 1200
     r["RK09"] = elo_maximo >= 1300
@@ -520,10 +520,10 @@ def evaluar_logros(
 
     r["ES01"] = any('NAT DEX MONOTYPE' in str(f).upper() for f in formatos_jugados_esp)
     r["ES02"] = any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados_esp)
-    r["ES03"] = _wr_por_formato(40)
-    r["ES04"] = _wr_por_formato(50)
-    r["ES05"] = _wr_por_formato(60)
-    r["ES06"] = _wr_por_formato(70)
+    r["ES03"] = _wr_por_formato(30)
+    r["ES04"] = _wr_por_formato(40)
+    r["ES05"] = _wr_por_formato(50)
+    r["ES06"] = _wr_por_formato(60)
     r["ES07"] = formatos_jugados_esp >= formatos_totales_esp and len(formatos_totales_esp) > 0
     r["ES08"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
     r["ES09"] = any(str(f).upper() in ('OU',) for f in formatos_jugados_esp)
