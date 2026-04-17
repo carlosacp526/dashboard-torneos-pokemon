@@ -16,12 +16,27 @@ except ImportError:
     except ImportError:
         _IMGS = {}
 
+# def _get_img_bytes(num: int):
+#     """Retorna bytes PNG del logro num, o None si no está disponible."""
+#     b64 = _IMGS.get(num)
+#     if b64:
+#         import base64 as _b64
+#         return _b64.b64decode(b64)
+#     return None
+
+
 def _get_img_bytes(num: int):
     """Retorna bytes PNG del logro num, o None si no está disponible."""
     b64 = _IMGS.get(num)
     if b64:
         import base64 as _b64
-        return _b64.b64decode(b64)
+        # asegurar padding correcto
+        b64 = b64.strip()
+        b64 += "=" * (-len(b64) % 4)
+        try:
+            return _b64.b64decode(b64)
+        except Exception:
+            return None
     return None
 
 def _img_b64(path: str) -> str:
