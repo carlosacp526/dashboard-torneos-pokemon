@@ -175,8 +175,17 @@ def show():
         asc = (sort_order == "Ascendente")
         tabla_h = hist_df[['date','player1','player2','winner','league','round','status','Match_replays']]\
             .sort_values(sort_col, ascending=asc).head(max_rows)
-        st.dataframe(tabla_h, use_container_width=True)
-
+        ##st.dataframe(tabla_h, use_container_width=True)
+        st.dataframe(
+            tabla_h,
+            column_config={
+                "Match_replays": st.column_config.LinkColumn(
+                    "🎬 Replay",
+                    display_text="Ver replay"  # texto que muestra el link
+                )
+            },
+            use_container_width=True
+        )
         csv = tabla_h.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Descargar CSV", csv,
                            f"historial_{start_year}{start_month:02d}_{end_year}{end_month:02d}.csv",
