@@ -175,6 +175,13 @@ def show():
         asc = (sort_order == "Ascendente")
         tabla_h = hist_df[['date','player1','player2','winner','league','round','status','Match_replays']]\
             .sort_values(sort_col, ascending=asc).head(max_rows)
+        
+        tabla_h = tabla_h.copy()
+        tabla_h['Match_replays'] = tabla_h['Match_replays'].apply(
+            lambda x: x if pd.notna(x) and str(x).strip().startswith('http') else 'Sin replay'
+        )
+
+
         ##st.dataframe(tabla_h, use_container_width=True)
         st.dataframe(
             tabla_h,
