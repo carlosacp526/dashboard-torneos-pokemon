@@ -177,22 +177,31 @@ def show():
             .sort_values(sort_col, ascending=asc).head(max_rows)
         
         tabla_h = tabla_h.copy()
-        tabla_h['Match_replays'] = tabla_h['Match_replays'].apply(
-            lambda x: x if pd.notna(x) and str(x).strip().startswith('http') else 'No replay'
-        )
+        tabla_h = tabla_h.copy()
+
+        def make_link(x):
+            if pd.notna(x) and str(x).strip().startswith('http'):
+                return f'<a href="{x}" target="_blank">Replay</a>'  # ← tiene URL, muestra "Replay" clickeable
+            return 'No replay'  # ← no tiene URL, muestra "No replay"
+        tabla_h['Match_replays'] = tabla_h['Match_replays'].apply(make_link)
+        st.write(tabla_h.to_html(escape=False), unsafe_allow_html=True)
+
+        # tabla_h['Match_replays'] = tabla_h['Match_replays'].apply(
+        #     lambda x: x if pd.notna(x) and str(x).strip().startswith('http') else 'No replay'
+        # )
 
 
-        ##st.dataframe(tabla_h, use_container_width=True)
-        st.dataframe(
-            tabla_h,
-            column_config={
-                "Match_replays": st.column_config.LinkColumn(
-                    "🎬 Replay",
-                    display_text="Replay"
-                )
-            },
-            use_container_width=True
-        )
+        # ##st.dataframe(tabla_h, use_container_width=True)
+        # st.dataframe(
+        #     tabla_h,
+        #     column_config={
+        #         "Match_replays": st.column_config.LinkColumn(
+        #             "🎬 Replay",
+        #             display_text="Replay"
+        #         )
+        #     },
+        #     use_container_width=True
+        # )
         csv = tabla_h.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Descargar CSV", csv,
                            f"historial_{start_year}{start_month:02d}_{end_year}{end_month:02d}.csv",
