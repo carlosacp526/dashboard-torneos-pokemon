@@ -143,4 +143,4 @@ def show():
         st.markdown("- 📊 Clasificacion Mundial \n- 🌡️ Ratios de uso \n- 🎯 Ladder Mundial Actual  \n- 📈 Pendientes")
         if st.button("➡️ Ir a Mundial Informacion", use_container_width=True, key="btn_mundial"):
             if "calidad" in pages:
-                st.switch_page(pages["mundial_info"])
+                st.switch_page(pages["mundial"])
