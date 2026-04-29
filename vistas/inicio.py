@@ -135,3 +135,12 @@ def show():
         if st.button("➡️ Ir a Calidad de Ligas", use_container_width=True, key="btn_calidad"):
             if "calidad" in pages:
                 st.switch_page(pages["calidad"])
+    with col_h:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🌎 Mundial Pokemon</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 📊 Clasificacion Mundial \n- 🌡️ Ratios de uso \n- 🎯 Ladder Mundial Actual  \n- 📈 Pendientes")
+        if st.button("➡️ Ir a Mundial Informacion", use_container_width=True, key="btn_mundial"):
+            if "calidad" in pages:
+                st.switch_page(pages["mundial_info"])
