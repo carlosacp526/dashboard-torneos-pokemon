@@ -178,7 +178,7 @@ def show():
         
         tabla_h = tabla_h.copy()
         tabla_h['Match_replays'] = tabla_h['Match_replays'].apply(
-            lambda x: x if pd.notna(x) and str(x).strip().startswith('http') else 'Sin replay'
+            lambda x: x if pd.notna(x) and str(x).strip().startswith('http') else 'No replay'
         )
 
 
@@ -188,7 +188,7 @@ def show():
             column_config={
                 "Match_replays": st.column_config.LinkColumn(
                     "🎬 Replay",
-                    display_text="https?://.*"  # ← regex, solo URLs muestran "Ver replay"
+                    display_text="Replay"
                 )
             },
             use_container_width=True
