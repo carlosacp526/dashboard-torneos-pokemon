@@ -9,7 +9,9 @@ st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="�
 from vistas import jugadores
 from vistas import inicio, analisis, rankings, elo, ligas, prediccion
 from vistas import calidad
-p_calidad = st.Page(calidad.show, title="🔬 Calidad de Ligas", url_path="calidad")
+from vistas import mundial_info
+p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
+p_mundial    = st.Page(mundial_info.show, title="🌎 Mundial Pokémon",        url_path="mundial")
 p_inicio     = st.Page(inicio.show,     title="🏠 Inicio",                  url_path="inicio",     default=True)
 p_analisis   = st.Page(analisis.show,   title="📊 Análisis General",        url_path="analisis")
 p_jugadores  = st.Page(jugadores.show,  title="👤 Jugadores",               url_path="jugadores")
@@ -26,12 +28,13 @@ st.session_state["_pages"] = {
     "rankings":   p_rankings,
     "elo":        p_elo,
     "prediccion": p_prediccion,
-    "calidad": p_calidad 
+    "calidad":    p_calidad,
+    "mundial":    p_mundial,
 }
 
 pg = st.navigation({
     "🏠 Inicio": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores, p_ligas, p_rankings, p_elo, p_prediccion,p_calidad],
+    "📊 Secciones": [p_analisis, p_jugadores, p_ligas, p_rankings, p_elo, p_prediccion, p_calidad, p_mundial],
 })
 
 pg.run()

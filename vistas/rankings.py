@@ -14,14 +14,19 @@ def show():
     st.markdown('<div id="campeones"></div>', unsafe_allow_html=True)
     st.header("🏆 Salón de la Fama - Campeones")
 
-    tab_champ = st.tabs(["2021","2022","2023","2024","2025-I","2025-II","2025-III"])
-    images = [("campeones_2021.png","Campeones 2021"),
-              ("campeones_2022.png","Campeones 2022"),
-              ("campeones_2023.png","Campeones 2023"),
-              ("campeones_2024.png","Campeones 2024"),
-              ("campeones_2025_I.png","Campeones 2025-I"),
+    tab_champ = st.tabs(["2025-III","2025-II","2025-I","2024","2023","2022","2021"])
+    images = [ ("campeones_2025_III.png","Campeones 2025-III"),
               ("campeones_2025_II.png","Campeones 2025-II"),
-              ("campeones_2025_III.png","Campeones 2025-III")]
+              ("campeones_2025_I.png","Campeones 2025-I"),
+              ("campeones_2024.png","Campeones 2024"),
+              ("campeones_2023.png","Campeones 2023"),
+               ("campeones_2022.png","Campeones 2022"),
+              ("campeones_2021.png","Campeones 2021")         
+              
+              
+              
+              
+             ]
 
     for tab, (img, caption) in zip(tab_champ, images):
         with tab:
@@ -160,7 +165,7 @@ def show():
                 sort_order = st.radio("Orden:", ["Descendente","Ascendente"], horizontal=True)
 
         asc = (sort_order == "Ascendente")
-        tabla_h = hist_df[['date','player1','player2','winner','league','round','status','replay']]\
+        tabla_h = hist_df[['date','player1','player2','winner','league','round','status','Match_replays']]\
             .sort_values(sort_col, ascending=asc).head(max_rows)
         st.dataframe(tabla_h, use_container_width=True)
 
