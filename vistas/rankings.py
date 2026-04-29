@@ -188,7 +188,7 @@ def show():
             column_config={
                 "Match_replays": st.column_config.LinkColumn(
                     "🎬 Replay",
-                    display_text="Ver replay"  # texto que muestra el link
+                    display_text="https?://.*"  # ← regex, solo URLs muestran "Ver replay"
                 )
             },
             use_container_width=True
