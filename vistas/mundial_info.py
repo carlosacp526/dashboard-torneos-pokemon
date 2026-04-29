@@ -15,7 +15,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     # SECCIÓN 1 — MUNDIAL ACTUAL  (score_mundial.csv)
     # ══════════════════════════════════════════════════════════════
-    st.header("🏆 Mundial Pokémon — Edición Actual")
+    st.header("🏆 Mundial Pokémon — Generaciones")
 
     tab_rank, tab_pts = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
 
@@ -58,7 +58,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     # SECCIÓN 2 — PRIMER MUNDIAL  (score_mundial2.csv)
     # ══════════════════════════════════════════════════════════════
-    st.header("🥇 Primer Mundial Pokémon")
+    st.header("🥇 Mundial Origins")
 
     tab_rank2, tab_pts2 = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
 
