@@ -83,13 +83,15 @@ def show():
     years = sorted(df['date'].dt.year.dropna().unique().astype(int))
     months = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
                7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}
-
-    c1, c2, c3 = st.columns(3)
+    eventos = df['Aka_evento'].fillna('Sin evento').unique().tolist()
+    c1, c2, c3,c4 = st.columns(4)
     start_year  = c1.selectbox("Año desde",  options=years, index=0, key="hist_start_year")
     start_month = c1.selectbox("Mes desde",  options=list(months.keys()), format_func=lambda x:months[x], index=0, key="hist_start_month")
     end_year    = c2.selectbox("Año hasta",  options=years, index=len(years)-1, key="hist_end_year")
     end_month   = c2.selectbox("Mes hasta",  options=list(months.keys()), format_func=lambda x:months[x], index=11, key="hist_end_month")
     liga_filter = c3.selectbox("Liga (filtro)", options=["Todas"]+sorted(leagues), key="hist_liga")
+    Evento_filter =  c4.selectbox("Nombre Torneo", options=["Todas"]+sorted(eventos), key="hist_evento")
+    
 
     st.markdown("---")
     st.markdown("### 🔍 Filtros de Jugadores")
@@ -116,6 +118,8 @@ def show():
     hist_mask = (df['date'] >= start_date) & (df['date'] <= end_date)
     if liga_filter != "Todas":
         hist_mask &= df['league'].fillna('Sin liga') == liga_filter
+    if Evento_filter != "Todas":  # ← agregar esto
+        hist_mask &= df['Aka_evento'].fillna('Sin evento') == Evento_filter
 
     def player_mask(query, exact, col_only=None):
         if not query: return pd.Series(True, index=df.index)
