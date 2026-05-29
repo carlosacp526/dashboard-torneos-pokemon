@@ -30,218 +30,6 @@ def load_model(df_raw):
         return None, f"ERROR: {e}"
 
 
-FECHA_MAP = {
-    ("ASCENSO",1):202112,("ASCENSO",2):202201,("ASCENSO",3):202207,
-    ("ASCENSO",4):202301,("ASCENSO",5):202301,("ASCENSO",6):202302,
-    ("ASCENSO",7):202303,("ASCENSO",8):202312,("ASCENSO",9):202403,
-    ("ASCENSO",10):202406,("ASCENSO",11):202502,("ASCENSO",12):202511,
-    ("CYPHER",1):202202,("CYPHER",2):202203,("CYPHER",3):202203,
-    ("CYPHER",4):202204,("CYPHER",5):202205,("CYPHER",6):202207,
-    ("CYPHER",7):202207,("CYPHER",8):202208,("CYPHER",9):202209,
-    ("PEST1",1):202409,("PEST1",2):202409,("PEST1",3):202410,
-    ("PEST1",4):202410,("PEST1",5):202411,("PEST1",6):202411,
-    ("PEST1",7):202412,("PEST1",8):202412,("PEST1",9):202412,
-    ("PEST2",1):202506,("PEST2",2):202507,("PEST2",3):202507,
-    ("PEST2",4):202508,("PEST2",5):202509,("PEST2",6):202510,
-    ("PEST2",7):202510,("PEST2",8):202510,("PEST2",9):202511,
-    ("PSST1",1):202211,("PSST1",2):202211,("PSST1",3):202211,
-    ("PSST1",4):202212,("PSST1",5):202301,("PSST1",6):202302,
-    ("PSST1",7):202302,("PSST1",8):202303,("PSST1",9):202304,
-    ("PSST2",1):202311,("PSST2",2):202311,("PSST2",3):202312,
-    ("PSST2",4):202312,("PSST2",5):202401,("PSST2",6):202401,
-    ("PSST2",7):202402,("PSST2",8):202402,("PSST2",9):202403,
-    ("PJST1",1):202211,("PJST1",2):202211,("PJST1",3):202212,
-    ("PJST1",4):202212,("PJST1",5):202301,("PJST1",6):202302,
-    ("PJST1",7):202302,("PJST1",8):202303,("PJST1",9):202304,
-    ("PJST2",1):202311,("PJST2",2):202311,("PJST2",3):202312,
-    ("PJST2",4):202312,("PJST2",5):202401,("PJST2",6):202401,
-    ("PJST2",7):202402,("PJST2",8):202402,("PJST2",9):202403,
-    ("PMST1",1):202111,("PMST1",2):202112,("PMST1",3):202201,
-    ("PMST1",4):202202,("PMST1",5):202203,("PMST1",6):202204,
-    ("PMST1",7):202205,("PMST1",8):202206,("PMST1",9):202207,
-    ("PMST2",1):202209,("PMST2",2):202210,("PMST2",3):202211,
-    ("PMST2",4):202212,("PMST2",5):202301,("PMST2",6):202302,
-    ("PMST2",7):202303,("PMST2",8):202304,("PMST2",9):202305,
-    ("PMST3",1):202307,("PMST3",2):202308,("PMST3",3):202309,
-    ("PMST3",4):202310,("PMST3",5):202311,("PMST3",6):202312,
-    ("PMST3",7):202401,("PMST3",8):202402,("PMST3",9):202403,
-    ("PMST4",1):202405,("PMST4",2):202406,("PMST4",3):202407,
-    ("PMST4",4):202408,("PMST4",5):202409,("PMST4",6):202410,
-    ("PMST4",7):202411,("PMST4",8):202412,("PMST4",9):202501,
-    ("PMST5",1):202503,("PMST5",2):202504,("PMST5",3):202505,
-    ("PMST5",4):202506,("PMST5",5):202507,("PMST5",6):202508,
-    ("PMST5",7):202509,("PMST5",8):202510,("PMST5",9):202511,
-    ("PLST1",1):202401,("PLST1",2):202402,("PLST1",3):202403,
-    ("PLST1",4):202404,("PLST1",5):202405,("PLST1",6):202406,
-    ("PLST1",7):202407,("PLST1",8):202408,("PLST1",9):202409,
-}
-
-TRAINING_STAT_COLS = [
-    "Score_Prom_Ac","Winrate_Ac",
-    "Fase_Eliminatorias_Ac","Fase_GRUPOS_Ac","Fase_JORNADAS_Ac","Fase_RONDAS_Ac",
-    "Formato_DOBLES_Ac","Formato_SINGLES_Ac","Formato_VGC_Ac",
-    "CATEGORIA_ASCENSO_Ac","CATEGORIA_CYPHER_Ac","CATEGORIA_LIGA_Ac","CATEGORIA_TORNEO_Ac",
-]
-
-def build_training_data(_df_raw):
-    df = normalize_columns(_df_raw.copy())
-    df = ensure_fields(df)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df = df[(df["Walkover"] >= 0) & df["winner"].notna()].copy()
-    df = df.sort_values("date").reset_index(drop=True)
-    rows_j = []
-    for _, row in df.iterrows():
-        ganador  = row["winner"]
-        perdedor = row["player2"] if row["winner"] == row["player1"] else row["player1"]
-        lg   = str(row.get("league",""))
-        lc   = str(row.get("Ligas_categoria",""))
-        lcat = lc if (lg == "LIGA" and lc not in ["nan","No Posee Liga",""]) else lg
-        torneo = int(row["N_Torneo"]) if pd.notna(row.get("N_Torneo")) else 0
-        fecha  = FECHA_MAP.get((lcat, torneo), None)
-        if fecha is None:
-            fecha = (row["date"].year*100 + row["date"].month) if pd.notna(row["date"]) else None
-        if fecha is None:
-            continue
-        fmt = str(row.get("Formato","SINGLES"))
-        fase_raw = str(row.get("Fase_completo", row.get("round","")))
-        fase = "Eliminatorias"
-        for k,v in [("jornada","JORNADAS"),("grupos","GRUPOS"),("suiza","RONDAS"),
-                    ("playoff","Eliminatorias"),("final","Eliminatorias"),
-                    ("semi","Eliminatorias"),("cuarto","Eliminatorias")]:
-            if k in fase_raw.lower():
-                fase = v; break
-        pg = int(row.get("pokemons Sob", 0))
-        pv = int(row.get("pokemon vencidos", 0))
-        for jugador, es_g in [(ganador, True), (perdedor, False)]:
-            rows_j.append({
-                "Jugador":jugador,"Ganador":ganador,"Perdedor":perdedor,
-                "Fecha":fecha,"llave_torneo":torneo,"Llave_cat":lcat,
-                "Formato":fmt,"Fase":fase,
-                "Victorias":1 if es_g else 0,"Derrotas":0 if es_g else 1,
-                "pokes_sobrevivientes": pg if es_g else (6-pv),
-                "poke_vencidos":        pv if es_g else (6-pg),
-                "CATEGORIA_ASCENSO": 1 if lcat=="ASCENSO" else 0,
-                "CATEGORIA_CYPHER":  1 if lcat=="CYPHER"  else 0,
-                "CATEGORIA_LIGA":    1 if ("ST" in lcat or lg=="LIGA") else 0,
-                "CATEGORIA_TORNEO":  1 if lcat=="TORNEO"  else 0,
-                "Formato_DOBLES":    1 if fmt=="DOBLES"  else 0,
-                "Formato_SINGLES":   1 if fmt=="SINGLES" else 0,
-                "Formato_VGC":       1 if fmt=="VGC"     else 0,
-                "Fase_Eliminatorias":1 if fase=="Eliminatorias" else 0,
-                "Fase_GRUPOS":       1 if fase=="GRUPOS"   else 0,
-                "Fase_JORNADAS":     1 if fase=="JORNADAS" else 0,
-                "Fase_RONDAS":       1 if fase=="RONDAS"   else 0,
-            })
-    df_j = pd.DataFrame(rows_j)
-    df_j["Juegos"] = df_j["Victorias"] + df_j["Derrotas"]
-    DSUM = ["Fase_Eliminatorias","Fase_GRUPOS","Fase_JORNADAS","Fase_RONDAS",
-            "Formato_DOBLES","Formato_SINGLES","Formato_VGC"]
-    DMAX = ["CATEGORIA_ASCENSO","CATEGORIA_CYPHER","CATEGORIA_LIGA","CATEGORIA_TORNEO"]
-    agg_dict = {
-        "pokes_sobrevivientes":("pokes_sobrevivientes","sum"),
-        "poke_vencidos":("poke_vencidos","sum"),
-        "Juegos":("Juegos","sum"),
-        "Victorias":("Victorias","sum"),
-        "Derrotas":("Derrotas","sum"),
-    }
-    for d in DSUM: agg_dict[d] = (d,"sum")
-    for d in DMAX: agg_dict[d] = (d,"max")
-    df_fecha = df_j.groupby(["Jugador","Fecha"]).agg(**agg_dict).reset_index()
-    df_fecha = score_final(df_fecha)
-    df_fecha = df_fecha.sort_values(["Jugador","Fecha"]).reset_index(drop=True)
-    df_fecha["Victorias_Ac"]  = df_fecha.groupby("Jugador")["Victorias"].cumsum()
-    df_fecha["Juegos_Ac"]     = df_fecha.groupby("Jugador")["Juegos"].cumsum()
-    df_fecha["Score_Ac"]      = df_fecha.groupby("Jugador")["score_completo"].cumsum()
-    df_fecha["Score_Prom_Ac"] = df_fecha.groupby("Jugador")["score_completo"].expanding().mean().reset_index(level=0,drop=True)
-    df_fecha["Winrate_Ac"]    = (df_fecha["Victorias_Ac"] / df_fecha["Juegos_Ac"].replace(0,1)).round(4)
-    for d in DSUM:
-        df_fecha[d+"_Ac"] = df_fecha.groupby("Jugador")[d].cumsum()
-    for d in DMAX:
-        df_fecha[d+"_Ac"] = df_fecha.groupby("Jugador").expanding().max().reset_index(level=0,drop=True)[d]
-    training = df_fecha[["Jugador","Fecha"] + TRAINING_STAT_COLS].copy()
-    batallas = df_j[["Ganador","Perdedor","Fecha","llave_torneo","Llave_cat","Formato","Fase"]].drop_duplicates().reset_index(drop=True)
-    batallas = batallas[batallas["Fecha"] >= 202105].copy()
-    batallas = batallas.rename(columns={"Fecha":"Fecha_x"})
-
-    def merge_previo(bat, trn, jugador_col, suf):
-        m = bat.merge(trn, left_on=jugador_col, right_on="Jugador", how="left")
-        m = m[m["Fecha"] < m["Fecha_x"]].copy()
-        if m.empty:
-            for c in TRAINING_STAT_COLS:
-                bat[c+suf] = 0.5 if "Winrate" in c else (50 if "Score" in c else 0)
-            return bat.copy()
-        idx = m.groupby([jugador_col,"Fecha_x","llave_torneo"])["Fecha"].idxmax()
-        m = m.loc[idx.dropna()]
-        rename = {c: c+suf for c in TRAINING_STAT_COLS}
-        m = m.rename(columns=rename)
-        keep = list(bat.columns) + [c+suf for c in TRAINING_STAT_COLS]
-        return m[[c for c in keep if c in m.columns]]
-
-    av3 = merge_previo(batallas, training, "Ganador", "_x")
-    av4 = merge_previo(batallas, training, "Perdedor", "_y")
-    feat_x = [c+"_x" for c in TRAINING_STAT_COLS]
-    feat_y = [c+"_y" for c in TRAINING_STAT_COLS]
-    all_feat = feat_x + feat_y
-    merge_cols = ["Ganador","Perdedor","Fecha_x","llave_torneo","Llave_cat","Formato","Fase"]
-    av5 = av3.merge(av4, on=merge_cols, how="inner")
-    for c in all_feat:
-        if c not in av5.columns: av5[c] = np.nan
-        av5[c] = av5[c].fillna(0.5 if "Winrate" in c else (50 if "Score" in c else 0))
-    av5 = av5.sample(frac=1, random_state=42).reset_index(drop=True)
-    n = len(av5)
-    df1 = av5.iloc[:n//2].copy();  df1["target"] = 0
-    df2 = av5.iloc[n//2:].copy();  df2["target"] = 1
-    swap = {}
-    for c in df2.columns:
-        if c.endswith("_x") and c[:-2]+"_y" in df2.columns:
-            swap[c] = c[:-2]+"_y__t"
-    for c in list(swap.keys()):
-        swap[c[:-2]+"_y"] = c[:-2]+"_x__t"
-    df2 = df2.rename(columns=swap)
-    df2 = df2.rename(columns={c: c.replace("__t","") for c in df2.columns})
-    data = pd.concat([df1, df2], ignore_index=True)
-    X = data[all_feat].fillna(0)
-    y = data["target"].astype(int)
-    latest = training.sort_values("Fecha").groupby("Jugador").last().reset_index()
-    return X, y, all_feat, latest, df_fecha
-
-
-def train_models(_X, _y):
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import cross_val_score, train_test_split
-    from sklearn.metrics import accuracy_score
-    import xgboost as xgb
-    import lightgbm as lgb
-    X, y = _X.copy(), _y.copy()
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y)
-    models = {
-        "XGBoost": xgb.XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.05,
-            subsample=0.8, colsample_bytree=0.8, use_label_encoder=False,
-            eval_metric="logloss", random_state=42, verbosity=0),
-        "XGBoost (tuned)": xgb.XGBClassifier(n_estimators=300, max_depth=4, learning_rate=0.03,
-            subsample=0.7, colsample_bytree=0.7, min_child_weight=3, use_label_encoder=False,
-            eval_metric="logloss", random_state=42, verbosity=0),
-        "LightGBM": lgb.LGBMClassifier(n_estimators=200, max_depth=5, learning_rate=0.05,
-            subsample=0.8, colsample_bytree=0.8, random_state=42, verbose=-1),
-        "LightGBM (tuned)": lgb.LGBMClassifier(n_estimators=300, num_leaves=31, learning_rate=0.03,
-            min_child_samples=10, subsample=0.7, random_state=42, verbose=-1),
-        "Random Forest": RandomForestClassifier(n_estimators=200, max_depth=8,
-            min_samples_leaf=5, random_state=42, n_jobs=-1),
-        "Random Forest (deep)": RandomForestClassifier(n_estimators=300, max_depth=12,
-            min_samples_leaf=3, max_features="sqrt", random_state=42, n_jobs=-1),
-    }
-    results, trained = {}, {}
-    for name, model in models.items():
-        try:
-            model.fit(X_train, y_train)
-            acc = accuracy_score(y_test, model.predict(X_test))
-            cv  = cross_val_score(model, X, y, cv=5, scoring="accuracy").mean()
-            results[name] = {"accuracy": round(acc,4), "cv_accuracy": round(cv,4)}
-            trained[name] = model
-        except Exception as e:
-            results[name] = {"accuracy":0.0, "cv_accuracy":0.0, "error":str(e)}
-    return trained, results, X_train, X_test, y_train, y_test
 
 
 def make_pred_row(j1, j2, latest_stats, feature_cols):
@@ -802,21 +590,27 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lc
                         "Reentrena localmente para ver estadísticas detalladas.")
 
             with tab2:
-                corr = X.join(y.rename("target")).corr()["target"].drop("target").sort_values()
-                fig  = px.bar(x=corr.values, y=corr.index, orientation="h",
-                              title="Correlación Features vs Resultado (positivo = favorece J2)",
-                              color=corr.values, color_continuous_scale="RdYlGn",
-                              labels={"x":"Correlación","y":"Feature"})
-                fig.update_layout(height=600)
-                st.plotly_chart(fig, use_container_width=True)
+                if X.empty:
+                    st.info("Las correlaciones no están disponibles en el pkl liviano. Reentrena el modelo.")
+                else:
+                    corr = X.join(y.rename("target")).corr()["target"].drop("target").sort_values()
+                    fig  = px.bar(x=corr.values, y=corr.index, orientation="h",
+                                  title="Correlación Features vs Resultado (positivo = favorece J2)",
+                                  color=corr.values, color_continuous_scale="RdYlGn",
+                                  labels={"x":"Correlación","y":"Feature"})
+                    fig.update_layout(height=600)
+                    st.plotly_chart(fig, use_container_width=True)
 
             with tab3:
-                feat_sel = st.selectbox("Feature:", feature_cols)
-                fig = px.histogram(X.join(y.rename("target")), x=feat_sel,
-                                   color=y.map({0:"J1 gana",1:"J2 gana"}),
-                                   barmode="overlay", nbins=40, title=f"Distribución - {feat_sel}",
-                                   color_discrete_map={"J1 gana":"#2ecc71","J2 gana":"#e74c3c"})
-                st.plotly_chart(fig, use_container_width=True)
+                if X.empty:
+                    st.info("Las distribuciones no están disponibles en el pkl liviano. Reentrena el modelo.")
+                else:
+                    feat_sel = st.selectbox("Feature:", feature_cols)
+                    fig = px.histogram(X.join(y.rename("target")), x=feat_sel,
+                                       color=y.map({0:"J1 gana",1:"J2 gana"}),
+                                       barmode="overlay", nbins=40, title=f"Distribución - {feat_sel}",
+                                       color_discrete_map={"J1 gana":"#2ecc71","J2 gana":"#e74c3c"})
+                    st.plotly_chart(fig, use_container_width=True)
 
             with tab4:
                 valid_r = {k:v for k,v in results.items() if "error" not in v}
@@ -865,29 +659,29 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lc
                     try:
                         import shap
                         mod_s = st.selectbox("Modelo SHAP:", list(trained.keys()), key="shap_mod")
-                        samp  = X_test.sample(min(300, len(X_test)), random_state=42)
-                        with st.spinner("Calculando SHAP..."):
-                            expl = shap.TreeExplainer(trained[mod_s])
-                            sv   = expl.shap_values(samp)
-                            if isinstance(sv, list): sv = sv[1]
-                        si = pd.DataFrame({"Feature":feature_cols,"SHAP":np.abs(sv).mean(axis=0)})
-                        si = si.sort_values("SHAP", ascending=True).tail(15)
-                        fig = px.bar(si, x="SHAP", y="Feature", orientation="h",
-                                     title=f"SHAP - {mod_s}", color="SHAP", color_continuous_scale="reds",
-                                     labels={"SHAP":"|SHAP| promedio"})
-                        fig.update_layout(height=500)
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.info("Mayor valor SHAP = más influencia en la predicción.")
-                        st.markdown("#### SHAP individual")
-                        idx_s = st.slider("Partida test:", 0, len(samp)-1, 0)
-                        sv_r  = sv[idx_s]
-                        sv_df = pd.DataFrame({"Feature":feature_cols,"SHAP":sv_r}).sort_values("SHAP")
-                        colors = ["#e74c3c" if v<0 else "#2ecc71" for v in sv_df["SHAP"]]
-                        fig2 = go.Figure(go.Bar(x=sv_df["SHAP"], y=sv_df["Feature"],
-                                                orientation="h", marker_color=colors))
-                        fig2.update_layout(title="SHAP - Partida individual", xaxis_title="Contribución", height=500)
-                        st.plotly_chart(fig2, use_container_width=True)
-                        st.caption("Verde = favorece J1 | Rojo = favorece J2")
+                        # usar pred_features si X_test está vacío
+                        X_shap = X_test if not X_test.empty else (
+                            pred_features[top_feat].fillna(0) if not pred_features.empty else pd.DataFrame()
+                        )
+                        if X_shap.empty:
+                            st.info("Sin datos para SHAP. Reentrena con datos de validación.")
+                        else:
+                            samp = X_shap.sample(min(100, len(X_shap)), random_state=42)
+                            with st.spinner("Calculando SHAP..."):
+                                expl = shap.TreeExplainer(trained[mod_s])
+                                sv   = expl.shap_values(samp)
+                                if isinstance(sv, list): sv = sv[1]
+                                if sv.ndim == 1: sv = sv.reshape(1, -1)
+                            si = pd.DataFrame({"Feature": top_feat,
+                                               "SHAP": np.abs(sv).mean(axis=0)})
+                            si = si.sort_values("SHAP", ascending=True)
+                            fig = px.bar(si, x="SHAP", y="Feature", orientation="h",
+                                         title=f"SHAP - {mod_s}", color="SHAP",
+                                         color_continuous_scale="reds",
+                                         labels={"SHAP":"|SHAP| promedio"})
+                            fig.update_layout(height=400)
+                            st.plotly_chart(fig, use_container_width=True)
+                            st.info("Mayor valor SHAP = más influencia en la predicción.")
                     except ImportError:
                         st.warning("Agrega shap al requirements.txt")
                     except Exception as e:
