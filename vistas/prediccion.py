@@ -324,51 +324,59 @@ def _calc_winrates_detallados(jug, df_j):
 def _get_player_stats(jug, latest_stats, df_fecha):
     """Devuelve un dict con todas las stats relevantes de un jugador."""
     r = latest_stats[latest_stats["Jugador"] == jug]
-    hist = df_fecha[df_fecha["Jugador"] == jug].sort_values("Fecha")
-
     if r.empty:
         return None
 
     rv = r.iloc[0]
-    total_juegos = int(rv.get("Juegos_Ac", hist["Juegos"].sum()) if "Juegos_Ac" in rv else hist["Juegos"].sum())
-    total_victorias = int(hist["Victorias"].sum())
-    total_derrotas = int(hist["Derrotas"].sum()) if "Derrotas" in hist.columns else total_juegos - total_victorias
 
-    # Winrate por formato (acumulado)
-    wr_singles   = rv.get("Formato_SINGLES_Ac", 0)
-    wr_dobles    = rv.get("Formato_DOBLES_Ac", 0)
-    wr_vgc       = rv.get("Formato_VGC_Ac", 0)
-    total_fmt    = max(wr_singles + wr_dobles + wr_vgc, 1)
+    # df_fecha puede estar vacío en el pkl liviano
+    hist = pd.DataFrame()
+    if not df_fecha.empty and "Jugador" in df_fecha.columns:
+        hist = df_fecha[df_fecha["Jugador"] == jug].sort_values("Fecha") \
+               if "Fecha" in df_fecha.columns else df_fecha[df_fecha["Jugador"] == jug]
 
-    # Participacion por tier/categoria
-    cat_ascenso  = int(rv.get("CATEGORIA_ASCENSO_Ac", 0))
-    cat_cypher   = int(rv.get("CATEGORIA_CYPHER_Ac", 0))
-    cat_liga     = int(rv.get("CATEGORIA_LIGA_Ac", 0))
-    cat_torneo   = int(rv.get("CATEGORIA_TORNEO_Ac", 0))
+    # totales — desde cosechas si no hay df_fecha
+    total_juegos    = int(rv.get("n_batallas_m36", rv.get("Juegos_Ac", 0)))
+    total_victorias = int(rv.get("n_batallas_m36", 0) * rv.get("winrate_m36", rv.get("Winrate_Ac", 0))) \
+                      if not hist.empty and "Victorias" not in hist.columns \
+                      else int(hist["Victorias"].sum()) if not hist.empty else 0
+    total_derrotas  = total_juegos - total_victorias
 
-    # Fases
-    fase_elim    = int(rv.get("Fase_Eliminatorias_Ac", 0))
-    fase_grupos  = int(rv.get("Fase_GRUPOS_Ac", 0))
-    fase_jornadas= int(rv.get("Fase_JORNADAS_Ac", 0))
-    fase_rondas  = int(rv.get("Fase_RONDAS_Ac", 0))
+    # formatos
+    wr_singles = float(rv.get("fmt_singles_sum_m36", rv.get("Formato_SINGLES_Ac", 0)))
+    wr_dobles  = float(rv.get("fmt_dobles_sum_m36",  rv.get("Formato_DOBLES_Ac",  0)))
+    wr_vgc     = float(rv.get("fmt_vgc_sum_m36",     rv.get("Formato_VGC_Ac",     0)))
+    total_fmt  = max(wr_singles + wr_dobles + wr_vgc, 1)
+
+    # categorías
+    cat_ascenso = int(rv.get("cat_ascenso_sum_m36", rv.get("CATEGORIA_ASCENSO_Ac", 0)))
+    cat_cypher  = int(rv.get("cat_cypher_sum_m36",  rv.get("CATEGORIA_CYPHER_Ac",  0)))
+    cat_liga    = int(rv.get("cat_liga_sum_m36",     rv.get("CATEGORIA_LIGA_Ac",    0)))
+    cat_torneo  = int(rv.get("cat_torneo_sum_m36",   rv.get("CATEGORIA_TORNEO_Ac",  0)))
+
+    # fases
+    fase_elim     = int(rv.get("fase_elim_sum_m36",     rv.get("Fase_Eliminatorias_Ac", 0)))
+    fase_grupos   = int(rv.get("fase_grupos_sum_m36",   rv.get("Fase_GRUPOS_Ac",        0)))
+    fase_jornadas = int(rv.get("fase_jornadas_sum_m36", rv.get("Fase_JORNADAS_Ac",      0)))
+    fase_rondas   = int(rv.get("fase_rondas_sum_m36",   rv.get("Fase_RONDAS_Ac",        0)))
+
+    # winrate global
+    winrate_ac = float(rv.get("winrate_m36", rv.get("winrate_m12", rv.get("Winrate_Ac", 0))))
 
     return {
-        "winrate_ac":   float(rv.get("Winrate_Ac", 0)),
+        "winrate_ac":   winrate_ac,
         "score_prom":   float(rv.get("Score_Prom_Ac", 0)),
         "total_juegos": total_juegos,
         "victorias":    total_victorias,
         "derrotas":     total_derrotas,
-        # formatos (partidas jugadas)
-        "singles":  wr_singles,
-        "dobles":   wr_dobles,
-        "vgc":      wr_vgc,
-        "total_fmt":total_fmt,
-        # tiers
-        "cat_ascenso": cat_ascenso,
-        "cat_cypher":  cat_cypher,
-        "cat_liga":    cat_liga,
-        "cat_torneo":  cat_torneo,
-        # fases
+        "singles":      wr_singles,
+        "dobles":       wr_dobles,
+        "vgc":          wr_vgc,
+        "total_fmt":    total_fmt,
+        "cat_ascenso":  cat_ascenso,
+        "cat_cypher":   cat_cypher,
+        "cat_liga":     cat_liga,
+        "cat_torneo":   cat_torneo,
         "fase_elim":     fase_elim,
         "fase_grupos":   fase_grupos,
         "fase_jornadas": fase_jornadas,
