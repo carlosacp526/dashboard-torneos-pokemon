@@ -454,10 +454,12 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lc
                 expl2 = shap.TreeExplainer(trained[mod_p])
                 sv2   = expl2.shap_values(X_p)
                 if isinstance(sv2, list): sv2 = sv2[1]
+                if sv2.ndim == 2: sv2_row = sv2[0]
+                else:             sv2_row = sv2
                 sv2df = (pd.DataFrame({
                             "Feature": feature_cols,
                             "Valor":   X_p.values[0],
-                            "SHAP":    sv2[0]
+                            "SHAP":    sv2_row
                          })
                          .sort_values("SHAP")
                          .assign(Direccion=lambda d: d["SHAP"].apply(
@@ -555,7 +557,7 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lc
                     return "background-color:#b71c1c;color:white"
 
                 st.dataframe(
-                    display_df.style.applymap(color_conf, subset=["Confianza %"]),
+                    display_df.style.map(color_conf, subset=["Confianza %"]),
                     use_container_width=True, hide_index=True, height=400
                 )
 
