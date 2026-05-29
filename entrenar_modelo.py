@@ -37,9 +37,14 @@ def _prep(df_raw):
     df = normalize_columns(df_raw.copy())
     df = ensure_fields(df)
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df = df.dropna(subset=["date"])
+    # separar pendientes ANTES de dropna (no tienen fecha)
+    df_pend_raw = df[df["Walkover"] == -1].copy()
+    df_pend_raw["ym"] = 0   # placeholder, no se usa para cosechas
+    # solo las jugadas necesitan fecha
+    df = df[df["Walkover"] != -1].dropna(subset=["date"])
     df["ym"] = df["date"].dt.year * 100 + df["date"].dt.month
-    return df.sort_values("date").reset_index(drop=True)
+    df = df.sort_values("date").reset_index(drop=True)
+    return df, df_pend_raw
 
 
 def _liga_cat(row):
@@ -338,15 +343,19 @@ def train_models(X, y, X_val, y_val):
 def build_pred_features(df_pend, cos, top_feat):
     feat_cols_base = list({c[:-2] for c in top_feat if c.endswith(("_g","_p"))})
 
+    # ym máximo disponible (para pendientes sin fecha que tienen ym=0)
+    max_ym = int(cos["ym"].max()) if not cos.empty else 999999
+
     def get_latest(jugador, ym_bat):
-        sub = cos[(cos["jugador"] == jugador) & (cos["ym"] < ym_bat)]
+        ym_ref = max_ym if ym_bat == 0 else ym_bat
+        sub = cos[(cos["jugador"] == jugador) & (cos["ym"] <= ym_ref)]
         if sub.empty: return None
         return sub.sort_values("ym").iloc[-1]
 
     rows = []
     for _, r in df_pend.iterrows():
         p1, p2 = str(r["player1"]).strip(), str(r["player2"]).strip()
-        ym     = int(r["ym"])
+        ym     = int(r.get("ym", 0))
         cos1   = get_latest(p1, ym)
         cos2   = get_latest(p2, ym)
         fila   = {"player1": p1, "player2": p2, "ym": ym,
@@ -386,10 +395,10 @@ def main():
     df_raw = pd.read_csv(args.csv, sep=";") if args.csv else load_data()
     print(f"      {len(df_raw)} filas.")
 
-    df       = _prep(df_raw)
+    df, df_pend_raw = _prep(df_raw)
     df_train = df[(df["Walkover"] == 0) & (df["ym"] <= TRAIN_END)].copy()
     df_val   = df[(df["Walkover"] == 0) & (df["ym"] >= VAL_START)].copy()
-    df_pend  = df[df["Walkover"] == -1].copy()
+    df_pend  = df_pend_raw.copy()
     print(f"      Train: {len(df_train)} | Val: {len(df_val)} | Pendientes: {len(df_pend)}")
 
     print("\n[2/7] Historial base...")
