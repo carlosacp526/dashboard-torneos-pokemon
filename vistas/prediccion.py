@@ -453,13 +453,21 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lc
                 import shap
                 expl2 = shap.TreeExplainer(trained[mod_p])
                 sv2   = expl2.shap_values(X_p)
-                if isinstance(sv2, list): sv2 = sv2[1]
-                if sv2.ndim == 2: sv2_row = sv2[0]
-                else:             sv2_row = sv2
+
+                # manejo de distintas formas según modelo
+                if isinstance(sv2, list):
+                    sv2_row = sv2[1][0]       # Random Forest: lista [clase0, clase1]
+                elif sv2.ndim == 3:
+                    sv2_row = sv2[0, :, 1]    # array 3D: (muestras, features, clases)
+                elif sv2.ndim == 2:
+                    sv2_row = sv2[0]          # array 2D: (muestras, features)
+                else:
+                    sv2_row = sv2             # ya es 1D
+
                 sv2df = (pd.DataFrame({
-                            "Feature": feature_cols,
-                            "Valor":   X_p.values[0],
-                            "SHAP":    sv2_row
+                            "Feature":   feature_cols,
+                            "Valor":     X_p.values[0],
+                            "SHAP":      sv2_row,
                          })
                          .sort_values("SHAP")
                          .assign(Direccion=lambda d: d["SHAP"].apply(
@@ -475,12 +483,12 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lc
                 fs.update_layout(
                     title=f"Contribución de cada feature — {mod_p}",
                     xaxis_title="Contribución SHAP",
-                    height=520,
+                    height=450,
                     shapes=[dict(type="line", x0=0, x1=0, y0=-0.5,
                                  y1=len(sv2df)-0.5, line=dict(color="white", width=1, dash="dot"))]
                 )
                 st.plotly_chart(fs, use_container_width=True)
-                st.caption(f"🟢 Verde = favorece a **{p1}** (J1)  |  🔴 Rojo = favorece a **{p2}** (J2)  |  _x = stats J1  |  _y = stats J2")
+                st.caption(f"🟢 Verde = favorece **{p1}** | 🔴 Rojo = favorece **{p2}** | _g = stats J1 | _p = stats J2")
 
                 top_pos = sv2df[sv2df["SHAP"] > 0].tail(3)["Feature"].tolist()
                 top_neg = sv2df[sv2df["SHAP"] < 0].head(3)["Feature"].tolist()
