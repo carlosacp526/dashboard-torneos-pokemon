@@ -265,7 +265,7 @@ def show():
 
         img_path = _get_pokemon_img(row["Pokémon"])
         if img_path:
-            c1.image(img_path, width=80)
+            c1.image(img_path, width=120)
         else:
             c1.markdown("❓")
 
