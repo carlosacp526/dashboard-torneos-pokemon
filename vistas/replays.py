@@ -269,7 +269,8 @@ def show():
         else:
             c1.markdown("❓")
 
-        c2.markdown(f"**{row['Pokémon']}**")
+        #c2.markdown(f"**{row['Pokémon']}**")
+        c2.markdown(f"<span style='font-size:30px; font-weight:bold'>{row['Pokémon']}</span>", unsafe_allow_html=True)
         c3.markdown(str(row["Usos"]))
         c4.markdown(f"{row['% Uso']}%")
 
