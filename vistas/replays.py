@@ -260,7 +260,7 @@ def show():
     st.markdown("<hr style='margin:2px 0'>", unsafe_allow_html=True)
 
     for pos, row in ranking_top.iterrows():
-        c0, c1, c2, c3, c4 = st.columns([0.5, 1, 1.5, 1.5, 1.5])
+        c0, c1, c2, c3, c4 = st.columns([0.5, 1, 1, 0.7, 0.7])
 
         if pos == 1:   medal = "🥇"
         elif pos == 2: medal = "🥈"
