@@ -270,9 +270,11 @@ def show():
             c1.markdown("❓")
 
         #c2.markdown(f"**{row['Pokémon']}**")
-        c2.markdown(f"<span style='font-size:30px; font-weight:bold'>{row['Pokémon']}</span>", unsafe_allow_html=True)
-        c3.markdown(str(row["Usos"]))
-        c4.markdown(f"{row['% Uso']}%")
+        c2.markdown(f"<span style='font-size:25px; font-weight:bold'>{row['Pokémon']}</span>", unsafe_allow_html=True)
+        #c3.markdown(str(row["Usos"]))
+        #c4.markdown(f"{row['% Uso']}%")
+        c3.markdown(f"<span style='font-size:25px'>{row['Usos']}</span>", unsafe_allow_html=True)
+        c4.markdown(f"<span style='font-size:25px'>{row['% Uso']}%</span>", unsafe_allow_html=True)
 
     st.markdown("---")
 
