@@ -189,7 +189,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
 
     # Headers
     #headers = [("#", PAD), ("Pokemon", 148), ("Usos", 435), ("% Uso", 510), ("Uso", BAR_X)]
-    headers = [("#", PAD), ("Pokémon", 110), ("Usos", 340), ("% Uso", 430)]
+    headers = [("#", PAD), ("Pokemon", 110), ("Usos", 340), ("% Uso", 430)]
     for label, cx in headers:
         draw.text((cx, TITLE_H + 8), label, font=f_head, fill=HEADER_TXT)
 
