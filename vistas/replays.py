@@ -132,67 +132,103 @@ def _cargar_todos_replays(df_filtrado: pd.DataFrame) -> tuple[pd.Series, int]:
 
 from PIL import Image, ImageDraw, ImageFont
 import io
-
 def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
-    """Genera una imagen PNG del ranking de Pokémon."""
-    ROW_H      = 60
-    IMG_SIZE   = 50
-    PADDING    = 20
-    COL_WIDTHS = [50, 80, 220, 100, 100]  # #, img, nombre, usos, %uso
-    WIDTH      = sum(COL_WIDTHS) + PADDING * 2
-    HEADER_H   = 60
-    HEIGHT     = HEADER_H + ROW_H * len(ranking_top) + PADDING * 2
+    from PIL import Image, ImageDraw, ImageFont
+    import io
 
-    img  = Image.new("RGB", (WIDTH, HEIGHT), color=(30, 30, 40))
+    FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+    ROW_H   = 72
+    IMG_SIZE = 52
+    PAD     = 28
+    TITLE_H = 80
+    WIDTH   = 680
+    N       = len(ranking_top)
+    HEIGHT  = TITLE_H + ROW_H * (N + 1) + PAD * 2
+
+    BG_TOP   = (15, 17, 35);  BG_BOT  = (25, 30, 60)
+    ROW_A    = (30, 34, 60);  ROW_B   = (22, 26, 50)
+    GOLD     = (255, 200, 50); SILVER = (192, 200, 215); BRONZE = (200, 140, 80)
+    WHITE    = (255, 255, 255); CYAN  = (90, 210, 255);  GREEN  = (80, 220, 160)
+    SUBTEXT  = (140, 150, 190); HEADER_TXT = (160, 180, 255)
+    BAR_BG   = (40, 45, 80);  BAR_FG  = (70, 160, 255)
+    BAR_X, BAR_W, BAR_H = 590, 62, 10
+
+    img  = Image.new("RGB", (WIDTH, HEIGHT), color=BG_TOP)
     draw = ImageDraw.Draw(img)
 
+    # Degradado de fondo
+    for y in range(HEIGHT):
+        t = y / HEIGHT
+        r = int(BG_TOP[0] + (BG_BOT[0] - BG_TOP[0]) * t)
+        g = int(BG_TOP[1] + (BG_BOT[1] - BG_TOP[1]) * t)
+        b = int(BG_TOP[2] + (BG_BOT[2] - BG_TOP[2]) * t)
+        draw.line([(0, y), (WIDTH, y)], fill=(r, g, b))
+
     try:
-        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
-        font_body  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 17)
-        font_bold  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 17)
+        f_title = ImageFont.truetype(FONT_BOLD, 26)
+        f_sub   = ImageFont.truetype(FONT_REG,  14)
+        f_head  = ImageFont.truetype(FONT_BOLD, 15)
+        f_rank  = ImageFont.truetype(FONT_BOLD, 22)
+        f_name  = ImageFont.truetype(FONT_BOLD, 18)
+        f_stat  = ImageFont.truetype(FONT_REG,  17)
+        f_pct   = ImageFont.truetype(FONT_BOLD, 17)
     except Exception:
-        font_title = font_body = font_bold = ImageFont.load_default()
+        f_title = f_sub = f_head = f_rank = f_name = f_stat = f_pct = ImageFont.load_default()
 
-    # Header
-    headers = ["#", "Img", "Pokémon", "Usos", "% Uso"]
-    x = PADDING
-    for i, h in enumerate(headers):
-        draw.text((x + 5, PADDING + 15), h, font=font_title, fill=(255, 215, 0))
-        x += COL_WIDTHS[i]
+    # Bordes dorados
+    draw.rectangle([0, 0, WIDTH, 4], fill=GOLD)
+    draw.rectangle([0, HEIGHT - 4, WIDTH, HEIGHT], fill=GOLD)
 
-    # Filas
-    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
-    for pos, row in ranking_top.iterrows():
-        y   = PADDING + HEADER_H + (pos - 1) * ROW_H
-        bg  = (40, 40, 55) if pos % 2 == 0 else (50, 50, 70)
-        draw.rectangle([PADDING, y, WIDTH - PADDING, y + ROW_H - 2], fill=bg)
+    # Título
+    draw.text((PAD, 18), "TOP POKEMON MAS USADOS", font=f_title, fill=GOLD)
+    draw.text((PAD, 52), f"{N} Pokemon  ·  Poketubi Stats", font=f_sub, fill=SUBTEXT)
+    draw.rectangle([PAD, TITLE_H - 4, WIDTH - PAD, TITLE_H - 2], fill=(60, 70, 120))
 
-        x = PADDING
-        # Posición (sin emoji, Pillow no los renderiza bien)
-        pos_txt = {1: "1°", 2: "2°", 3: "3°"}.get(pos, f"{pos}°")
-        draw.text((x + 5, y + 18), pos_txt, font=font_bold, fill=(255, 215, 0) if pos <= 3 else (200, 200, 200))
-        x += COL_WIDTHS[0]
+    # Headers
+    headers = [("#", PAD), ("Pokemon", 148), ("Usos", 435), ("% Uso", 510), ("Uso", BAR_X)]
+    for label, cx in headers:
+        draw.text((cx, TITLE_H + 8), label, font=f_head, fill=HEADER_TXT)
 
-        # Imagen del Pokémon
-        img_path = _get_pokemon_img(row["Pokémon"])
+    max_uso = ranking_top["Usos"].max()
+
+    for i, (pos, row) in enumerate(ranking_top.iterrows()):
+        y  = TITLE_H + ROW_H + i * ROW_H
+        bg = ROW_A if i % 2 == 0 else ROW_B
+        draw.rectangle([PAD // 2, y, WIDTH - PAD // 2, y + ROW_H - 2], fill=bg)
+
+        edge_col = GOLD if pos == 1 else SILVER if pos == 2 else BRONZE if pos == 3 else (60, 80, 140)
+        draw.rectangle([PAD // 2, y, PAD // 2 + 3, y + ROW_H - 2], fill=edge_col)
+
+        cy = y + ROW_H // 2
+
+        # Número
+        medal_col = GOLD if pos == 1 else SILVER if pos == 2 else BRONZE if pos == 3 else SUBTEXT
+        draw.text((PAD, cy - 12), f"{pos}°", font=f_rank, fill=medal_col)
+
+        # Sprite
+        sx, sy = 80, cy - IMG_SIZE // 2
+        img_path = _get_pokemon_img(row["Pokemon"])
         if img_path:
             try:
                 poke_img = Image.open(img_path).convert("RGBA").resize((IMG_SIZE, IMG_SIZE))
-                img.paste(poke_img, (x + 10, y + 5), poke_img)
+                img.paste(poke_img, (sx, sy), poke_img)
             except Exception:
-                pass
-        x += COL_WIDTHS[1]
+                draw.rectangle([sx, sy, sx + IMG_SIZE, sy + IMG_SIZE], fill=(40, 45, 75))
+        else:
+            draw.rectangle([sx, sy, sx + IMG_SIZE, sy + IMG_SIZE], fill=(40, 45, 75))
 
-        # Nombre
-        draw.text((x + 5, y + 18), row["Pokémon"], font=font_bold, fill=(255, 255, 255))
-        x += COL_WIDTHS[2]
+        # Nombre, usos, %
+        draw.text((148, cy - 10), row["Pokemon"],    font=f_name, fill=WHITE)
+        draw.text((435, cy - 10), str(row["Usos"]),  font=f_stat, fill=CYAN)
+        draw.text((510, cy - 10), f"{row['% Uso']}%", font=f_pct, fill=GREEN)
 
-        # Usos
-        draw.text((x + 5, y + 18), str(row["Usos"]), font=font_body, fill=(180, 220, 255))
-        x += COL_WIDTHS[3]
-
-        # % Uso
-        draw.text((x + 5, y + 18), f"{row['% Uso']}%", font=font_body, fill=(180, 255, 180))
+        # Barra de uso
+        filled = int(BAR_W * row["Usos"] / max_uso)
+        draw.rectangle([BAR_X, cy - BAR_H // 2, BAR_X + BAR_W, cy + BAR_H // 2], fill=BAR_BG)
+        if filled > 0:
+            draw.rectangle([BAR_X, cy - BAR_H // 2, BAR_X + filled, cy + BAR_H // 2], fill=BAR_FG)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
