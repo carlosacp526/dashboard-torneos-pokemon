@@ -245,7 +245,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     st.subheader(f"🏆 Top {top_n} Pokémon más usados — {aka_label}")
 
-    h0, h1, h2, h3, h4 = st.columns([0.5, 1, 1, 1, 1])
+    h0, h1, h2, h3, h4 = st.columns([0.5, 1, 1, 0.7, 0.7])
     #h0.markdown("**#**")
     #h1.markdown("**Imagen**")
     #h2.markdown("**Pokémon**")
