@@ -174,14 +174,14 @@ def calcular_elo_formato(df_raw, formato):
     dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
     data_elo = pd.merge(data_elo, dfechas, how='left', left_on='Participantes', right_on='Jugador')
     del data_elo['Jugador']
-    cutoff = pd.Timestamp.now() - pd.DateOffset(months=12)
+    cutoff = pd.Timestamp.now() - pd.DateOffset(months=6)
     data_elo['Actividad'] = data_elo['Fecha'].apply(lambda x: 'Activo' if pd.notna(x) and x>=cutoff else 'Inactivo')
     data_elo = data_elo.sort_values('Elo', ascending=False).reset_index(drop=True)
     data_elo['RANK'] = range(1, len(data_elo)+1)
     return data_elo, data_filas
 
 def calcular_elo_tier(df_raw, tier):
-    """Calcula Elo independiente filtrado por Tier."""
+    """Calcula Elo independiente filtrado por Tier — usa PSElo igual que calcular_elo_formato."""
     df = normalize_columns(df_raw.copy())
     df = ensure_fields(df)
     if 'Tier' not in df.columns: return pd.DataFrame(), pd.DataFrame()
@@ -206,29 +206,17 @@ def calcular_elo_tier(df_raw, tier):
         'Rating_B': [0.0]*len(elo), 'Rating_B_NEW': [0.0]*len(elo),
         'Fecha': elo['date'].values,
     })
-    for i, row in elo.iterrows():
-        ra = float(data_elo.loc[data_elo['Participantes']==row['Ganador'],'Elo'].values[0])
-        rb = float(data_elo.loc[data_elo['Participantes']==row['Perdedor'],'Elo'].values[0])
-        n_tier = len(data_elo)
-        K = 32
-        ea = 1/(1+10**((rb-ra)/400))
-        eb = 1/(1+10**((ra-rb)/400))
-        ra_new = round(ra + K*(1-ea), 2)
-        rb_new = round(rb + K*(0-eb), 2)
-        data_elo.loc[data_elo['Participantes']==row['Ganador'],'Elo'] = ra_new
-        data_elo.loc[data_elo['Participantes']==row['Perdedor'],'Elo'] = rb_new
-        data_filas.at[i,'Jugador_A']    = row['Ganador']
-        data_filas.at[i,'Rating_A']     = ra
-        data_filas.at[i,'Rating_A_NEW'] = ra_new
-        data_filas.at[i,'Jugador_B']    = row['Perdedor']
-        data_filas.at[i,'Rating_B']     = rb
-        data_filas.at[i,'Rating_B_NEW'] = rb_new
-    per = data_filas[['Jugador_B','Fecha']].rename(columns={'Jugador_B':'Jugador'})
-    gan = data_filas[['Jugador_A','Fecha']].rename(columns={'Jugador_A':'Jugador'})
+    for i in range(len(elo)):
+        g = elo.loc[i,'Ganador']; p = elo.loc[i,'Perdedor']
+        ra = data_elo.loc[data_elo['Participantes']==g,'Elo'].values[0]
+        rb = data_elo.loc[data_elo['Participantes']==p,'Elo'].values[0]
+        PSElo(ra).update_rating(g, p, ra, rb, 1, data_elo, data_filas, i)
+    per = elo[['Perdedor','date']].rename(columns={'Perdedor':'Jugador','date':'Fecha'})
+    gan = elo[['Ganador','date']].rename(columns={'Ganador':'Jugador','date':'Fecha'})
     dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
     data_elo = pd.merge(data_elo, dfechas, how='left', left_on='Participantes', right_on='Jugador')
     del data_elo['Jugador']
-    cutoff = pd.Timestamp.now() - pd.DateOffset(months=1000)
+    cutoff = pd.Timestamp.now() - pd.DateOffset(months=6)
     data_elo['Actividad'] = data_elo['Fecha'].apply(lambda x: 'Activo' if pd.notna(x) and x>=cutoff else 'Inactivo')
     data_elo = data_elo.sort_values('Elo', ascending=False).reset_index(drop=True)
     data_elo['RANK'] = range(1, len(data_elo)+1)
