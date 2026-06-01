@@ -246,11 +246,17 @@ def show():
     st.subheader(f"🏆 Top {top_n} Pokémon más usados — {aka_label}")
 
     h0, h1, h2, h3, h4 = st.columns([0.5, 1, 1, 1, 1])
-    h0.markdown("**#**")
-    h1.markdown("**Imagen**")
-    h2.markdown("**Pokémon**")
-    h3.markdown("**Usos**")
-    h4.markdown("**% Uso**")
+    #h0.markdown("**#**")
+    #h1.markdown("**Imagen**")
+    #h2.markdown("**Pokémon**")
+    #h3.markdown("**Usos**")
+    #h4.markdown("**% Uso**")
+
+    h0.markdown("<span style='font-size:20px; font-weight:bold'>#</span>", unsafe_allow_html=True)
+    h1.markdown("<span style='font-size:20px; font-weight:bold'>Imagen</span>", unsafe_allow_html=True)
+    h2.markdown("<span style='font-size:25px; font-weight:bold'>Pokémon</span>", unsafe_allow_html=True)
+    h3.markdown("<span style='font-size:25px; font-weight:bold'>Usos</span>", unsafe_allow_html=True)
+    h4.markdown("<span style='font-size:25px; font-weight:bold'>% Uso</span>", unsafe_allow_html=True)
     st.markdown("<hr style='margin:2px 0'>", unsafe_allow_html=True)
 
     for pos, row in ranking_top.iterrows():
