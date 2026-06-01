@@ -130,7 +130,73 @@ def _cargar_todos_replays(df_filtrado: pd.DataFrame) -> tuple[pd.Series, int]:
     prog.empty()
     return todos, total_equipos
 
+from PIL import Image, ImageDraw, ImageFont
+import io
 
+def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
+    """Genera una imagen PNG del ranking de Pokémon."""
+    ROW_H      = 60
+    IMG_SIZE   = 50
+    PADDING    = 20
+    COL_WIDTHS = [50, 80, 220, 100, 100]  # #, img, nombre, usos, %uso
+    WIDTH      = sum(COL_WIDTHS) + PADDING * 2
+    HEADER_H   = 60
+    HEIGHT     = HEADER_H + ROW_H * len(ranking_top) + PADDING * 2
+
+    img  = Image.new("RGB", (WIDTH, HEIGHT), color=(30, 30, 40))
+    draw = ImageDraw.Draw(img)
+
+    try:
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
+        font_body  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 17)
+        font_bold  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 17)
+    except Exception:
+        font_title = font_body = font_bold = ImageFont.load_default()
+
+    # Header
+    headers = ["#", "Img", "Pokémon", "Usos", "% Uso"]
+    x = PADDING
+    for i, h in enumerate(headers):
+        draw.text((x + 5, PADDING + 15), h, font=font_title, fill=(255, 215, 0))
+        x += COL_WIDTHS[i]
+
+    # Filas
+    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+    for pos, row in ranking_top.iterrows():
+        y   = PADDING + HEADER_H + (pos - 1) * ROW_H
+        bg  = (40, 40, 55) if pos % 2 == 0 else (50, 50, 70)
+        draw.rectangle([PADDING, y, WIDTH - PADDING, y + ROW_H - 2], fill=bg)
+
+        x = PADDING
+        # Posición (sin emoji, Pillow no los renderiza bien)
+        pos_txt = {1: "1°", 2: "2°", 3: "3°"}.get(pos, f"{pos}°")
+        draw.text((x + 5, y + 18), pos_txt, font=font_bold, fill=(255, 215, 0) if pos <= 3 else (200, 200, 200))
+        x += COL_WIDTHS[0]
+
+        # Imagen del Pokémon
+        img_path = _get_pokemon_img(row["Pokémon"])
+        if img_path:
+            try:
+                poke_img = Image.open(img_path).convert("RGBA").resize((IMG_SIZE, IMG_SIZE))
+                img.paste(poke_img, (x + 10, y + 5), poke_img)
+            except Exception:
+                pass
+        x += COL_WIDTHS[1]
+
+        # Nombre
+        draw.text((x + 5, y + 18), row["Pokémon"], font=font_bold, fill=(255, 255, 255))
+        x += COL_WIDTHS[2]
+
+        # Usos
+        draw.text((x + 5, y + 18), str(row["Usos"]), font=font_body, fill=(180, 220, 255))
+        x += COL_WIDTHS[3]
+
+        # % Uso
+        draw.text((x + 5, y + 18), f"{row['% Uso']}%", font=font_body, fill=(180, 255, 180))
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 def show():
     st.title("🎮 User Rate - Pkmn")
     st.markdown("---")
@@ -286,6 +352,9 @@ def show():
 
     csv = ranking_top.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Descargar CSV", csv, "uso_pokemon.csv", "text/csv")
+
+    png_bytes = _generar_png_ranking(ranking_top)
+    st.download_button("🖼️ Descargar PNG", png_bytes, "uso_pokemon.png", "image/png") 
 
     st.markdown("---")
 
