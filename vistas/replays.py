@@ -141,7 +141,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
     FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
     ROW_H   = 72
-    IMG_SIZE = 80
+    IMG_SIZE = 55
     PAD     = 28
     TITLE_H = 80
     WIDTH   = 520
@@ -223,7 +223,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
 
         # Nombre, usos, %
 
-        draw.text((110, cy - 10), row["Pokémon"],    font=f_name, fill=WHITE)
+        draw.text((125, cy - 10), row["Pokémon"],    font=f_name, fill=WHITE)
         draw.text((340, cy - 10), str(row["Usos"]),  font=f_stat, fill=CYAN)
         draw.text((430, cy - 10), f"{row['% Uso']}%", font=f_pct, fill=GREEN)
         # Barra de uso
