@@ -210,7 +210,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
 
         # Sprite
         sx, sy = 80, cy - IMG_SIZE // 2
-        img_path = _get_pokemon_img(row["Pokemon"])
+        img_path = _get_pokemon_img(row["Pokémon"])
         if img_path:
             try:
                 poke_img = Image.open(img_path).convert("RGBA").resize((IMG_SIZE, IMG_SIZE))
@@ -221,10 +221,10 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
             draw.rectangle([sx, sy, sx + IMG_SIZE, sy + IMG_SIZE], fill=(40, 45, 75))
 
         # Nombre, usos, %
-        draw.text((148, cy - 10), row["Pokemon"],    font=f_name, fill=WHITE)
+
+        draw.text((148, cy - 10), row["Pokémon"],    font=f_name, fill=WHITE)
         draw.text((435, cy - 10), str(row["Usos"]),  font=f_stat, fill=CYAN)
         draw.text((510, cy - 10), f"{row['% Uso']}%", font=f_pct, fill=GREEN)
-
         # Barra de uso
         filled = int(BAR_W * row["Usos"] / max_uso)
         draw.rectangle([BAR_X, cy - BAR_H // 2, BAR_X + BAR_W, cy + BAR_H // 2], fill=BAR_BG)
