@@ -132,6 +132,7 @@ def _cargar_todos_replays(df_filtrado: pd.DataFrame) -> tuple[pd.Series, int]:
 
 from PIL import Image, ImageDraw, ImageFont
 import io
+
 def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
     from PIL import Image, ImageDraw, ImageFont
     import io
@@ -233,6 +234,8 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
+
+
 def show():
     st.title("🎮 User Rate - Pkmn")
     st.markdown("---")
