@@ -188,7 +188,8 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
     draw.rectangle([PAD, TITLE_H - 4, WIDTH - PAD, TITLE_H - 2], fill=(60, 70, 120))
 
     # Headers
-    headers = [("#", PAD), ("Pokemon", 148), ("Usos", 435), ("% Uso", 510), ("Uso", BAR_X)]
+    #headers = [("#", PAD), ("Pokemon", 148), ("Usos", 435), ("% Uso", 510), ("Uso", BAR_X)]
+    headers = [("#", PAD), ("Pokémon", 148), ("Usos", 435), ("% Uso", 510)]
     for label, cx in headers:
         draw.text((cx, TITLE_H + 8), label, font=f_head, fill=HEADER_TXT)
 
@@ -226,10 +227,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
         draw.text((435, cy - 10), str(row["Usos"]),  font=f_stat, fill=CYAN)
         draw.text((510, cy - 10), f"{row['% Uso']}%", font=f_pct, fill=GREEN)
         # Barra de uso
-        filled = int(BAR_W * row["Usos"] / max_uso)
-        draw.rectangle([BAR_X, cy - BAR_H // 2, BAR_X + BAR_W, cy + BAR_H // 2], fill=BAR_BG)
-        if filled > 0:
-            draw.rectangle([BAR_X, cy - BAR_H // 2, BAR_X + filled, cy + BAR_H // 2], fill=BAR_FG)
+
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
