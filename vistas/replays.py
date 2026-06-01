@@ -141,10 +141,10 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
     FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
     ROW_H   = 72
-    IMG_SIZE = 52
+    IMG_SIZE = 80
     PAD     = 28
     TITLE_H = 80
-    WIDTH   = 680
+    WIDTH   = 520
     N       = len(ranking_top)
     HEIGHT  = TITLE_H + ROW_H * (N + 1) + PAD * 2
 
@@ -189,7 +189,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
 
     # Headers
     #headers = [("#", PAD), ("Pokemon", 148), ("Usos", 435), ("% Uso", 510), ("Uso", BAR_X)]
-    headers = [("#", PAD), ("Pokémon", 148), ("Usos", 435), ("% Uso", 510)]
+    headers = [("#", PAD), ("Pokémon", 110), ("Usos", 340), ("% Uso", 430)]
     for label, cx in headers:
         draw.text((cx, TITLE_H + 8), label, font=f_head, fill=HEADER_TXT)
 
@@ -210,7 +210,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
         draw.text((PAD, cy - 12), f"{pos}°", font=f_rank, fill=medal_col)
 
         # Sprite
-        sx, sy = 80, cy - IMG_SIZE // 2
+        sx, sy = 58, cy - IMG_SIZE // 2
         img_path = _get_pokemon_img(row["Pokémon"])
         if img_path:
             try:
@@ -223,9 +223,9 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
 
         # Nombre, usos, %
 
-        draw.text((148, cy - 10), row["Pokémon"],    font=f_name, fill=WHITE)
-        draw.text((435, cy - 10), str(row["Usos"]),  font=f_stat, fill=CYAN)
-        draw.text((510, cy - 10), f"{row['% Uso']}%", font=f_pct, fill=GREEN)
+        draw.text((110, cy - 10), row["Pokémon"],    font=f_name, fill=WHITE)
+        draw.text((340, cy - 10), str(row["Usos"]),  font=f_stat, fill=CYAN)
+        draw.text((430, cy - 10), f"{row['% Uso']}%", font=f_pct, fill=GREEN)
         # Barra de uso
 
 
