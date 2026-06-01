@@ -245,7 +245,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     st.subheader(f"🏆 Top {top_n} Pokémon más usados — {aka_label}")
 
-    h0, h1, h2, h3, h4 = st.columns([0.5, 1, 1.5, 1.5, 1.5])
+    h0, h1, h2, h3, h4 = st.columns([0.5, 1, 1, 1, 1])
     h0.markdown("**#**")
     h1.markdown("**Imagen**")
     h2.markdown("**Pokémon**")
@@ -265,7 +265,7 @@ def show():
 
         img_path = _get_pokemon_img(row["Pokémon"])
         if img_path:
-            c1.image(img_path, width=120)
+            c1.image(img_path, width=140)
         else:
             c1.markdown("❓")
 
