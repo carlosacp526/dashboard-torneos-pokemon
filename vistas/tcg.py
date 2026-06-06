@@ -21,6 +21,13 @@ LIGAS_DIR     = os.path.join(TCG_DIR, "ligas")
 # ── Dimensiones carta (proporción TCG estándar 63x88mm → ×10) ────
 CW, CH = 630, 880
 
+# ── Zonas del template TCG estándar ───────────────────────────────
+# coordenadas relativas al frame (porcentajes que coinciden con plantillas TCG)
+IMG_ZONE   = {"x": 53,  "y": 80,  "w": 524, "h": 380}   # área blanca de la ilustración
+NAME_ZONE  = {"y": 470, "h": 50}                          # nombre debajo de la ilustración
+STATS_ZONE = {"x": 35,  "y": 530, "w": 560, "h": 220}    # área texturizada inferior
+FOOTER_ZONE = {"y": 815, "h": 45}                         # weakness/resistance/retreat
+
 # ── Colores ───────────────────────────────────────────────────────
 C_GOLD    = (255, 215,   0)
 C_WHITE   = (255, 255, 255)
@@ -122,17 +129,22 @@ def _paste_center(base, overlay, cx, cy):
 
 def calcular_stats(df, jugador, fecha_corte=None):
     """Calcula todas las stats del jugador hasta fecha_corte."""
+    from utils import build_base_liga, build_base_torneo, load_data
+
+    df_full = df.copy()
     if fecha_corte:
         df = df[df["date"] <= pd.Timestamp(fecha_corte)]
 
+    jl = jugador.lower().strip()
+
     pm = df[
-        (df["player1"].str.lower().str.contains(jugador.lower(), na=False)) |
-        (df["player2"].str.lower().str.contains(jugador.lower(), na=False))
+        (df["player1"].str.lower().str.contains(jl, na=False)) |
+        (df["player2"].str.lower().str.contains(jl, na=False))
     ].copy()
     pm_ok = pm[pm["Walkover"] == 0] if "Walkover" in pm.columns else pm
 
     total     = len(pm_ok)
-    victorias = int(pm_ok["winner"].str.lower().str.contains(jugador.lower(), na=False).sum())
+    victorias = int(pm_ok["winner"].str.lower().str.contains(jl, na=False).sum())
     derrotas  = total - victorias
     winrate   = round(victorias / total * 100, 1) if total > 0 else 0.0
 
@@ -140,7 +152,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
     def fmt_stats(fmt):
         sub = pm_ok[pm_ok["Formato"].str.upper() == fmt.upper()] if "Formato" in pm_ok.columns else pd.DataFrame()
         n   = len(sub)
-        w   = int(sub["winner"].str.lower().str.contains(jugador.lower(), na=False).sum()) if n > 0 else 0
+        w   = int(sub["winner"].str.lower().str.contains(jl, na=False).sum()) if n > 0 else 0
         wr  = round(w/n*100,1) if n > 0 else 0.0
         return n, wr
 
@@ -156,7 +168,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
             t_df = df[df["N_Torneo"] == nt]
             if t_df.empty: continue
             last = t_df.sort_values("date").iloc[-1]
-            if str(last.get("winner","")).lower().find(jugador.lower()) >= 0:
+            if str(last.get("winner","")).lower().find(jl) >= 0:
                 torneos_camp.append(int(nt))
 
     # ligas participadas en orden cronológico
@@ -168,7 +180,6 @@ def calcular_stats(df, jugador, fecha_corte=None):
             seen = []
             for _, r in liga_rows.iterrows():
                 lcat = str(r.get("Ligas_categoria","")).strip()
-                # extraer prefijo: PMST1 → PMS
                 import re
                 m = re.match(r'^([A-Z]+)', lcat)
                 pref = m.group(1) if m else lcat
@@ -176,26 +187,47 @@ def calcular_stats(df, jugador, fecha_corte=None):
                     seen.append(pref)
             ligas_hist = seen
 
-    # liga vigente (última)
     liga_vigente = ligas_hist[-1] if ligas_hist else ""
 
-    # ELO y RANK (desde calcular_elo si está disponible)
+    # ── ELO y RANK desde calcular_elo ─────────────────────────────
     elo_val  = 1000
     rank_val = 0
     try:
         from vistas.elo import calcular_elo
-        data_elo, _ = calcular_elo(load_data())
-        row_elo = data_elo[data_elo["Participantes"].str.lower().str.contains(jugador.lower(), na=False)]
-        if not row_elo.empty:
-            elo_val  = int(row_elo.iloc[0]["Elo"])
-            rank_val = int(row_elo.iloc[0]["RANK"])
-    except Exception:
-        pass
+        # usar df_full (sin filtro de fecha) o df filtrado según corte
+        df_for_elo = df if fecha_corte else load_data()
+        data_elo, _ = calcular_elo(df_for_elo)
+        if not data_elo.empty:
+            row_elo = data_elo[data_elo["Participantes"].str.lower().str.strip() == jl]
+            if row_elo.empty:
+                row_elo = data_elo[data_elo["Participantes"].str.lower().str.contains(jl, na=False)]
+            if not row_elo.empty:
+                elo_val  = int(round(row_elo.iloc[0]["Elo"]))
+                rank_val = int(row_elo.iloc[0]["RANK"])
+    except Exception as e:
+        print(f"Error ELO: {e}")
 
-    # Score
-    score_val = 0
-    if "score_completo" in pm_ok.columns:
-        score_val = int(pm_ok[pm_ok["winner"].str.lower().str.contains(jugador.lower(), na=False)]["score_completo"].sum())
+    # ── SCORE desde base2 (ligas) + base_torneo_final (torneos) ──
+    score_val = 0.0
+    try:
+        df_for_score = df if fecha_corte else load_data()
+        base2, _              = build_base_liga(df_for_score)
+        base_torneo_final, _  = build_base_torneo(df_for_score)
+
+        score_l = 0.0
+        score_t = 0.0
+        if not base2.empty and "Participante" in base2.columns and "score_completo" in base2.columns:
+            sub_l = base2[base2["Participante"].str.lower().str.strip() == jl]
+            if not sub_l.empty:
+                score_l = float(sub_l["score_completo"].sum())
+        if not base_torneo_final.empty and "Participante" in base_torneo_final.columns and "score_completo" in base_torneo_final.columns:
+            sub_t = base_torneo_final[base_torneo_final["Participante"].str.lower().str.strip() == jl]
+            if not sub_t.empty:
+                score_t = float(sub_t["score_completo"].sum())
+
+        score_val = round(score_l + score_t, 0)
+    except Exception as e:
+        print(f"Error SCORE: {e}")
 
     return {
         "jugador":     jugador,
@@ -212,7 +244,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
         "liga_vigente":liga_vigente,
         "elo":         elo_val,
         "rank":        rank_val,
-        "score":       score_val,
+        "score":       int(score_val),
     }
 
 
@@ -242,13 +274,16 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
 
     draw = ImageDraw.Draw(carta, "RGBA")
 
-    # ── ZONA IMAGEN (pokemon + jugador) ───────────────────────────
-    IMG_X, IMG_Y = 28, 65
-    IMG_W, IMG_H = CW - 56, 320
+    # ── ZONA IMAGEN (alineada con el frame blanco del template) ──
+    IMG_X = IMG_ZONE["x"]
+    IMG_Y = IMG_ZONE["y"]
+    IMG_W = IMG_ZONE["w"]
+    IMG_H = IMG_ZONE["h"]
 
-    # fondo zona imagen
-    _rounded_rect(draw, [IMG_X, IMG_Y, IMG_X+IMG_W, IMG_Y+IMG_H],
-                  radius=10, fill=(200, 200, 210, 255), outline=C_GOLD, width=3)
+    # si NO hay template (modo auto), dibujamos el marco gris
+    if not (fondo_path and os.path.exists(fondo_path)):
+        _rounded_rect(draw, [IMG_X, IMG_Y, IMG_X+IMG_W, IMG_Y+IMG_H],
+                      radius=10, fill=(200, 200, 210, 255), outline=C_GOLD, width=3)
 
     # Pokémon de fondo
     poke_path = _find_pokemon_img(pokemon_nombre)
@@ -261,104 +296,113 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
         poke_img.putalpha(a)
         carta.paste(poke_img, (IMG_X+5, IMG_Y+5), poke_img)
 
-    # Foto jugador (centrada, recortada en círculo o cuadrado suavizado)
+    # Foto jugador (centrada, sin fondo negro)
     if foto_jugador_path and os.path.exists(foto_jugador_path):
         foto = Image.open(foto_jugador_path).convert("RGBA")
-        FW, FH = 210, 240
-        foto = foto.resize((FW, FH), Image.LANCZOS)
-        # máscara redondeada
-        mask = Image.new("L", (FW, FH), 0)
-        ImageDraw.Draw(mask).rounded_rectangle([0,0,FW-1,FH-1], radius=18, fill=255)
+        FW, FH = 230, 260
+        # mantener aspect ratio
+        foto.thumbnail((FW, FH), Image.LANCZOS)
+        fw_real, fh_real = foto.size
+        # máscara redondeada con sombra
+        mask = Image.new("L", foto.size, 0)
+        ImageDraw.Draw(mask).rounded_rectangle([0,0,fw_real-1,fh_real-1], radius=18, fill=255)
         foto.putalpha(mask)
-        px = IMG_X + (IMG_W - FW) // 2
-        py = IMG_Y + (IMG_H - FH) // 2 + 10
+        # sombra
+        shadow = Image.new("RGBA", (fw_real+20, fh_real+20), (0,0,0,0))
+        sh_draw = ImageDraw.Draw(shadow)
+        sh_draw.rounded_rectangle([10,10,fw_real+10,fh_real+10], radius=18, fill=(0,0,0,140))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(8))
+        px = IMG_X + (IMG_W - fw_real) // 2
+        py = IMG_Y + (IMG_H - fh_real) // 2 + 10
+        carta.paste(shadow, (px-10, py-10), shadow)
         carta.paste(foto, (px, py), foto)
 
-    # ELO y RANK — esquina inferior derecha de la zona imagen
-    f_elo  = _font(26, bold=True)
-    f_rank = _font(26, bold=True)
+    # ── ELO y RANK — esquina inferior derecha de la zona imagen ──
+    f_elo  = _font(24, bold=True)
+    f_rank = _font(24, bold=True)
     elo_text  = f"ELO : {stats['elo']}"
     rank_text = f"RANK : {stats['rank']}"
-    ex = IMG_X + IMG_W - 160
-    ey = IMG_Y + IMG_H - 72
-    # fondo semitransparente
-    _rounded_rect(draw, [ex-8, ey-6, ex+152, ey+56], radius=8,
-                  fill=(0,0,0,160))
+    ex = IMG_X + IMG_W - 145
+    ey = IMG_Y + IMG_H - 68
+    _rounded_rect(draw, [ex-8, ey-6, ex+140, ey+54], radius=8, fill=(0,0,0,180))
     _text_shadow(draw, elo_text,  (ex, ey),    f_elo,  C_YELLOW, offset=(2,2))
-    _text_shadow(draw, rank_text, (ex, ey+30), f_rank, C_YELLOW, offset=(2,2))
+    _text_shadow(draw, rank_text, (ex, ey+28), f_rank, C_YELLOW, offset=(2,2))
 
     # ── LOGO POKETUBI (superior izquierda) ────────────────────────
     if os.path.exists(LOGO_PATH):
-        logo = _load_img(LOGO_PATH, (160, 50))
-        carta.paste(logo, (28, 10), logo)
+        logo = _load_img(LOGO_PATH, (140, 42))
+        carta.paste(logo, (24, 20), logo)
     else:
-        f_logo = _font(28, bold=True)
-        _text_shadow(draw, "POKETUBI", (32, 12), f_logo, C_WHITE,
-                     shadow=(0,0,0,200), offset=(2,2))
+        f_logo = _font(24, bold=True)
+        _text_shadow(draw, "POKETUBI", (28, 22), f_logo, C_WHITE,
+                     shadow=(0,0,0,220), offset=(2,2))
 
     # ── SÍMBOLO LIGA VIGENTE (superior derecha) ───────────────────
     liga_v = stats.get("liga_vigente","")
     if liga_v:
         liga_img_path = _find_liga_img(liga_v)
         if liga_img_path:
-            limg = _load_img(liga_img_path, (70, 70))
-            carta.paste(limg, (CW-100, 5), limg)
+            limg = _load_img(liga_img_path, (60, 60))
+            carta.paste(limg, (CW-86, 15), limg)
         else:
-            f_lv = _font(14, bold=True)
-            _rounded_rect(draw, [CW-100, 8, CW-28, 58], radius=8,
-                          fill=(40,40,60,220), outline=C_GOLD, width=2)
-            draw.text((CW-64, 26), liga_v, font=f_lv, fill=C_GOLD, anchor="mm")
+            f_lv = _font(13, bold=True)
+            _rounded_rect(draw, [CW-86, 18, CW-26, 58], radius=8,
+                          fill=(40,40,60,230), outline=C_GOLD, width=2)
+            draw.text((CW-56, 38), liga_v, font=f_lv, fill=C_GOLD, anchor="mm")
 
     # ── NOMBRE JUGADOR ────────────────────────────────────────────
-    NOMBRE_Y = IMG_Y + IMG_H + 12
-    f_nombre = _font(54, bold=True)
+    NOMBRE_Y = NAME_ZONE["y"]
+    _rounded_rect(draw, [70, NOMBRE_Y-2, CW-70, NOMBRE_Y+50], radius=10,
+                  fill=(15, 15, 25, 210))
+    f_nombre = _font(42, bold=True)
     nombre_upper = stats["jugador"].upper()
-    # sombra y texto
     bbox = draw.textbbox((0,0), nombre_upper, font=f_nombre)
     nw = bbox[2] - bbox[0]
     nx = (CW - nw) // 2
-    _text_shadow(draw, nombre_upper, (nx, NOMBRE_Y), f_nombre, C_WHITE,
-                 shadow=(0,0,0,200), offset=(3,3))
+    _text_shadow(draw, nombre_upper, (nx, NOMBRE_Y+2), f_nombre, C_YELLOW,
+                 shadow=(0,0,0,230), offset=(2,3))
 
-    # ── SEPARADOR ─────────────────────────────────────────────────
-    SEP_Y = NOMBRE_Y + 68
-    draw.line([(28, SEP_Y), (CW-28, SEP_Y)], fill=C_GOLD, width=2)
+    # ── SECCIÓN STATS — fondo oscuro semitransparente ────────────
+    STATS_Y = STATS_ZONE["y"]
+    PANEL_X = STATS_ZONE["x"]
+    PANEL_W = STATS_ZONE["w"]
+    PANEL_H = STATS_ZONE["h"]
+    _rounded_rect(draw, [PANEL_X, STATS_Y-6, PANEL_X+PANEL_W, STATS_Y+PANEL_H], radius=10,
+                  fill=(15, 15, 25, 215))
 
-    # ── SECCIÓN STATS ─────────────────────────────────────────────
-    STATS_Y = SEP_Y + 14
     f_label = _font(18, bold=True)
-    f_val   = _font(38, bold=True)
+    f_val   = _font(40, bold=True)
     f_small = _font(15, bold=True)
-    f_med   = _font(22, bold=True)
+    f_med   = _font(24, bold=True)
 
     # columna izquierda: BATALLAS + WIN RATE
-    COL1_X = 40
-    draw.text((COL1_X, STATS_Y),       "BATALLAS:",  font=f_label, fill=C_GRAY)
-    draw.text((COL1_X+130, STATS_Y),   "WIN RATE:",  font=f_label, fill=C_GRAY)
-    _text_shadow(draw, str(stats["total"]),      (COL1_X,     STATS_Y+24), f_val, C_WHITE)
-    _text_shadow(draw, f"{stats['winrate']}%",   (COL1_X+130, STATS_Y+24), f_val, C_WHITE)
+    COL1_X = PANEL_X + 18
+    draw.text((COL1_X, STATS_Y),       "BATALLAS:",  font=f_label, fill=C_YELLOW)
+    draw.text((COL1_X+130, STATS_Y),   "WIN RATE:",  font=f_label, fill=C_YELLOW)
+    _text_shadow(draw, str(stats["total"]),      (COL1_X,     STATS_Y+22), f_val, C_WHITE, offset=(2,3))
+    _text_shadow(draw, f"{stats['winrate']}%",   (COL1_X+130, STATS_Y+22), f_val, C_WHITE, offset=(2,3))
 
     # copa + torneos
-    copa_y = STATS_Y + 75
+    copa_y = STATS_Y + 80
     if os.path.exists(COPA_PATH):
-        copa_img = _load_img(COPA_PATH, (65, 65))
+        copa_img = _load_img(COPA_PATH, (68, 68))
         carta.paste(copa_img, (COL1_X, copa_y), copa_img)
     else:
-        draw.text((COL1_X, copa_y+10), "🏆", font=_font(40), fill=C_GOLD)
+        draw.text((COL1_X, copa_y+10), "🏆", font=_font(46), fill=C_GOLD)
 
-    # torneos ganados
-    f_torn = _font(17, bold=True)
+    f_torn_lbl = _font(16, bold=True)
+    f_torn_val = _font(18, bold=True)
     torn_str = ", ".join(str(t) for t in stats["torneos"][:4]) if stats["torneos"] else "-"
     if len(torn_str) > 14: torn_str = torn_str[:13]+"…"
-    draw.text((COL1_X, copa_y+70), "Torneo",    font=f_torn, fill=C_GRAY)
-    draw.text((COL1_X, copa_y+90), torn_str,    font=f_torn, fill=C_WHITE)
+    draw.text((COL1_X+78, copa_y+8),  "Torneo",  font=f_torn_lbl, fill=C_YELLOW)
+    _text_shadow(draw, torn_str, (COL1_X+78, copa_y+30), f_torn_val, C_WHITE, offset=(2,2))
 
     # separador vertical
-    draw.line([(CW//2-10, SEP_Y+10), (CW//2-10, SEP_Y+190)], fill=C_DGRAY, width=2)
+    draw.line([(CW//2-5, STATS_Y-2), (CW//2-5, STATS_Y+PANEL_H-12)], fill=C_GOLD, width=2)
 
     # columna derecha: BATALLAS || WIN RATE por formato
-    COL2_X = CW//2 + 10
-    draw.text((COL2_X+60, STATS_Y), "BATALLAS|| WIN RATE", font=f_small, fill=C_GRAY)
+    COL2_X = CW//2 + 12
+    draw.text((COL2_X+45, STATS_Y), "BATALLAS || WIN RATE", font=f_small, fill=C_YELLOW)
 
     fmt_rows = [
         ("SINGLES", stats["singles_n"], stats["singles_wr"]),
@@ -366,42 +410,47 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
         ("VGC",     stats["vgc_n"],     stats["vgc_wr"]),
     ]
     for idx, (label, n_val, wr_val) in enumerate(fmt_rows):
-        fy = STATS_Y + 38 + idx * 52
-        draw.text((COL2_X,      fy), label,         font=f_small, fill=C_GRAY)
-        _text_shadow(draw, str(n_val),    (COL2_X+100, fy-4), f_med, C_WHITE)
-        draw.text((COL2_X+160, fy), f"{wr_val}%",  font=f_med,   fill=C_GRAY)
+        fy = STATS_Y + 38 + idx * 48
+        draw.text((COL2_X,      fy+5), label,         font=f_small, fill=C_YELLOW)
+        _text_shadow(draw, str(n_val),    (COL2_X+105, fy), f_med, C_WHITE, offset=(2,2))
+        _text_shadow(draw, f"{wr_val}%",  (COL2_X+170, fy), f_med, C_WHITE, offset=(2,2))
 
-    # ── SCORE ─────────────────────────────────────────────────────
-    SCORE_Y = STATS_Y + 195
-    draw.line([(28, SCORE_Y-8), (CW-28, SCORE_Y-8)], fill=C_DGRAY, width=1)
-    f_score_lbl = _font(28, bold=True)
-    f_score_val = _font(52, bold=True)
-    draw.text((38, SCORE_Y),       "SCORE:",           font=f_score_lbl, fill=C_WHITE)
-    _text_shadow(draw, str(stats["score"]), (165, SCORE_Y-6), f_score_val, C_BLUE,
-                 shadow=(0,40,120,180), offset=(3,3))
+    # ── SCORE — panel propio ──────────────────────────────────────
+    SCORE_Y = STATS_Y + PANEL_H + 5
+    _rounded_rect(draw, [PANEL_X, SCORE_Y, PANEL_X+PANEL_W, SCORE_Y+50], radius=10,
+                  fill=(15, 15, 25, 220))
+    f_score_lbl = _font(26, bold=True)
+    f_score_val = _font(46, bold=True)
+    draw.text((PANEL_X+18, SCORE_Y+12), "SCORE:", font=f_score_lbl, fill=C_YELLOW)
+    _text_shadow(draw, str(stats["score"]), (PANEL_X+135, SCORE_Y+2), f_score_val, C_BLUE,
+                 shadow=(0,30,100,230), offset=(2,3))
 
-    # ── LIGAS HISTÓRICAS (logos) ──────────────────────────────────
-    LIGA_ICON_SIZE = 60
-    liga_start_x = CW - 28 - len(stats["ligas_hist"]) * (LIGA_ICON_SIZE + 6)
-    liga_y = SCORE_Y - 4
-    for li, liga_key in enumerate(stats["ligas_hist"][-4:]):  # máx 4
-        lx = liga_start_x + li * (LIGA_ICON_SIZE + 6)
-        lp = _find_liga_img(liga_key)
-        if lp:
-            limg2 = _load_img(lp, (LIGA_ICON_SIZE, LIGA_ICON_SIZE))
-            carta.paste(limg2, (lx, liga_y), limg2)
-        else:
-            _rounded_rect(draw, [lx, liga_y, lx+LIGA_ICON_SIZE, liga_y+LIGA_ICON_SIZE],
-                          radius=8, fill=(40,40,70,200), outline=C_GOLD, width=1)
-            draw.text((lx+LIGA_ICON_SIZE//2, liga_y+LIGA_ICON_SIZE//2),
-                      liga_key, font=_font(11, bold=True), fill=C_GOLD, anchor="mm")
+    # ── LIGAS HISTÓRICAS (a la derecha del SCORE) ────────────────
+    LIGA_ICON_SIZE = 42
+    ligas_show = stats["ligas_hist"][-4:]
+    if ligas_show:
+        liga_start_x = PANEL_X + PANEL_W - 10 - len(ligas_show) * (LIGA_ICON_SIZE + 4)
+        liga_y = SCORE_Y + 4
+        for li, liga_key in enumerate(ligas_show):
+            lx = liga_start_x + li * (LIGA_ICON_SIZE + 4)
+            lp = _find_liga_img(liga_key)
+            if lp:
+                limg2 = _load_img(lp, (LIGA_ICON_SIZE, LIGA_ICON_SIZE))
+                carta.paste(limg2, (lx, liga_y), limg2)
+            else:
+                _rounded_rect(draw, [lx, liga_y, lx+LIGA_ICON_SIZE, liga_y+LIGA_ICON_SIZE],
+                              radius=6, fill=(40,40,70,230), outline=C_GOLD, width=1)
+                draw.text((lx+LIGA_ICON_SIZE//2, liga_y+LIGA_ICON_SIZE//2),
+                          liga_key[:3], font=_font(10, bold=True), fill=C_GOLD, anchor="mm")
 
-    # ── LIGA VIGENTE (texto inferior) ────────────────────────────
-    FOOTER_Y = CH - 40
-    draw.line([(28, FOOTER_Y-8), (CW-28, FOOTER_Y-8)], fill=C_DGRAY, width=1)
+    # ── LIGA VIGENTE (footer) ────────────────────────────────────
+    FOOTER_Y = CH - 32
+    _rounded_rect(draw, [PANEL_X, FOOTER_Y-4, PANEL_X+PANEL_W, FOOTER_Y+26], radius=8,
+                  fill=(15, 15, 25, 230))
     f_footer = _font(18, bold=True)
     liga_v_str = f"LIGA VIGENTE: {stats['liga_vigente']}" if stats['liga_vigente'] else "LIGA VIGENTE: -"
-    draw.text((38, FOOTER_Y), liga_v_str, font=f_footer, fill=C_GOLD)
+    _text_shadow(draw, liga_v_str, (PANEL_X+15, FOOTER_Y), f_footer, C_GOLD,
+                 shadow=(0,0,0,220), offset=(2,2))
 
     return carta.convert("RGB")
 
