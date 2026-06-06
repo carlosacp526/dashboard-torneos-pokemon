@@ -41,7 +41,7 @@ C_RED     = (220,  50,  50)
 C_SHADOW  = (  0,   0,   0, 120)
 
 # ── Ligas disponibles ─────────────────────────────────────────────
-LIGAS_STD = ["PMS", "PSS", "PJS", "PES", "PLS", "LEGENDS"]
+LIGAS_STD = ["PMS", "PSS", "PJS", "PES", "PLS"]
 
 
 def _load_img(path, size=None, fallback_color=(100,100,100)):
@@ -58,7 +58,7 @@ def _load_img(path, size=None, fallback_color=(100,100,100)):
 def _find_jugador_img(nombre):
     if not os.path.exists(JUGADORES_DIR): return None
     clean = nombre.strip().lower().replace(" ","_")
-    for ext in ["png","jpg","jpeg","webp"]:
+    for ext in ["png","jpg","jpeg","webp","PNG","JPG","JPEG"]:
         for variant in [clean, nombre.strip().lower(), nombre.strip()]:
             p = os.path.join(JUGADORES_DIR, f"{variant}.{ext}")
             if os.path.exists(p): return p
@@ -68,7 +68,7 @@ def _find_jugador_img(nombre):
 def _find_pokemon_img(nombre):
     if not nombre or not os.path.exists(POKEMON_DIR): return None
     clean = nombre.strip().lower().replace(" ","_").replace("-","_")
-    for ext in ["png","jpg","jpeg","webp"]:
+    for ext in ["png","jpg","jpeg","webp","PNG","JPG","JPEG"]:
         p = os.path.join(POKEMON_DIR, f"{clean}.{ext}")
         if os.path.exists(p): return p
     return None
@@ -76,7 +76,7 @@ def _find_pokemon_img(nombre):
 
 def _find_liga_img(liga):
     if not os.path.exists(LIGAS_DIR): return None
-    for ext in ["png","jpg","jpeg","webp"]:
+    for ext in ["png","jpg","jpeg","webp","PNG","JPG","JPEG"]:
         p = os.path.join(LIGAS_DIR, f"{liga}.{ext}")
         if os.path.exists(p): return p
     return None
