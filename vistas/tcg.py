@@ -395,7 +395,7 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
     torn_str = ", ".join(str(t) for t in stats["torneos"][:4]) if stats["torneos"] else "-"
     if len(torn_str) > 14: torn_str = torn_str[:13]+"…"
     draw.text((COL1_X+78, copa_y+8),  "Torneo",  font=f_torn_lbl, fill=C_YELLOW)
-    _text_shadow(draw, torn_str, (COL1_X+78, copa_y+30), f_torn_val, C_WHITE, offset=(2,2))
+    _text_shadow(draw, torn_str, (COL1_X+78, copa_y+50), f_torn_val, C_WHITE, offset=(2,2))
 
     # separador vertical
     draw.line([(CW//2-5, STATS_Y-2), (CW//2-5, STATS_Y+PANEL_H-12)], fill=C_GOLD, width=2)
