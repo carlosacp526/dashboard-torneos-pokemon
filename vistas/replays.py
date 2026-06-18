@@ -371,10 +371,25 @@ def show():
         else:          medal = f"**{pos}**"
 
         c0.markdown(medal)
+           
+        # img_path = _get_pokemon_img(row["Pokémon"])
+        # if img_path:
+            
+        #     c1.image(img_path, width=140)
+        # else:
+        #     c1.markdown("❓")
+
+        from PIL import Image
 
         img_path = _get_pokemon_img(row["Pokémon"])
+
         if img_path:
-            c1.image(img_path, width=140)
+            try:
+                Image.open(img_path).verify()
+                c1.image(img_path, width=140)
+            except Exception:
+                c1.markdown("❓")
+                st.write(f"Imagen inválida: {img_path}")
         else:
             c1.markdown("❓")
 
