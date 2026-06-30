@@ -610,7 +610,7 @@ def evaluar_logros(
     
     #r["TO11"] = bool(torneos_num & {46,68}) and n_camp_torneo >= 1
 
-    CAMPEONES_mundial={"Darmanethan"}
+    CAMPEONES_mundial={"Darmanethan","Fur4nko"}
     # VICTORIAS
     #r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
     ##r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
@@ -718,7 +718,7 @@ def evaluar_logros(
     r["SP05"] = max_wins_rival >= 20
     # SP06: Underdog — ganar a alguien que sea campeón de torneo Y liga
     LEYENDAS = [
-        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru"
+        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru","haseo"
         # agregar más aquí
     ]
     def _underdog():
