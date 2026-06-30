@@ -162,7 +162,7 @@ LOGROS = [
     {"id":"PR09","num":100,"cat":"Progresión",  "rareza":"Legendario","icon":"💠","xp":1600, "name":"XP Acumulado 20K",     "desc":"Acumula 20,000 puntos XP"},
 
 # ── TIPOS (18) ───────────────────────────────────────────────────────────────
-{"id":"TI01","num":101,"cat":"Torneo","rareza":"Bronce","icon":"🔥","xp":200,"name":"Maestro Fuego",    "desc":"Participa en torneo Monotype Fuego (T??)"},
+{"id":"TI01","num":101,"cat":"Torneo","rareza":"Bronce","icon":"🔥","xp":200,"name":"Maestro Fuego",    "desc":"Participa en torneo Monotype Fuego (T76)"},
 {"id":"TI02","num":102,"cat":"Torneo","rareza":"Bronce","icon":"💧","xp":200,"name":"Maestro Agua",     "desc":"Participa en torneo Monotype Agua (T69)"},
 {"id":"TI03","num":103,"cat":"Torneo","rareza":"Bronce","icon":"🌿","xp":200,"name":"Maestro Planta",   "desc":"Participa en torneo Monotype Planta (T??)"},
 {"id":"TI04","num":104,"cat":"Torneo","rareza":"Bronce","icon":"⚡","xp":200,"name":"Maestro Eléctrico","desc":"Participa en torneo Monotype Eléctrico (T??)"},
@@ -493,7 +493,7 @@ def evaluar_logros(
     CAMPEONES_TORNEO = [
         "Yabadaba", "MaskWolf","Chino","The.Ultracheese","Luigillanos","Renzo","Alechiii","Aikauwu","D'Allfather","Haseo","Joscake","A25","Angello77","Nigga Chan",
         "Davarv","haiseowo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
-        "Mr.Shadowdusk","Chris FPS","Adpg","SasoriVzla7","skll02","EmperorGambit"
+        "Mr.Shadowdusk","Chris FPS","Adpg","SasoriVzla7","skll02","EmperorGambit","ShinkaHMA","Rainer","huevo_pipipi","HaoSigismondi" ,"Bloody Cheese"
         # agregar más aquí
     ]
     def _verdugo_elite():
@@ -580,7 +580,7 @@ def evaluar_logros(
     }
 
     TORNEOS_TIPOS = {
-        "TI01": {100},  # Fuego
+        "TI01": {76},  # Fuego
         "TI02": {69},  # Agua
         "TI03": {100},  # Planta
         "TI04": {100},  # Eléctrico
