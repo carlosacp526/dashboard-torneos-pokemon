@@ -29,16 +29,17 @@ def _font(size, bold=False):
 
 
 def _render_ranking_png(df_ranking, titulo, subtitulo=""):
-    """Genera un PNG profesional del ranking (jugador × evento × total)."""
-    # ── configuración ─────────────────────────────────────────
-    HEADER_H   = 110
-    ROW_H      = 42
-    RANK_W     = 60
-    JUG_W      = 200
-    TOTAL_W    = 100
-    EVENT_W    = 110
-    PAD        = 20
-    FOOTER_H   = 40
+    """Genera un PNG minimalista y elegante del ranking."""
+    # ── configuración (2x resolución) ─────────────────────────
+    SCALE      = 2
+    HEADER_H   = 140 * SCALE
+    ROW_H      = 52 * SCALE
+    RANK_W     = 72 * SCALE
+    JUG_W      = 260 * SCALE
+    TOTAL_W    = 120 * SCALE
+    EVENT_W    = 120 * SCALE
+    PAD        = 32 * SCALE
+    FOOTER_H   = 44 * SCALE
 
     n_rows   = len(df_ranking)
     eventos  = [c for c in df_ranking.columns if c not in ["Rank","Jugador","Total"]]
@@ -47,144 +48,160 @@ def _render_ranking_png(df_ranking, titulo, subtitulo=""):
     IMG_W = RANK_W + JUG_W + TOTAL_W + EVENT_W * n_events + PAD * 2
     IMG_H = HEADER_H + ROW_H * (n_rows + 1) + FOOTER_H + PAD * 2
 
-    # colores
-    C_BG        = (18, 22, 38)
-    C_PANEL     = (28, 32, 50)
-    C_HEADER    = (35, 55, 100)
-    C_ACCENT    = (250, 200, 40)
-    C_TEXT      = (240, 240, 245)
-    C_SUBTXT    = (170, 175, 190)
-    C_ROW_ALT   = (24, 28, 44)
-    C_GOLD      = (255, 215, 0)
-    C_SILVER    = (192, 192, 200)
-    C_BRONZE    = (205, 127, 50)
-    C_GREEN     = (46, 204, 113)
-    C_RED       = (231, 76, 60)
-    C_DARKROW   = (18, 22, 38)
+    # ── paleta minimalista ────────────────────────────────────
+    C_BG        = (245, 246, 249)   # gris muy claro
+    C_HEADER    = (24,  28,  40)    # azul-negro
+    C_HDR_TEXT  = (245, 246, 249)
+    C_ACCENT    = (200, 160,  60)   # dorado sobrio
+    C_TEXT      = (30,  32,  42)
+    C_SUBTXT    = (110, 115, 130)
+    C_ROW       = (255, 255, 255)
+    C_ROW_ALT   = (240, 242, 246)
+    C_BORDER    = (220, 224, 232)
+    C_TOP16_BG  = (245, 249, 245)   # verde muy tenue
+    C_TOP16_L   = (100, 155, 110)
+    C_GOLD_BG   = (252, 246, 220)
+    C_SILVER_BG = (240, 240, 245)
+    C_BRONZE_BG = (248, 234, 218)
+    C_GOLD      = (185, 145,  30)
+    C_SILVER    = (130, 135, 148)
+    C_BRONZE    = (168, 108,  50)
+    C_POSITIVE  = (55, 130,  80)
+    C_NEGATIVE  = (185,  55,  55)
 
     img  = Image.new("RGB", (IMG_W, IMG_H), C_BG)
     draw = ImageDraw.Draw(img)
 
-    f_title  = _font(32, bold=True)
-    f_sub    = _font(16, bold=False)
-    f_hdr    = _font(15, bold=True)
-    f_row    = _font(16, bold=True)
-    f_val    = _font(17, bold=True)
-    f_ev     = _font(13, bold=True)
-    f_footer = _font(11, bold=False)
+    # tipografías escaladas
+    f_title  = _font(38 * SCALE, bold=True)
+    f_sub    = _font(17 * SCALE, bold=False)
+    f_hdr    = _font(15 * SCALE, bold=True)
+    f_row    = _font(18 * SCALE, bold=True)
+    f_val    = _font(20 * SCALE, bold=True)
+    f_ev     = _font(14 * SCALE, bold=True)
+    f_footer = _font(12 * SCALE, bold=False)
 
     # ── HEADER ────────────────────────────────────────────────
     draw.rectangle([0, 0, IMG_W, HEADER_H], fill=C_HEADER)
-    draw.rectangle([0, HEADER_H, IMG_W, HEADER_H + 3], fill=C_ACCENT)
-    draw.text((PAD, 22), "🏆 " + titulo, font=f_title, fill=C_ACCENT)
-    if subtitulo:
-        draw.text((PAD, 65), subtitulo, font=f_sub, fill=C_TEXT)
-    from datetime import datetime
-    fecha_str = datetime.now().strftime("%d/%m/%Y  %H:%M")
-    tw = draw.textlength(fecha_str, font=f_sub)
-    draw.text((IMG_W - PAD - tw, 70), fecha_str, font=f_sub, fill=C_SUBTXT)
+    # línea dorada delgada al pie del header
+    draw.rectangle([0, HEADER_H - 2, IMG_W, HEADER_H], fill=C_ACCENT)
 
-    # ── COLUMNAS: encabezado ─────────────────────────────────
-    y0 = HEADER_H + PAD
-    x  = PAD
-    # fondo header
-    draw.rectangle([PAD, y0, IMG_W - PAD, y0 + ROW_H], fill=C_PANEL)
+    draw.text((PAD, PAD - 4), titulo, font=f_title, fill=C_HDR_TEXT)
+    if subtitulo:
+        draw.text((PAD, PAD + 52 * SCALE), subtitulo, font=f_sub, fill=(180, 185, 200))
+
+    from datetime import datetime
+    fecha_str = datetime.now().strftime("%d · %m · %Y")
+    tw = draw.textlength(fecha_str, font=f_sub)
+    draw.text((IMG_W - PAD - tw, PAD + 4), fecha_str, font=f_sub, fill=(180, 185, 200))
+
+    # ── ENCABEZADO DE COLUMNAS ────────────────────────────────
+    y0 = HEADER_H + PAD // 2
+    # línea fina superior
+    draw.line([PAD, y0, IMG_W - PAD, y0], fill=C_BORDER, width=1)
+
+    x = PAD
     # Rank
-    draw.text((x + 10, y0 + 12), "RANK", font=f_hdr, fill=C_ACCENT)
+    tw = draw.textlength("#", font=f_hdr)
+    draw.text((x + (RANK_W - tw) / 2, y0 + 14 * SCALE), "#", font=f_hdr, fill=C_SUBTXT)
     x += RANK_W
-    draw.text((x + 10, y0 + 12), "JUGADOR", font=f_hdr, fill=C_ACCENT)
+    draw.text((x + 8 * SCALE, y0 + 14 * SCALE), "JUGADOR", font=f_hdr, fill=C_SUBTXT)
     x += JUG_W
     tw = draw.textlength("TOTAL", font=f_hdr)
-    draw.text((x + (TOTAL_W - tw) / 2, y0 + 12), "TOTAL", font=f_hdr, fill=C_ACCENT)
+    draw.text((x + (TOTAL_W - tw) / 2, y0 + 14 * SCALE), "TOTAL", font=f_hdr, fill=C_SUBTXT)
     x += TOTAL_W
     for ev in eventos:
-        # texto ajustado
-        ev_short = ev
-        if len(ev_short) > 14:
-            ev_short = ev_short[:13] + "…"
+        ev_short = ev if len(ev) <= 14 else ev[:13] + "…"
         tw = draw.textlength(ev_short, font=f_ev)
-        draw.text((x + (EVENT_W - tw) / 2, y0 + 14), ev_short, font=f_ev, fill=C_TEXT)
+        draw.text((x + (EVENT_W - tw) / 2, y0 + 15 * SCALE), ev_short, font=f_ev, fill=C_SUBTXT)
         x += EVENT_W
+
+    # línea fina inferior de encabezado
+    draw.line([PAD, y0 + ROW_H, IMG_W - PAD, y0 + ROW_H], fill=C_BORDER, width=1)
 
     # ── FILAS ─────────────────────────────────────────────────
     for i, row in df_ranking.iterrows():
         yr = y0 + ROW_H + i * ROW_H
         rank = int(row["Rank"])
 
-        # color de fila
-        if rank == 1:
-            row_bg  = tuple(int(c*0.35) for c in C_GOLD)
-            rank_bg = C_GOLD;  rank_fg = (0, 0, 0)
-        elif rank == 2:
-            row_bg  = tuple(int(c*0.35) for c in C_SILVER)
-            rank_bg = C_SILVER;  rank_fg = (0, 0, 0)
-        elif rank == 3:
-            row_bg  = tuple(int(c*0.45) for c in C_BRONZE)
-            rank_bg = C_BRONZE;  rank_fg = (0, 0, 0)
-        elif rank <= 16:
-            # CLASIFICADOS al mundial — verde intenso
-            row_bg  = (25, 75, 55)
-            rank_bg = (46, 160, 100);  rank_fg = (255, 255, 255)
-        else:
-            row_bg  = C_ROW_ALT if i % 2 == 0 else C_DARKROW
-            rank_bg = C_PANEL;  rank_fg = C_SUBTXT
+        # color de fila (minimalista)
+        if   rank == 1: row_bg = C_GOLD_BG
+        elif rank == 2: row_bg = C_SILVER_BG
+        elif rank == 3: row_bg = C_BRONZE_BG
+        elif rank <= 16: row_bg = C_TOP16_BG
+        else:            row_bg = C_ROW if i % 2 == 0 else C_ROW_ALT
 
-        # fondo fila
-        draw.rectangle([PAD, yr, IMG_W - PAD, yr + ROW_H - 1], fill=row_bg)
-        # separador — línea gruesa dorada tras el top 16 (corte de clasificación)
+        draw.rectangle([PAD, yr, IMG_W - PAD, yr + ROW_H], fill=row_bg)
+
+        # línea separadora sutil
+        draw.line([PAD, yr + ROW_H, IMG_W - PAD, yr + ROW_H], fill=C_BORDER, width=1)
+
+        # línea gruesa dorada tras rank 16
         if rank == 16:
-            draw.line([PAD, yr + ROW_H - 1, IMG_W - PAD, yr + ROW_H - 1],
-                      fill=C_ACCENT, width=3)
-        else:
-            draw.line([PAD, yr + ROW_H - 1, IMG_W - PAD, yr + ROW_H - 1],
-                      fill=(50, 55, 75), width=1)
+            draw.line([PAD, yr + ROW_H, IMG_W - PAD, yr + ROW_H], fill=C_ACCENT, width=3)
 
-        # celda rank
+        # ── celda rank ───────────────────────────────────────
         x = PAD
-        draw.rectangle([x, yr, x + RANK_W, yr + ROW_H - 1], fill=rank_bg)
+        # color del número
+        if   rank == 1: rank_color = C_GOLD
+        elif rank == 2: rank_color = C_SILVER
+        elif rank == 3: rank_color = C_BRONZE
+        elif rank <= 16:
+            rank_color = C_TOP16_L
+            # barrita vertical izquierda para top 16
+            draw.rectangle([x, yr + 6, x + 4 * SCALE, yr + ROW_H - 6], fill=C_TOP16_L)
+        else:
+            rank_color = C_SUBTXT
+
         tw = draw.textlength(str(rank), font=f_val)
-        draw.text((x + (RANK_W - tw) / 2, yr + 11), str(rank), font=f_val, fill=rank_fg)
+        draw.text((x + (RANK_W - tw) / 2, yr + 14 * SCALE),
+                  str(rank), font=f_val, fill=rank_color)
         x += RANK_W
 
-        # jugador
+        # ── jugador ──────────────────────────────────────────
         jug = str(row["Jugador"])
-        if len(jug) > 20: jug = jug[:19] + "…"
-        draw.text((x + 10, yr + 11), jug, font=f_row, fill=C_TEXT)
+        if len(jug) > 22: jug = jug[:21] + "…"
+        draw.text((x + 8 * SCALE, yr + 14 * SCALE),
+                  jug, font=f_row, fill=C_TEXT)
         x += JUG_W
 
-        # total
+        # ── total ────────────────────────────────────────────
         total = int(row["Total"])
-        col_total = C_ACCENT if rank <= 3 else C_GREEN if rank <= 16 else C_TEXT
+        col_total = C_TEXT
+        if rank <= 3:      col_total = rank_color
+        elif rank <= 16:   col_total = C_TOP16_L
         tw = draw.textlength(str(total), font=f_val)
-        draw.text((x + (TOTAL_W - tw) / 2, yr + 11), str(total), font=f_val, fill=col_total)
+        draw.text((x + (TOTAL_W - tw) / 2, yr + 12 * SCALE),
+                  str(total), font=f_val, fill=col_total)
         x += TOTAL_W
 
-        # eventos
+        # ── eventos ──────────────────────────────────────────
         for ev in eventos:
             v = row[ev]
             try: v_int = int(v)
             except: v_int = 0
             if v_int == 0:
-                txt_v = "-"; col_v = C_SUBTXT
+                txt_v = "·"; col_v = (200, 205, 215)
             elif v_int < 0:
-                txt_v = str(v_int); col_v = C_RED
+                txt_v = str(v_int); col_v = C_NEGATIVE
             else:
                 txt_v = str(v_int); col_v = C_TEXT
             tw = draw.textlength(txt_v, font=f_row)
-            draw.text((x + (EVENT_W - tw) / 2, yr + 12), txt_v, font=f_row, fill=col_v)
+            draw.text((x + (EVENT_W - tw) / 2, yr + 14 * SCALE),
+                      txt_v, font=f_row, fill=col_v)
             x += EVENT_W
 
     # ── FOOTER ────────────────────────────────────────────────
     footer_y = IMG_H - FOOTER_H
-    draw.rectangle([0, footer_y, IMG_W, IMG_H], fill=C_PANEL)
-    draw.rectangle([0, footer_y - 2, IMG_W, footer_y], fill=C_ACCENT)
-    footer_txt = "Poketubi · Ranking oficial"
-    draw.text((PAD, footer_y + 12), footer_txt, font=f_footer, fill=C_TEXT)
-    tw = draw.textlength(fecha_str, font=f_footer)
-    draw.text((IMG_W - PAD - tw, footer_y + 12), fecha_str, font=f_footer, fill=C_SUBTXT)
+    draw.rectangle([0, footer_y, IMG_W, IMG_H], fill=C_HEADER)
+    draw.text((PAD, footer_y + 14 * SCALE),
+              "POKETUBI", font=f_hdr, fill=C_ACCENT)
+    tw = draw.textlength("Ranking oficial", font=f_footer)
+    draw.text((IMG_W - PAD - tw, footer_y + 15 * SCALE),
+              "Ranking oficial", font=f_footer, fill=(180, 185, 200))
 
     buf = io.BytesIO()
-    img.save(buf, format="PNG", dpi=(200, 200))
+    img.save(buf, format="PNG", dpi=(300, 300), optimize=True)
     buf.seek(0)
     return buf
 
@@ -713,7 +730,6 @@ MONOTYPE1_PENALIDADES = {
         # "Jugador3": [(30, "Suplantación")],
     },
 }
-
 
 
 # ══════════════════════════════════════════════════════════════════
