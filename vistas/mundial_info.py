@@ -179,48 +179,33 @@ def _render_puntajes(mundial_nombre, tipos, posiciones, ligas_list, df_raw):
 
 
 # ══════════════════════════════════════════════════════════════════
-#  CONFIGURACIÓN DE CADA MUNDIAL (edita aquí)
+#  CONFIGURACIÓN DE MONOTYPE_1 (edita aquí)
+#  Origins y Generaciones ya están calculados en Score_Retos.ipynb
+#  → score_mundial.csv (Generaciones) y score_mundial2.csv (Origins)
 # ══════════════════════════════════════════════════════════════════
 
-# ── ORIGINS (T27-T66, PMS T1-T5, PSS T1-T4, PJS T1-T4, PES T1) ────
-ORIGINS_TIPOS = {
-    27: "GRANDE", 28: "MEDIANO", 29: "GRANDE",
-    30: "SPECIAL", 31: "GRANDE", 32: "SPECIAL", 33: "MEDIANO",
-    34: "REGIONAL",
-    # >>> continuar hasta T66
-}
-ORIGINS_POSICIONES = {
-    27: {"Elin beacil": "Campeón"},
-    28: {"A25": "Campeón"},
-    29: {"Akaru": "Campeón"},
-    30: {"MaskWolf": "Campeón"},
-    31: {"Ricomam": "Campeón"},
-    32: {"Davarv": "Campeón"},
-    33: {"Angello77": "Campeón"},
-}
-ORIGINS_LIGAS = ["PMST1","PMST2","PMST3","PMST4","PMST5",
-                 "PSST1","PSST2","PSST3","PSST4",
-                 "PJST1","PJST2","PJST3","PJST4",
-                 "PEST1"]
-
-# ── GENERACIONES (T1-T27, PMS T6, PSS T5, PJS T5, PES T2, PLS T1) ─
-GENERACIONES_TIPOS = {
-    # >>> agrega aquí T1 a T27
-}
-GENERACIONES_POSICIONES = {
-    # >>> agrega aquí posiciones
-}
-GENERACIONES_LIGAS = ["PMST6","PSST5","PJST5","PEST2","PLST1"]
-
-# ── MONOTYPE_1 (T66 en adelante) ──────────────────────────────────
+# ── MONOTYPE_1 (T67 en adelante) ──────────────────────────────────
 MONOTYPE1_TIPOS = {
-    # >>> agrega aquí a partir del T67
+    # >>> agrega aquí el tipo de cada N_Torneo
+    # Ejemplo:
+    # 67: "GRANDE",
+    # 68: "MEDIANO",
+    # 69: "SPECIAL",
 }
 MONOTYPE1_POSICIONES = {
-    # >>> agrega aquí posiciones
+    # >>> agrega aquí posiciones por torneo
+    # Ejemplo:
+    # 67: {
+    #     "Elin beacil": "Campeón",
+    #     "Angello77":   "Subcampeón",
+    #     "Ricomam":     "Top4",
+    #     "Draco axel":  "Top4",
+    # },
 }
 MONOTYPE1_LIGAS = [
-    # >>> agrega aquí liga_temporada
+    # >>> agrega aquí las liga_temporada del mundial Monotype_1
+    # Ejemplo:
+    # "PMST7", "PSST6", "PJST6", "PEST3", "PLST2",
 ]
 
 
@@ -385,14 +370,45 @@ def show():
         )
 
         if mundial_sel == "Monotype_1":
+            st.info("🔵 Mundial vigente — puntajes calculados dinámicamente conforme se agregan torneos.")
             _render_puntajes("Monotype_1", MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
                              MONOTYPE1_LIGAS, df_raw)
+
         elif mundial_sel == "Generaciones":
-            _render_puntajes("Generaciones", GENERACIONES_TIPOS, GENERACIONES_POSICIONES,
-                             GENERACIONES_LIGAS, df_raw)
-        else:
-            _render_puntajes("Origins", ORIGINS_TIPOS, ORIGINS_POSICIONES,
-                             ORIGINS_LIGAS, df_raw)
+            st.info("🟢 Mundial cerrado — puntajes finales calculados en `Score_Retos.ipynb`.")
+            try:
+                df_g = pd.read_csv("score_mundial.csv")
+                df_g["Puntaje"] = df_g["Puntaje"].astype(int)
+                m1, m2, m3 = st.columns(3)
+                m1.metric("👥 Jugadores puntuados", len(df_g))
+                m2.metric("🏆 Puntaje máximo",       int(df_g["Puntaje"].max()))
+                m3.metric("📊 Total de puntos",      int(df_g["Puntaje"].sum()))
+                st.dataframe(df_g.style.apply(_highlight_top3, axis=1),
+                             use_container_width=True, height=600, hide_index=True)
+                csv = df_g.to_csv(index=False).encode("utf-8")
+                st.download_button("📥 Descargar Generaciones CSV", csv,
+                                   "puntajes_generaciones.csv", "text/csv",
+                                   key="dl_gen_puntajes")
+            except Exception as e:
+                st.error(f"No se pudo cargar score_mundial.csv: {e}")
+
+        else:  # Origins
+            st.info("🟠 Primer mundial — puntajes finales calculados en `Score_Retos.ipynb`.")
+            try:
+                df_o = pd.read_csv("score_mundial2.csv")
+                df_o["Puntaje"] = df_o["Puntaje"].astype(int)
+                m1, m2, m3 = st.columns(3)
+                m1.metric("👥 Jugadores puntuados", len(df_o))
+                m2.metric("🏆 Puntaje máximo",       int(df_o["Puntaje"].max()))
+                m3.metric("📊 Total de puntos",      int(df_o["Puntaje"].sum()))
+                st.dataframe(df_o.style.apply(_highlight_top3, axis=1),
+                             use_container_width=True, height=600, hide_index=True)
+                csv = df_o.to_csv(index=False).encode("utf-8")
+                st.download_button("📥 Descargar Origins CSV", csv,
+                                   "puntajes_origins.csv", "text/csv",
+                                   key="dl_ori_puntajes")
+            except Exception as e:
+                st.error(f"No se pudo cargar score_mundial2.csv: {e}")
 
     st.markdown("---")
     st.caption("Poketubi · Sección Mundial Pokémon")
