@@ -378,7 +378,8 @@ MONOTYPE1_LIGAS = {
 # Estructura: FORMATO → { jugador: [ (puntos_restados, "motivo"), ... ] }
 MONOTYPE1_PENALIDADES = {
     "SINGLES": {
-        # "Jugador1": [(20, "No presentado T67"), (10, "WO Semis T68")],
+         "Ricomam": [(20, "WO R6 Mundial")],
+          "Davarv": [(20, "WO R6 Mundial")]
     },
     "DOBLES": {
         # "Jugador2": [(15, "Descalificado T69")],
