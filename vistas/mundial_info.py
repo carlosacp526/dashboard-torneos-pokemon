@@ -296,7 +296,8 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix=
 MONOTYPE1_TIPOS = {
     # >>> agrega aquí el tipo de cada N_Torneo
     # Ejemplo:
-    # 67: "GRANDE",
+    68: "MUNDIAL",
+    69: "SPECIAL"
     # 68: "MEDIANO",
     # 69: "SPECIAL",
 }
@@ -304,26 +305,64 @@ MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
     # Un mismo torneo puede tener SINGLES, DOBLES y/o VGC.
     # Ejemplo:
-    # 67: {
-    #     "SINGLES": {
-    #         "Elin beacil": "Campeón",
-    #         "Angello77":   "Subcampeón",
-    #         "Ricomam":     "Top4",
-    #     },
-    #     "DOBLES": {
-    #         "Fur4nko":  "Campeón",
-    #         "Davarv":   "Subcampeón",
-    #     },
-    #     "VGC": {
-    #         "Akaru":    "Campeón",
-    #     }
-    # },
-    # 68: {
-    #     "SINGLES": {
-    #         "MaskWolf": "Campeón",
-    #     }
-    # },
-}
+     68: {
+         
+         "SINGLES": {"D'AllFather": "Participante", "Porygon Z": "Participante","CaradeCoso": "Participante", "Yabadaba": "Participante" , "Elin beacil": "Participante","Angello77":   "Top4","Davarv":"Participante","Ricomam":"Participante","Darmanethan":"Participante","Adpg":"Participante"} ,
+         "DOBLES": { "Akaru":"Top4"},
+         "VGC": {"Fur4nko":   "Campeón","Bloody Cheese": "Participante", "A25": "Participante", "SasoriVzla7": "Participante","Joscake": "Participante"}}
+  
+        ,
+     69: {
+      "SINGLES": {
+        "huevo_pipipi":   "Campeón",
+        "Elin beacil": "Subcampeón",
+        "Okari958":     "Top4",
+        "Porygon Z":     "Top4",
+
+        "2DpkmN":     "Top8",
+        "Dino agente":     "Top8",
+        "MafiaPolar6242":     "Top8",
+        "Ricomam":     "Top8",
+
+        "Adpg":     "Top16",
+        "afroier":     "Top16",
+        "Angello77":     "Top16",
+        "Angelowos":     "Top16",
+        "Davarv":     "Top16",
+        "GatitaGolosa123":     "Top16",
+        "Mr.Shadowdusk":     "Top16",
+        "Sammy Sweet":     "Top16",
+
+        "Ake-Izou":     "Top24",
+        "Arnau":     "Top24",
+        "Bloody Cheese":     "Top24",
+        "CaradeCoso":     "Top24",
+        "Draco axel":     "Top24",
+        "Fur4nko":     "Top24",
+        "Ger":     "Top24",
+        "Joscake":     "Top24",
+
+        "LABIAMG":     "Top32",
+        "Moirix":     "Top32",
+        "Oscopio":     "Top32",
+        "Samibaisito":     "Top32",
+        "SasoriVzla7":     "Top32",
+        "ShinkaHMA":     "Top32",
+        "Yabadaba":     "Top32",
+        "ZapeohDev":     "Top32",
+
+
+        "JaLax":     "Top40",
+        "masafesio":     "Top40",
+        "Saga":     "Top40",
+        "The.Ultracheese":     "Top40",
+        "skll02":     "Top40",
+        "Hallacas":     "Top40",
+        "D'AllFather":     "Top40",
+        "Blazing":     "Top40",
+
+        }}
+        }
 MONOTYPE1_LIGAS = {
     # >>> agrega aquí las liga_temporada con su formato manual
     # Estructura: "LIGA_TEMPORADA": "FORMATO"
