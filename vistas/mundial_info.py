@@ -31,7 +31,7 @@ def _font(size, bold=False):
 def _render_ranking_png(df_ranking, titulo, subtitulo=""):
     """Genera un PNG minimalista y elegante del ranking."""
     # ── configuración (2x resolución) ─────────────────────────
-    SCALE      = 2
+    SCALE      = 4
     HEADER_H   = 140 * SCALE
     ROW_H      = 52 * SCALE
     RANK_W     = 72 * SCALE
