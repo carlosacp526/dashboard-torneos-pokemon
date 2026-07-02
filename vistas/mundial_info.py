@@ -1,45 +1,51 @@
 import streamlit as st
 import pandas as pd
-import os, sys
+import os, sys, re
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields
+from utils import load_data, normalize_columns, ensure_fields, build_base_liga
 
-def show():
-    df_raw = load_data()
-    df     = normalize_columns(df_raw.copy())
-    df     = ensure_fields(df)
 
-    st.title("🌎 Mundial Pokémon")
-    st.markdown("---")
+# ══════════════════════════════════════════════════════════════════
+#  HELPERS DE ESTILOS
+# ══════════════════════════════════════════════════════════════════
 
-    # ══════════════════════════════════════════════════════════════
-    # SECCIÓN 1 — MUNDIAL ACTUAL  (score_mundial.csv)
-    # ══════════════════════════════════════════════════════════════
-    st.header("🏆 Mundial Pokémon — Generaciones")
+def _highlight_top3(row):
+    """Colores para top 3 de un ranking."""
+    if row["Rank"] == 1: return ["background-color:#FFD700;color:#000;font-weight:bold"] * len(row)
+    if row["Rank"] == 2: return ["background-color:#C0C0C0;color:#000;font-weight:bold"] * len(row)
+    if row["Rank"] == 3: return ["background-color:#CD7F32;color:#000;font-weight:bold"] * len(row)
+    return [""] * len(row)
 
+
+def _highlight_ladder(row):
+    pos = row.name
+    if pos == 1:  return ["background-color:#FFD700;font-weight:bold;color:#000"] * len(row)
+    if pos == 2:  return ["background-color:#C0C0C0;font-weight:bold;color:#000"] * len(row)
+    if pos == 3:  return ["background-color:#CD7F32;font-weight:bold;color:#000"] * len(row)
+    if pos <= 8:  return ["background-color:#1a3a5c;color:#fff"] * len(row)
+    return [""] * len(row)
+
+
+def _render_ranking_csv(path_csv, path_png, top_n=16, label_mundial=""):
+    """Renderiza el ranking desde un CSV con puntajes ya calculados."""
     tab_rank, tab_pts = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
 
     with tab_pts:
-        if os.path.exists("PUNTAJES_MUNDIAL.png"):
-            st.image("PUNTAJES_MUNDIAL.png", width=900)
+        if os.path.exists(path_png):
+            st.image(path_png, width=900)
         else:
-            st.info("Coloca 'PUNTAJES_MUNDIAL.png' en la carpeta del proyecto")
+            st.info(f"Coloca '{path_png}' en la carpeta del proyecto")
         st.caption("Puntajes para clasificación al mundial")
 
     with tab_rank:
         try:
-            ranking_completo = pd.read_csv("score_mundial.csv")
-            ranking_completo["Puntaje"] = ranking_completo["Puntaje"].apply(lambda x: int(x))
-            clasificados = ranking_completo[ranking_completo["Rank"] < 18]
-            resto        = ranking_completo[ranking_completo["Rank"] >= 18]
+            ranking = pd.read_csv(path_csv)
+            ranking["Puntaje"] = ranking["Puntaje"].apply(lambda x: int(x))
+            clasificados = ranking[ranking["Rank"] < top_n + 1]
+            resto        = ranking[ranking["Rank"] >= top_n + 1]
 
-            st.subheader("🏆 CLASIFICADOS TOP 17")
-            def highlight_top3(row):
-                if row["Rank"] == 1: return ["background-color:#004C99;font-weight:bold"] * len(row)
-                if row["Rank"] == 2: return ["background-color:#0066CC;font-weight:bold"] * len(row)
-                if row["Rank"] == 3: return ["background-color:#007BFF;font-weight:bold"] * len(row)
-                return [""] * len(row)
-            st.dataframe(clasificados.style.apply(highlight_top3, axis=1),
+            st.subheader(f"🏆 CLASIFICADOS TOP {top_n}")
+            st.dataframe(clasificados.style.apply(_highlight_top3, axis=1),
                          use_container_width=True, hide_index=True)
 
             st.subheader("📊 RANKING COMPLETO")
@@ -51,175 +57,342 @@ def show():
             with c2: st.dataframe(p2, use_container_width=True, hide_index=True, height=600)
             with c3: st.dataframe(p3, use_container_width=True, hide_index=True, height=600)
         except Exception as e:
-            st.error(f"No se pudo cargar score_mundial.csv: {e}")
+            st.error(f"No se pudo cargar {path_csv}: {e}")
 
-    st.markdown("---")
 
-    # ══════════════════════════════════════════════════════════════
-    # SECCIÓN 2 — PRIMER MUNDIAL  (score_mundial2.csv)
-    # ══════════════════════════════════════════════════════════════
-    st.header("🥇 Mundial Origins")
+# ══════════════════════════════════════════════════════════════════
+#  TABLAS DE PUNTAJES OFICIALES
+# ══════════════════════════════════════════════════════════════════
 
-    tab_rank2, tab_pts2 = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
+PUNTAJES = {
+    "MUNDIAL":  {"Campeón": 300, "Top4": 150, "Participante": 100},
+    "REGIONAL": {"Campeón": 150, "Subcampeón": 100, "Top4": 80,
+                 "Top8": 60, "Top16": 50, "Top24": 40, "Top32": 30,
+                 "Top45": 20, "Top64": 10, "Top72": 5},
+    "SPECIAL":  {"Campeón": 80, "Subcampeón": 60, "Top4": 50,
+                 "Top8": 40, "Top16": 30, "Top24": 20, "Top32": 10, "Top40": 5},
+    "GRANDE":   {"Campeón": 50, "Subcampeón": 40, "Top4": 30, "Top8": 20, "Top16": 10},
+    "MEDIANO":  {"Campeón": 40, "Subcampeón": 30, "Top4": 20, "Top8": 10},
+    "PEQUEÑO":  {"Campeón": 30, "Subcampeón": 20, "Top4": 10},
+    # Ligas (posición calculada automáticamente desde base2)
+    "PMS": {"Campeón": 150, "Top3": 100, "Participante": 40},
+    "PSS": {"Campeón": 100, "Top3": 60,  "Participante": 30},
+    "PES": {"Campeón": 80,  "Top3": 40,  "Participante": 20},
+    "PJS": {"Campeón": 50,  "Top3": 25,  "Participante": 10},
+    "PLS": {"Campeón": 200, "Top3": 120, "Participante": 50},
+}
 
-    with tab_pts2:
-        if os.path.exists("PUNTAJES_MUNDIAL2.png"):
-            st.image("PUNTAJES_MUNDIAL2.png", width=900)
-        else:
-            st.info("Coloca 'PUNTAJES_MUNDIAL2.png' en la carpeta del proyecto")
-        st.caption("Puntajes para clasificación al primer mundial")
 
-    with tab_rank2:
-        try:
-            ranking2 = pd.read_csv("score_mundial2.csv")
-            ranking2["Puntaje"] = ranking2["Puntaje"].apply(lambda x: int(x))
-            clasificados2 = ranking2[ranking2["Rank"] < 17]
-            resto2        = ranking2[ranking2["Rank"] >= 17]
+# ══════════════════════════════════════════════════════════════════
+#  CÁLCULO DE PUNTAJES POR MUNDIAL
+# ══════════════════════════════════════════════════════════════════
 
-            st.subheader("🏆 CLASIFICADOS TOP 16")
-            st.dataframe(clasificados2.style.apply(highlight_top3, axis=1),
-                         use_container_width=True, hide_index=True)
+def _calcular_puntos(tipos, posiciones, ligas_list, df_raw):
+    """Calcula puntos totales de un mundial dado."""
+    puntos_jugador = {}
+    detalle_rows   = []
 
-            st.subheader("📊 RANKING COMPLETO")
-            q1 = resto2.iloc[0:28].reset_index(drop=True)
-            q2 = resto2.iloc[28:56].reset_index(drop=True)
-            q3 = resto2.iloc[56:].reset_index(drop=True)
-            d1, d2, d3 = st.columns(3)
-            with d1: st.dataframe(q1, use_container_width=True, hide_index=True, height=600)
-            with d2: st.dataframe(q2, use_container_width=True, hide_index=True, height=600)
-            with d3: st.dataframe(q3, use_container_width=True, hide_index=True, height=600)
-        except Exception as e:
-            st.error(f"No se pudo cargar score_mundial2.csv: {e}")
-
-    st.markdown("---")
-
-    # ══════════════════════════════════════════════════════════════
-    # SECCIÓN 3 — POKÉMON MÁS USADOS POR TORNEO GENERACIONAL
-    # ══════════════════════════════════════════════════════════════
-    st.header("🎮 Pokémon más usados por Torneo Generacional")
-    st.caption("Sube dos imágenes por torneo (imagen 1 e imagen 2)")
-
-    TORNEOS_GEN = [
-        "Torneo Gen 1 — Kanto",
-        "Torneo Gen 2 — Johto",
-        "Torneo Gen 3 — Hoenn",
-        "Torneo Gen 4 — Sinnoh",
-        "Torneo Gen 5 — Unova",
-        "Torneo Gen 6 — Kalos",
-        "Torneo Gen 7 — Alola",
-        "Torneo Gen 8 — Galar",
-        "Torneo Gen 9 — Paldea",
-    ]
-
-    # nombres de archivo esperados: gen1_img1.png, gen1_img2.png, gen2_img1.png ...
-    tabs_gen = st.tabs([f"Gen {i+1}" for i in range(9)])
-
-    for i, (tab, nombre_torneo) in enumerate(zip(tabs_gen, TORNEOS_GEN)):
-        with tab:
-            st.subheader(f"🎯 {nombre_torneo}")
-            img1 = f"gen{i+1}_img1.png"
-            img2 = f"gen{i+1}_img2.png"
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("**📸 Imagen 1 — Pokémon más usados**")
-                if os.path.exists(img1):
-                    st.image(img1, use_container_width=True)
-                else:
-                    st.info(f"Coloca '{img1}' en la carpeta del proyecto")
-            with col2:
-                st.markdown("**📸 Imagen 2 — Pokémon más usados**")
-                if os.path.exists(img2):
-                    st.image(img2, use_container_width=True)
-                else:
-                    st.info(f"Coloca '{img2}' en la carpeta del proyecto")
-
-    st.markdown("---")
-
-    # ══════════════════════════════════════════════════════════════
-    # SECCIÓN 4 — LADDER TORNEO 68 (MUNDIAL)
-    # ══════════════════════════════════════════════════════════════
-    st.header("🏟️ Ladder — Torneo 68 (Mundial)")
-
-    df_t68 = df[df["N_Torneo"] == 68].copy() if "N_Torneo" in df.columns else pd.DataFrame()
-
-    if df_t68.empty:
-        st.warning("No se encontraron datos del Torneo 68.")
-    else:
-        completed_mask = (
-            df_t68["status"].fillna("").str.lower().isin(
-                ["completed","done","finished","vencida","terminada","win","won"]
-            ) | df_t68["winner"].notna()
-        )
-        df_comp   = df_t68[completed_mask]
-        df_pend   = df_t68[~completed_mask]
-
-        # métricas rápidas
-        m1, m2, m3, m4 = st.columns(4)
-        jugadores_t68 = pd.unique(df_t68[["player1","player2"]].values.ravel("K"))
-        m1.metric("👥 Participantes",     len(jugadores_t68))
-        m2.metric("✅ Batallas jugadas",  len(df_comp))
-        m3.metric("⏳ Batallas pendientes", len(df_pend))
-        m4.metric("📋 Total batallas",    len(df_t68))
-
-        st.markdown("---")
-
-        # ── Ladder (tabla de posiciones) ───────────────────────
-        st.subheader("📊 Ladder — Tabla de posiciones")
-
-        ladder_rows = []
-        for jugador in jugadores_t68:
-            if pd.isna(jugador) or str(jugador).strip() == "": continue
-            jq = str(jugador).strip()
-            partidas_j = df_comp[
-                df_comp["player1"].str.lower().str.contains(jq.lower(), na=False) |
-                df_comp["player2"].str.lower().str.contains(jq.lower(), na=False)
-            ]
-            wins   = int(partidas_j["winner"].str.lower().str.contains(jq.lower(), na=False).sum())
-            losses = len(partidas_j) - wins
-            total_j = len(partidas_j)
-            wr     = round(wins / total_j * 100, 1) if total_j > 0 else 0.0
-            ladder_rows.append({
-                "Jugador":   jq,
-                "PJ":        total_j,
-                "V":         wins,
-                "D":         losses,
-                "WR%":       wr,
-                "Pts":       wins * 3,
+    # Torneos
+    for id_torneo, jugadores in posiciones.items():
+        tipo = tipos.get(id_torneo)
+        if tipo not in PUNTAJES: continue
+        tabla_pts = PUNTAJES[tipo]
+        for jugador, posicion in jugadores.items():
+            pts = tabla_pts.get(posicion, 0)
+            puntos_jugador[jugador] = puntos_jugador.get(jugador, 0) + pts
+            detalle_rows.append({
+                "Jugador":  jugador,
+                "Evento":   f"T{id_torneo} ({tipo})",
+                "Posición": posicion,
+                "Puntos":   pts,
             })
 
-        if ladder_rows:
-            ladder_df = (pd.DataFrame(ladder_rows)
-                         .sort_values(["Pts","WR%"], ascending=False)
-                         .reset_index(drop=True))
-            ladder_df.index += 1
-            ladder_df.index.name = "Pos"
+    # Ligas — posición calculada desde base2
+    try:
+        base2, _ = build_base_liga(df_raw)
+        for liga_temp in ligas_list:
+            m = re.match(r'^([A-Z]+)', liga_temp)
+            if not m: continue
+            prefijo = m.group(1)
+            if prefijo not in PUNTAJES: continue
+            tabla = PUNTAJES[prefijo]
+            liga_df = base2[base2["Liga_Temporada"] == liga_temp].copy()
+            if liga_df.empty: continue
+            liga_df = liga_df.sort_values("score_completo", ascending=False).reset_index(drop=True)
+            liga_df["RANK"] = range(1, len(liga_df) + 1)
+            for _, row in liga_df.iterrows():
+                jugador = row["Participante"]
+                rank    = row["RANK"]
+                if rank == 1:
+                    pts, pos = tabla.get("Campeón", 0), "Campeón"
+                elif rank <= 3:
+                    pts, pos = tabla.get("Top3", 0), "Top3"
+                else:
+                    pts, pos = tabla.get("Participante", 0), "Participante"
+                puntos_jugador[jugador] = puntos_jugador.get(jugador, 0) + pts
+                detalle_rows.append({
+                    "Jugador":  jugador,
+                    "Evento":   liga_temp,
+                    "Posición": f"Rank {rank} ({pos})",
+                    "Puntos":   pts,
+                })
+    except Exception as e:
+        st.warning(f"No se pudieron calcular puntajes de ligas: {e}")
 
-            def highlight_ladder(row):
-                pos = row.name
-                if pos == 1:  return ["background-color:#FFD700;font-weight:bold;color:#000"] * len(row)
-                if pos == 2:  return ["background-color:#C0C0C0;font-weight:bold;color:#000"] * len(row)
-                if pos == 3:  return ["background-color:#CD7F32;font-weight:bold;color:#000"] * len(row)
-                if pos <= 8:  return ["background-color:#1a3a5c;color:#fff"] * len(row)
-                return [""] * len(row)
+    return puntos_jugador, detalle_rows
 
-            st.dataframe(ladder_df.style.apply(highlight_ladder, axis=1),
-                         use_container_width=True, height=500)
+
+def _render_puntajes(mundial_nombre, tipos, posiciones, ligas_list, df_raw):
+    """Muestra la sección de puntajes calculados de un mundial."""
+    puntos_jugador, detalle_rows = _calcular_puntos(tipos, posiciones, ligas_list, df_raw)
+
+    if not puntos_jugador:
+        st.info(f"Aún no hay posiciones definidas para **{mundial_nombre}**. "
+                f"Agrega los datos en los diccionarios del código.")
+        return
+
+    df_puntos = (pd.DataFrame(list(puntos_jugador.items()),
+                               columns=["Jugador","Puntos"])
+                 .sort_values("Puntos", ascending=False)
+                 .reset_index(drop=True))
+    df_puntos.index += 1
+    df_puntos.index.name = "Rank"
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("👥 Jugadores puntuados", len(df_puntos))
+    m2.metric("🏆 Puntaje máximo",       int(df_puntos["Puntos"].max()))
+    m3.metric("📊 Total de puntos",      int(df_puntos["Puntos"].sum()))
+
+    st.subheader(f"🏆 Ranking calculado — {mundial_nombre}")
+    st.dataframe(df_puntos.style.apply(_highlight_ladder, axis=1),
+                 use_container_width=True, height=500)
+
+    csv = df_puntos.to_csv().encode("utf-8")
+    st.download_button(f"📥 Descargar {mundial_nombre} CSV", csv,
+                       f"puntajes_{mundial_nombre.lower()}.csv", "text/csv",
+                       key=f"dl_{mundial_nombre}")
+
+    with st.expander("🔍 Desglose de puntos por evento"):
+        df_det = pd.DataFrame(detalle_rows).sort_values(
+            ["Jugador","Puntos"], ascending=[True, False])
+        st.dataframe(df_det, use_container_width=True, height=500)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  CONFIGURACIÓN DE CADA MUNDIAL (edita aquí)
+# ══════════════════════════════════════════════════════════════════
+
+# ── ORIGINS (T27-T66, PMS T1-T5, PSS T1-T4, PJS T1-T4, PES T1) ────
+ORIGINS_TIPOS = {
+    27: "GRANDE", 28: "MEDIANO", 29: "GRANDE",
+    30: "SPECIAL", 31: "GRANDE", 32: "SPECIAL", 33: "MEDIANO",
+    34: "REGIONAL",
+    # >>> continuar hasta T66
+}
+ORIGINS_POSICIONES = {
+    27: {"Elin beacil": "Campeón"},
+    28: {"A25": "Campeón"},
+    29: {"Akaru": "Campeón"},
+    30: {"MaskWolf": "Campeón"},
+    31: {"Ricomam": "Campeón"},
+    32: {"Davarv": "Campeón"},
+    33: {"Angello77": "Campeón"},
+}
+ORIGINS_LIGAS = ["PMST1","PMST2","PMST3","PMST4","PMST5",
+                 "PSST1","PSST2","PSST3","PSST4",
+                 "PJST1","PJST2","PJST3","PJST4",
+                 "PEST1"]
+
+# ── GENERACIONES (T1-T27, PMS T6, PSS T5, PJS T5, PES T2, PLS T1) ─
+GENERACIONES_TIPOS = {
+    # >>> agrega aquí T1 a T27
+}
+GENERACIONES_POSICIONES = {
+    # >>> agrega aquí posiciones
+}
+GENERACIONES_LIGAS = ["PMST6","PSST5","PJST5","PEST2","PLST1"]
+
+# ── MONOTYPE_1 (T66 en adelante) ──────────────────────────────────
+MONOTYPE1_TIPOS = {
+    # >>> agrega aquí a partir del T67
+}
+MONOTYPE1_POSICIONES = {
+    # >>> agrega aquí posiciones
+}
+MONOTYPE1_LIGAS = [
+    # >>> agrega aquí liga_temporada
+]
+
+
+# ══════════════════════════════════════════════════════════════════
+#  SHOW PRINCIPAL
+# ══════════════════════════════════════════════════════════════════
+
+def show():
+    df_raw = load_data()
+    df     = normalize_columns(df_raw.copy())
+    df     = ensure_fields(df)
+
+    st.title("🌎 Mundial Pokémon")
+    st.markdown("---")
+
+    # Navegación por tabs superiores
+    tab_monotype, tab_generac, tab_origins, tab_puntajes = st.tabs([
+        "🔵 Monotype_1  ·  Actual",
+        "🟢 Generaciones",
+        "🟠 Origins",
+        "🎯 Puntajes de Clasificación",
+    ])
+
+    # ══════════════════════════════════════════════════════════════
+    # TAB 1 — MONOTYPE_1 (MUNDIAL ACTUAL)
+    # ══════════════════════════════════════════════════════════════
+    with tab_monotype:
+        st.header("🔵 Mundial Pokémon — Monotype_1  (Actual)")
+        st.info("Mundial vigente — la clasificación se actualiza a medida que se disputan los torneos.")
+        _render_puntajes("Monotype_1", MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
+                         MONOTYPE1_LIGAS, df_raw)
+
+    # ══════════════════════════════════════════════════════════════
+    # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
+    # ══════════════════════════════════════════════════════════════
+    with tab_generac:
+        st.header("🟢 Mundial Pokémon — Generaciones  (Cerrado)")
+
+        sub_rank, sub_ladder, sub_poke = st.tabs([
+            "🏆 Ranking del Mundial",
+            "🏟️ Ladder Torneo 68",
+            "🎮 Pokémon por Torneo Generacional",
+        ])
+
+        # ── Sub-tab: Ranking del Mundial ─────────────────────────
+        with sub_rank:
+            _render_ranking_csv("score_mundial.csv", "PUNTAJES_MUNDIAL.png",
+                                top_n=17, label_mundial="Generaciones")
+
+        # ── Sub-tab: Ladder Torneo 68 ───────────────────────────
+        with sub_ladder:
+            st.subheader("🏟️ Ladder — Torneo 68 (Mundial Generaciones)")
+            df_t68 = df[df["N_Torneo"] == 68].copy() if "N_Torneo" in df.columns else pd.DataFrame()
+
+            if df_t68.empty:
+                st.warning("No se encontraron datos del Torneo 68.")
+            else:
+                completed_mask = (
+                    df_t68["status"].fillna("").str.lower().isin(
+                        ["completed","done","finished","vencida","terminada","win","won"]
+                    ) | df_t68["winner"].notna()
+                )
+                df_comp = df_t68[completed_mask]
+                df_pend = df_t68[~completed_mask]
+
+                m1, m2, m3, m4 = st.columns(4)
+                jugadores_t68 = pd.unique(df_t68[["player1","player2"]].values.ravel("K"))
+                m1.metric("👥 Participantes",      len(jugadores_t68))
+                m2.metric("✅ Batallas jugadas",   len(df_comp))
+                m3.metric("⏳ Batallas pendientes",len(df_pend))
+                m4.metric("📋 Total batallas",     len(df_t68))
+
+                st.markdown("---")
+                st.markdown("#### 📊 Ladder — Tabla de posiciones")
+
+                ladder_rows = []
+                for jugador in jugadores_t68:
+                    if pd.isna(jugador) or str(jugador).strip() == "": continue
+                    jq = str(jugador).strip()
+                    partidas_j = df_comp[
+                        df_comp["player1"].str.lower().str.contains(jq.lower(), na=False) |
+                        df_comp["player2"].str.lower().str.contains(jq.lower(), na=False)
+                    ]
+                    wins    = int(partidas_j["winner"].str.lower().str.contains(jq.lower(), na=False).sum())
+                    total_j = len(partidas_j)
+                    ladder_rows.append({
+                        "Jugador": jq,
+                        "PJ":  total_j,
+                        "V":   wins,
+                        "D":   total_j - wins,
+                        "WR%": round(wins/total_j*100,1) if total_j > 0 else 0.0,
+                        "Pts": wins * 3,
+                    })
+
+                if ladder_rows:
+                    ladder_df = (pd.DataFrame(ladder_rows)
+                                 .sort_values(["Pts","WR%"], ascending=False)
+                                 .reset_index(drop=True))
+                    ladder_df.index += 1
+                    ladder_df.index.name = "Pos"
+                    st.dataframe(ladder_df.style.apply(_highlight_ladder, axis=1),
+                                 use_container_width=True, height=500)
+
+                st.markdown("---")
+                st.markdown("#### ⏳ Batallas Pendientes")
+                if df_pend.empty:
+                    st.success("✅ No hay batallas pendientes.")
+                else:
+                    cols_show = [c for c in ["round","player1","player2","status","replay"]
+                                 if c in df_pend.columns]
+                    st.dataframe(df_pend[cols_show].reset_index(drop=True),
+                                 use_container_width=True, height=400)
+                    st.info(f"Total pendientes: **{len(df_pend)}**")
+
+        # ── Sub-tab: Pokémon por Torneo Generacional ─────────────
+        with sub_poke:
+            st.subheader("🎮 Pokémon más usados por Torneo Generacional")
+            TORNEOS_GEN = [
+                "Torneo Gen 1 — Kanto",   "Torneo Gen 2 — Johto",
+                "Torneo Gen 3 — Hoenn",   "Torneo Gen 4 — Sinnoh",
+                "Torneo Gen 5 — Unova",   "Torneo Gen 6 — Kalos",
+                "Torneo Gen 7 — Alola",   "Torneo Gen 8 — Galar",
+                "Torneo Gen 9 — Paldea",
+            ]
+            tabs_gen = st.tabs([f"Gen {i+1}" for i in range(9)])
+            for i, (tab, nombre_torneo) in enumerate(zip(tabs_gen, TORNEOS_GEN)):
+                with tab:
+                    st.markdown(f"##### 🎯 {nombre_torneo}")
+                    img1 = f"gen{i+1}_img1.png"
+                    img2 = f"gen{i+1}_img2.png"
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if os.path.exists(img1):
+                            st.image(img1, use_container_width=True)
+                        else:
+                            st.info(f"Coloca '{img1}' en la carpeta")
+                    with col2:
+                        if os.path.exists(img2):
+                            st.image(img2, use_container_width=True)
+                        else:
+                            st.info(f"Coloca '{img2}' en la carpeta")
+
+    # ══════════════════════════════════════════════════════════════
+    # TAB 3 — ORIGINS (PRIMER MUNDIAL)
+    # ══════════════════════════════════════════════════════════════
+    with tab_origins:
+        st.header("🟠 Mundial Pokémon — Origins  (Primer mundial)")
+        _render_ranking_csv("score_mundial2.csv", "PUNTAJES_MUNDIAL2.png",
+                            top_n=16, label_mundial="Origins")
+
+    # ══════════════════════════════════════════════════════════════
+    # TAB 4 — PUNTAJES DE CLASIFICACIÓN (CALCULADOR DINÁMICO)
+    # ══════════════════════════════════════════════════════════════
+    with tab_puntajes:
+        st.header("🎯 Puntajes de Clasificación Mundial")
+        st.caption("Cálculo de puntos por torneo y liga según el molde oficial")
+
+        mundial_sel = st.radio(
+            "Mundial",
+            ["Monotype_1", "Generaciones", "Origins"],
+            horizontal=True, key="mundial_calc_sel"
+        )
+
+        if mundial_sel == "Monotype_1":
+            _render_puntajes("Monotype_1", MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
+                             MONOTYPE1_LIGAS, df_raw)
+        elif mundial_sel == "Generaciones":
+            _render_puntajes("Generaciones", GENERACIONES_TIPOS, GENERACIONES_POSICIONES,
+                             GENERACIONES_LIGAS, df_raw)
         else:
-            st.info("Aún no hay partidas completadas en el Torneo 68.")
-
-        st.markdown("---")
-
-        # ── Batallas pendientes ────────────────────────────────
-        st.subheader("⏳ Batallas Pendientes — Torneo 68")
-
-        if df_pend.empty:
-            st.success("✅ No hay batallas pendientes.")
-        else:
-            cols_show = [c for c in ["round","player1","player2","status","replay"]
-                         if c in df_pend.columns]
-            st.dataframe(df_pend[cols_show].reset_index(drop=True),
-                         use_container_width=True, height=400)
-            st.info(f"Total pendientes: **{len(df_pend)}**")
+            _render_puntajes("Origins", ORIGINS_TIPOS, ORIGINS_POSICIONES,
+                             ORIGINS_LIGAS, df_raw)
 
     st.markdown("---")
     st.caption("Poketubi · Sección Mundial Pokémon")
