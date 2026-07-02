@@ -142,40 +142,133 @@ def _calcular_puntos(tipos, posiciones, ligas_list, df_raw):
     return puntos_jugador, detalle_rows
 
 
-def _render_puntajes(mundial_nombre, tipos, posiciones, ligas_list, df_raw):
-    """Muestra la sección de puntajes calculados de un mundial."""
-    puntos_jugador, detalle_rows = _calcular_puntos(tipos, posiciones, ligas_list, df_raw)
+def _calcular_puntos_por_formato(tipos, posiciones, ligas_list, df_raw):
+    """
+    Calcula puntos separados por formato (SINGLES, DOBLES, VGC).
+    Detecta el formato de cada torneo desde df_raw.
+    Devuelve dict: {formato: {puntos_jugador, detalle_rows}}
+    """
+    # detectar formato de cada N_Torneo
+    df_norm = normalize_columns(df_raw.copy())
+    df_norm = ensure_fields(df_norm)
+    formato_por_torneo = {}
+    if "N_Torneo" in df_norm.columns and "Formato" in df_norm.columns:
+        agg = (df_norm.dropna(subset=["N_Torneo","Formato"])
+                       .groupby("N_Torneo")["Formato"]
+                       .agg(lambda s: str(s.mode().iloc[0]).upper() if len(s.mode())>0 else ""))
+        formato_por_torneo = agg.to_dict()
 
-    if not puntos_jugador:
-        st.info(f"Aún no hay posiciones definidas para **{mundial_nombre}**. "
-                f"Agrega los datos en los diccionarios del código.")
+    rankings = {"SINGLES": {}, "DOBLES": {}, "VGC": {}}
+    detalles = {"SINGLES": [], "DOBLES": [], "VGC": []}
+
+    # ── Torneos ────────────────────────────────────────────────
+    for id_torneo, jugadores in posiciones.items():
+        tipo = tipos.get(id_torneo)
+        if tipo not in PUNTAJES: continue
+        fmt = formato_por_torneo.get(id_torneo, "")
+        if fmt not in rankings:
+            continue  # torneo sin formato válido → no cuenta
+        tabla_pts = PUNTAJES[tipo]
+        for jugador, posicion in jugadores.items():
+            pts = tabla_pts.get(posicion, 0)
+            rankings[fmt][jugador] = rankings[fmt].get(jugador, 0) + pts
+            detalles[fmt].append({
+                "Jugador":  jugador,
+                "Evento":   f"T{id_torneo} ({tipo})",
+                "Posición": posicion,
+                "Puntos":   pts,
+            })
+
+    # ── Ligas — detectar formato de la liga y calcular posición ─
+    try:
+        base2, _ = build_base_liga(df_raw)
+        for liga_temp in ligas_list:
+            m = re.match(r'^([A-Z]+)', liga_temp)
+            if not m: continue
+            prefijo = m.group(1)
+            if prefijo not in PUNTAJES: continue
+            tabla = PUNTAJES[prefijo]
+
+            liga_df = base2[base2["Liga_Temporada"] == liga_temp].copy()
+            if liga_df.empty: continue
+
+            # detectar formato de la liga desde el CSV original
+            liga_fmt = ""
+            if "Formato" in df_norm.columns and "Ligas_categoria" in df_norm.columns:
+                sub_liga = df_norm[df_norm["Ligas_categoria"].astype(str).str.startswith(liga_temp)]
+                if not sub_liga.empty:
+                    modo = sub_liga["Formato"].dropna().mode()
+                    if len(modo) > 0:
+                        liga_fmt = str(modo.iloc[0]).upper()
+            if liga_fmt not in rankings:
+                continue
+
+            liga_df = liga_df.sort_values("score_completo", ascending=False).reset_index(drop=True)
+            liga_df["RANK"] = range(1, len(liga_df) + 1)
+            for _, row in liga_df.iterrows():
+                jugador = row["Participante"]
+                rank    = row["RANK"]
+                if rank == 1:
+                    pts, pos = tabla.get("Campeón", 0), "Campeón"
+                elif rank <= 3:
+                    pts, pos = tabla.get("Top3", 0), "Top3"
+                else:
+                    pts, pos = tabla.get("Participante", 0), "Participante"
+                rankings[liga_fmt][jugador] = rankings[liga_fmt].get(jugador, 0) + pts
+                detalles[liga_fmt].append({
+                    "Jugador":  jugador,
+                    "Evento":   liga_temp,
+                    "Posición": f"Rank {rank} ({pos})",
+                    "Puntos":   pts,
+                })
+    except Exception as e:
+        st.warning(f"No se pudieron calcular puntajes de ligas: {e}")
+
+    return rankings, detalles
+
+
+def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw):
+    """Muestra los 3 rankings paralelos de Monotype_1 (SINGLES/DOBLES/VGC)."""
+    rankings, detalles = _calcular_puntos_por_formato(tipos, posiciones, ligas_list, df_raw)
+
+    if not any(rankings.values()):
+        st.info("Aún no hay posiciones definidas para **Monotype_1**. "
+                "Agrega los datos en `MONOTYPE1_TIPOS`, `MONOTYPE1_POSICIONES` y `MONOTYPE1_LIGAS`.")
         return
 
-    df_puntos = (pd.DataFrame(list(puntos_jugador.items()),
-                               columns=["Jugador","Puntos"])
-                 .sort_values("Puntos", ascending=False)
-                 .reset_index(drop=True))
-    df_puntos.index += 1
-    df_puntos.index.name = "Rank"
+    subtabs = st.tabs(["🎯 SINGLES", "👥 DOBLES", "🎮 VGC"])
+    for tab_fmt, fmt in zip(subtabs, ["SINGLES","DOBLES","VGC"]):
+        with tab_fmt:
+            pts_dict = rankings[fmt]
+            det_list = detalles[fmt]
+            if not pts_dict:
+                st.info(f"Aún no hay torneos ni ligas de formato **{fmt}** definidos.")
+                continue
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("👥 Jugadores puntuados", len(df_puntos))
-    m2.metric("🏆 Puntaje máximo",       int(df_puntos["Puntos"].max()))
-    m3.metric("📊 Total de puntos",      int(df_puntos["Puntos"].sum()))
+            df_pts = (pd.DataFrame(list(pts_dict.items()), columns=["Jugador","Puntos"])
+                      .sort_values("Puntos", ascending=False)
+                      .reset_index(drop=True))
+            df_pts.index += 1
+            df_pts.index.name = "Rank"
 
-    st.subheader(f"🏆 Ranking calculado — {mundial_nombre}")
-    st.dataframe(df_puntos.style.apply(_highlight_ladder, axis=1),
-                 use_container_width=True, height=500)
+            m1, m2, m3 = st.columns(3)
+            m1.metric("👥 Jugadores puntuados", len(df_pts))
+            m2.metric("🏆 Puntaje máximo",       int(df_pts["Puntos"].max()))
+            m3.metric("📊 Total de puntos",      int(df_pts["Puntos"].sum()))
 
-    csv = df_puntos.to_csv().encode("utf-8")
-    st.download_button(f"📥 Descargar {mundial_nombre} CSV", csv,
-                       f"puntajes_{mundial_nombre.lower()}.csv", "text/csv",
-                       key=f"dl_{mundial_nombre}")
+            st.subheader(f"🏆 Ranking Monotype_1 — {fmt}")
+            st.dataframe(df_pts.style.apply(_highlight_ladder, axis=1),
+                         use_container_width=True, height=500)
 
-    with st.expander("🔍 Desglose de puntos por evento"):
-        df_det = pd.DataFrame(detalle_rows).sort_values(
-            ["Jugador","Puntos"], ascending=[True, False])
-        st.dataframe(df_det, use_container_width=True, height=500)
+            csv = df_pts.to_csv().encode("utf-8")
+            st.download_button(f"📥 Descargar {fmt} CSV", csv,
+                               f"puntajes_monotype1_{fmt.lower()}.csv", "text/csv",
+                               key=f"dl_mono_{fmt}")
+
+            with st.expander(f"🔍 Desglose de puntos {fmt}"):
+                df_det = pd.DataFrame(det_list).sort_values(
+                    ["Jugador","Puntos"], ascending=[True, False])
+                st.dataframe(df_det, use_container_width=True, height=500)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -234,9 +327,10 @@ def show():
     # ══════════════════════════════════════════════════════════════
     with tab_monotype:
         st.header("🔵 Mundial Pokémon — Monotype_1  (Actual)")
-        st.info("Mundial vigente — la clasificación se actualiza a medida que se disputan los torneos.")
-        _render_puntajes("Monotype_1", MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
-                         MONOTYPE1_LIGAS, df_raw)
+        st.info("Mundial vigente con **3 rankings paralelos** (SINGLES · DOBLES · VGC). "
+                "El formato de cada torneo se detecta automáticamente desde el CSV.")
+        _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
+                                    MONOTYPE1_LIGAS, df_raw)
 
     # ══════════════════════════════════════════════════════════════
     # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
@@ -370,9 +464,9 @@ def show():
         )
 
         if mundial_sel == "Monotype_1":
-            st.info("🔵 Mundial vigente — puntajes calculados dinámicamente conforme se agregan torneos.")
-            _render_puntajes("Monotype_1", MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
-                             MONOTYPE1_LIGAS, df_raw)
+            st.info("🔵 Mundial vigente — **3 rankings** por formato (SINGLES · DOBLES · VGC).")
+            _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
+                                        MONOTYPE1_LIGAS, df_raw)
 
         elif mundial_sel == "Generaciones":
             st.info("🟢 Mundial cerrado — puntajes finales calculados en `Score_Retos.ipynb`.")
