@@ -1,8 +1,192 @@
 import streamlit as st
 import pandas as pd
-import os, sys, re
+import os, sys, re, io
+from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, build_base_liga
+
+
+# ══════════════════════════════════════════════════════════════════
+#  GENERADOR DE PNG PROFESIONAL DEL RANKING
+# ══════════════════════════════════════════════════════════════════
+
+def _font(size, bold=False):
+    candidates_bold = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/segoeuib.ttf",
+    ]
+    candidates_reg = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/segoeui.ttf",
+    ]
+    for path in (candidates_bold if bold else candidates_reg):
+        if os.path.exists(path):
+            try: return ImageFont.truetype(path, size)
+            except: pass
+    return ImageFont.load_default()
+
+
+def _render_ranking_png(df_ranking, titulo, subtitulo=""):
+    """Genera un PNG profesional del ranking (jugador × evento × total)."""
+    # ── configuración ─────────────────────────────────────────
+    HEADER_H   = 110
+    ROW_H      = 42
+    RANK_W     = 60
+    JUG_W      = 200
+    TOTAL_W    = 100
+    EVENT_W    = 110
+    PAD        = 20
+    FOOTER_H   = 40
+
+    n_rows   = len(df_ranking)
+    eventos  = [c for c in df_ranking.columns if c not in ["Rank","Jugador","Total"]]
+    n_events = len(eventos)
+
+    IMG_W = RANK_W + JUG_W + TOTAL_W + EVENT_W * n_events + PAD * 2
+    IMG_H = HEADER_H + ROW_H * (n_rows + 1) + FOOTER_H + PAD * 2
+
+    # colores
+    C_BG        = (18, 22, 38)
+    C_PANEL     = (28, 32, 50)
+    C_HEADER    = (35, 55, 100)
+    C_ACCENT    = (250, 200, 40)
+    C_TEXT      = (240, 240, 245)
+    C_SUBTXT    = (170, 175, 190)
+    C_ROW_ALT   = (24, 28, 44)
+    C_GOLD      = (255, 215, 0)
+    C_SILVER    = (192, 192, 200)
+    C_BRONZE    = (205, 127, 50)
+    C_GREEN     = (46, 204, 113)
+    C_RED       = (231, 76, 60)
+    C_DARKROW   = (18, 22, 38)
+
+    img  = Image.new("RGB", (IMG_W, IMG_H), C_BG)
+    draw = ImageDraw.Draw(img)
+
+    f_title  = _font(32, bold=True)
+    f_sub    = _font(16, bold=False)
+    f_hdr    = _font(15, bold=True)
+    f_row    = _font(16, bold=True)
+    f_val    = _font(17, bold=True)
+    f_ev     = _font(13, bold=True)
+    f_footer = _font(11, bold=False)
+
+    # ── HEADER ────────────────────────────────────────────────
+    draw.rectangle([0, 0, IMG_W, HEADER_H], fill=C_HEADER)
+    draw.rectangle([0, HEADER_H, IMG_W, HEADER_H + 3], fill=C_ACCENT)
+    draw.text((PAD, 22), "🏆 " + titulo, font=f_title, fill=C_ACCENT)
+    if subtitulo:
+        draw.text((PAD, 65), subtitulo, font=f_sub, fill=C_TEXT)
+    from datetime import datetime
+    fecha_str = datetime.now().strftime("%d/%m/%Y  %H:%M")
+    tw = draw.textlength(fecha_str, font=f_sub)
+    draw.text((IMG_W - PAD - tw, 70), fecha_str, font=f_sub, fill=C_SUBTXT)
+
+    # ── COLUMNAS: encabezado ─────────────────────────────────
+    y0 = HEADER_H + PAD
+    x  = PAD
+    # fondo header
+    draw.rectangle([PAD, y0, IMG_W - PAD, y0 + ROW_H], fill=C_PANEL)
+    # Rank
+    draw.text((x + 10, y0 + 12), "RANK", font=f_hdr, fill=C_ACCENT)
+    x += RANK_W
+    draw.text((x + 10, y0 + 12), "JUGADOR", font=f_hdr, fill=C_ACCENT)
+    x += JUG_W
+    tw = draw.textlength("TOTAL", font=f_hdr)
+    draw.text((x + (TOTAL_W - tw) / 2, y0 + 12), "TOTAL", font=f_hdr, fill=C_ACCENT)
+    x += TOTAL_W
+    for ev in eventos:
+        # texto ajustado
+        ev_short = ev
+        if len(ev_short) > 14:
+            ev_short = ev_short[:13] + "…"
+        tw = draw.textlength(ev_short, font=f_ev)
+        draw.text((x + (EVENT_W - tw) / 2, y0 + 14), ev_short, font=f_ev, fill=C_TEXT)
+        x += EVENT_W
+
+    # ── FILAS ─────────────────────────────────────────────────
+    for i, row in df_ranking.iterrows():
+        yr = y0 + ROW_H + i * ROW_H
+        rank = int(row["Rank"])
+
+        # color de fila
+        if rank == 1:
+            row_bg  = tuple(int(c*0.35) for c in C_GOLD)
+            rank_bg = C_GOLD;  rank_fg = (0, 0, 0)
+        elif rank == 2:
+            row_bg  = tuple(int(c*0.35) for c in C_SILVER)
+            rank_bg = C_SILVER;  rank_fg = (0, 0, 0)
+        elif rank == 3:
+            row_bg  = tuple(int(c*0.45) for c in C_BRONZE)
+            rank_bg = C_BRONZE;  rank_fg = (0, 0, 0)
+        elif rank <= 16:
+            # CLASIFICADOS al mundial — verde intenso
+            row_bg  = (25, 75, 55)
+            rank_bg = (46, 160, 100);  rank_fg = (255, 255, 255)
+        else:
+            row_bg  = C_ROW_ALT if i % 2 == 0 else C_DARKROW
+            rank_bg = C_PANEL;  rank_fg = C_SUBTXT
+
+        # fondo fila
+        draw.rectangle([PAD, yr, IMG_W - PAD, yr + ROW_H - 1], fill=row_bg)
+        # separador — línea gruesa dorada tras el top 16 (corte de clasificación)
+        if rank == 16:
+            draw.line([PAD, yr + ROW_H - 1, IMG_W - PAD, yr + ROW_H - 1],
+                      fill=C_ACCENT, width=3)
+        else:
+            draw.line([PAD, yr + ROW_H - 1, IMG_W - PAD, yr + ROW_H - 1],
+                      fill=(50, 55, 75), width=1)
+
+        # celda rank
+        x = PAD
+        draw.rectangle([x, yr, x + RANK_W, yr + ROW_H - 1], fill=rank_bg)
+        tw = draw.textlength(str(rank), font=f_val)
+        draw.text((x + (RANK_W - tw) / 2, yr + 11), str(rank), font=f_val, fill=rank_fg)
+        x += RANK_W
+
+        # jugador
+        jug = str(row["Jugador"])
+        if len(jug) > 20: jug = jug[:19] + "…"
+        draw.text((x + 10, yr + 11), jug, font=f_row, fill=C_TEXT)
+        x += JUG_W
+
+        # total
+        total = int(row["Total"])
+        col_total = C_ACCENT if rank <= 3 else C_GREEN if rank <= 16 else C_TEXT
+        tw = draw.textlength(str(total), font=f_val)
+        draw.text((x + (TOTAL_W - tw) / 2, yr + 11), str(total), font=f_val, fill=col_total)
+        x += TOTAL_W
+
+        # eventos
+        for ev in eventos:
+            v = row[ev]
+            try: v_int = int(v)
+            except: v_int = 0
+            if v_int == 0:
+                txt_v = "-"; col_v = C_SUBTXT
+            elif v_int < 0:
+                txt_v = str(v_int); col_v = C_RED
+            else:
+                txt_v = str(v_int); col_v = C_TEXT
+            tw = draw.textlength(txt_v, font=f_row)
+            draw.text((x + (EVENT_W - tw) / 2, yr + 12), txt_v, font=f_row, fill=col_v)
+            x += EVENT_W
+
+    # ── FOOTER ────────────────────────────────────────────────
+    footer_y = IMG_H - FOOTER_H
+    draw.rectangle([0, footer_y, IMG_W, IMG_H], fill=C_PANEL)
+    draw.rectangle([0, footer_y - 2, IMG_W, footer_y], fill=C_ACCENT)
+    footer_txt = "Poketubi · Ranking oficial"
+    draw.text((PAD, footer_y + 12), footer_txt, font=f_footer, fill=C_TEXT)
+    tw = draw.textlength(fecha_str, font=f_footer)
+    draw.text((IMG_W - PAD - tw, footer_y + 12), fecha_str, font=f_footer, fill=C_SUBTXT)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", dpi=(200, 200))
+    buf.seek(0)
+    return buf
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -275,10 +459,27 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix=
                 st.dataframe(pivot.style.apply(_highlight_top3, axis=1),
                              use_container_width=True, height=550, hide_index=True)
 
-            csv = pivot.to_csv(index=False).encode("utf-8")
-            st.download_button(f"📥 Descargar {fmt} CSV", csv,
-                               f"puntajes_monotype1_{fmt.lower()}.csv", "text/csv",
-                               key=f"dl_mono_{key_prefix}_{fmt}")
+                st.markdown("#### 🖼️ Imagen del ranking")
+                top_n = st.selectbox(
+                    "Cantidad a mostrar en el PNG",
+                    [16, 20, 25, 30, 50, len(pivot)],
+                    index=0,
+                    format_func=lambda x: f"Top {x}" if x < len(pivot) else f"Completo ({len(pivot)})",
+                    key=f"topn_mono_{key_prefix}_{fmt}"
+                )
+                pivot_top = pivot.head(top_n)
+
+                png_buf = _render_ranking_png(
+                    pivot_top,
+                    titulo=f"MONOTYPE_1 — {fmt}",
+                    subtitulo=f"Top {top_n} · Clasificados al mundial (top 16 marcados en verde)"
+                )
+                st.image(png_buf, use_container_width=True)
+                st.download_button(f"📥 Descargar Top {top_n} {fmt} PNG",
+                                   png_buf.getvalue(),
+                                   f"ranking_monotype1_{fmt.lower()}_top{top_n}.png",
+                                   "image/png",
+                                   key=f"dl_mono_{key_prefix}_{fmt}")
 
             with st.expander(f"🔍 Desglose lineal {fmt}"):
                 df_lineal = pd.DataFrame(det_list).sort_values(
@@ -291,6 +492,8 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix=
 #  Origins y Generaciones ya están calculados en Score_Retos.ipynb
 #  → score_mundial.csv (Generaciones) y score_mundial2.csv (Origins)
 # ══════════════════════════════════════════════════════════════════
+
+# ── MONOTYPE_1 (T67 en adelante) ──────────────────────────────────
 
 # ── MONOTYPE_1 (T67 en adelante) ──────────────────────────────────
 MONOTYPE1_TIPOS = {
@@ -512,6 +715,7 @@ MONOTYPE1_PENALIDADES = {
 }
 
 
+
 # ══════════════════════════════════════════════════════════════════
 #  SHOW PRINCIPAL
 # ══════════════════════════════════════════════════════════════════
@@ -689,9 +893,32 @@ def show():
                 m3.metric("📊 Total de puntos",      int(df_g["Puntaje"].sum()))
                 st.dataframe(df_g.style.apply(_highlight_top3, axis=1),
                              use_container_width=True, height=600, hide_index=True)
-                csv = df_g.to_csv(index=False).encode("utf-8")
-                st.download_button("📥 Descargar Generaciones CSV", csv,
-                                   "puntajes_generaciones.csv", "text/csv",
+                # PNG con selector de top
+                st.markdown("#### 🖼️ Imagen del ranking")
+                top_n_g = st.selectbox(
+                    "Cantidad a mostrar en el PNG",
+                    [16, 20, 30, 50, len(df_g)],
+                    index=2,
+                    format_func=lambda x: f"Top {x}" if x < len(df_g) else f"Completo ({len(df_g)})",
+                    key="topn_gen"
+                )
+                df_g_top = df_g.head(top_n_g).copy()
+                df_g_top["Total"] = df_g_top["Puntaje"]
+                df_g_top["Jugador"] = df_g_top["Participante"] if "Participante" in df_g_top.columns else df_g_top.get("Jugador", "")
+                if "Rank" not in df_g_top.columns:
+                    df_g_top.insert(0, "Rank", range(1, len(df_g_top)+1))
+                cols_show = ["Rank","Jugador","Total"]
+                if "País" in df_g_top.columns:
+                    cols_show.insert(2, "País")
+                png_buf = _render_ranking_png(
+                    df_g_top[cols_show],
+                    titulo="MUNDIAL GENERACIONES",
+                    subtitulo=f"Top {top_n_g} · Clasificados al mundial (top 16 en verde)"
+                )
+                st.image(png_buf, use_container_width=True)
+                st.download_button(f"📥 Descargar Top {top_n_g} Generaciones PNG",
+                                   png_buf.getvalue(),
+                                   f"ranking_generaciones_top{top_n_g}.png", "image/png",
                                    key="dl_gen_puntajes")
             except Exception as e:
                 st.error(f"No se pudo cargar score_mundial.csv: {e}")
@@ -707,9 +934,32 @@ def show():
                 m3.metric("📊 Total de puntos",      int(df_o["Puntaje"].sum()))
                 st.dataframe(df_o.style.apply(_highlight_top3, axis=1),
                              use_container_width=True, height=600, hide_index=True)
-                csv = df_o.to_csv(index=False).encode("utf-8")
-                st.download_button("📥 Descargar Origins CSV", csv,
-                                   "puntajes_origins.csv", "text/csv",
+                # PNG con selector de top
+                st.markdown("#### 🖼️ Imagen del ranking")
+                top_n_o = st.selectbox(
+                    "Cantidad a mostrar en el PNG",
+                    [16, 20, 30, 50, len(df_o)],
+                    index=2,
+                    format_func=lambda x: f"Top {x}" if x < len(df_o) else f"Completo ({len(df_o)})",
+                    key="topn_ori"
+                )
+                df_o_top = df_o.head(top_n_o).copy()
+                df_o_top["Total"] = df_o_top["Puntaje"]
+                df_o_top["Jugador"] = df_o_top["Participante"] if "Participante" in df_o_top.columns else df_o_top.get("Jugador", "")
+                if "Rank" not in df_o_top.columns:
+                    df_o_top.insert(0, "Rank", range(1, len(df_o_top)+1))
+                cols_show = ["Rank","Jugador","Total"]
+                if "País" in df_o_top.columns:
+                    cols_show.insert(2, "País")
+                png_buf = _render_ranking_png(
+                    df_o_top[cols_show],
+                    titulo="MUNDIAL ORIGINS",
+                    subtitulo=f"Top {top_n_o} · Clasificados al mundial (top 16 en verde)"
+                )
+                st.image(png_buf, use_container_width=True)
+                st.download_button(f"📥 Descargar Top {top_n_o} Origins PNG",
+                                   png_buf.getvalue(),
+                                   f"ranking_origins_top{top_n_o}.png", "image/png",
                                    key="dl_ori_puntajes")
             except Exception as e:
                 st.error(f"No se pudo cargar score_mundial2.csv: {e}")
