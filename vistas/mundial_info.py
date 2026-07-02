@@ -300,6 +300,7 @@ MONOTYPE1_TIPOS = {
     69: "SPECIAL",
     70: "GRANDE",
     71: "GRANDE",
+    72: "GRANDE",
     # 69: "SPECIAL",
 }
 MONOTYPE1_POSICIONES = {
@@ -408,6 +409,30 @@ MONOTYPE1_POSICIONES = {
         "Saga":     "Top16",
         "ShinkaHMA":     "Top16",
         "skll02":     "Top16"
+
+        }},
+
+                  72: {
+      "VGC": {
+        "HaoSigismondi":   "Campeón",
+        "LABIAMG": "Subcampeón",
+        "Bamdara":     "Top4",
+        "Lautaro":     "Top4",
+
+        "2DpkmN":     "Top8",
+        "Chonarthas":     "Top8",
+        "mtdrumr":     "Top8",
+        "Saga":     "Top8",
+
+
+        "A25":     "Top16",
+        "Bloody Cheese":     "Top16",
+        "D'AllFather":     "Top16",
+        "David Wong":     "Top16",
+        "Dino agente":     "Top16",
+        "Fabricio19jr":     "Top16",
+        "Hydreigon_chelas":     "Top16",
+        "Okari958":     "Top16"
 
         }}
         
