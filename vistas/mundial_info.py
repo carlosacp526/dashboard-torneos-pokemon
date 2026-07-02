@@ -297,8 +297,8 @@ MONOTYPE1_TIPOS = {
     # >>> agrega aquí el tipo de cada N_Torneo
     # Ejemplo:
     68: "MUNDIAL",
-    69: "SPECIAL"
-    # 68: "MEDIANO",
+    69: "SPECIAL",
+    70: "GRANDE",
     # 69: "SPECIAL",
 }
 MONOTYPE1_POSICIONES = {
@@ -361,7 +361,33 @@ MONOTYPE1_POSICIONES = {
         "D'AllFather":     "Top40",
         "Blazing":     "Top40",
 
+        }},
+
+             70: {
+      "DOBLES": {
+        "EmperorGambit":   "Campeón",
+        "Davarv": "Subcampeón",
+        "Saga":     "Top4",
+        "ShinkaHMA":     "Top4",
+
+        "Angelowos":     "Top8",
+        "Bloody Cheese":     "Top8",
+        "D'AllFather":     "Top8",
+        "JaLax":     "Top8",
+
+
+        "Dino324000":     "Top16",
+        "MafiaPolar6242":     "Top16",
+        "masafesio":     "Top16",
+        "Okari958":     "Top16",
+        "Porygon Z":     "Top16",
+        "SasoriVzla7":     "Top16",
+        "skll02":     "Top16",
+        "Hydreigon_chelas":     "Top16",
+
         }}
+        
+        
         }
 MONOTYPE1_LIGAS = {
     # >>> agrega aquí las liga_temporada con su formato manual
