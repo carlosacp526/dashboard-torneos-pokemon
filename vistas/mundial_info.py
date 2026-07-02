@@ -482,7 +482,7 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix=
             st.caption("Cada columna muestra el aporte del torneo/liga al total del jugador.")
             if not pivot.empty:
                 st.dataframe(pivot.style.apply(_highlight_top3, axis=1),
-                             use_container_width=True, height=550, hide_index=True)
+                             use_container_width=True, height=900, hide_index=True)
 
                 st.markdown("#### 🖼️ Imagen del ranking")
                 top_n = st.selectbox(
