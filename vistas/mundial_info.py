@@ -142,47 +142,39 @@ def _calcular_puntos(tipos, posiciones, ligas_list, df_raw):
     return puntos_jugador, detalle_rows
 
 
-def _calcular_puntos_por_formato(tipos, posiciones, ligas_list, df_raw):
+def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw):
     """
     Calcula puntos separados por formato (SINGLES, DOBLES, VGC).
-    Detecta el formato de cada torneo desde df_raw.
+    El formato se define manualmente en MONOTYPE1_POSICIONES y MONOTYPE1_LIGAS.
     Devuelve dict: {formato: {puntos_jugador, detalle_rows}}
     """
-    # detectar formato de cada N_Torneo
-    df_norm = normalize_columns(df_raw.copy())
-    df_norm = ensure_fields(df_norm)
-    formato_por_torneo = {}
-    if "N_Torneo" in df_norm.columns and "Formato" in df_norm.columns:
-        agg = (df_norm.dropna(subset=["N_Torneo","Formato"])
-                       .groupby("N_Torneo")["Formato"]
-                       .agg(lambda s: str(s.mode().iloc[0]).upper() if len(s.mode())>0 else ""))
-        formato_por_torneo = agg.to_dict()
-
     rankings = {"SINGLES": {}, "DOBLES": {}, "VGC": {}}
     detalles = {"SINGLES": [], "DOBLES": [], "VGC": []}
 
     # ── Torneos ────────────────────────────────────────────────
-    for id_torneo, jugadores in posiciones.items():
+    for id_torneo, formatos_dict in posiciones.items():
         tipo = tipos.get(id_torneo)
         if tipo not in PUNTAJES: continue
-        fmt = formato_por_torneo.get(id_torneo, "")
-        if fmt not in rankings:
-            continue  # torneo sin formato válido → no cuenta
         tabla_pts = PUNTAJES[tipo]
-        for jugador, posicion in jugadores.items():
-            pts = tabla_pts.get(posicion, 0)
-            rankings[fmt][jugador] = rankings[fmt].get(jugador, 0) + pts
-            detalles[fmt].append({
-                "Jugador":  jugador,
-                "Evento":   f"T{id_torneo} ({tipo})",
-                "Posición": posicion,
-                "Puntos":   pts,
-            })
+        for fmt, jugadores in formatos_dict.items():
+            fmt = str(fmt).upper()
+            if fmt not in rankings: continue
+            for jugador, posicion in jugadores.items():
+                pts = tabla_pts.get(posicion, 0)
+                rankings[fmt][jugador] = rankings[fmt].get(jugador, 0) + pts
+                detalles[fmt].append({
+                    "Jugador":  jugador,
+                    "Evento":   f"T{id_torneo} ({tipo}) — {fmt}",
+                    "Posición": posicion,
+                    "Puntos":   pts,
+                })
 
-    # ── Ligas — detectar formato de la liga y calcular posición ─
+    # ── Ligas — formato manual + posición calculada desde base2 ─
     try:
         base2, _ = build_base_liga(df_raw)
-        for liga_temp in ligas_list:
+        for liga_temp, liga_fmt in ligas_dict.items():
+            liga_fmt = str(liga_fmt).upper()
+            if liga_fmt not in rankings: continue
             m = re.match(r'^([A-Z]+)', liga_temp)
             if not m: continue
             prefijo = m.group(1)
@@ -191,20 +183,9 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_list, df_raw):
 
             liga_df = base2[base2["Liga_Temporada"] == liga_temp].copy()
             if liga_df.empty: continue
-
-            # detectar formato de la liga desde el CSV original
-            liga_fmt = ""
-            if "Formato" in df_norm.columns and "Ligas_categoria" in df_norm.columns:
-                sub_liga = df_norm[df_norm["Ligas_categoria"].astype(str).str.startswith(liga_temp)]
-                if not sub_liga.empty:
-                    modo = sub_liga["Formato"].dropna().mode()
-                    if len(modo) > 0:
-                        liga_fmt = str(modo.iloc[0]).upper()
-            if liga_fmt not in rankings:
-                continue
-
             liga_df = liga_df.sort_values("score_completo", ascending=False).reset_index(drop=True)
             liga_df["RANK"] = range(1, len(liga_df) + 1)
+
             for _, row in liga_df.iterrows():
                 jugador = row["Participante"]
                 rank    = row["RANK"]
@@ -286,20 +267,39 @@ MONOTYPE1_TIPOS = {
     # 69: "SPECIAL",
 }
 MONOTYPE1_POSICIONES = {
-    # >>> agrega aquí posiciones por torneo
+    # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
+    # Un mismo torneo puede tener SINGLES, DOBLES y/o VGC.
     # Ejemplo:
     # 67: {
-    #     "Elin beacil": "Campeón",
-    #     "Angello77":   "Subcampeón",
-    #     "Ricomam":     "Top4",
-    #     "Draco axel":  "Top4",
+    #     "SINGLES": {
+    #         "Elin beacil": "Campeón",
+    #         "Angello77":   "Subcampeón",
+    #         "Ricomam":     "Top4",
+    #     },
+    #     "DOBLES": {
+    #         "Fur4nko":  "Campeón",
+    #         "Davarv":   "Subcampeón",
+    #     },
+    #     "VGC": {
+    #         "Akaru":    "Campeón",
+    #     }
+    # },
+    # 68: {
+    #     "SINGLES": {
+    #         "MaskWolf": "Campeón",
+    #     }
     # },
 }
-MONOTYPE1_LIGAS = [
-    # >>> agrega aquí las liga_temporada del mundial Monotype_1
+MONOTYPE1_LIGAS = {
+    # >>> agrega aquí las liga_temporada con su formato manual
+    # Estructura: "LIGA_TEMPORADA": "FORMATO"
     # Ejemplo:
-    # "PMST7", "PSST6", "PJST6", "PEST3", "PLST2",
-]
+    # "PMST7":  "SINGLES",
+    # "PSST6":  "DOBLES",
+    # "PJST6":  "VGC",
+    # "PEST3":  "SINGLES",
+    # "PLST2":  "SINGLES",
+}
 
 
 # ══════════════════════════════════════════════════════════════════
