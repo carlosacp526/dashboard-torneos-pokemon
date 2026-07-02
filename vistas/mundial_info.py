@@ -42,7 +42,7 @@ def _render_ranking_png(df_ranking, titulo, subtitulo=""):
     FOOTER_H   = 44 * SCALE
 
 
-    SCALE      = 1.5   # antes 2 — reduce todo (cuadros y texto) ~25%O si solo quieres achicar las cajas mantiendo el texto legible, ajusta solo alturas/anchos:
+    SCALE      = 1   # antes 2 — reduce todo (cuadros y texto) ~25%O si solo quieres achicar las cajas mantiendo el texto legible, ajusta solo alturas/anchos:
     ROW_H      = 42 * SCALE    # antes 52
     JUG_W      = 220 * SCALE   # antes 260
     TOTAL_W    = 100 * SCALE   # antes 120
