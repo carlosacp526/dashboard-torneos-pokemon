@@ -301,7 +301,8 @@ MONOTYPE1_TIPOS = {
     70: "GRANDE",
     71: "GRANDE",
     72: "GRANDE",
-    # 69: "SPECIAL",
+    73: "GRANDE",
+    74: "GRANDE",
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -433,6 +434,53 @@ MONOTYPE1_POSICIONES = {
         "Fabricio19jr":     "Top16",
         "Hydreigon_chelas":     "Top16",
         "Okari958":     "Top16"
+
+        }},
+                          73: {
+      "VGC": {
+        "Rainer":   "Campeón",
+        "SasoriVzla7": "Subcampeón",
+        "Akaru":     "Top4",
+        "Okari958":     "Top4",
+
+        "Dino agente":     "Top8",
+        "LoLo":     "Top8",
+        "MilanesaVGC":     "Top8",
+        "Saga":     "Top8",
+
+
+        "Angelowos":     "Top16",
+        "Fabricio19jr":     "Top16",
+        "Fur4nk0":     "Top16",
+        "HaoSigismondi":     "Top16",
+        "HideOnCube":     "Top16",
+        "Lautaro":     "Top16",
+        "Ricomam":     "Top16",
+        "MafiaPolar6242":     "Top16"
+
+        }},
+
+                  74: {
+      "DOBLES": {
+        "ShinkaHMA":   "Campeón",
+        "Bamdara": "Subcampeón",
+        "A25":     "Top4",
+        "Marmach":     "Top4",
+
+        "Chris FPS":     "Top8",
+        "D'AllFather":     "Top8",
+        "EmperorGambit":     "Top8",
+        "JaLax":     "Top8",
+
+
+        "CaradeCoso":     "Top16",
+        "Dino agente":     "Top16",
+        "Draco axel":     "Top16",
+        "Fur4nko":     "Top16",
+        "GatitaGolosa123":     "Top16",
+        "Hallacas":     "Top16",
+        "HaoSigismondi":     "Top16",
+        "Ger":     "Top16"
 
         }}
         
