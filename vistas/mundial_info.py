@@ -299,6 +299,7 @@ MONOTYPE1_TIPOS = {
     68: "MUNDIAL",
     69: "SPECIAL",
     70: "GRANDE",
+    71: "GRANDE",
     # 69: "SPECIAL",
 }
 MONOTYPE1_POSICIONES = {
@@ -309,7 +310,7 @@ MONOTYPE1_POSICIONES = {
          
          "SINGLES": {"D'AllFather": "Participante", "Porygon Z": "Participante","CaradeCoso": "Participante", "Yabadaba": "Participante" , "Elin beacil": "Participante","Angello77":   "Top4","Davarv":"Participante","Ricomam":"Participante","Darmanethan":"Participante","Adpg":"Participante"} ,
          "DOBLES": { "Akaru":"Top4"},
-         "VGC": {"Fur4nko":   "Campeón","Bloody Cheese": "Participante", "A25": "Participante", "SasoriVzla7": "Participante","Joscake": "Participante"}}
+         "VGC": {"Fur4nko":   "Campeón","Bloody Cheese": "Participante", "A25": "Participante", "SasoriVzla7": "Participante","Joscake": "Participante","Chris FPS":"Top4"}}
   
         ,
      69: {
@@ -385,8 +386,30 @@ MONOTYPE1_POSICIONES = {
         "skll02":     "Top16",
         "Hydreigon_chelas":     "Top16",
 
+        }},
+          71: {
+      "DOBLES": {
+        "Angello77":   "Campeón",
+        "LABIAMG": "Subcampeón",
+        "Fur4nko":     "Top4",
+        "GatitaGolosa123":     "Top4",
+
+        "Adpg":     "Top8",
+        "Akaru":     "Top8",
+        "MafiaPolar6242":     "Top8",
+        "SasoriVzla7":     "Top8",
+
+
+        "Yabadaba":     "Top16",
+        "Bloody Cheese":     "Top16",
+        "D'AllFather":     "Top16",
+        "Draco axel":     "Top16",
+        "Haseo":     "Top16",
+        "Saga":     "Top16",
+        "ShinkaHMA":     "Top16",
+        "skll02":     "Top16"
+
         }}
-        
         
         }
 MONOTYPE1_LIGAS = {
