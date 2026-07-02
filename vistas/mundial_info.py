@@ -142,12 +142,14 @@ def _calcular_puntos(tipos, posiciones, ligas_list, df_raw):
     return puntos_jugador, detalle_rows
 
 
-def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw):
+def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw, penalidades=None):
     """
     Calcula puntos separados por formato (SINGLES, DOBLES, VGC).
     El formato se define manualmente en MONOTYPE1_POSICIONES y MONOTYPE1_LIGAS.
+    Aplica penalidades (restas) por formato si se pasan.
     Devuelve dict: {formato: {puntos_jugador, detalle_rows}}
     """
+    penalidades = penalidades or {}
     rankings = {"SINGLES": {}, "DOBLES": {}, "VGC": {}}
     detalles = {"SINGLES": [], "DOBLES": [], "VGC": []}
 
@@ -205,12 +207,32 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw):
     except Exception as e:
         st.warning(f"No se pudieron calcular puntajes de ligas: {e}")
 
+    # ── Penalidades (restar puntos por formato) ────────────────
+    for fmt, jugadores_pen in penalidades.items():
+        fmt = str(fmt).upper()
+        if fmt not in rankings: continue
+        for jugador, castigos in jugadores_pen.items():
+            for castigo in castigos:
+                if isinstance(castigo, (tuple, list)) and len(castigo) >= 1:
+                    pts_menos = int(castigo[0])
+                    motivo    = castigo[1] if len(castigo) > 1 else "Penalidad"
+                else:
+                    pts_menos = int(castigo)
+                    motivo    = "Penalidad"
+                rankings[fmt][jugador] = rankings[fmt].get(jugador, 0) - pts_menos
+                detalles[fmt].append({
+                    "Jugador":  jugador,
+                    "Evento":   f"🚨 PENALIDAD",
+                    "Posición": motivo,
+                    "Puntos":   -pts_menos,
+                })
+
     return rankings, detalles
 
 
-def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw):
+def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix="", penalidades=None):
     """Muestra los 3 rankings paralelos de Monotype_1 (SINGLES/DOBLES/VGC)."""
-    rankings, detalles = _calcular_puntos_por_formato(tipos, posiciones, ligas_list, df_raw)
+    rankings, detalles = _calcular_puntos_por_formato(tipos, posiciones, ligas_list, df_raw, penalidades)
 
     if not any(rankings.values()):
         st.info("Aún no hay posiciones definidas para **Monotype_1**. "
@@ -226,30 +248,42 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw):
                 st.info(f"Aún no hay torneos ni ligas de formato **{fmt}** definidos.")
                 continue
 
-            df_pts = (pd.DataFrame(list(pts_dict.items()), columns=["Jugador","Puntos"])
-                      .sort_values("Puntos", ascending=False)
-                      .reset_index(drop=True))
-            df_pts.index += 1
-            df_pts.index.name = "Rank"
+            # ── construir tabla pivote: jugador × evento ─────────
+            df_det = pd.DataFrame(det_list)
+            if not df_det.empty:
+                pivot = (df_det.groupby(["Jugador","Evento"])["Puntos"]
+                                .sum()
+                                .unstack(fill_value=0)
+                                .reset_index())
+                pivot["Total"] = pivot.drop(columns=["Jugador"]).sum(axis=1)
+                pivot = pivot.sort_values("Total", ascending=False).reset_index(drop=True)
+                pivot.insert(0, "Rank", range(1, len(pivot) + 1))
+                # ordenar columnas: Rank, Jugador, Total, luego eventos
+                cols_evento = [c for c in pivot.columns if c not in ["Rank","Jugador","Total"]]
+                pivot = pivot[["Rank","Jugador","Total"] + cols_evento]
+            else:
+                pivot = pd.DataFrame()
 
             m1, m2, m3 = st.columns(3)
-            m1.metric("👥 Jugadores puntuados", len(df_pts))
-            m2.metric("🏆 Puntaje máximo",       int(df_pts["Puntos"].max()))
-            m3.metric("📊 Total de puntos",      int(df_pts["Puntos"].sum()))
+            m1.metric("👥 Jugadores puntuados", len(pivot))
+            m2.metric("🏆 Puntaje máximo",       int(pivot["Total"].max()) if not pivot.empty else 0)
+            m3.metric("📊 Total de puntos",      int(pivot["Total"].sum()) if not pivot.empty else 0)
 
             st.subheader(f"🏆 Ranking Monotype_1 — {fmt}")
-            st.dataframe(df_pts.style.apply(_highlight_ladder, axis=1),
-                         use_container_width=True, height=500)
+            st.caption("Cada columna muestra el aporte del torneo/liga al total del jugador.")
+            if not pivot.empty:
+                st.dataframe(pivot.style.apply(_highlight_top3, axis=1),
+                             use_container_width=True, height=550, hide_index=True)
 
-            csv = df_pts.to_csv().encode("utf-8")
+            csv = pivot.to_csv(index=False).encode("utf-8")
             st.download_button(f"📥 Descargar {fmt} CSV", csv,
                                f"puntajes_monotype1_{fmt.lower()}.csv", "text/csv",
-                               key=f"dl_mono_{fmt}")
+                               key=f"dl_mono_{key_prefix}_{fmt}")
 
-            with st.expander(f"🔍 Desglose de puntos {fmt}"):
-                df_det = pd.DataFrame(det_list).sort_values(
+            with st.expander(f"🔍 Desglose lineal {fmt}"):
+                df_lineal = pd.DataFrame(det_list).sort_values(
                     ["Jugador","Puntos"], ascending=[True, False])
-                st.dataframe(df_det, use_container_width=True, height=500)
+                st.dataframe(df_lineal, use_container_width=True, height=500)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -262,8 +296,7 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw):
 MONOTYPE1_TIPOS = {
     # >>> agrega aquí el tipo de cada N_Torneo
     # Ejemplo:
-    68: "MUNDIAL",
-    69: "SPECIAL"
+    # 67: "GRANDE",
     # 68: "MEDIANO",
     # 69: "SPECIAL",
 }
@@ -271,67 +304,6 @@ MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
     # Un mismo torneo puede tener SINGLES, DOBLES y/o VGC.
     # Ejemplo:
-
-     68: {
-         
-         "SINGLES": {"D'AllFather": "Participante", "Porygon Z": "Participante","CaradeCoso": "Participante", "Yabadaba": "Participante" , "Elin beacil": "Participante","Angello77":   "Top4","Davarv":"Participante","Ricomam":"Participante","Darmanethan":"Participante","Adpg":"Participante"} ,
-         "DOBLES": { "Akaru":"Top4"},
-         "VGC": {"Fur4nko":   "Campeón","Bloody Cheese": "Participante", "A25": "Participante", "SasoriVzla7": "Participante","Joscake": "Participante"}}
-  
-        ,
-     69: {
-      "SINGLES": {
-        "huevo_pipipi":   "Campeón",
-        "Elin beacil": "Subcampeón",
-        "Okari958":     "Top4",
-        "Porygon Z":     "Top4",
-
-        "2DpkmN":     "Top8",
-        "Dino agente":     "Top8",
-        "MafiaPolar6242":     "Top8",
-        "Ricomam":     "Top8",
-
-        "Adpg":     "Top16",
-        "afroier":     "Top16",
-        "Angello77":     "Top16",
-        "Angelowos":     "Top16",
-        "Davarv":     "Top16",
-        "GatitaGolosa123":     "Top16",
-        "Mr.Shadowdusk":     "Top16",
-        "Sammy Sweet":     "Top16",
-
-        "Ake-Izou":     "Top24",
-        "Arnau":     "Top24",
-        "Bloody Cheese":     "Top24",
-        "CaradeCoso":     "Top24",
-        "Draco axel":     "Top24",
-        "Fur4nko":     "Top24",
-        "Ger":     "Top24",
-        "Joscake":     "Top24",
-
-        "LABIAMG":     "Top32",
-        "Moirix":     "Top32",
-        "Oscopio":     "Top32",
-        "Samibaisito":     "Top32",
-        "SasoriVzla7":     "Top32",
-        "ShinkaHMA":     "Top32",
-        "Yabadaba":     "Top32",
-        "ZapeohDev":     "Top32",
-
-
-        "JaLax":     "Top40",
-        "masafesio":     "Top40",
-        "Saga":     "Top40",
-        "The.Ultracheese":     "Top40",
-        "skll02":     "Top40",
-        "Hallacas":     "Top40",
-        "D'AllFather":     "Top40",
-        "Blazing":     "Top40",
-
-        }}
-    # "SPECIAL":  {"Campeón": 80, "Subcampeón": 60, "Top4": 50,
-    #              "Top8": 40, "Top16": 30, "Top24": 20, "Top32": 10, "Top40": 5},
-  
     # 67: {
     #     "SINGLES": {
     #         "Elin beacil": "Campeón",
@@ -363,6 +335,20 @@ MONOTYPE1_LIGAS = {
     # "PLST2":  "SINGLES",
 }
 
+# ── PENALIDADES (restar puntos a un jugador en un formato) ────────
+# Estructura: FORMATO → { jugador: [ (puntos_restados, "motivo"), ... ] }
+MONOTYPE1_PENALIDADES = {
+    "SINGLES": {
+        # "Jugador1": [(20, "No presentado T67"), (10, "WO Semis T68")],
+    },
+    "DOBLES": {
+        # "Jugador2": [(15, "Descalificado T69")],
+    },
+    "VGC": {
+        # "Jugador3": [(30, "Suplantación")],
+    },
+}
+
 
 # ══════════════════════════════════════════════════════════════════
 #  SHOW PRINCIPAL
@@ -392,7 +378,7 @@ def show():
         st.info("Mundial vigente con **3 rankings paralelos** (SINGLES · DOBLES · VGC). "
                 "El formato de cada torneo se detecta automáticamente desde el CSV.")
         _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
-                                    MONOTYPE1_LIGAS, df_raw)
+                                    MONOTYPE1_LIGAS, df_raw, key_prefix="tab1", penalidades=MONOTYPE1_PENALIDADES)
 
     # ══════════════════════════════════════════════════════════════
     # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
@@ -528,7 +514,7 @@ def show():
         if mundial_sel == "Monotype_1":
             st.info("🔵 Mundial vigente — **3 rankings** por formato (SINGLES · DOBLES · VGC).")
             _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
-                                        MONOTYPE1_LIGAS, df_raw)
+                                        MONOTYPE1_LIGAS, df_raw, key_prefix="tab4", penalidades=MONOTYPE1_PENALIDADES)
 
         elif mundial_sel == "Generaciones":
             st.info("🟢 Mundial cerrado — puntajes finales calculados en `Score_Retos.ipynb`.")
