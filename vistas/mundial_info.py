@@ -729,7 +729,8 @@ MONOTYPE1_LIGAS = {
 MONOTYPE1_PENALIDADES = {
     "SINGLES": {
          "Ricomam": [(20, "WO R6 Mundial")],
-          "Davarv": [(20, "WO R6 Mundial")]
+          "Davarv": [(20, "WO R6 Mundial")],
+          "Darmanethan": [(20, "WO R6 Mundial")]
     },
     "DOBLES": {
         # "Jugador2": [(15, "Descalificado T69")],
