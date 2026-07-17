@@ -35,10 +35,12 @@ def _extraer_pokemon_replay(url: str, formato_esp: str = "") -> pd.Series:
     """Extrae Pokémon de un replay. Cada Formato_esp puede tener su propia lógica."""
 
     # ── CASOS ESPECÍFICOS POR FORMATO ──────────────────────────
-    # Random sin teampreview → usar |switch| y |drag|
+    # Formatos sin teampreview (Random, y VGC 2010 al ser Gen 4 -donde
+    # el Team Preview todavía no existía-) → usar |switch| y |drag|
     if formato_esp.upper() in ("RANDOM SINGLES", "RANDOM BATTLE","RANDOM DOUBLES",
                                 "BABY RANDOM SINGLES",
-                                "FREE FOR ALL RANDOMS"):
+                                "FREE FOR ALL RANDOMS",
+                                "VGC 2010"):
         try:
             resp = requests.get(url.strip() + ".json", verify=False, timeout=10)
             resp.raise_for_status()
