@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
-import os, sys
+import os, sys, re
 import datetime
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -96,6 +96,52 @@ def _fusionar_cache(a: pd.DataFrame, b: pd.DataFrame) -> pd.DataFrame:
 def _es_vgc_champions(formato: str, formato_esp: str) -> bool:
     valores = {str(formato or "").strip().upper(), str(formato_esp or "").strip().upper()}
     return bool(valores & {"VGC", "CHAMPIONS"})
+
+
+def _parsear_teamsheet_texto(html_bloque: str):
+    """
+    Parsea un bloque de Open Team Sheet (lo que genera '!showteam' o un formato
+    con hoja abierta obligatoria). Viene como HTML dentro de una línea |raw| o
+    |c| del log, con el equipo en formato de exportación:
+
+        Landorus-Therian @ Choice Scarf
+        Ability: Intimidate
+        Tera Type: Flying
+        - U-turn
+        - Earthquake
+        - Rock Slide
+        - Tailwind
+
+    Devuelve una lista de dicts: [{"pokemon", "item", "ability", "tera", "moves":[...]}]
+    """
+    texto = re.sub(r'<br\s*/?>', '\n', html_bloque)
+    texto = re.sub(r'<[^>]+>', ' ', texto)
+    texto = texto.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+
+    lineas = [l.strip() for l in texto.split('\n') if l.strip()]
+
+    sets, actual = [], None
+    for linea in lineas:
+        m_move = re.match(r'^-\s*(.+)$', linea)
+        m_ability = re.match(r'^Ability:\s*(.+)$', linea, re.I)
+        m_tera = re.match(r'^Tera Type:\s*(.+)$', linea, re.I)
+        m_mon = None if m_move else re.match(r'^([A-Za-zÀ-ÿ0-9\.\'\-]+(?:[ \-][A-Za-zÀ-ÿ0-9\.\'\-]+)*)\s*@\s*(.+)$', linea)
+
+        if m_mon:
+            if actual:
+                sets.append(actual)
+            actual = {"pokemon": m_mon.group(1).strip(), "item": m_mon.group(2).strip(),
+                      "ability": None, "tera": None, "moves": []}
+        elif m_ability and actual:
+            actual["ability"] = m_ability.group(1).strip()
+        elif m_tera and actual:
+            actual["tera"] = m_tera.group(1).strip()
+        elif m_move and actual:
+            actual["moves"].append(m_move.group(1).strip())
+
+    if actual:
+        sets.append(actual)
+    return sets
 
 
 def _extraer_detalle_replay(url: str, formato_esp: str = ""):
@@ -196,6 +242,44 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 if reg:
                     reg["tera"] = parts[3].strip()
 
+    # ── Open Team Sheets (si se usó !showteam o el formato lo exige) ──
+    # Esto da datos MUCHO más completos: el moveset completo (no solo lo
+    # usado en batalla), habilidad real, item real y teratipo real.
+    for line in log_lines:
+        low = line.lower()
+        if "infobox" not in low or "ability:" not in low:
+            continue
+        if not (line.startswith("|raw|") or line.startswith("|c|") or "|/raw" in line):
+            continue
+
+        dueño = None
+        for pid, uname in player_names.items():
+            if uname and uname.lower() in low:
+                dueño = pid
+                break
+        if not dueño:
+            continue  # no se pudo determinar de quién es el equipo -> se ignora, no se adivina
+
+        for s in _parsear_teamsheet_texto(line):
+            especie = s["pokemon"]
+            if not especie:
+                continue
+            key = (dueño, especie)
+            if key not in registros:
+                registros[key] = {"moves": set(), "abilities": set(), "items": set(), "tera": None}
+            if s["ability"]:
+                registros[key]["abilities"].add(s["ability"])
+            if s["item"]:
+                registros[key]["items"].add(s["item"])
+            if s["tera"]:
+                registros[key]["tera"] = s["tera"]
+            for mv in s["moves"]:
+                registros[key]["moves"].add(mv)
+
+            equipos.setdefault(dueño, [])
+            if especie not in equipos[dueño]:
+                equipos[dueño].append(especie)
+
     # ── Ganador ────────────────────────────────────────────────
     ganador_pid = None
     for line in log_lines:
@@ -239,35 +323,55 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
 
 def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
     """
-    Devuelve (df_detalle, total_equipos, n_nuevos, n_fallidos).
+    Devuelve (df_detalle, total_equipos, n_nuevos, n_fallidos, info_debug).
 
     - Sólo pide al servidor de Showdown los replays NUEVOS (no están en caché)
       o los que antes fallaron (status == 'failed').
     - Para formatos VGC / CHAMPIONS usa sólo Rep == 1 (evita contar 2 o 3 veces
-      el mismo equipo en un Bo3).
+      el mismo equipo en un Bo3). Si la columna Rep no existe, o viene vacía
+      para una fila, esa fila NO se descarta (para no perder datos por un
+      problema de columna en vez de lógica real).
     """
-    cols_necesarias = ["Match_replays", "Formato_esp", "Formato", "Rep"]
+    info_debug = {}
+
+    col_rep_real = None
+    for c in df_filtrado.columns:
+        if str(c).strip().lower() == "rep":
+            col_rep_real = c
+            break
+    info_debug["columna_rep_detectada"] = col_rep_real
+
+    cols_necesarias = ["Match_replays", "Formato_esp", "Formato"]
     cols = [c for c in cols_necesarias if c in df_filtrado.columns]
     replays = df_filtrado[cols].copy()
     for faltante in cols_necesarias:
         if faltante not in replays.columns:
             replays[faltante] = ""
 
+    replays["Rep"] = df_filtrado[col_rep_real].values if col_rep_real is not None else np.nan
+
     replays = replays.dropna(subset=["Match_replays"])
     replays = replays[replays["Match_replays"].str.strip().str.startswith("https://")]
+    info_debug["total_antes_filtro_rep"] = len(replays)
 
     # ── Filtro Rep para VGC / CHAMPIONS ──────────────────────────
     def _incluir(row):
         if _es_vgc_champions(str(row["Formato"]), str(row["Formato_esp"])):
+            if col_rep_real is None:
+                return True
             rep = pd.to_numeric(row["Rep"], errors="coerce")
+            if pd.isna(rep):
+                return True
             return rep == 1
         return True
 
     if not replays.empty:
         replays = replays[replays.apply(_incluir, axis=1)]
 
+    info_debug["total_despues_filtro_rep"] = len(replays)
+
     if replays.empty:
-        return pd.DataFrame(columns=CACHE_COLS), 0, 0, 0
+        return pd.DataFrame(columns=CACHE_COLS), 0, 0, 0, info_debug
 
     replays = replays.drop_duplicates(subset=["Match_replays"])
 
@@ -317,7 +421,10 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
         fmt_up = str(row["Formato_esp"]).strip().upper()
         total_equipos += 4 if fmt_up in FFA_FORMATOS else 2
 
-    return df_detalle, total_equipos, n_nuevos, n_fallidos
+    info_debug["urls_unicas_a_procesar"] = len(replays)
+    info_debug["filas_en_cache_ok_para_estas_urls"] = len(df_detalle)
+
+    return df_detalle, total_equipos, n_nuevos, n_fallidos, info_debug
 
 
 def _desglose_pokemon(df_detalle: pd.DataFrame, especie: str) -> dict:
@@ -569,10 +676,19 @@ def show():
     # ── Botón para cargar ───────────────────────────────────────
     if st.button("🚀 Analizar replays", type="primary"):
         with st.spinner("Procesando replays..."):
-            df_detalle, total_equipos, n_nuevos, n_fallidos = _cargar_todos_replays_detalle(df_filtrado)
+            df_detalle, total_equipos, n_nuevos, n_fallidos, info_debug = _cargar_todos_replays_detalle(df_filtrado)
+
+        with st.expander("🔧 Diagnóstico (por si algo no cuadra)"):
+            st.json(info_debug)
 
         if df_detalle.empty:
-            st.warning("No se pudieron extraer Pokémon de los replays.")
+            st.warning(
+                "No se pudieron extraer Pokémon de los replays. Revisa el "
+                "diagnóstico de arriba: si 'total_despues_filtro_rep' es 0 pero "
+                "'total_antes_filtro_rep' no lo es, el filtro de Rep para "
+                "VGC/CHAMPIONS está descartando todo."
+            )
+            st.session_state.pop("_replay_detalle", None)
             return
 
         st.session_state["_replay_detalle"]  = df_detalle
