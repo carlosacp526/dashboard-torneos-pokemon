@@ -734,4 +734,4 @@ def show():
     # url_sel = df_rep.iloc[sel_idx]["Match_replays"].strip()
 
     # st.markdown(f"🔗 [Abrir en Pokémon Showdown]({url_sel})")
-    st.components.v1.iframe(url_sel, height=500, scrolling=True)
+    # st.components.v1.iframe(url_sel, height=500, scrolling=True)
