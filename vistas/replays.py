@@ -260,7 +260,7 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
     def _incluir(row):
         if _es_vgc_champions(str(row["Formato"]), str(row["Formato_esp"])):
             rep = pd.to_numeric(row["Rep"], errors="coerce")
-            return rep == 1
+            return rep == "1"
         return True
 
     if not replays.empty:
