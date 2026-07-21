@@ -94,8 +94,8 @@ def _fusionar_cache(a: pd.DataFrame, b: pd.DataFrame) -> pd.DataFrame:
 # ══════════════════════════════════════════════════════════════════
 
 def _es_vgc_champions(formato: str, formato_esp: str) -> bool:
-    txt = f"{formato or ''} {formato_esp or ''}".upper()
-    return "VGC" in txt or "CHAMPIONS" in txt
+    valores = {str(formato or "").strip().upper(), str(formato_esp or "").strip().upper()}
+    return bool(valores & {"VGC", "CHAMPIONS"})
 
 
 def _extraer_detalle_replay(url: str, formato_esp: str = ""):
