@@ -709,29 +709,29 @@ def show():
     # ══════════════════════════════════════════════════════════════
     # VISOR DE REPLAYS
     # ══════════════════════════════════════════════════════════════
-    st.subheader("📺 Ver Replays")
+    # st.subheader("📺 Ver Replays")
 
-    cols_replay = [c for c in ["player1", "player2", "winner", "N_Torneo",
-                                "Formato", "Tier", "Match_replays"]
-                   if c in df_filtrado.columns]
-    df_rep = df_filtrado[cols_replay].dropna(subset=["Match_replays"])
-    df_rep = df_rep[df_rep["Match_replays"].str.strip().str.startswith("https://")].reset_index(drop=True)
+    # cols_replay = [c for c in ["player1", "player2", "winner", "N_Torneo",
+    #                             "Formato", "Tier", "Match_replays"]
+    #                if c in df_filtrado.columns]
+    # df_rep = df_filtrado[cols_replay].dropna(subset=["Match_replays"])
+    # df_rep = df_rep[df_rep["Match_replays"].str.strip().str.startswith("https://")].reset_index(drop=True)
 
-    if df_rep.empty:
-        st.info("No hay replays para mostrar.")
-        return
+    # if df_rep.empty:
+    #     st.info("No hay replays para mostrar.")
+    #     return
 
-    opciones = []
-    for _, r in df_rep.iterrows():
-        p1  = r.get("player1", "?")
-        p2  = r.get("player2", "?")
-        fmt = r.get("Formato", "")
-        opciones.append(f"{p1} vs {p2}  [{fmt}]")
+    # opciones = []
+    # for _, r in df_rep.iterrows():
+    #     p1  = r.get("player1", "?")
+    #     p2  = r.get("player2", "?")
+    #     fmt = r.get("Formato", "")
+    #     opciones.append(f"{p1} vs {p2}  [{fmt}]")
 
-    sel_idx = st.selectbox("Selecciona un replay", range(len(opciones)),
-                            format_func=lambda i: opciones[i])
+    # sel_idx = st.selectbox("Selecciona un replay", range(len(opciones)),
+    #                         format_func=lambda i: opciones[i])
 
-    url_sel = df_rep.iloc[sel_idx]["Match_replays"].strip()
+    # url_sel = df_rep.iloc[sel_idx]["Match_replays"].strip()
 
-    st.markdown(f"🔗 [Abrir en Pokémon Showdown]({url_sel})")
+    # st.markdown(f"🔗 [Abrir en Pokémon Showdown]({url_sel})")
     st.components.v1.iframe(url_sel, height=500, scrolling=True)
