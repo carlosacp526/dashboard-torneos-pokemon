@@ -530,7 +530,7 @@ MONOTYPE1_TIPOS = {
     71: "GRANDE",
     72: "GRANDE",
     73: "GRANDE",
-    74: "GRANDE",
+    74: "GRANDE",79:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
