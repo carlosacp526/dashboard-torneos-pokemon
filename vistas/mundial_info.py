@@ -720,7 +720,7 @@ MONOTYPE1_POSICIONES = {
         "Chris FPS":     "Top4",
         "Saga":     "Top4",
 
-        "Porygon Z":     "Top8",
+        "Angelowos":     "Top8",
         "Blazing":     "Top8",
         "Hydreigon_chelas":     "Top8",
         "Johan250":     "Top8",
