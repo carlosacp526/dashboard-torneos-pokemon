@@ -678,7 +678,7 @@ def evaluar_logros(
                 break
     r["SO08"] = _so08
     ##MEJORES_JUGADORES=["Fur4nko","Elin beacil","Luigillanos","Haseo"]
-    ##r["SO09"] = False  # premio manual MEJOR DE LA COMUNIDAD O TENER 500 JUEGOS
+    ##r["SO09"] = False  # premio manual MEJOR DE LA COMUNIDAD O TENER 300 JUEGOS
     LEYENDA_COMUNIDAD = {"fur4nko", "elin beacil", "haseo", "luigillanos","yabadaba"}
 
     r["SO09"] = (
