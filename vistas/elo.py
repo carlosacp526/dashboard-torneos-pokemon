@@ -344,6 +344,76 @@ def show():
 
     st.markdown("---")
 
+    # ── Evolución Elo Mensual y Anual (acumulada) ────────────────────
+    st.header("📅 Evolución Elo Mensual y Anual")
+    st.caption("Elo acumulado de los jugadores a lo largo del tiempo (último valor de cada mes / año).")
+
+    def _build_long_history(data_filas):
+        a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].rename(
+            columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+        b = data_filas[['Jugador_B', 'Rating_B_NEW', 'Fecha']].rename(
+            columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+        long_df = pd.concat([a, b], ignore_index=True)
+        long_df['Fecha'] = pd.to_datetime(long_df['Fecha'])
+        long_df = long_df.dropna(subset=['Jugador', 'Fecha'])
+        long_df = long_df.sort_values('Fecha')
+        return long_df
+
+    long_hist = _build_long_history(data_filas)
+
+    top_default = activos.head(5)['Participantes'].tolist()
+    jugadores_evol = st.multiselect(
+        "👥 Jugadores a comparar",
+        options=sorted(data_elo['Participantes'].unique().tolist()),
+        default=top_default,
+        key="elo_evol_multiselect"
+    )
+
+    if not jugadores_evol:
+        st.info("Selecciona al menos un jugador para ver la evolución.")
+    else:
+        hist_sel = long_hist[long_hist['Jugador'].isin(jugadores_evol)].copy()
+
+        tab_mes, tab_anio = st.tabs(["📅 Mensual", "📆 Anual"])
+
+        with tab_mes:
+            hist_sel['Periodo'] = hist_sel['Fecha'].dt.to_period('M').astype(str)
+            mensual = hist_sel.groupby(['Periodo', 'Jugador'])['Elo'].last().reset_index()
+            pivot_m = mensual.pivot(index='Periodo', columns='Jugador', values='Elo').sort_index()
+            pivot_m = pivot_m.ffill()  # acumulado: mantiene el último Elo conocido en meses sin partidas
+
+            fig_m = px.line(pivot_m.reset_index(), x='Periodo', y=pivot_m.columns.tolist(),
+                             markers=True, title="Elo Mensual Acumulado")
+            fig_m.add_hline(y=1000, line_dash="dash", line_color="gray")
+            fig_m.update_layout(xaxis_tickangle=-30, yaxis_title="Elo", legend_title="Jugador",
+                                hovermode='x unified')
+            st.plotly_chart(fig_m, use_container_width=True)
+
+            with st.expander("📋 Tabla mensual"):
+                st.dataframe(pivot_m, use_container_width=True)
+                st.download_button("📥 Descargar Elo mensual", pivot_m.to_csv().encode('utf-8'),
+                                    "elo_mensual.csv", "text/csv", key="dl_elo_mensual")
+
+        with tab_anio:
+            hist_sel['Año'] = hist_sel['Fecha'].dt.year.astype(str)
+            anual = hist_sel.groupby(['Año', 'Jugador'])['Elo'].last().reset_index()
+            pivot_a = anual.pivot(index='Año', columns='Jugador', values='Elo').sort_index()
+            pivot_a = pivot_a.ffill()
+
+            fig_a = px.line(pivot_a.reset_index(), x='Año', y=pivot_a.columns.tolist(),
+                             markers=True, title="Elo Anual Acumulado")
+            fig_a.add_hline(y=1000, line_dash="dash", line_color="gray")
+            fig_a.update_layout(xaxis_tickangle=-30, yaxis_title="Elo", legend_title="Jugador",
+                                hovermode='x unified')
+            st.plotly_chart(fig_a, use_container_width=True)
+
+            with st.expander("📋 Tabla anual"):
+                st.dataframe(pivot_a, use_container_width=True)
+                st.download_button("📥 Descargar Elo anual", pivot_a.to_csv().encode('utf-8'),
+                                    "elo_anual.csv", "text/csv", key="dl_elo_anual")
+
+    st.markdown("---")
+
     # ── Elo por Formato ─────────────────────────────────────────────
     st.header("🎮 Ranking Elo por Formato")
     st.caption("Elo calculado de forma independiente para cada formato.")
