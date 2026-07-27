@@ -344,9 +344,10 @@ def show():
 
     st.markdown("---")
 
-    # ── Evolución Elo Mensual y Anual (acumulada) ────────────────────
-    st.header("📅 Evolución Elo Mensual y Anual")
-    st.caption("Elo acumulado de los jugadores a lo largo del tiempo (último valor de cada mes / año).")
+    # ── Ranking Elo Mensual y Anual (acumulado) ──────────────────────
+    st.header("📅 Ranking Elo Mensual y Anual")
+    st.caption("Ranking completo (Elo + RANK) de todos los jugadores, congelado al final de un mes/año elegido. "
+               "El Elo se mantiene acumulado desde su última partida aunque no hayan jugado ese mes.")
 
     def _build_long_history(data_filas):
         a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].rename(
@@ -359,58 +360,67 @@ def show():
         long_df = long_df.sort_values('Fecha')
         return long_df
 
+    def _ranking_periodo(pivot_full, periodo_sel):
+        """Toma la columna del periodo elegido, descarta jugadores sin Elo aún y arma el ranking."""
+        serie = pivot_full.loc[periodo_sel].dropna().sort_values(ascending=False)
+        rank_df = serie.reset_index()
+        rank_df.columns = ['Participantes', 'Elo']
+        rank_df['Elo'] = rank_df['Elo'].round(0).astype(int)
+        rank_df.insert(0, 'RANK', range(1, len(rank_df) + 1))
+        return rank_df
+
     long_hist = _build_long_history(data_filas)
 
-    top_default = activos.head(5)['Participantes'].tolist()
-    jugadores_evol = st.multiselect(
-        "👥 Jugadores a comparar",
-        options=sorted(data_elo['Participantes'].unique().tolist()),
-        default=top_default,
-        key="elo_evol_multiselect"
-    )
-
-    if not jugadores_evol:
-        st.info("Selecciona al menos un jugador para ver la evolución.")
+    if long_hist.empty:
+        st.info("No hay historial suficiente para calcular rankings mensuales.")
     else:
-        hist_sel = long_hist[long_hist['Jugador'].isin(jugadores_evol)].copy()
+        fecha_min, fecha_max = long_hist['Fecha'].min(), long_hist['Fecha'].max()
 
-        tab_mes, tab_anio = st.tabs(["📅 Mensual", "📆 Anual"])
+        # ---- grilla mensual completa (incluye meses sin partidas, con ffill) ----
+        long_hist['Periodo_M'] = long_hist['Fecha'].dt.to_period('M')
+        last_m = long_hist.groupby(['Periodo_M', 'Jugador'])['Elo'].last().reset_index()
+        pivot_m_full = last_m.pivot(index='Periodo_M', columns='Jugador', values='Elo')
+        pivot_m_full = pivot_m_full.reindex(
+            pd.period_range(fecha_min.to_period('M'), fecha_max.to_period('M'), freq='M')
+        ).ffill()
+        pivot_m_full.index = pivot_m_full.index.astype(str)
+
+        # ---- grilla anual completa ----
+        long_hist['Periodo_A'] = long_hist['Fecha'].dt.to_period('Y')
+        last_a = long_hist.groupby(['Periodo_A', 'Jugador'])['Elo'].last().reset_index()
+        pivot_a_full = last_a.pivot(index='Periodo_A', columns='Jugador', values='Elo')
+        pivot_a_full = pivot_a_full.reindex(
+            pd.period_range(fecha_min.to_period('Y'), fecha_max.to_period('Y'), freq='Y')
+        ).ffill()
+        pivot_a_full.index = pivot_a_full.index.astype(str)
+
+        tab_mes, tab_anio = st.tabs(["📅 Ranking Mensual", "📆 Ranking Anual"])
 
         with tab_mes:
-            hist_sel['Periodo'] = hist_sel['Fecha'].dt.to_period('M').astype(str)
-            mensual = hist_sel.groupby(['Periodo', 'Jugador'])['Elo'].last().reset_index()
-            pivot_m = mensual.pivot(index='Periodo', columns='Jugador', values='Elo').sort_index()
-            pivot_m = pivot_m.ffill()  # acumulado: mantiene el último Elo conocido en meses sin partidas
+            meses_disp = pivot_m_full.index.tolist()
+            mes_sel = st.selectbox("Selecciona mes/año", meses_disp, index=len(meses_disp) - 1, key="rank_mes_sel")
+            rank_mes = _ranking_periodo(pivot_m_full, mes_sel)
 
-            fig_m = px.line(pivot_m.reset_index(), x='Periodo', y=pivot_m.columns.tolist(),
-                             markers=True, title="Elo Mensual Acumulado")
-            fig_m.add_hline(y=1000, line_dash="dash", line_color="gray")
-            fig_m.update_layout(xaxis_tickangle=-30, yaxis_title="Elo", legend_title="Jugador",
-                                hovermode='x unified')
-            st.plotly_chart(fig_m, use_container_width=True)
-
-            with st.expander("📋 Tabla mensual"):
-                st.dataframe(pivot_m, use_container_width=True)
-                st.download_button("📥 Descargar Elo mensual", pivot_m.to_csv().encode('utf-8'),
-                                    "elo_mensual.csv", "text/csv", key="dl_elo_mensual")
+            st.subheader(f"🏆 Ranking Elo acumulado — {mes_sel}")
+            buscar_m = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_mes")
+            tabla_m = (rank_mes[rank_mes['Participantes'].str.contains(buscar_m, case=False, na=False)]
+                       if buscar_m else rank_mes)
+            st.dataframe(tabla_m, use_container_width=True, hide_index=True, height=450)
+            st.download_button(f"📥 Descargar ranking {mes_sel}", rank_mes.to_csv(index=False).encode('utf-8'),
+                                f"ranking_elo_{mes_sel}.csv", "text/csv", key="dl_rank_mes")
 
         with tab_anio:
-            hist_sel['Año'] = hist_sel['Fecha'].dt.year.astype(str)
-            anual = hist_sel.groupby(['Año', 'Jugador'])['Elo'].last().reset_index()
-            pivot_a = anual.pivot(index='Año', columns='Jugador', values='Elo').sort_index()
-            pivot_a = pivot_a.ffill()
+            anios_disp = pivot_a_full.index.tolist()
+            anio_sel = st.selectbox("Selecciona año", anios_disp, index=len(anios_disp) - 1, key="rank_anio_sel")
+            rank_anio = _ranking_periodo(pivot_a_full, anio_sel)
 
-            fig_a = px.line(pivot_a.reset_index(), x='Año', y=pivot_a.columns.tolist(),
-                             markers=True, title="Elo Anual Acumulado")
-            fig_a.add_hline(y=1000, line_dash="dash", line_color="gray")
-            fig_a.update_layout(xaxis_tickangle=-30, yaxis_title="Elo", legend_title="Jugador",
-                                hovermode='x unified')
-            st.plotly_chart(fig_a, use_container_width=True)
-
-            with st.expander("📋 Tabla anual"):
-                st.dataframe(pivot_a, use_container_width=True)
-                st.download_button("📥 Descargar Elo anual", pivot_a.to_csv().encode('utf-8'),
-                                    "elo_anual.csv", "text/csv", key="dl_elo_anual")
+            st.subheader(f"🏆 Ranking Elo acumulado — {anio_sel}")
+            buscar_a = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_anio")
+            tabla_a = (rank_anio[rank_anio['Participantes'].str.contains(buscar_a, case=False, na=False)]
+                       if buscar_a else rank_anio)
+            st.dataframe(tabla_a, use_container_width=True, hide_index=True, height=450)
+            st.download_button(f"📥 Descargar ranking {anio_sel}", rank_anio.to_csv(index=False).encode('utf-8'),
+                                f"ranking_elo_{anio_sel}.csv", "text/csv", key="dl_rank_anio")
 
     st.markdown("---")
 
