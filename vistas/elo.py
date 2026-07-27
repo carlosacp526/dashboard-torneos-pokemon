@@ -401,6 +401,13 @@ def show():
             mes_sel = st.selectbox("Selecciona mes/año", meses_disp, index=len(meses_disp) - 1, key="rank_mes_sel")
             rank_mes = _ranking_periodo(pivot_m_full, mes_sel)
 
+            filtro_m = st.radio("Mostrar", ["🌐 Todos", "✅ Solo activos (hoy)"], horizontal=True, key="filtro_rank_mes")
+            if filtro_m == "✅ Solo activos (hoy)":
+                rank_mes = rank_mes[rank_mes['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
+                rank_mes['RANK'] = range(1, len(rank_mes) + 1)
+                st.caption("Filtrado a jugadores Activos (jugaron en los últimos 6 meses desde hoy) — "
+                           "mismo criterio que el 'Ranking Elo en Vivo' de arriba.")
+
             st.subheader(f"🏆 Ranking Elo acumulado — {mes_sel}")
             buscar_m = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_mes")
             tabla_m = (rank_mes[rank_mes['Participantes'].str.contains(buscar_m, case=False, na=False)]
@@ -413,6 +420,13 @@ def show():
             anios_disp = pivot_a_full.index.tolist()
             anio_sel = st.selectbox("Selecciona año", anios_disp, index=len(anios_disp) - 1, key="rank_anio_sel")
             rank_anio = _ranking_periodo(pivot_a_full, anio_sel)
+
+            filtro_a = st.radio("Mostrar", ["🌐 Todos", "✅ Solo activos (hoy)"], horizontal=True, key="filtro_rank_anio")
+            if filtro_a == "✅ Solo activos (hoy)":
+                rank_anio = rank_anio[rank_anio['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
+                rank_anio['RANK'] = range(1, len(rank_anio) + 1)
+                st.caption("Filtrado a jugadores Activos (jugaron en los últimos 6 meses desde hoy) — "
+                           "mismo criterio que el 'Ranking Elo en Vivo' de arriba.")
 
             st.subheader(f"🏆 Ranking Elo acumulado — {anio_sel}")
             buscar_a = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_anio")
