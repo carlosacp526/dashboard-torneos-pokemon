@@ -196,7 +196,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
         from vistas.elo import calcular_elo
         # usar df_full (sin filtro de fecha) o df filtrado según corte
         df_for_elo = df if fecha_corte else load_data()
-        data_elo, _ = calcular_elo(df_for_elo)
+        data_elo, _, _ = calcular_elo(df_for_elo)
         if not data_elo.empty:
             row_elo = data_elo[data_elo["Participantes"].str.lower().str.strip() == jl]
             if row_elo.empty:
