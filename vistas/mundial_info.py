@@ -713,6 +713,58 @@ MONOTYPE1_POSICIONES = {
         }}
 ,
 
+   75: {
+      "SINGLES": {
+#     -- "Chonarthas":   "Campeón",
+##"Elin beacil": "Subcampeón",
+        "Chris FPS":     "Top4",
+        "Saga":     "Top4",
+
+        "Porygon Z":     "Top8",
+        "Blazing":     "Top8",
+        "Hydreigon_chelas":     "Top8",
+        "Johan250":     "Top8",
+
+        "Angello77":     "Top16",
+        "Bloody Cheese":     "Top16",
+        "gbrielzzzs":     "Top16",
+        "jers512":     "Top16",
+        "jztrkr":     "Top16",
+        "MafiaPolar6242":     "Top16",
+        "Moirix":     "Top16",
+        "mounstronio":     "Top16",
+
+        "Arnau":     "Top24",
+        "CaradeCoso":     "Top24",
+        "David Wong":     "Top24",
+        "Dino agente":     "Top24",
+        "Draco axel":     "Top24",
+        "EmperorGambit":     "Top24",
+        "kazaheta":     "Top24",
+        "LABIAMG":     "Top24",
+
+        "lexodia":     "Top32",
+        "masafesio":     "Top32",
+        "Minipapus":     "Top32",
+        "Roy Kasoy":     "Top32",
+        "SasoriVzla7":     "Top32",
+        "ShinkaHMA":     "Top32",
+        "The.Ultracheese":     "Top32",
+        "ZapeohDev":     "Top32",
+
+
+        "afroier":     "Top40",
+        "Fabricio19jr":     "Top40",
+        "Hallacas":     "Top40",
+        "2DpkmN":     "Top40",
+        "Haseo":     "Top40",
+        "MigueR34":     "Top40",
+        "AerosmithJR":     "Top40",
+        "Ger":     "Top40",
+
+        }}
+,
+
                  79: {
       "DOBLES": {
         "LABIAMG":   "Campeón",
