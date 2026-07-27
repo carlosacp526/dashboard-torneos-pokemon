@@ -693,7 +693,7 @@ MONOTYPE1_POSICIONES = {
         "ShinkaHMA":   "Campeón",
         "Bamdara": "Subcampeón",
         "A25":     "Top4",
-        "Marmach":     "Top4",
+        "Mar":     "Top4",
 
         "Chris FPS":     "Top8",
         "D'AllFather":     "Top8",
@@ -709,6 +709,22 @@ MONOTYPE1_POSICIONES = {
         "Hallacas":     "Top16",
         "HaoSigismondi":     "Top16",
         "Ger":     "Top16"
+
+        }}
+,
+
+                 79: {
+      "DOBLES": {
+        "LABIAMG":   "Campeón",
+        "afroier": "Subcampeón",
+        "Elin beacil":     "Top4",
+        "D'AllFather":     "Top4",
+
+        "ShinkaHMA":     "Top8",
+        "MafiaPolar6242":     "Top8",
+        "skll02":     "Top8",
+        "JaLax":     "Top8",
+
 
         }}
         
