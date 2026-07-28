@@ -399,14 +399,24 @@ def show():
         with tab_mes:
             meses_disp = pivot_m_full.index.tolist()
             mes_sel = st.selectbox("Selecciona mes/año", meses_disp, index=len(meses_disp) - 1, key="rank_mes_sel")
-            rank_mes = _ranking_periodo(pivot_m_full, mes_sel)
 
             filtro_m = st.radio("Mostrar", ["🌐 Todos", "✅ Solo activos (hoy)"], horizontal=True, key="filtro_rank_mes")
-            if filtro_m == "✅ Solo activos (hoy)":
-                rank_mes = rank_mes[rank_mes['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
-                rank_mes['RANK'] = range(1, len(rank_mes) + 1)
-                st.caption("Filtrado a jugadores Activos (jugaron en los últimos 6 meses desde hoy) — "
-                           "mismo criterio que el 'Ranking Elo en Vivo' de arriba.")
+
+            if mes_sel == meses_disp[-1]:
+                # Mes más reciente = estado acumulado hasta hoy → usar EXACTAMENTE
+                # la misma tabla que el "Ranking Elo en Vivo" (mismo RANK, sin recalcular).
+                base_m = data_elo if filtro_m == "🌐 Todos" else activos
+                rank_mes = base_m[['RANK', 'Participantes', 'Elo']].copy()
+                rank_mes['Elo'] = rank_mes['Elo'].round(0).astype(int)
+                st.caption("✅ Este mes es el estado acumulado hasta hoy — coincide exactamente con el "
+                           "'Ranking Elo en Vivo' de arriba (mismos números de RANK, incluyendo huecos si hay inactivos).")
+            else:
+                rank_mes = _ranking_periodo(pivot_m_full, mes_sel)
+                if filtro_m == "✅ Solo activos (hoy)":
+                    rank_mes = rank_mes[rank_mes['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
+                    rank_mes['RANK'] = range(1, len(rank_mes) + 1)
+                st.caption("Mes histórico: el RANK se recalcula de forma consecutiva (1,2,3...) entre los jugadores "
+                           "con Elo registrado hasta esa fecha, ya que el estado de 'activo' de ese momento no se conserva.")
 
             st.subheader(f"🏆 Ranking Elo acumulado — {mes_sel}")
             buscar_m = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_mes")
@@ -419,14 +429,22 @@ def show():
         with tab_anio:
             anios_disp = pivot_a_full.index.tolist()
             anio_sel = st.selectbox("Selecciona año", anios_disp, index=len(anios_disp) - 1, key="rank_anio_sel")
-            rank_anio = _ranking_periodo(pivot_a_full, anio_sel)
 
             filtro_a = st.radio("Mostrar", ["🌐 Todos", "✅ Solo activos (hoy)"], horizontal=True, key="filtro_rank_anio")
-            if filtro_a == "✅ Solo activos (hoy)":
-                rank_anio = rank_anio[rank_anio['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
-                rank_anio['RANK'] = range(1, len(rank_anio) + 1)
-                st.caption("Filtrado a jugadores Activos (jugaron en los últimos 6 meses desde hoy) — "
-                           "mismo criterio que el 'Ranking Elo en Vivo' de arriba.")
+
+            if anio_sel == anios_disp[-1]:
+                base_a = data_elo if filtro_a == "🌐 Todos" else activos
+                rank_anio = base_a[['RANK', 'Participantes', 'Elo']].copy()
+                rank_anio['Elo'] = rank_anio['Elo'].round(0).astype(int)
+                st.caption("✅ Este año es el estado acumulado hasta hoy — coincide exactamente con el "
+                           "'Ranking Elo en Vivo' de arriba (mismos números de RANK, incluyendo huecos si hay inactivos).")
+            else:
+                rank_anio = _ranking_periodo(pivot_a_full, anio_sel)
+                if filtro_a == "✅ Solo activos (hoy)":
+                    rank_anio = rank_anio[rank_anio['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
+                    rank_anio['RANK'] = range(1, len(rank_anio) + 1)
+                st.caption("Año histórico: el RANK se recalcula de forma consecutiva (1,2,3...) entre los jugadores "
+                           "con Elo registrado hasta esa fecha, ya que el estado de 'activo' de ese momento no se conserva.")
 
             st.subheader(f"🏆 Ranking Elo acumulado — {anio_sel}")
             buscar_a = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_anio")
