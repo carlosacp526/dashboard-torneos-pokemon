@@ -715,8 +715,8 @@ MONOTYPE1_POSICIONES = {
 
    75: {
       "SINGLES": {
-#     -- "Chonarthas":   "Campeón",
-##"Elin beacil": "Subcampeón",
+      "Chonarthas":   "Campeón",
+      "Mr.Shadowdusk": "Subcampeón",
         "Chris FPS":     "Top4",
         "Saga":     "Top4",
 
