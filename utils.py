@@ -431,10 +431,13 @@ def generar_tabla_enfrentamientos(df_liga, lt):
 
 
 def tabla_formatos_html(tabla):
-    """Renderiza la tabla de Win/Total/Rate por formato como HTML con estilo tipo Poketubi."""
+    """Renderiza la tabla de Win/Total/Rate por formato como HTML con estilo tipo Poketubi.
+    Resalta en verde, POR FORMATO, a quien(es) tengan más WIN en ESE formato (se permiten empates:
+    si dos o más comparten el máximo de WIN en Singles, por ejemplo, todos quedan resaltados ahí)."""
     if tabla is None or tabla.empty:
         return "<p>No hay datos</p>"
     formatos = tabla.attrs.get('formatos', ['Singles', 'Dobles', 'VGC'])
+    max_win_por_formato = {fmt: tabla[f'{fmt}_WIN'].max() for fmt in formatos}
     max_punt = tabla['Puntaje'].max()
 
     css = """
@@ -447,6 +450,7 @@ def tabla_formatos_html(tabla):
     .fmt-cell {background:#F5B970;color:#000;}
     .fmt-cell-top {background:#58D68D;color:#000;font-weight:bold;}
     .fmt-punt {background:#000;color:#fff;font-weight:bold;font-style:italic;}
+    .fmt-punt-top {background:#F1C40F;color:#000;font-weight:bold;font-style:italic;}
     </style>
     """
     header1 = "<tr><th class='fmt-name' rowspan='2'>Participantes</th>"
@@ -460,13 +464,14 @@ def tabla_formatos_html(tabla):
 
     rows_html = ""
     for _, row in tabla.iterrows():
-        cell_cls = "fmt-cell-top" if row['Puntaje'] == max_punt else "fmt-cell"
         rows_html += f"<tr><td class='fmt-name'>{row['Participantes']}</td>"
         for fmt in formatos:
+            cell_cls = "fmt-cell-top" if row[f'{fmt}_WIN'] == max_win_por_formato[fmt] else "fmt-cell"
             rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_WIN'])}</td>"
             rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_TOTAL'])}</td>"
             rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_RATE'])}%</td>"
-        rows_html += f"<td class='fmt-punt'>{int(row['Puntaje'])}</td></tr>"
+        punt_cls = "fmt-punt-top" if row['Puntaje'] == max_punt else "fmt-punt"
+        rows_html += f"<td class='{punt_cls}'>{int(row['Puntaje'])}</td></tr>"
 
     return css + f"<table class='fmt-table'>{header1}{header2}{rows_html}</table>"
 
