@@ -485,7 +485,7 @@ def generar_pdf_jugador(
         if col_key in matches.columns:
             for val in matches[col_key].dropna().unique():
                 s = matches[matches[col_key]==val]
-                if len(s) >= 2:
+                if len(s) >= 1:
                     w = int(s['winner'].str.contains(player_query, case=False, na=False).sum())
                     result[str(val)] = (round(w/len(s)*100, 1), len(s))
         return result

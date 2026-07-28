@@ -27,7 +27,7 @@ def show():
     else:
         ligas_temporadas = ['PJST1','PJST2','PJST3','PJST4','PJST5',"PJST6",
                             'PEST1','PEST2',"PEST3",'PSST1','PSST2','PSST3','PSST4','PSST5','PSST6',
-                            'PMST1','PMST2','PMST3','PMST4','PMST5','PMST6','PLST1']
+                            'PMST1','PMST2','PMST3','PMST4','PMST5','PMST6','PMST7','PLST1']
         ligas = ['PJS','PES','PSS','PMS','PLS']
         tabs_ligas = st.tabs(ligas)
 
