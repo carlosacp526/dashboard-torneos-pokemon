@@ -7,7 +7,9 @@ from utils import (load_data, normalize_columns, ensure_fields,
                    generar_tabla_temporada, generar_tabla_torneo,
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
                    build_base_liga, build_base_torneo, build_base_jornada,
-                   generar_tabla_jornada, volver_inicio)
+                   generar_tabla_jornada, volver_inicio,
+                   generar_tabla_formatos, generar_tabla_enfrentamientos,
+                   tabla_formatos_html, tabla_enfrentamientos_html)
 
 def show():
     df_raw = load_data()
@@ -52,7 +54,7 @@ def show():
 
                 for idx_t, temporada in enumerate(temporadas_liga):
                     with tabs_temp[idx_t]:
-                        tab_gen, tab_jorn = st.tabs(["📋 Tabla General","📅 Por Jornada"])
+                        tab_gen, tab_jorn, tab_fmt = st.tabs(["📋 Tabla General","📅 Por Jornada","🎯 Formatos y Enfrentamientos"])
 
                         with tab_gen:
                             tabla = generar_tabla_temporada(base2, temporada)
@@ -181,6 +183,36 @@ def show():
                                         csv_j = tjd.to_csv(index=False).encode('utf-8')
                                         st.download_button(f"📥 Descargar Jornada {int(nj)}", csv_j,
                                                            f"jornada_{int(nj)}_{temporada}.csv", "text/csv")
+
+                        with tab_fmt:
+                            st.markdown(f"### 🎯 Victorias por Formato — {temporada}")
+                            tabla_fmt = generar_tabla_formatos(df_liga, temporada)
+                            if tabla_fmt is None or tabla_fmt.empty:
+                                st.info(f"No hay datos de formato (columna 'Formato') para {temporada}")
+                            else:
+                                st.caption("WIN/TOTAL/RATE por formato (Singles, Dobles, VGC). Se permiten empates en Puntaje: "
+                                           "todos los que compartan el puntaje máximo quedan resaltados en verde.")
+                                st.markdown(tabla_formatos_html(tabla_fmt), unsafe_allow_html=True)
+                                csv_fmt = tabla_fmt.to_csv(index=False).encode('utf-8')
+                                st.download_button(f"📥 Descargar Formatos {temporada}", csv_fmt,
+                                                   f"formatos_{liga}_{temporada}.csv", "text/csv",
+                                                   key=f"dl_fmt_{temporada}")
+
+                            st.markdown("---")
+                            st.markdown(f"### ⚔️ Enfrentamientos — {temporada}")
+                            matriz_enf = generar_tabla_enfrentamientos(df_liga, temporada)
+                            if matriz_enf is None or matriz_enf.empty:
+                                st.info(f"No hay datos de enfrentamientos para {temporada}")
+                            else:
+                                st.caption("Resultado del cruce entre cada par de participantes, sumando TODAS las batallas "
+                                           "jugadas entre ellos en la temporada (cualquier formato, cualquier jornada). "
+                                           "**V** = victoria clara (3 pts) · **VR** = victoria reñida (2 pts) · "
+                                           "**DR** = derrota reñida (1 pt) · **D** = derrota clara (0 pts) · **NP** = no jugaron.")
+                                st.markdown(tabla_enfrentamientos_html(matriz_enf), unsafe_allow_html=True)
+                                csv_enf = matriz_enf.reset_index().rename(columns={'index':'Participantes'}).to_csv(index=False).encode('utf-8')
+                                st.download_button(f"📥 Descargar Enfrentamientos {temporada}", csv_enf,
+                                                   f"enfrentamientos_{liga}_{temporada}.csv", "text/csv",
+                                                   key=f"dl_enf_{temporada}")
 
     volver_inicio()
 
