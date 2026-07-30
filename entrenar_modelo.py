@@ -24,10 +24,11 @@ sys.path.insert(0, ROOT)
 from utils import load_data, normalize_columns, ensure_fields
 
 VENTANAS   = [1, 3, 5, 7, 9, 12, 15, 18, 24, 36]
-TRAIN_END  = 202602
-VAL_START  = 202603
+TRAIN_END  = 202512
+VAL_START  = 202601
 LIGAS_STD  = ["PMS", "PSS", "PES", "PJS", "PLS"]
 TOP_N_FEAT = 10
+REP_BUCKETS = [1, 2, 3, 4, 5]   # 5 representa "5 o más" repeticiones del mismo cruce
 
 # ════════════════════════════════════════════════════════════════
 # 1. PREPARACIÓN BASE
@@ -53,6 +54,20 @@ def _liga_cat(row):
     return lc if (lg == "LIGA" and lc not in ["nan", "No Posee Liga", ""]) else lg
 
 
+def _instancia_key(row, lcat):
+    """Identifica la competencia específica (torneo puntual, liga+temporada puntual,
+    ascenso puntual o cypher puntual) para poder contar repeticiones de un mismo
+    cruce SOLO dentro de esa instancia."""
+    lg = str(row.get("league", "")).upper()
+    if lg == "LIGA":
+        rnd = str(row.get("round", ""))
+        partes = rnd.split(" ")
+        temporada = partes[1] if len(partes) > 1 else rnd
+        return f"{lcat}_{temporada}"
+    torneo_id = row.get("tournament", row.get("round", ""))
+    return f"{lcat}_{torneo_id}"
+
+
 # ════════════════════════════════════════════════════════════════
 # 2. HISTORIAL POR JUGADOR
 # ════════════════════════════════════════════════════════════════
@@ -62,6 +77,7 @@ def build_historial(df):
     tiers = sorted(df_ok["Tier"].dropna().unique().tolist())
 
     rows = []
+    rep_counter = {}   # (par_jugadores, instancia, formato) -> cuántas veces se han cruzado
     for _, r in df_ok.iterrows():
         ganador  = str(r["winner"]).strip()
         p1, p2   = str(r["player1"]).strip(), str(r["player2"]).strip()
@@ -73,6 +89,14 @@ def build_historial(df):
         fase_raw = str(r.get("Fase_completo", r.get("round", ""))).lower()
         pob_g    = int(r.get("pokemons Sob", 0) or 0)
         pob_v    = int(r.get("pokemon vencidos", 0) or 0)
+
+        # Rep: n° de batalla de este cruce específico dentro de la misma competencia+formato
+        # (df_ok ya está ordenado por fecha, así que el conteo incremental es cronológico)
+        instancia  = _instancia_key(r, lcat)
+        key_rep    = (frozenset({p1, p2}), instancia, fmt)
+        rep_counter[key_rep] = rep_counter.get(key_rep, 0) + 1
+        rep_actual = rep_counter[key_rep]
+        rep_bucket = rep_actual if rep_actual <= 4 else 5  # 5 = "5 o más"
 
         fase = "eliminatorias"
         for k, v in [("jornada","jornadas"),("grupos","grupos"),
@@ -104,9 +128,12 @@ def build_historial(df):
                 "pokes_sob":     pob_g if es_g else max(0, 6 - pob_v),
                 "pokes_venc":    pob_v if es_g else max(0, 6 - pob_g),
                 "participo_liga":1 if any(l in lcat.upper() for l in LIGAS_STD) else 0,
+                "rep_actual":    rep_bucket,
             }
             for t in tiers:
                 row_base[f"wr_tier_{t}"] = (1 if es_g else 0) if tier == t else np.nan
+            for b in REP_BUCKETS:
+                row_base[f"wr_rep_{b}"] = (1 if es_g else 0) if rep_bucket == b else np.nan
             row_base.update(ligas_flags)
             rows.append(row_base)
 
@@ -122,9 +149,10 @@ def build_cosechas(hist, tiers):
         "gano","fmt_singles","fmt_dobles","fmt_vgc",
         "cat_liga","cat_torneo","cat_ascenso","cat_cypher",
         "fase_elim","fase_grupos","fase_jornadas","fase_rondas",
-        "pokes_sob","pokes_venc","participo_liga",
+        "pokes_sob","pokes_venc","participo_liga","rep_actual",
     ] + [f"liga_{l.lower()}" for l in LIGAS_STD] \
-      + [f"wr_tier_{t}" for t in tiers]
+      + [f"wr_tier_{t}" for t in tiers] \
+      + [f"wr_rep_{b}" for b in REP_BUCKETS]
 
     all_ym    = sorted(hist["ym"].unique())
     jugadores = hist["jugador"].unique()
@@ -149,7 +177,7 @@ def build_cosechas(hist, tiers):
                     row_cos[f"meses_activo_m{n}"] = 0
                     for col in base_cols:
                         if col == "gano": continue
-                        if col.startswith("wr_tier_"):
+                        if col.startswith("wr_"):
                             row_cos[f"{col}_m{n}"] = np.nan
                         else:
                             row_cos[f"{col}_sum_m{n}"]  = 0
@@ -162,7 +190,7 @@ def build_cosechas(hist, tiers):
                     row_cos[f"meses_activo_m{n}"] = ventana["ym"].nunique()
                     for col in base_cols:
                         if col == "gano": continue
-                        if col.startswith("wr_tier_"):
+                        if col.startswith("wr_"):
                             sub = ventana[col].dropna()
                             row_cos[f"{col}_m{n}"] = sub.mean() if len(sub) > 0 else np.nan
                         else:

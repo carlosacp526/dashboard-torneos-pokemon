@@ -124,10 +124,17 @@ def _get_player_stats(jug, latest_stats, df_fecha):
                if "Fecha" in df_fecha.columns else df_fecha[df_fecha["Jugador"] == jug]
 
     # totales — desde cosechas si no hay df_fecha
-    total_juegos    = int(rv.get("n_batallas_m36", rv.get("Juegos_Ac", 0)))
-    total_victorias = int(rv.get("n_batallas_m36", 0) * rv.get("winrate_m36", rv.get("Winrate_Ac", 0))) \
-                      if not hist.empty and "Victorias" not in hist.columns \
-                      else int(hist["Victorias"].sum()) if not hist.empty else 0
+    # totales — desde hist real si existe, si no desde cosechas (con manejo seguro de NaN)
+    total_juegos = int(rv.get("n_batallas_m36", rv.get("Juegos_Ac", 0)))
+
+    if not hist.empty and "Victorias" in hist.columns:
+        total_victorias = int(hist["Victorias"].sum())
+    else:
+        n_bat_est = rv.get("n_batallas_m36", rv.get("Juegos_Ac", 0)) or 0
+        wr_est    = rv.get("winrate_m36", rv.get("Winrate_Ac", 0))
+        wr_est    = 0 if pd.isna(wr_est) else wr_est
+        total_victorias = int(round(n_bat_est * wr_est))
+
     total_derrotas  = total_juegos - total_victorias
 
     # formatos
