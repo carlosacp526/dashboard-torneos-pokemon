@@ -24,8 +24,8 @@ sys.path.insert(0, ROOT)
 from utils import load_data, normalize_columns, ensure_fields
 
 VENTANAS   = [1, 3, 5, 7, 9, 12, 15, 18, 24, 36]
-TRAIN_END  = 202512
-VAL_START  = 202601
+TRAIN_END  = 202602
+VAL_START  = 202603
 LIGAS_STD  = ["PMS", "PSS", "PES", "PJS", "PLS"]
 TOP_N_FEAT = 10
 
