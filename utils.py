@@ -516,6 +516,63 @@ def tabla_enfrentamientos_html(matriz):
     return css + f"<table class='enf-table'>{header}{rows_html}</table>"
 
 
+def obtener_elo_rank_historico(data_elo, data_filas, jugador, fecha_corte=None):
+    """Devuelve (elo, rank) de un jugador usando la MISMA lógica que el Ranking Elo Mensual/Anual:
+    - Si fecha_corte es None -> Elo/Rank actual (idéntico al 'Ranking Elo en Vivo': mismo data_elo,
+      mismo RANK con huecos si hay inactivos).
+    - Si se da fecha_corte -> reconstruye el historial largo (Jugador/Elo/Fecha) a partir de
+      data_filas, se queda solo con las batallas hasta esa fecha, toma el último Elo conocido de
+      cada jugador y arma un ranking fresco entre ellos en ese momento (igual que el mes histórico
+      del Ranking Elo Mensual)."""
+    jl = jugador.lower().strip()
+
+    if fecha_corte is None:
+        if data_elo is None or data_elo.empty:
+            return 1000, 0
+        row = data_elo[data_elo['Participantes'].str.lower().str.strip() == jl]
+        if row.empty:
+            row = data_elo[data_elo['Participantes'].str.lower().str.contains(jl, na=False)]
+        if row.empty:
+            return 1000, 0
+        return int(round(row.iloc[0]['Elo'])), int(row.iloc[0]['RANK'])
+
+    if data_filas is None or data_filas.empty:
+        return 1000, 0
+
+    a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].rename(
+        columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+    b = data_filas[['Jugador_B', 'Rating_B_NEW', 'Fecha']].rename(
+        columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+    long_df = pd.concat([a, b], ignore_index=True)
+    long_df['Fecha'] = pd.to_datetime(long_df['Fecha'])
+    long_df = long_df.dropna(subset=['Jugador', 'Fecha'])
+    long_df = long_df[long_df['Fecha'] <= pd.Timestamp(fecha_corte)]
+    long_df = long_df.sort_values('Fecha')
+
+    if long_df.empty:
+        return 1000, 0
+
+    ultimo = long_df.groupby('Jugador')['Elo'].last()
+    ranking = ultimo.sort_values(ascending=False)
+
+    nombre_match = None
+    for nombre in ranking.index:
+        if str(nombre).lower().strip() == jl:
+            nombre_match = nombre
+            break
+    if nombre_match is None:
+        for nombre in ranking.index:
+            if jl in str(nombre).lower():
+                nombre_match = nombre
+                break
+    if nombre_match is None:
+        return 1000, 0
+
+    elo_val = int(round(ranking[nombre_match]))
+    rank_val = int(ranking.index.get_loc(nombre_match)) + 1
+    return elo_val, rank_val
+
+
 CSS_BACK = """
 <style>
 .minimal-back { text-align: center; margin: 2rem 0; }
