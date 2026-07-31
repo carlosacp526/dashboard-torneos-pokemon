@@ -394,7 +394,7 @@ def show():
         ).ffill()
         pivot_a_full.index = pivot_a_full.index.astype(str)
 
-        tab_mes, tab_anio = st.tabs(["📅 Ranking Mensual", "📆 Ranking Anual"])
+        tab_mes, tab_anio, tab_torneo = st.tabs(["📅 Ranking Mensual", "📆 Ranking Anual", "🏆 Ranking por Torneo"])
 
         with tab_mes:
             meses_disp = pivot_m_full.index.tolist()
@@ -453,6 +453,58 @@ def show():
             st.dataframe(tabla_a, use_container_width=True, hide_index=True, height=450)
             st.download_button(f"📥 Descargar ranking {anio_sel}", rank_anio.to_csv(index=False).encode('utf-8'),
                                 f"ranking_elo_{anio_sel}.csv", "text/csv", key="dl_rank_anio")
+
+        with tab_torneo:
+            st.caption("Elo/RANK acumulado hasta la FECHA del torneo elegido — no cuenta nada jugado después de "
+                       "esa fecha (ni torneos posteriores, ni ligas, ascensos o cyphers posteriores).")
+
+            torneos_df = df_raw[(df_raw['league'] == 'TORNEO') & (df_raw['Walkover'] >= 0)].copy()
+            if torneos_df.empty or 'N_Torneo' not in torneos_df.columns:
+                st.info("No hay torneos registrados para calcular este ranking.")
+            else:
+                torneos_df['date'] = pd.to_datetime(torneos_df['date'])
+                lista_torneos = sorted(torneos_df['N_Torneo'].dropna().unique().tolist())
+                torneo_sel = st.selectbox("Selecciona N° de Torneo", lista_torneos,
+                                           index=len(lista_torneos) - 1, key="rank_torneo_sel")
+
+                fecha_torneo = torneos_df.loc[torneos_df['N_Torneo'] == torneo_sel, 'date'].max()
+                st.caption(f"📅 Corte: hasta {fecha_torneo.strftime('%Y-%m-%d')} "
+                           f"(fecha de la última partida registrada del Torneo #{int(torneo_sel)}).")
+
+                filtro_t = st.radio("Mostrar", ["🌐 Todos", "✅ Solo activos (hoy)"],
+                                     horizontal=True, key="filtro_rank_torneo")
+
+                if fecha_torneo >= fecha_max:
+                    # es el evento más reciente registrado -> usar EXACTAMENTE el Ranking en Vivo
+                    base_t = data_elo if filtro_t == "🌐 Todos" else activos
+                    rank_torneo = base_t[['RANK', 'Participantes', 'Elo']].copy()
+                    rank_torneo['Elo'] = rank_torneo['Elo'].round(0).astype(int)
+                    st.caption("✅ Este torneo es el evento más reciente registrado — coincide exactamente con "
+                               "el 'Ranking Elo en Vivo' de arriba.")
+                else:
+                    hist_corte = long_hist[long_hist['Fecha'] <= fecha_torneo]
+                    if hist_corte.empty:
+                        rank_torneo = pd.DataFrame(columns=['RANK', 'Participantes', 'Elo'])
+                    else:
+                        ultimo = hist_corte.groupby('Jugador')['Elo'].last().sort_values(ascending=False)
+                        rank_torneo = ultimo.reset_index()
+                        rank_torneo.columns = ['Participantes', 'Elo']
+                        rank_torneo['Elo'] = rank_torneo['Elo'].round(0).astype(int)
+                        rank_torneo.insert(0, 'RANK', range(1, len(rank_torneo) + 1))
+
+                    if filtro_t == "✅ Solo activos (hoy)" and not rank_torneo.empty:
+                        rank_torneo = rank_torneo[rank_torneo['Participantes'].isin(activos['Participantes'])].reset_index(drop=True)
+                        rank_torneo['RANK'] = range(1, len(rank_torneo) + 1)
+
+                st.subheader(f"🏆 Ranking Elo acumulado — hasta Torneo #{int(torneo_sel)}")
+                buscar_t = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_torneo")
+                tabla_t = (rank_torneo[rank_torneo['Participantes'].str.contains(buscar_t, case=False, na=False)]
+                           if buscar_t else rank_torneo)
+                st.dataframe(tabla_t, use_container_width=True, hide_index=True, height=450)
+                st.download_button(f"📥 Descargar ranking hasta Torneo {int(torneo_sel)}",
+                                    rank_torneo.to_csv(index=False).encode('utf-8'),
+                                    f"ranking_elo_torneo_{int(torneo_sel)}.csv", "text/csv",
+                                    key="dl_rank_torneo")
 
     st.markdown("---")
 
