@@ -277,13 +277,41 @@ def evaluar_logros(
     n_camp_liga   = len(campeonatos_liga)
     n_camp_torneo = len(campeonatos_torneo)
 
-    # racha máxima
+    # ── racha máxima ─────────────────────────────────────────────────────────
     racha_max = 0
     if not pm.empty and 'winner' in pm.columns and 'date' in pm.columns:
-        pm_s = pm.dropna(subset=['date']).sort_values('date')
+        pm_s = pm.copy()
+
+        # Excluir partidas pendientes (Walkover == -1), mantener jugadas (0 y 1)
+        if 'Walkover' in pm_s.columns:
+            pm_s = pm_s[pm_s['Walkover'] != -1]
+
+        # Ordenar correctamente: fecha → N_Torneo → orden de ronda
+        ROUND_ORDER_RACHA = {
+            'ronda suiza 1':10,'ronda suiza 2':11,'ronda suiza 3':12,
+            'ronda suiza 4':13,'ronda suiza 5':14,'ronda suiza 6':15,
+            'fase de grupos':20,'playoff':25,
+            'treintaidosavo de final':30,'dieciseisavos de final':40,
+            'octavos de final':50,'cuartos de final':60,'semifinal':70,'final':90,
+        }
+        def _ro(r):
+            if pd.isna(r): return 50
+            r_low = str(r).strip().lower()
+            if ' j' in r_low:
+                try: return int(r_low.split(' j')[1])
+                except: pass
+            return ROUND_ORDER_RACHA.get(r_low, 50)
+
+        pm_s['_ro'] = pm_s['round'].apply(_ro) if 'round' in pm_s.columns else 50
+        pm_s['_nt'] = pm_s['N_Torneo'].fillna(0) if 'N_Torneo' in pm_s.columns else 0
+        pm_s = pm_s.dropna(subset=['date']).sort_values(['date','_nt','_ro'])
+
         racha = 0
         for _, row in pm_s.iterrows():
-            if pq in str(row.get('winner','')).lower():
+            winner = str(row.get('winner', '')).strip().lower()
+            # Comparación exacta primero, luego contains como fallback
+            gano = (winner == pq) or (pq in winner and len(pq) > 4)
+            if gano:
                 racha += 1
                 racha_max = max(racha_max, racha)
             else:
