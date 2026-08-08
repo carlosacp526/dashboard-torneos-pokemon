@@ -24,7 +24,7 @@ p_rankings   = st.Page(rankings.show,     title="🏅 Historico",               
 p_elo        = st.Page(elo.show,          title="⚡ Ranking Elo",            url_path="elo")
 p_prediccion = st.Page(prediccion.show,   title="🤖 Predicción",             url_path="prediccion")
 p_tcg = st.Page(tcg.show,   title="🃏TCG",             url_path="tcg")
-p_roleplay = st.Page(tcg.show,   title="👤👤 Roleplay",             url_path="roleplay")
+p_roleplay = st.Page(roleplay.show,   title="👤👤 Roleplay",             url_path="roleplay")
 
 st.session_state["_pages"] = {
     "inicio":     p_inicio,
