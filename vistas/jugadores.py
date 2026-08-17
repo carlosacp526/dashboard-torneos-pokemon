@@ -1299,21 +1299,24 @@ def show():
 
                     st.markdown("""
                         <style>
-                        .raidcard{position:relative;width:190px;background:#1B2B3B;border-radius:14px;
-                            overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.4);flex-shrink:0}
-                        .raidcard .poster{width:100%;height:110px;background-size:cover;background-position:center}
-                        .raidcard .datebadge{position:absolute;top:8px;left:8px;color:white;font-weight:bold;
-                            font-size:0.85em;line-height:1.05;border-radius:8px;padding:4px 8px;
-                            text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
-                        .raidcard .datebadge span{display:block;font-size:0.62em;font-weight:600;opacity:.9}
-                        .raidcard .body{padding:9px 10px 10px 10px}
-                        .raidcard .ev{color:#ECF0F1;font-weight:bold;font-size:0.92em;white-space:nowrap;
-                            overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+                        .raidcard{position:relative;background:#1B2B3B;border-radius:16px;
+                            overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+                        .raidcard .poster{width:100%;height:130px;background-size:cover;background-position:center}
+                        .raidcard .datebadge{position:absolute;top:9px;left:9px;color:white;font-weight:900;
+                            font-size:1.35em;line-height:1;border-radius:10px;padding:6px 11px;
+                            text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.65);
+                            border:2px solid rgba(255,255,255,.4)}
+                        .raidcard .datebadge span{display:block;font-size:0.48em;font-weight:800;
+                            letter-spacing:.6px;opacity:.95;margin-top:2px}
+                        .raidcard .body{padding:12px 13px 13px 13px}
+                        .raidcard .ev{color:#ECF0F1;font-weight:bold;font-size:1.02em;white-space:nowrap;
+                            overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
                         .raidcard .tierbadge{display:inline-block;color:white;font-weight:bold;
-                            font-size:0.78em;border-radius:6px;padding:3px 9px;margin-right:5px}
+                            font-size:0.85em;border-radius:6px;padding:4px 10px;margin-right:5px}
                         .raidcard .pend{display:inline-block;border-radius:10px;
-                            padding:3px 9px;font-size:0.78em;font-weight:bold}
-                        .raidrow{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 4px 0}
+                            padding:4px 10px;font-size:0.85em;font-weight:bold}
+                        .raidrow{display:grid;grid-template-columns:repeat(5, minmax(165px, 1fr));
+                            gap:14px;margin:8px 0 4px 0;overflow-x:auto;padding-bottom:6px}
                         </style>
                     """, unsafe_allow_html=True)
 
