@@ -1213,8 +1213,6 @@ def show():
         if fp.empty:
             st.info("No se encontraron batallas con los filtros seleccionados.")
         else:
-            v_cal, v_tabla = st.tabs(["📅 Calendario", "📋 Tabla"])
-
             TIER_COLORS_CAL = {
                 'S': '#E74C3C', 'A': '#E67E22', 'B': '#F1C40F',
                 'C': '#2ECC71', 'D': '#3498DB', 'E': '#9B59B6',
@@ -1222,6 +1220,10 @@ def show():
             LEAGUE_ICONS = {
                 'TORNEO': '🏆', 'LIGA': '🏅', 'ASCENSO': '⬆️',
                 'CYPHER': '🔮', 'MUNDIAL': '🌎',
+            }
+            EVENT_COLORS = {
+                'TORNEO': '#E67E22', 'LIGA': '#3498DB', 'ASCENSO': '#2ECC71',
+                'CYPHER': '#9B59B6', 'MUNDIAL': '#F1C40F',
             }
 
             def evento_nombre(row):
@@ -1235,214 +1237,74 @@ def show():
                 elif league == 'LIGA':
                     cat = str(row.get('Ligas_categoria', ''))
                     return f"Liga {cat}" if cat not in ('nan','') else 'Liga'
-                return league
+                return league or 'Evento'
 
-            # ── CALENDARIO ───────────────────────────────────────────
-            with v_cal:
-                if not has_fecha_max:
-                    st.info("El calendario requiere la columna **Fecha_max** en el CSV. Aún no está disponible.")
+            # ── CALENDARIO COMPACTO (agrupado por Aka_evento + Fecha_max) ──
+            if not has_fecha_max:
+                st.info("El calendario requiere la columna **Fecha_max** en el CSV. Aún no está disponible.")
+            else:
+                fp_cal = fp.dropna(subset=['Fecha_max']).copy()
+                fp_cal['Fecha_max'] = pd.to_datetime(fp_cal['Fecha_max'], errors='coerce')
+                fp_cal = fp_cal.dropna(subset=['Fecha_max'])
+
+                if fp_cal.empty:
+                    st.info("Sin fechas límite asignadas.")
                 else:
-                    fp_cal = fp.dropna(subset=['Fecha_max']).copy()
-                    fp_cal['Fecha_max'] = pd.to_datetime(fp_cal['Fecha_max'], errors='coerce')
-                    fp_cal = fp_cal.dropna(subset=['Fecha_max'])
+                    hoy = pd.Timestamp.now().normalize()
+                    fp_cal['_fecha']  = fp_cal['Fecha_max'].dt.date
+                    fp_cal['_evento'] = fp_cal.apply(evento_nombre, axis=1)
 
-                    if fp_cal.empty:
-                        st.info("Sin fechas límite asignadas.")
-                    else:
-                        # Rango del calendario
-                        fecha_min = fp_cal['Fecha_max'].min()
-                        fecha_max = fp_cal['Fecha_max'].max()
-                        hoy = pd.Timestamp.now().normalize()
+                    resumen = (
+                        fp_cal.groupby(['_fecha', '_evento'])
+                              .size()
+                              .reset_index(name='Pendientes')
+                              .sort_values('_fecha')
+                    )
+                    # liga dominante de cada evento, solo para elegir ícono/color
+                    liga_por_evento = fp_cal.groupby('_evento')['league'] \
+                        .agg(lambda s: s.mode().iloc[0] if not s.mode().empty else '')
 
-                        # Generar semanas
-                        # Encontrar el lunes de la semana de fecha_min
-                        inicio_cal = fecha_min - pd.Timedelta(days=fecha_min.weekday())
-                        fin_cal    = fecha_max + pd.Timedelta(days=6 - fecha_max.weekday())
-                        semanas    = pd.date_range(inicio_cal, fin_cal, freq='W-MON')
+                    for fecha in sorted(resumen['_fecha'].unique()):
+                        es_hoy    = fecha == hoy.date()
+                        es_pasado = fecha < hoy.date()
 
-                        dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-
-                        for semana_inicio in semanas:
-                            dias = [semana_inicio + pd.Timedelta(days=d) for d in range(7)]
-                            # Solo mostrar semanas que tienen al menos una batalla
-                            batallas_semana = fp_cal[
-                                (fp_cal['Fecha_max'] >= dias[0]) &
-                                (fp_cal['Fecha_max'] <= dias[6])
-                            ]
-                            if batallas_semana.empty:
-                                continue
-
-                            st.markdown(f"**Semana del {dias[0].strftime('%d/%m')} al {dias[6].strftime('%d/%m/%Y')}**")
-                            cols_dias = st.columns(7)
-
-                            for col_d, dia in zip(cols_dias, dias):
-                                batallas_dia = fp_cal[fp_cal['Fecha_max'].dt.date == dia.date()]
-                                es_hoy = dia.date() == hoy.date()
-                                es_pasado = dia.date() < hoy.date()
-
-                                # Header del día
-                                dia_label = dias_semana[dia.weekday()]
-                                num_dia   = dia.strftime('%d')
-
-                                if es_hoy:
-                                    hdr_bg = "#3498DB"
-                                    hdr_color = "white"
-                                elif es_pasado and not batallas_dia.empty:
-                                    hdr_bg = "#E74C3C"
-                                    hdr_color = "white"
-                                elif not batallas_dia.empty:
-                                    hdr_bg = "#1B2B3B"
-                                    hdr_color = "#ECF0F1"
-                                else:
-                                    hdr_bg = "transparent"
-                                    hdr_color = "#4A5568"
-
-                                with col_d:
-                                    st.markdown(
-                                        f"<div style='text-align:center;background:{hdr_bg};"
-                                        f"color:{hdr_color};border-radius:6px;padding:4px 2px;"
-                                        f"font-size:0.75em;font-weight:bold;margin-bottom:4px'>"
-                                        f"{dia_label}<br><span style='font-size:1.1em'>{num_dia}</span>"
-                                        f"{'<br>📍HOY' if es_hoy else ''}</div>",
-                                        unsafe_allow_html=True
-                                    )
-
-                                    for _, bat in batallas_dia.iterrows():
-                                        tier  = str(bat.get('Tier', '?'))
-                                        p1    = str(bat.get('player1', ''))
-                                        p2    = str(bat.get('player2', ''))
-                                        ronda = str(bat.get('round', ''))
-                                        ev    = evento_nombre(bat)
-                                        icon  = LEAGUE_ICONS.get(str(bat.get('league','')), '📋')
-                                        tc    = TIER_COLORS_CAL.get(tier, '#888')
-
-                                        # Abreviar nombres
-                                        p1s = p1.split()[0][:8] if p1 else '?'
-                                        p2s = p2.split()[0][:8] if p2 else '?'
-
-                                        st.markdown(
-                                            f"<div style='background:#1B2B3B;border-left:3px solid {tc};"
-                                            f"border-radius:4px;padding:4px 5px;margin-bottom:3px;"
-                                            f"font-size:0.68em'>"
-                                            f"<div style='color:{tc};font-weight:bold'>T{tier} {icon}{ev}</div>"
-                                            f"<div style='color:#ECF0F1'>{p1s}</div>"
-                                            f"<div style='color:#95A5A6;font-size:0.9em'>vs {p2s}</div>"
-                                            f"<div style='color:#4A5568;font-size:0.85em'>{ronda[:20]}</div>"
-                                            f"</div>",
-                                            unsafe_allow_html=True
-                                        )
-
-                            st.markdown("")  # espaciado entre semanas
-
-            # ── TABLA ────────────────────────────────────────────────
-            with v_tabla:
-                cols_show = ['player1', 'player2', 'round', 'Tier', 'league',
-                             'N_Torneo', 'Ligas_categoria', 'date']
-                if has_fecha_max:
-                    cols_show.append('Fecha_max')
-                if 'Aka_evento' in fp.columns:
-                    cols_show.append('Aka_evento')
-
-                cols_exist = [c for c in cols_show if c in fp.columns]
-                rename_map = {
-                    'player1': 'Jugador 1', 'player2': 'Jugador 2',
-                    'round': 'Ronda', 'league': 'Tipo', 'N_Torneo': 'N° Torneo',
-                    'Ligas_categoria': 'Liga', 'date': 'Fecha registro',
-                    'Fecha_max': 'Fecha límite', 'Aka_evento': 'Evento',
-                }
-                tabla_pend = fp[cols_exist].rename(columns=rename_map).reset_index(drop=True)
-                st.dataframe(tabla_pend, use_container_width=True, hide_index=True, height=500)
-
-                csv_pend = tabla_pend.to_csv(index=False).encode('utf-8')
-                st.download_button("📥 Descargar pendientes CSV", csv_pend,
-                                   "batallas_pendientes.csv", "text/csv",
-                                   key="dl_pendientes")
-
-            # ── TARJETAS ─────────────────────────────────────────────
-            with v_cards:
-                TIER_COLORS = {
-                    'S': '#E74C3C', 'A': '#E67E22', 'B': '#F1C40F',
-                    'C': '#2ECC71', 'D': '#3498DB', 'E': '#9B59B6',
-                }
-                LEAGUE_ICONS = {
-                    'TORNEO': '🏆', 'LIGA': '🏅', 'ASCENSO': '⬆️',
-                    'CYPHER': '🔮', 'MUNDIAL': '🌎',
-                }
-
-                cards_per_row = 2
-                fp_cards = fp.head(100).reset_index(drop=True)
-
-                for i in range(0, len(fp_cards), cards_per_row):
-                    batch = fp_cards.iloc[i:i+cards_per_row]
-                    cols = st.columns(cards_per_row)
-                    for col, (_, row) in zip(cols, batch.iterrows()):
-                        tier     = str(row.get('Tier', '?'))
-                        league   = str(row.get('league', ''))
-                        ronda    = str(row.get('round', '—'))
-                        n_torneo = row.get('N_Torneo', '')
-                        aka      = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
-                        fecha_m  = str(row.get('Fecha_max', ''))[:10] if has_fecha_max else ''
-                        fecha_r  = str(row.get('date', ''))[:10]
-                        p1       = str(row.get('player1', ''))
-                        p2       = str(row.get('player2', ''))
-
-                        tier_color = TIER_COLORS.get(tier, '#888')
-                        league_icon = LEAGUE_ICONS.get(league, '📋')
-
-                        # Nombre del evento
-                        if aka and aka != 'nan':
-                            evento_str = aka
-                        elif league == 'TORNEO' and pd.notna(n_torneo):
-                            evento_str = f"Torneo {int(n_torneo)}"
-                        elif league == 'LIGA':
-                            liga_cat = str(row.get('Ligas_categoria', ''))
-                            evento_str = f"Liga {liga_cat}" if liga_cat and liga_cat != 'nan' else 'Liga'
+                        if es_hoy:
+                            color_fecha, badge = '#3498DB', ' · 📍 HOY'
+                        elif es_pasado:
+                            color_fecha, badge = '#E74C3C', ' · 🔴 VENCIDA'
                         else:
-                            evento_str = league
+                            color_fecha, badge = '#ECF0F1', ''
 
-                        # Días restantes si hay Fecha_max
-                        dias_badge = ""
-                        if has_fecha_max and fecha_m and fecha_m != 'nan' and fecha_m != 'NaT':
-                            try:
-                                dias = (pd.Timestamp(fecha_m) - pd.Timestamp.now()).days
-                                if dias < 0:
-                                    dias_badge = f'<span style="background:#E74C3C;color:white;padding:2px 8px;border-radius:4px;font-size:0.75em">⚠️ Vencida hace {abs(dias)}d</span>'
-                                elif dias == 0:
-                                    dias_badge = f'<span style="background:#E67E22;color:white;padding:2px 8px;border-radius:4px;font-size:0.75em">⚡ Vence hoy</span>'
-                                elif dias <= 3:
-                                    dias_badge = f'<span style="background:#E67E22;color:white;padding:2px 8px;border-radius:4px;font-size:0.75em">🔥 {dias}d restantes</span>'
-                                else:
-                                    dias_badge = f'<span style="background:#2C3E50;color:#95A5A6;padding:2px 8px;border-radius:4px;font-size:0.75em">📅 {dias}d restantes</span>'
-                            except Exception:
-                                pass
+                        fecha_str = pd.Timestamp(fecha).strftime('%d/%m/%Y')
 
-                        with col:
-                            st.markdown(f"""
-<div style="background:#1B2B3B;border-left:4px solid {tier_color};border-radius:8px;
-            padding:12px;margin-bottom:10px">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-    <div>
-      <span style="font-size:1em;font-weight:bold;color:{tier_color}">Tier {tier}</span>
-      &nbsp;
-      <span style="color:#95A5A6;font-size:0.85em">{league_icon} {evento_str}</span>
-    </div>
-    <span style="color:#95A5A6;font-size:0.75em">{ronda}</span>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;
-              background:#0D1B2A;border-radius:6px;padding:8px 12px;margin-bottom:6px">
-    <span style="color:#ECF0F1;font-weight:bold;font-size:0.9em">{p1}</span>
-    <span style="color:#F1C40F;font-weight:bold">VS</span>
-    <span style="color:#ECF0F1;font-weight:bold;font-size:0.9em">{p2}</span>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-    <span style="color:#95A5A6;font-size:0.75em">📅 Registrada: {fecha_r}</span>
-    {dias_badge}
-  </div>
-  {f'<div style="margin-top:4px"><span style="color:#F39C12;font-size:0.75em">⏰ Límite: {fecha_m}</span></div>' if fecha_m and fecha_m not in ("nan","NaT","") else ""}
-</div>""", unsafe_allow_html=True)
+                        st.markdown(
+                            f"<div style='margin-top:16px;font-weight:bold;font-size:1.05em;"
+                            f"color:{color_fecha}'>📅 {fecha_str}{badge}</div>",
+                            unsafe_allow_html=True,
+                        )
 
-            # ── TABLA ────────────────────────────────────────────────
-            with v_tabla:
+                        chips = ""
+                        for _, r in resumen[resumen['_fecha'] == fecha].iterrows():
+                            ev   = r['_evento']
+                            n    = r['Pendientes']
+                            lg   = liga_por_evento.get(ev, '')
+                            icon = LEAGUE_ICONS.get(lg, '📋')
+                            col  = EVENT_COLORS.get(lg, '#7F8C8D')
+                            chips += (
+                                f"<span style='display:inline-block;background:{col}22;"
+                                f"border:1px solid {col};color:{col};border-radius:14px;"
+                                f"padding:4px 12px;margin:3px 6px 3px 0;font-size:0.88em;"
+                                f"font-weight:bold'>{icon} {ev} · {n}</span>"
+                            )
+                        st.markdown(f"<div style='line-height:2.2'>{chips}</div>", unsafe_allow_html=True)
+
+                    st.caption(
+                        f"Total: {len(fp_cal)} batalla(s) pendiente(s) en "
+                        f"{fp_cal['_evento'].nunique()} evento(s)."
+                    )
+
+            # ── Detalle / export (opcional, colapsado) ──────────────────
+            with st.expander("📋 Ver detalle y exportar CSV"):
                 cols_show = ['player1', 'player2', 'round', 'Tier', 'league',
                              'N_Torneo', 'Ligas_categoria', 'date']
                 if has_fecha_max:
@@ -1458,7 +1320,7 @@ def show():
                     'Fecha_max': 'Fecha límite', 'Aka_evento': 'Evento',
                 }
                 tabla_pend = fp[cols_exist].rename(columns=rename_map).reset_index(drop=True)
-                st.dataframe(tabla_pend, use_container_width=True, hide_index=True, height=500)
+                st.dataframe(tabla_pend, use_container_width=True, hide_index=True, height=400)
 
                 csv_pend = tabla_pend.to_csv(index=False).encode('utf-8')
                 st.download_button("📥 Descargar pendientes CSV", csv_pend,
