@@ -1213,8 +1213,150 @@ def show():
         if fp.empty:
             st.info("No se encontraron batallas con los filtros seleccionados.")
         else:
-            # ── Vista: tabs por tipo de visualización ────────────────
-            v_cards, v_tabla = st.tabs(["🃏 Tarjetas", "📋 Tabla"])
+            v_cal, v_tabla = st.tabs(["📅 Calendario", "📋 Tabla"])
+
+            TIER_COLORS_CAL = {
+                'S': '#E74C3C', 'A': '#E67E22', 'B': '#F1C40F',
+                'C': '#2ECC71', 'D': '#3498DB', 'E': '#9B59B6',
+            }
+            LEAGUE_ICONS = {
+                'TORNEO': '🏆', 'LIGA': '🏅', 'ASCENSO': '⬆️',
+                'CYPHER': '🔮', 'MUNDIAL': '🌎',
+            }
+
+            def evento_nombre(row):
+                aka = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
+                if aka and aka not in ('nan', ''):
+                    return aka
+                league = str(row.get('league', ''))
+                n_t = row.get('N_Torneo', '')
+                if league == 'TORNEO' and pd.notna(n_t):
+                    return f"T{int(n_t)}"
+                elif league == 'LIGA':
+                    cat = str(row.get('Ligas_categoria', ''))
+                    return f"Liga {cat}" if cat not in ('nan','') else 'Liga'
+                return league
+
+            # ── CALENDARIO ───────────────────────────────────────────
+            with v_cal:
+                if not has_fecha_max:
+                    st.info("El calendario requiere la columna **Fecha_max** en el CSV. Aún no está disponible.")
+                else:
+                    fp_cal = fp.dropna(subset=['Fecha_max']).copy()
+                    fp_cal['Fecha_max'] = pd.to_datetime(fp_cal['Fecha_max'], errors='coerce')
+                    fp_cal = fp_cal.dropna(subset=['Fecha_max'])
+
+                    if fp_cal.empty:
+                        st.info("Sin fechas límite asignadas.")
+                    else:
+                        # Rango del calendario
+                        fecha_min = fp_cal['Fecha_max'].min()
+                        fecha_max = fp_cal['Fecha_max'].max()
+                        hoy = pd.Timestamp.now().normalize()
+
+                        # Generar semanas
+                        # Encontrar el lunes de la semana de fecha_min
+                        inicio_cal = fecha_min - pd.Timedelta(days=fecha_min.weekday())
+                        fin_cal    = fecha_max + pd.Timedelta(days=6 - fecha_max.weekday())
+                        semanas    = pd.date_range(inicio_cal, fin_cal, freq='W-MON')
+
+                        dias_semana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
+                        for semana_inicio in semanas:
+                            dias = [semana_inicio + pd.Timedelta(days=d) for d in range(7)]
+                            # Solo mostrar semanas que tienen al menos una batalla
+                            batallas_semana = fp_cal[
+                                (fp_cal['Fecha_max'] >= dias[0]) &
+                                (fp_cal['Fecha_max'] <= dias[6])
+                            ]
+                            if batallas_semana.empty:
+                                continue
+
+                            st.markdown(f"**Semana del {dias[0].strftime('%d/%m')} al {dias[6].strftime('%d/%m/%Y')}**")
+                            cols_dias = st.columns(7)
+
+                            for col_d, dia in zip(cols_dias, dias):
+                                batallas_dia = fp_cal[fp_cal['Fecha_max'].dt.date == dia.date()]
+                                es_hoy = dia.date() == hoy.date()
+                                es_pasado = dia.date() < hoy.date()
+
+                                # Header del día
+                                dia_label = dias_semana[dia.weekday()]
+                                num_dia   = dia.strftime('%d')
+
+                                if es_hoy:
+                                    hdr_bg = "#3498DB"
+                                    hdr_color = "white"
+                                elif es_pasado and not batallas_dia.empty:
+                                    hdr_bg = "#E74C3C"
+                                    hdr_color = "white"
+                                elif not batallas_dia.empty:
+                                    hdr_bg = "#1B2B3B"
+                                    hdr_color = "#ECF0F1"
+                                else:
+                                    hdr_bg = "transparent"
+                                    hdr_color = "#4A5568"
+
+                                with col_d:
+                                    st.markdown(
+                                        f"<div style='text-align:center;background:{hdr_bg};"
+                                        f"color:{hdr_color};border-radius:6px;padding:4px 2px;"
+                                        f"font-size:0.75em;font-weight:bold;margin-bottom:4px'>"
+                                        f"{dia_label}<br><span style='font-size:1.1em'>{num_dia}</span>"
+                                        f"{'<br>📍HOY' if es_hoy else ''}</div>",
+                                        unsafe_allow_html=True
+                                    )
+
+                                    for _, bat in batallas_dia.iterrows():
+                                        tier  = str(bat.get('Tier', '?'))
+                                        p1    = str(bat.get('player1', ''))
+                                        p2    = str(bat.get('player2', ''))
+                                        ronda = str(bat.get('round', ''))
+                                        ev    = evento_nombre(bat)
+                                        icon  = LEAGUE_ICONS.get(str(bat.get('league','')), '📋')
+                                        tc    = TIER_COLORS_CAL.get(tier, '#888')
+
+                                        # Abreviar nombres
+                                        p1s = p1.split()[0][:8] if p1 else '?'
+                                        p2s = p2.split()[0][:8] if p2 else '?'
+
+                                        st.markdown(
+                                            f"<div style='background:#1B2B3B;border-left:3px solid {tc};"
+                                            f"border-radius:4px;padding:4px 5px;margin-bottom:3px;"
+                                            f"font-size:0.68em'>"
+                                            f"<div style='color:{tc};font-weight:bold'>T{tier} {icon}{ev}</div>"
+                                            f"<div style='color:#ECF0F1'>{p1s}</div>"
+                                            f"<div style='color:#95A5A6;font-size:0.9em'>vs {p2s}</div>"
+                                            f"<div style='color:#4A5568;font-size:0.85em'>{ronda[:20]}</div>"
+                                            f"</div>",
+                                            unsafe_allow_html=True
+                                        )
+
+                            st.markdown("")  # espaciado entre semanas
+
+            # ── TABLA ────────────────────────────────────────────────
+            with v_tabla:
+                cols_show = ['player1', 'player2', 'round', 'Tier', 'league',
+                             'N_Torneo', 'Ligas_categoria', 'date']
+                if has_fecha_max:
+                    cols_show.append('Fecha_max')
+                if 'Aka_evento' in fp.columns:
+                    cols_show.append('Aka_evento')
+
+                cols_exist = [c for c in cols_show if c in fp.columns]
+                rename_map = {
+                    'player1': 'Jugador 1', 'player2': 'Jugador 2',
+                    'round': 'Ronda', 'league': 'Tipo', 'N_Torneo': 'N° Torneo',
+                    'Ligas_categoria': 'Liga', 'date': 'Fecha registro',
+                    'Fecha_max': 'Fecha límite', 'Aka_evento': 'Evento',
+                }
+                tabla_pend = fp[cols_exist].rename(columns=rename_map).reset_index(drop=True)
+                st.dataframe(tabla_pend, use_container_width=True, hide_index=True, height=500)
+
+                csv_pend = tabla_pend.to_csv(index=False).encode('utf-8')
+                st.download_button("📥 Descargar pendientes CSV", csv_pend,
+                                   "batallas_pendientes.csv", "text/csv",
+                                   key="dl_pendientes")
 
             # ── TARJETAS ─────────────────────────────────────────────
             with v_cards:
