@@ -1299,70 +1299,68 @@ def show():
 
                     st.markdown("""
                         <style>
-                        .raidcard{position:relative;width:152px;background:#1B2B3B;border-radius:12px;
-                            overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.4);flex-shrink:0}
-                        .raidcard .poster{width:100%;height:88px;background-size:cover;background-position:center}
-                        .raidcard .tierbadge{position:absolute;top:6px;right:6px;color:white;font-weight:bold;
-                            font-size:0.75em;border-radius:50%;width:26px;height:26px;display:flex;
-                            align-items:center;justify-content:center;border:2px solid #1B2B3B}
-                        .raidcard .body{padding:8px}
-                        .raidcard .ev{color:#ECF0F1;font-weight:bold;font-size:0.82em;white-space:nowrap;
-                            overflow:hidden;text-overflow:ellipsis}
-                        .raidcard .pend{margin-top:5px;display:inline-block;border-radius:10px;
-                            padding:2px 8px;font-size:0.72em;font-weight:bold}
-                        .raidrow{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px 0}
+                        .raidcard{position:relative;width:190px;background:#1B2B3B;border-radius:14px;
+                            overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.4);flex-shrink:0}
+                        .raidcard .poster{width:100%;height:110px;background-size:cover;background-position:center}
+                        .raidcard .datebadge{position:absolute;top:8px;left:8px;color:white;font-weight:bold;
+                            font-size:0.85em;line-height:1.05;border-radius:8px;padding:4px 8px;
+                            text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+                        .raidcard .datebadge span{display:block;font-size:0.62em;font-weight:600;opacity:.9}
+                        .raidcard .body{padding:9px 10px 10px 10px}
+                        .raidcard .ev{color:#ECF0F1;font-weight:bold;font-size:0.92em;white-space:nowrap;
+                            overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+                        .raidcard .tierbadge{display:inline-block;color:white;font-weight:bold;
+                            font-size:0.78em;border-radius:6px;padding:3px 9px;margin-right:5px}
+                        .raidcard .pend{display:inline-block;border-radius:10px;
+                            padding:3px 9px;font-size:0.78em;font-weight:bold}
+                        .raidrow{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 4px 0}
                         </style>
                     """, unsafe_allow_html=True)
 
-                    for fecha in sorted(resumen['_fecha'].unique()):
+                    resumen = resumen.sort_values(['_fecha', '_evento', '_tier']).reset_index(drop=True)
+
+                    cards = ""
+                    for _, r in resumen.iterrows():
+                        fecha, ev, tier, n, lg = r['_fecha'], r['_evento'], r['_tier'], r['Pendientes'], r['league']
+                        tc = TIER_COLORS_CAL.get(tier, '#7F8C8D')
+
                         es_hoy    = fecha == hoy.date()
                         es_pasado = fecha < hoy.date()
+                        fecha_bg  = '#3498DB' if es_hoy else ('#E74C3C' if es_pasado else '#3a1f5d')
+                        dia_num   = pd.Timestamp(fecha).strftime('%d')
+                        mes_str   = pd.Timestamp(fecha).strftime('%b').upper()
 
-                        if es_hoy:
-                            color_fecha, badge = '#3498DB', ' · 📍 HOY'
-                        elif es_pasado:
-                            color_fecha, badge = '#E74C3C', ' · 🔴 VENCIDA'
+                        poster_path = _poster_evento(r)
+                        b64 = _img_b64(poster_path)
+
+                        if b64:
+                            poster_html = f"<div class='poster' style='background-image:url({b64})'>"
                         else:
-                            color_fecha, badge = '#ECF0F1', ''
-
-                        fecha_str = pd.Timestamp(fecha).strftime('%d/%m/%Y')
-                        st.markdown(
-                            f"<div style='margin-top:16px;font-weight:bold;font-size:1.05em;"
-                            f"color:{color_fecha}'>📅 {fecha_str}{badge}</div>",
-                            unsafe_allow_html=True,
-                        )
-
-                        cards = ""
-                        for _, r in resumen[resumen['_fecha'] == fecha].iterrows():
-                            ev, tier, n, lg = r['_evento'], r['_tier'], r['Pendientes'], r['league']
-                            tc = TIER_COLORS_CAL.get(tier, '#7F8C8D')
-                            poster_path = _poster_evento(r)
-                            b64 = _img_b64(poster_path)
-
-                            if b64:
-                                poster_html = f"<div class='poster' style='background-image:url({b64})'></div>"
-                            else:
-                                icon = LEAGUE_ICONS.get(lg, '📋')
-                                poster_html = (
-                                    f"<div class='poster' style='background:linear-gradient(135deg,#3a1f5d,#1B2B3B);"
-                                    f"display:flex;align-items:center;justify-content:center;font-size:2em'>{icon}</div>"
-                                )
-
-                            cards += (
-                                "<div class='raidcard'>"
-                                f"{poster_html}"
-                                f"<div class='tierbadge' style='background:{tc}'>{tier}</div>"
-                                "<div class='body'>"
-                                f"<div class='ev' title='{ev}'>{ev}</div>"
-                                f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>"
-                                f"⏳ {n} pend.</div>"
-                                "</div></div>"
+                            icon = LEAGUE_ICONS.get(lg, '📋')
+                            poster_html = (
+                                f"<div class='poster' style='background:linear-gradient(135deg,#3a1f5d,#1B2B3B);"
+                                f"display:flex;align-items:center;justify-content:center;font-size:2.2em'>"
+                                f"{icon}"
                             )
-                        st.markdown(f"<div class='raidrow'>{cards}</div>", unsafe_allow_html=True)
+
+                        cards += (
+                            "<div class='raidcard'>"
+                            f"{poster_html}"
+                            f"<div class='datebadge' style='background:{fecha_bg}'>{dia_num}<span>{mes_str}</span></div>"
+                            "</div>"
+                            "<div class='body'>"
+                            f"<div class='ev' title='{ev}'>{ev}</div>"
+                            f"<div class='tierbadge' style='background:{tc}'>Tier {tier}</div>"
+                            f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>"
+                            f"⏳ {n}</div>"
+                            "</div></div>"
+                        )
+                    st.markdown(f"<div class='raidrow'>{cards}</div>", unsafe_allow_html=True)
 
                     st.caption(
                         f"Total: {len(fp_cal)} batalla(s) pendiente(s) en "
-                        f"{fp_cal['_evento'].nunique()} evento(s)."
+                        f"{fp_cal['_evento'].nunique()} evento(s). "
+                        f"📍 Azul = hoy · 🔴 Rojo = vencida"
                     )
 
             # ── Detalle / export (opcional, colapsado) ──────────────────
