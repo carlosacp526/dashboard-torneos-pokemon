@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import re, os, sys
+import re, os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, normalize_columns, ensure_fields, compute_player_stats, generar_tabla_temporada, generar_tabla_torneo,
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
@@ -1221,10 +1221,6 @@ def show():
                 'TORNEO': '🏆', 'LIGA': '🏅', 'ASCENSO': '⬆️',
                 'CYPHER': '🔮', 'MUNDIAL': '🌎',
             }
-            EVENT_COLORS = {
-                'TORNEO': '#E67E22', 'LIGA': '#3498DB', 'ASCENSO': '#2ECC71',
-                'CYPHER': '#9B59B6', 'MUNDIAL': '#F1C40F',
-            }
 
             def evento_nombre(row):
                 aka = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
@@ -1239,7 +1235,40 @@ def show():
                     return f"Liga {cat}" if cat not in ('nan','') else 'Liga'
                 return league or 'Evento'
 
-            # ── CALENDARIO COMPACTO (agrupado por Aka_evento + Fecha_max) ──
+            @st.cache_data(show_spinner=False)
+            def _img_b64(path):
+                if not path or not os.path.exists(path):
+                    return None
+                try:
+                    with open(path, 'rb') as f:
+                        data = f.read()
+                    ext = path.rsplit('.', 1)[-1].lower()
+                    mime = 'image/png' if ext == 'png' else 'image/jpeg'
+                    return f"data:{mime};base64,{base64.b64encode(data).decode()}"
+                except Exception:
+                    return None
+
+            def _poster_evento(row):
+                lg = str(row.get('league', ''))
+                try:
+                    if lg == 'TORNEO' and pd.notna(row.get('N_Torneo')):
+                        p = obtener_banner_torneo(int(row['N_Torneo']))
+                        if p:
+                            return p
+                    if lg == 'LIGA':
+                        cat = str(row.get('Ligas_categoria', ''))
+                        if cat and cat not in ('nan', ''):
+                            p = obtener_banner(cat)
+                            if p:
+                                return p
+                    p = obtener_banner(lg)
+                    if p:
+                        return p
+                except Exception:
+                    pass
+                return None
+
+            # ── CALENDARIO COMPACTO (agrupado por Aka_evento + Fecha_max + Tier) ──
             if not has_fecha_max:
                 st.info("El calendario requiere la columna **Fecha_max** en el CSV. Aún no está disponible.")
             else:
@@ -1253,16 +1282,37 @@ def show():
                     hoy = pd.Timestamp.now().normalize()
                     fp_cal['_fecha']  = fp_cal['Fecha_max'].dt.date
                     fp_cal['_evento'] = fp_cal.apply(evento_nombre, axis=1)
+                    fp_cal['_tier']   = fp_cal['Tier'].astype(str).replace({'nan': '?', 'None': '?'}) \
+                        if 'Tier' in fp_cal.columns else '?'
 
                     resumen = (
-                        fp_cal.groupby(['_fecha', '_evento'])
-                              .size()
-                              .reset_index(name='Pendientes')
+                        fp_cal.groupby(['_fecha', '_evento', '_tier'], dropna=False)
+                              .agg(
+                                  Pendientes=('_tier', 'size'),
+                                  league=('league', lambda s: s.mode().iloc[0] if not s.mode().empty else ''),
+                                  N_Torneo=('N_Torneo', 'first') if 'N_Torneo' in fp_cal.columns else ('_tier', 'first'),
+                                  Ligas_categoria=('Ligas_categoria', 'first') if 'Ligas_categoria' in fp_cal.columns else ('_tier', 'first'),
+                              )
+                              .reset_index()
                               .sort_values('_fecha')
                     )
-                    # liga dominante de cada evento, solo para elegir ícono/color
-                    liga_por_evento = fp_cal.groupby('_evento')['league'] \
-                        .agg(lambda s: s.mode().iloc[0] if not s.mode().empty else '')
+
+                    st.markdown("""
+                        <style>
+                        .raidcard{position:relative;width:152px;background:#1B2B3B;border-radius:12px;
+                            overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.4);flex-shrink:0}
+                        .raidcard .poster{width:100%;height:88px;background-size:cover;background-position:center}
+                        .raidcard .tierbadge{position:absolute;top:6px;right:6px;color:white;font-weight:bold;
+                            font-size:0.75em;border-radius:50%;width:26px;height:26px;display:flex;
+                            align-items:center;justify-content:center;border:2px solid #1B2B3B}
+                        .raidcard .body{padding:8px}
+                        .raidcard .ev{color:#ECF0F1;font-weight:bold;font-size:0.82em;white-space:nowrap;
+                            overflow:hidden;text-overflow:ellipsis}
+                        .raidcard .pend{margin-top:5px;display:inline-block;border-radius:10px;
+                            padding:2px 8px;font-size:0.72em;font-weight:bold}
+                        .raidrow{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px 0}
+                        </style>
+                    """, unsafe_allow_html=True)
 
                     for fecha in sorted(resumen['_fecha'].unique()):
                         es_hoy    = fecha == hoy.date()
@@ -1276,27 +1326,39 @@ def show():
                             color_fecha, badge = '#ECF0F1', ''
 
                         fecha_str = pd.Timestamp(fecha).strftime('%d/%m/%Y')
-
                         st.markdown(
                             f"<div style='margin-top:16px;font-weight:bold;font-size:1.05em;"
                             f"color:{color_fecha}'>📅 {fecha_str}{badge}</div>",
                             unsafe_allow_html=True,
                         )
 
-                        chips = ""
+                        cards = ""
                         for _, r in resumen[resumen['_fecha'] == fecha].iterrows():
-                            ev   = r['_evento']
-                            n    = r['Pendientes']
-                            lg   = liga_por_evento.get(ev, '')
-                            icon = LEAGUE_ICONS.get(lg, '📋')
-                            col  = EVENT_COLORS.get(lg, '#7F8C8D')
-                            chips += (
-                                f"<span style='display:inline-block;background:{col}22;"
-                                f"border:1px solid {col};color:{col};border-radius:14px;"
-                                f"padding:4px 12px;margin:3px 6px 3px 0;font-size:0.88em;"
-                                f"font-weight:bold'>{icon} {ev} · {n}</span>"
+                            ev, tier, n, lg = r['_evento'], r['_tier'], r['Pendientes'], r['league']
+                            tc = TIER_COLORS_CAL.get(tier, '#7F8C8D')
+                            poster_path = _poster_evento(r)
+                            b64 = _img_b64(poster_path)
+
+                            if b64:
+                                poster_html = f"<div class='poster' style='background-image:url({b64})'></div>"
+                            else:
+                                icon = LEAGUE_ICONS.get(lg, '📋')
+                                poster_html = (
+                                    f"<div class='poster' style='background:linear-gradient(135deg,#3a1f5d,#1B2B3B);"
+                                    f"display:flex;align-items:center;justify-content:center;font-size:2em'>{icon}</div>"
+                                )
+
+                            cards += (
+                                "<div class='raidcard'>"
+                                f"{poster_html}"
+                                f"<div class='tierbadge' style='background:{tc}'>{tier}</div>"
+                                "<div class='body'>"
+                                f"<div class='ev' title='{ev}'>{ev}</div>"
+                                f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>"
+                                f"⏳ {n} pend.</div>"
+                                "</div></div>"
                             )
-                        st.markdown(f"<div style='line-height:2.2'>{chips}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='raidrow'>{cards}</div>", unsafe_allow_html=True)
 
                     st.caption(
                         f"Total: {len(fp_cal)} batalla(s) pendiente(s) en "
