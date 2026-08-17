@@ -1151,35 +1151,177 @@ def show():
 
     # ── Batallas pendientes ─────────────────────────────────────────
     st.markdown('<div id="batllaspendientes"></div>', unsafe_allow_html=True)
-    st.subheader("Batallas pendientes")
-    pending = df[~completed_mask].copy()
+    st.subheader("⏳ Batallas Pendientes")
+
+    # Pendientes = Walkover == -1 (aún no jugadas)
+    if 'Walkover' in df.columns:
+        pending = df[df['Walkover'] == -1].copy()
+    else:
+        pending = df[~completed_mask].copy()
 
     if pending.empty:
-        st.success("No hay batallas pendientes.")
+        st.success("✅ No hay batallas pendientes.")
     else:
-        col1, col2, col3 = st.columns([2,1,1])
-        with col1:
-            player_filter = st.text_input("🔍 Buscar por jugador", "", key="pending_player_search")
-        with col2:
+        # ── Filtros ──────────────────────────────────────────────────
+        col_f1, col_f2, col_f3, col_f4 = st.columns([2, 1, 1, 1])
+        with col_f1:
+            player_filter = st.text_input("🔍 Buscar jugador", "", key="pending_player_search")
+        with col_f2:
             tier_options = ["Todos"] + sorted(pending['Tier'].dropna().unique().tolist())
-            tier_filter = st.selectbox("Filtrar por Tier", options=tier_options, key="pending_tier")
-        with col3:
+            tier_filter = st.selectbox("Tier", options=tier_options, key="pending_tier")
+        with col_f3:
             league_options = ["Todos"] + sorted(pending['league'].dropna().unique().tolist())
-            league_filter = st.selectbox("Filtrar por Evento", options=league_options, key="pending_league")
+            league_filter = st.selectbox("Evento", options=league_options, key="pending_league")
+        with col_f4:
+            # Ordenar por
+            orden_options = ["Fecha límite ↑", "Fecha límite ↓", "Tier", "Evento"]
+            orden_sel = st.selectbox("Ordenar por", orden_options, key="pending_orden")
 
         fp = pending.copy()
         if player_filter:
-            fp = fp[fp['player1'].str.contains(player_filter,case=False,na=False)|
-                    fp['player2'].str.contains(player_filter,case=False,na=False)]
-        if tier_filter != "Todos": fp = fp[fp['Tier'] == tier_filter]
-        if league_filter != "Todos": fp = fp[fp['league'] == league_filter]
+            fp = fp[fp['player1'].str.contains(player_filter, case=False, na=False) |
+                    fp['player2'].str.contains(player_filter, case=False, na=False)]
+        if tier_filter != "Todos":
+            fp = fp[fp['Tier'] == tier_filter]
+        if league_filter != "Todos":
+            fp = fp[fp['league'] == league_filter]
 
-        st.write(f"**Batallas pendientes:** {len(fp)}")
+        # Ordenar
+        has_fecha_max = 'Fecha_max' in fp.columns
+        if orden_sel == "Fecha límite ↑" and has_fecha_max:
+            fp = fp.sort_values('Fecha_max', ascending=True)
+        elif orden_sel == "Fecha límite ↓" and has_fecha_max:
+            fp = fp.sort_values('Fecha_max', ascending=False)
+        elif orden_sel == "Tier":
+            TIER_ORD = {'S':0,'A':1,'B':2,'C':3,'D':4,'E':5}
+            fp['_tier_ord'] = fp['Tier'].map(TIER_ORD).fillna(9)
+            fp = fp.sort_values('_tier_ord')
+        elif orden_sel == "Evento":
+            fp = fp.sort_values(['league','N_Torneo'], na_position='last')
+
+        # ── Métricas rápidas ─────────────────────────────────────────
+        mc1, mc2, mc3, mc4 = st.columns(4)
+        mc1.metric("Total pendientes", len(fp))
+        mc2.metric("Eventos distintos", fp['league'].nunique())
+        mc3.metric("Tiers distintos", fp['Tier'].dropna().nunique())
+        if has_fecha_max:
+            proxima = fp['Fecha_max'].dropna().min()
+            mc4.metric("Próxima fecha límite", str(proxima)[:10] if pd.notna(proxima) else "—")
+
+        st.markdown("---")
+
         if fp.empty:
-            st.info("No se encontraron batallas pendientes con los filtros aplicados.")
+            st.info("No se encontraron batallas con los filtros seleccionados.")
         else:
-            st.dataframe(fp[['player1','player2','date','round','Tier','league','N_Torneo']].head(200),
-                         use_container_width=True)
+            # ── Vista: tabs por tipo de visualización ────────────────
+            v_cards, v_tabla = st.tabs(["🃏 Tarjetas", "📋 Tabla"])
+
+            # ── TARJETAS ─────────────────────────────────────────────
+            with v_cards:
+                TIER_COLORS = {
+                    'S': '#E74C3C', 'A': '#E67E22', 'B': '#F1C40F',
+                    'C': '#2ECC71', 'D': '#3498DB', 'E': '#9B59B6',
+                }
+                LEAGUE_ICONS = {
+                    'TORNEO': '🏆', 'LIGA': '🏅', 'ASCENSO': '⬆️',
+                    'CYPHER': '🔮', 'MUNDIAL': '🌎',
+                }
+
+                cards_per_row = 2
+                fp_cards = fp.head(100).reset_index(drop=True)
+
+                for i in range(0, len(fp_cards), cards_per_row):
+                    batch = fp_cards.iloc[i:i+cards_per_row]
+                    cols = st.columns(cards_per_row)
+                    for col, (_, row) in zip(cols, batch.iterrows()):
+                        tier     = str(row.get('Tier', '?'))
+                        league   = str(row.get('league', ''))
+                        ronda    = str(row.get('round', '—'))
+                        n_torneo = row.get('N_Torneo', '')
+                        aka      = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
+                        fecha_m  = str(row.get('Fecha_max', ''))[:10] if has_fecha_max else ''
+                        fecha_r  = str(row.get('date', ''))[:10]
+                        p1       = str(row.get('player1', ''))
+                        p2       = str(row.get('player2', ''))
+
+                        tier_color = TIER_COLORS.get(tier, '#888')
+                        league_icon = LEAGUE_ICONS.get(league, '📋')
+
+                        # Nombre del evento
+                        if aka and aka != 'nan':
+                            evento_str = aka
+                        elif league == 'TORNEO' and pd.notna(n_torneo):
+                            evento_str = f"Torneo {int(n_torneo)}"
+                        elif league == 'LIGA':
+                            liga_cat = str(row.get('Ligas_categoria', ''))
+                            evento_str = f"Liga {liga_cat}" if liga_cat and liga_cat != 'nan' else 'Liga'
+                        else:
+                            evento_str = league
+
+                        # Días restantes si hay Fecha_max
+                        dias_badge = ""
+                        if has_fecha_max and fecha_m and fecha_m != 'nan' and fecha_m != 'NaT':
+                            try:
+                                dias = (pd.Timestamp(fecha_m) - pd.Timestamp.now()).days
+                                if dias < 0:
+                                    dias_badge = f'<span style="background:#E74C3C;color:white;padding:2px 8px;border-radius:4px;font-size:0.75em">⚠️ Vencida hace {abs(dias)}d</span>'
+                                elif dias == 0:
+                                    dias_badge = f'<span style="background:#E67E22;color:white;padding:2px 8px;border-radius:4px;font-size:0.75em">⚡ Vence hoy</span>'
+                                elif dias <= 3:
+                                    dias_badge = f'<span style="background:#E67E22;color:white;padding:2px 8px;border-radius:4px;font-size:0.75em">🔥 {dias}d restantes</span>'
+                                else:
+                                    dias_badge = f'<span style="background:#2C3E50;color:#95A5A6;padding:2px 8px;border-radius:4px;font-size:0.75em">📅 {dias}d restantes</span>'
+                            except Exception:
+                                pass
+
+                        with col:
+                            st.markdown(f"""
+<div style="background:#1B2B3B;border-left:4px solid {tier_color};border-radius:8px;
+            padding:12px;margin-bottom:10px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+    <div>
+      <span style="font-size:1em;font-weight:bold;color:{tier_color}">Tier {tier}</span>
+      &nbsp;
+      <span style="color:#95A5A6;font-size:0.85em">{league_icon} {evento_str}</span>
+    </div>
+    <span style="color:#95A5A6;font-size:0.75em">{ronda}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;
+              background:#0D1B2A;border-radius:6px;padding:8px 12px;margin-bottom:6px">
+    <span style="color:#ECF0F1;font-weight:bold;font-size:0.9em">{p1}</span>
+    <span style="color:#F1C40F;font-weight:bold">VS</span>
+    <span style="color:#ECF0F1;font-weight:bold;font-size:0.9em">{p2}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+    <span style="color:#95A5A6;font-size:0.75em">📅 Registrada: {fecha_r}</span>
+    {dias_badge}
+  </div>
+  {f'<div style="margin-top:4px"><span style="color:#F39C12;font-size:0.75em">⏰ Límite: {fecha_m}</span></div>' if fecha_m and fecha_m not in ("nan","NaT","") else ""}
+</div>""", unsafe_allow_html=True)
+
+            # ── TABLA ────────────────────────────────────────────────
+            with v_tabla:
+                cols_show = ['player1', 'player2', 'round', 'Tier', 'league',
+                             'N_Torneo', 'Ligas_categoria', 'date']
+                if has_fecha_max:
+                    cols_show.append('Fecha_max')
+                if 'Aka_evento' in fp.columns:
+                    cols_show.append('Aka_evento')
+
+                cols_exist = [c for c in cols_show if c in fp.columns]
+                rename_map = {
+                    'player1': 'Jugador 1', 'player2': 'Jugador 2',
+                    'round': 'Ronda', 'league': 'Tipo', 'N_Torneo': 'N° Torneo',
+                    'Ligas_categoria': 'Liga', 'date': 'Fecha registro',
+                    'Fecha_max': 'Fecha límite', 'Aka_evento': 'Evento',
+                }
+                tabla_pend = fp[cols_exist].rename(columns=rename_map).reset_index(drop=True)
+                st.dataframe(tabla_pend, use_container_width=True, hide_index=True, height=500)
+
+                csv_pend = tabla_pend.to_csv(index=False).encode('utf-8')
+                st.download_button("📥 Descargar pendientes CSV", csv_pend,
+                                   "batallas_pendientes.csv", "text/csv",
+                                   key="dl_pendientes")
 
 
     # ── Perfil del jugador ──────────────────────────────────────────
