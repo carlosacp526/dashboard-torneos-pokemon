@@ -1347,13 +1347,16 @@ def show():
                                 f"{icon}"
                             )
 
-                        # Fase_completo — discreto si existe
+                        # Fase_completo — badge similar al de tier
                         _fase_raw = str(r.get('Fase_completo', '')) if 'Fase_completo' in r.index else ''
                         fase_html = ''
                         if _fase_raw and _fase_raw not in ('nan','None',''):
-                            fase_html = (f"<div style='color:#7F8C8D;font-size:0.72em;font-style:italic;"
-                                         f"margin-top:5px;white-space:nowrap;overflow:hidden;"
-                                         f"text-overflow:ellipsis'>{_fase_raw[:22]}</div>")
+                            fase_html = (f"<div style='display:inline-block;background:{tc}11;"
+                                         f"border:1px solid {tc}55;color:{tc}cc;font-size:0.78em;"
+                                         f"border-radius:6px;padding:3px 8px;margin-top:5px;"
+                                         f"font-weight:600;max-width:100%;overflow:hidden;"
+                                         f"text-overflow:ellipsis;white-space:nowrap'>"
+                                         f"{_fase_raw[:22]}</div>")
 
                         cards += (
                             "<div class='raidcard'>"
