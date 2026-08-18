@@ -1365,10 +1365,11 @@ def show():
                             "</div>"
                             "<div class='body'>"
                             f"<div class='ev' title='{ev}'>{ev}</div>"
+                            f"<div style='display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px'>"
                             f"<div class='tierbadge' style='background:{tc}'>Tier {tier}</div>"
-                            f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>"
-                            f"⏳ {n}</div>"
+                            f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>⏳ {n}</div>"
                             f"{fase_html}"
+                            f"</div>"
                             "</div></div>"
                         )
                     st.markdown(f"<div class='raidrow'>{cards}</div>", unsafe_allow_html=True)
