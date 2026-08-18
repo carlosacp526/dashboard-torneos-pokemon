@@ -1292,6 +1292,7 @@ def show():
                                   league=('league', lambda s: s.mode().iloc[0] if not s.mode().empty else ''),
                                   N_Torneo=('N_Torneo', 'first') if 'N_Torneo' in fp_cal.columns else ('_tier', 'first'),
                                   Ligas_categoria=('Ligas_categoria', 'first') if 'Ligas_categoria' in fp_cal.columns else ('_tier', 'first'),
+                                  Fase_completo=('Fase_completo', lambda s: s.dropna().mode().iloc[0] if not s.dropna().empty else '') if 'Fase_completo' in fp_cal.columns else ('_tier', lambda s: ''),
                               )
                               .reset_index()
                               .sort_values('_fecha')
@@ -1346,6 +1347,14 @@ def show():
                                 f"{icon}"
                             )
 
+                        # Fase_completo — discreto si existe
+                        _fase_raw = str(r.get('Fase_completo', '')) if 'Fase_completo' in r.index else ''
+                        fase_html = ''
+                        if _fase_raw and _fase_raw not in ('nan','None',''):
+                            fase_html = (f"<div style='color:#7F8C8D;font-size:0.72em;font-style:italic;"
+                                         f"margin-top:5px;white-space:nowrap;overflow:hidden;"
+                                         f"text-overflow:ellipsis'>{_fase_raw[:22]}</div>")
+
                         cards += (
                             "<div class='raidcard'>"
                             f"{poster_html}"
@@ -1356,6 +1365,7 @@ def show():
                             f"<div class='tierbadge' style='background:{tc}'>Tier {tier}</div>"
                             f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>"
                             f"⏳ {n}</div>"
+                            f"{fase_html}"
                             "</div></div>"
                         )
                     st.markdown(f"<div class='raidrow'>{cards}</div>", unsafe_allow_html=True)
