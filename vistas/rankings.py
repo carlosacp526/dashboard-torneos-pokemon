@@ -15,7 +15,7 @@ def show():
     st.header("🏆 Salón de la Fama - Campeones")
 
     tab_champ = st.tabs(["2026-II","2026-I","2025-III","2025-II","2025-I","2024","2023","2022","2021"])
-    images = [ ("campeones_2026_I.png","Campeones 2026-I"), ("campeones_2026_II.png","Campeones 2026-II"), ("campeones_2025_III.png","Campeones 2025-III"),
+    images = [ ("campeones_2026_II.png","Campeones 2026-II"), ("campeones_2026_I.png","Campeones 2026-I"), ("campeones_2025_III.png","Campeones 2025-III"),
               ("campeones_2025_II.png","Campeones 2025-II"),
               ("campeones_2025_I.png","Campeones 2025-I"),
               ("campeones_2024.png","Campeones 2024"),
