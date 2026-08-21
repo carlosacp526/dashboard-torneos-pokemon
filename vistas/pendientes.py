@@ -10,18 +10,24 @@ from utils import load_data, normalize_columns, ensure_fields
 
 # ── Zonas horarias por país ────────────────────────────────────────────────────
 PAIS_TIMEZONE = {
-    "Peru":       ("America/Lima",       -5),
-    "Chile":      ("America/Santiago",   -4),  # -3 en verano
-    "Mexico":     ("America/Mexico_City",-6),
-    "Venezuela":  ("America/Caracas",    -4),
-    "Colombia":   ("America/Bogota",     -5),
-    "Argentina":  ("America/Argentina/Buenos_Aires", -3),
-    "Ecuador":    ("America/Guayaquil",  -5),
-    "Bolivia":    ("America/La_Paz",     -4),
-    "Paraguay":   ("America/Asuncion",   -4),
-    "Uruguay":    ("America/Montevideo", -3),
-    "España":     ("Europe/Madrid",       1),
-    "USA":        ("America/New_York",   -5),
+    "Peru":             ("America/Lima",                  -5),
+    "Chile":            ("America/Santiago",              -4),  # -3 en verano
+    "Mexico":           ("America/Mexico_City",           -6),
+    "Venezuela":        ("America/Caracas",               -4),
+    "Colombia":         ("America/Bogota",                -5),
+    "Argentina":        ("America/Argentina/Buenos_Aires",-3),
+    "Ecuador":          ("America/Guayaquil",              -5),
+    "Bolivia":          ("America/La_Paz",                 -4),
+    "Paraguay":         ("America/Asuncion",               -4),
+    "Uruguay":          ("America/Montevideo",              -3),
+    "Honduras":         ("America/Tegucigalpa",             -6),
+    "Republica Dominicana": ("America/Santo_Domingo",       -4),
+    "Cuba":             ("America/Havana",                  -5),  # -4 en verano
+    "Costa Rica":       ("America/Costa_Rica",              -6),
+    "Nicaragua":        ("America/Managua",                -6),
+    "Guatemala":        ("America/Guatemala",               -6),
+    "España":           ("Europe/Madrid",                    1),
+    "EEUU":              ("America/New_York",                -5),
 }
 
 EXCEL_CELULARES = "celulares.xlsx"   # archivo con columnas: Jugador, Telefono, Pais, Codigo
