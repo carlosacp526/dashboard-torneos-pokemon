@@ -109,7 +109,7 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         # Info de la batalla
         torneo   = str(row.get('N_Torneo', '')).replace('.0','') if pd.notna(row.get('N_Torneo')) else ''
         aka      = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
-        formato  = str(row.get('Formato', ''))
+        formato  = str(row.get('Tier', ''))
         fecha_m  = str(row.get('Fecha_max', ''))[:10] if 'Fecha_max' in row.index else ''
         ronda    = str(row.get('round', ''))
         liga_cat = str(row.get('Ligas_categoria', ''))
