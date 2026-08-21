@@ -200,7 +200,7 @@ def show():
                 try:
                     r = requests.get(
                         f"{url_test.rstrip('/')}/instance/fetchInstances",
-                        headers={"apikey": key_test}, timeout=8
+                        headers={"apikey": key_test}, timeout=60
                     )
                     if r.status_code == 200:
                         st.success(f"✅ Conexión OK — {r.status_code}")
