@@ -472,8 +472,9 @@ def show():
                         msg = construir_mensaje(jugador, bats_j, celulares, pais_j)
                         res = enviar_whatsapp(tel_j, msg, api_url_s, api_key_s, instancia_s)
                         estado = "✅ Enviado" if res['ok'] else f"❌ Error {res['status']}"
-                        resultados.append({'Jugador':jugador,'Estado':estado,'Tel':tel_j})
-                        log_lines.append(f"{estado} — {jugador} ({tel_j})")
+                        detalle = str(res.get('body',''))[:300]
+                        resultados.append({'Jugador':jugador,'Estado':estado,'Tel':tel_j,'Detalle':detalle})
+                        log_lines.append(f"{estado} — {jugador} ({tel_j}) — {detalle}")
 
                     progress.progress((idx+1)/len(seleccionados),
                                       text=f"Enviando {idx+1}/{len(seleccionados)}...")
