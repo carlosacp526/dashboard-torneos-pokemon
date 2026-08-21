@@ -5,6 +5,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 
 st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="⚡")
+from vistas import pendientes
 
 from vistas import jugadores
 from vistas import inicio, analisis, rankings, elo, ligas, prediccion,replays
@@ -25,7 +26,7 @@ p_elo        = st.Page(elo.show,          title="⚡ Ranking Elo",            ur
 p_prediccion = st.Page(prediccion.show,   title="🤖 Predicción",             url_path="prediccion")
 p_tcg = st.Page(tcg.show,   title="🃏TCG",             url_path="tcg")
 p_roleplay = st.Page(roleplay.show,   title="🎭 Roleplay",             url_path="roleplay")
-
+p_pendientes = st.Page(pendientes.show, title="⏳ Pendientes", url_path="pendientes")
 st.session_state["_pages"] = {
     "inicio":     p_inicio,
     "analisis":   p_analisis,
@@ -39,13 +40,13 @@ st.session_state["_pages"] = {
     "calidad":    p_calidad,
     "prediccion": p_prediccion,
     "tcg": p_tcg,
-    "roleplay": p_roleplay
-   
+    "roleplay": p_roleplay,
+   "pendientes": p_pendientes
 }
 
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas,  p_elo,p_calidad, p_prediccion,p_tcg ,p_roleplay],
+    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas,  p_elo,p_calidad, p_prediccion,p_tcg ,p_roleplay,p_pendientes],
 })
 
 pg.run()
