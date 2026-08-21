@@ -10,24 +10,18 @@ from utils import load_data, normalize_columns, ensure_fields
 
 # ── Zonas horarias por país ────────────────────────────────────────────────────
 PAIS_TIMEZONE = {
-    "Peru":             ("America/Lima",                  -5),
-    "Chile":            ("America/Santiago",              -4),  # -3 en verano
-    "Mexico":           ("America/Mexico_City",           -6),
-    "Venezuela":        ("America/Caracas",               -4),
-    "Colombia":         ("America/Bogota",                -5),
-    "Argentina":        ("America/Argentina/Buenos_Aires",-3),
-    "Ecuador":          ("America/Guayaquil",              -5),
-    "Bolivia":          ("America/La_Paz",                 -4),
-    "Paraguay":         ("America/Asuncion",               -4),
-    "Uruguay":          ("America/Montevideo",              -3),
-    "Honduras":         ("America/Tegucigalpa",             -6),
-    "Republica Dominicana": ("America/Santo_Domingo",       -4),
-    "Cuba":             ("America/Havana",                  -5),  # -4 en verano
-    "Costa Rica":       ("America/Costa_Rica",              -6),
-    "Nicaragua":        ("America/Managua",                -6),
-    "Guatemala":        ("America/Guatemala",               -6),
-    "España":           ("Europe/Madrid",                    1),
-    "EEUU":              ("America/New_York",                -5),
+    "Peru":       ("America/Lima",       -5),
+    "Chile":      ("America/Santiago",   -4),  # -3 en verano
+    "Mexico":     ("America/Mexico_City",-6),
+    "Venezuela":  ("America/Caracas",    -4),
+    "Colombia":   ("America/Bogota",     -5),
+    "Argentina":  ("America/Argentina/Buenos_Aires", -3),
+    "Ecuador":    ("America/Guayaquil",  -5),
+    "Bolivia":    ("America/La_Paz",     -4),
+    "Paraguay":   ("America/Asuncion",   -4),
+    "Uruguay":    ("America/Montevideo", -3),
+    "España":     ("Europe/Madrid",       1),
+    "USA":        ("America/New_York",   -5),
 }
 
 EXCEL_CELULARES = "celulares.xlsx"   # archivo con columnas: Jugador, Telefono, Pais, Codigo
@@ -109,7 +103,7 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         # Info de la batalla
         torneo   = str(row.get('N_Torneo', '')).replace('.0','') if pd.notna(row.get('N_Torneo')) else ''
         aka      = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
-        formato  = str(row.get('Tier', ''))
+        formato  = str(row.get('Formato', ''))
         fecha_m  = str(row.get('Fecha_max', ''))[:10] if 'Fecha_max' in row.index else ''
         ronda    = str(row.get('round', ''))
         liga_cat = str(row.get('Ligas_categoria', ''))
@@ -472,9 +466,8 @@ def show():
                         msg = construir_mensaje(jugador, bats_j, celulares, pais_j)
                         res = enviar_whatsapp(tel_j, msg, api_url_s, api_key_s, instancia_s)
                         estado = "✅ Enviado" if res['ok'] else f"❌ Error {res['status']}"
-                        detalle = str(res.get('body',''))[:300]
-                        resultados.append({'Jugador':jugador,'Estado':estado,'Tel':tel_j,'Detalle':detalle})
-                        log_lines.append(f"{estado} — {jugador} ({tel_j}) — {detalle}")
+                        resultados.append({'Jugador':jugador,'Estado':estado,'Tel':tel_j})
+                        log_lines.append(f"{estado} — {jugador} ({tel_j})")
 
                     progress.progress((idx+1)/len(seleccionados),
                                       text=f"Enviando {idx+1}/{len(seleccionados)}...")
