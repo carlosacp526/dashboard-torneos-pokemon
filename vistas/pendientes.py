@@ -135,26 +135,88 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
 
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
-
+import requests
+import time
 
 def enviar_whatsapp(numero: str, mensaje: str,
-                    api_url: str, api_key: str, instancia: str) -> dict:
-    """Envía mensaje via Evolution API."""
+                    api_url: str, api_key: str, instancia: str,
+                    intentos=3):
+
     url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
+
     headers = {
         "Content-Type": "application/json",
         "apikey": api_key,
     }
+
     payload = {
-        "number":  numero,
-        "text":    mensaje,
-        "delay":   1200,
+        "number": numero,
+        "text": mensaje,
+        "delay": 1200,
     }
-    try:
-        r = requests.post(url, headers=headers, json=payload, timeout=60)
-        return {"ok": r.status_code in (200, 201), "status": r.status_code, "body": r.text}
-    except Exception as e:
-        return {"ok": False, "status": 0, "body": str(e)}
+
+    for intento in range(intentos):
+        try:
+            r = requests.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=(10, 90)   # 10 s conectar, 90 s esperar respuesta
+            )
+
+            return {
+                "ok": r.status_code in (200, 201),
+                "status": r.status_code,
+                "body": r.text
+            }
+
+        except requests.exceptions.ReadTimeout:
+            if intento < intentos - 1:
+                time.sleep(5)
+                continue
+
+            return {
+                "ok": False,
+                "status": 408,
+                "body": "Timeout esperando respuesta de Evolution API."
+            }
+
+        except requests.exceptions.ConnectionError:
+            if intento < intentos - 1:
+                time.sleep(5)
+                continue
+
+            return {
+                "ok": False,
+                "status": 503,
+                "body": "No se pudo conectar con Evolution API."
+            }
+
+        except Exception as e:
+            return {
+                "ok": False,
+                "status": 500,
+                "body": str(e)
+            }
+
+# def enviar_whatsapp(numero: str, mensaje: str,
+#                     api_url: str, api_key: str, instancia: str) -> dict:
+#     """Envía mensaje via Evolution API."""
+#     url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
+#     headers = {
+#         "Content-Type": "application/json",
+#         "apikey": api_key,
+#     }
+#     payload = {
+#         "number":  numero,
+#         "text":    mensaje,
+#         "delay":   1200,
+#     }
+#     try:
+#         r = requests.post(url, headers=headers, json=payload, timeout=60)
+#         return {"ok": r.status_code in (200, 201), "status": r.status_code, "body": r.text}
+#     except Exception as e:
+#         return {"ok": False, "status": 0, "body": str(e)}
 
 
 # ════════════════════════════════════════════════════════════════════════════════
