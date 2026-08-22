@@ -207,6 +207,17 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
 
+def _sin_replay_cargado(df: pd.DataFrame) -> pd.Series:
+    """True para las filas donde Match_replays está vacío (sin link cargado
+    todavía). Se usa para excluir del flujo de WhatsApp las batallas que ya
+    tienen un replay subido, aunque figuren como pendientes (Walkover == -1)."""
+    if 'Match_replays' not in df.columns:
+        return pd.Series(True, index=df.index)
+    val = df['Match_replays'].astype(str).str.strip()
+    vacios = val.isin(['', 'nan', 'None', 'NaT', '-']) | df['Match_replays'].isna()
+    return vacios
+
+
 def contar_pendientes_por(fp: pd.DataFrame, columna_rival: str = None) -> dict:
     """Cuenta batallas pendientes reales (deduplicadas correctamente, respetando
     'Rep' como partida distinta) agrupadas por Rival, Formato (Tier), Tier y Aka_evento.
@@ -639,15 +650,23 @@ def show():
                        "Subí el archivo Excel con columnas: Jugador, Telefono, Pais, Codigo.")
             st.stop()
 
+        # Para WhatsApp, una batalla con Match_replays ya cargado (link no
+        # vacío) NO se considera pendiente, aunque Walkover siga en -1: ya
+        # se jugó y solo falta que se registre el resultado.
+        fp_wa = fp[_sin_replay_cargado(fp)].copy()
+        n_excluidas = len(fp) - len(fp_wa)
+        if n_excluidas > 0:
+            st.caption(f"ℹ️ {n_excluidas} batalla(s) con replay ya cargado se excluyeron de WhatsApp.")
+
         # Obtener jugadores únicos con pendientes
-        jugadores_p1 = fp['player1'].dropna().unique().tolist()
-        jugadores_p2 = fp['player2'].dropna().unique().tolist()
+        jugadores_p1 = fp_wa['player1'].dropna().unique().tolist()
+        jugadores_p2 = fp_wa['player2'].dropna().unique().tolist()
         todos_jugadores = sorted(set(jugadores_p1 + jugadores_p2))
 
         # Mostrar tabla de cobertura
         cobertura = []
         for j in todos_jugadores:
-            n_bat = len(fp[(fp['player1']==j)|(fp['player2']==j)])
+            n_bat = len(fp_wa[(fp_wa['player1']==j)|(fp_wa['player2']==j)])
             data  = celulares.get(j.lower(), {})
             cobertura.append({
                 'Jugador':  j,
@@ -691,7 +710,7 @@ def show():
             preview_j = seleccionados[0]
             preview_data = celulares.get(preview_j.lower(), {})
             preview_pais = preview_data.get('pais', 'Peru')
-            bats_preview = fp[(fp['player1']==preview_j)|(fp['player2']==preview_j)]
+            bats_preview = fp_wa[(fp_wa['player1']==preview_j)|(fp_wa['player2']==preview_j)]
             msg_preview  = construir_mensaje(preview_j, bats_preview, celulares, preview_pais)
 
             with st.expander(f"👁️ Preview mensaje — {preview_j}", expanded=True):
@@ -724,7 +743,7 @@ def show():
                     data_j  = celulares.get(jugador.lower(), {})
                     pais_j  = data_j.get('pais', 'Peru')
                     tel_j   = data_j.get('tel_completo', '')
-                    bats_j  = fp[(fp['player1']==jugador)|(fp['player2']==jugador)]
+                    bats_j  = fp_wa[(fp_wa['player1']==jugador)|(fp_wa['player2']==jugador)]
 
                     if not tel_j:
                         resultados.append({'Jugador':jugador,'Estado':'❌ Sin número','Tel':''})
