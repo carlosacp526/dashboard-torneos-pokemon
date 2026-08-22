@@ -135,15 +135,16 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
 
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
+
 import requests
 import time
-
 
 
 def enviar_whatsapp(numero: str, mensaje: str,
                     api_url: str, api_key: str, instancia: str,
                     intentos=2):
 
+    # Endpoint exacto de Evolution API v2
     url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
 
     headers = {
@@ -151,16 +152,19 @@ def enviar_whatsapp(numero: str, mensaje: str,
         "apikey": api_key,
     }
 
-    # Estructura explícita para evitar fallos de renderizado en v2
+    # Limpiar el número (solo dígitos)
+    clean_num = "".join(filter(str.isdigit, str(numero)))
+
+    # Estructura estricta para Evolution API v2.x
     payload = {
-        "number": str(numero).strip(),
-        "text": str(mensaje),
-        "textMessage": {
-            "text": str(mensaje)
-        },
+        "number": clean_num,
         "options": {
             "delay": 1200,
-            "presence": "composing"
+            "presence": "composing",
+            "linkPreview": False
+        },
+        "textMessage": {
+            "text": str(mensaje)
         }
     }
 
@@ -173,8 +177,23 @@ def enviar_whatsapp(numero: str, mensaje: str,
                 timeout=(5, 15)
             )
 
+            if r.status_code in (200, 201):
+                return {"ok": True, "status": r.status_code, "body": r.text}
+            
+            # Si la ruta /message/sendText/{instancia} rebota con 500, probar endpoint alternativo v2
+            url_alt = f"{api_url.rstrip('/')}/message/sendText"
+            payload_alt = {
+                "instance": instancia,
+                "number": clean_num,
+                "text": str(mensaje)
+            }
+            r_alt = requests.post(url_alt, headers=headers, json=payload_alt, timeout=(5, 15))
+            
+            if r_alt.status_code in (200, 201):
+                return {"ok": True, "status": r_alt.status_code, "body": r_alt.text}
+
             return {
-                "ok": r.status_code in (200, 201),
+                "ok": False,
                 "status": r.status_code,
                 "body": r.text
             }
@@ -187,8 +206,6 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
         except Exception as e:
             return {"ok": False, "status": 500, "body": str(e)}
-
-
         
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
