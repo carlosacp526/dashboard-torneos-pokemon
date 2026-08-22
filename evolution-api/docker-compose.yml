@@ -16,7 +16,7 @@ services:
       retries: 10
 
   evolution-api:
-    image: evoapicloud/evolution-api:v2.1.1
+    image: evoapicloud/evolution-api:latest
     container_name: evolution_api
     restart: always
     ports:
@@ -40,7 +40,7 @@ services:
       - DATABASE_SAVE_DATA_CONTACTS=true
       - DATABASE_SAVE_DATA_CHATS=true
 
-      - CONFIG_SESSION_PHONE_CLIENT=PoketubiBot
+      - CONFIG_SESSION_PHONE_CLIENT=Poketubi
       - CONFIG_SESSION_PHONE_NAME=Chrome
       - QRCODE_LIMIT=30
       - LOG_LEVEL=ERROR
