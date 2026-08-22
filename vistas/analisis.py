@@ -113,26 +113,15 @@ def show():
         pais_counts = df_cel_activos['Pais'].value_counts().reset_index()
         pais_counts.columns = ['País', 'Jugadores']
 
-        col_map, col_bar = st.columns([1, 1])
-        with col_map:
-            fig_map = px.choropleth(
-                pais_counts, locations='País', locationmode='country names',
-                color='Jugadores', color_continuous_scale='Blues',
-                title='Distribución por País',
-            )
-            fig_map.update_layout(margin=dict(l=0,r=0,t=30,b=0), height=320)
-            st.plotly_chart(fig_map, use_container_width=True)
-
-        with col_bar:
-            fig_bar = px.bar(
-                pais_counts, x='Jugadores', y='País', orientation='h',
-                color='Jugadores', color_continuous_scale='Blues',
-                text='Jugadores', title='Jugadores por País'
-            )
-            fig_bar.update_traces(textposition='outside')
-            fig_bar.update_layout(yaxis={'categoryorder':'total ascending'},
-                                   height=320, showlegend=False)
-            st.plotly_chart(fig_bar, use_container_width=True)
+        fig_bar = px.bar(
+            pais_counts, x='Jugadores', y='País', orientation='h',
+            color='Jugadores', color_continuous_scale='Blues',
+            text='Jugadores', title='Jugadores por País'
+        )
+        fig_bar.update_traces(textposition='outside')
+        fig_bar.update_layout(yaxis={'categoryorder':'total ascending'},
+                               height=400, showlegend=False)
+        st.plotly_chart(fig_bar, use_container_width=True)
 
         total_con_pais = df_cel_activos['Jugador'].nunique()
         total_jugadores = len(jugadores_csv)
