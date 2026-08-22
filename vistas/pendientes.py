@@ -89,9 +89,14 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
     """Arma el mensaje de WhatsApp personalizado, agrupado por rival."""
     # ── Deduplicar batallas repetidas ────────────────────────────────
     # Se considera "la misma batalla" cuando coinciden Torneo, Evento,
-    # Tier, Fecha límite y Fase — evita contar 2 o 3 veces lo mismo si
-    # el CSV trae filas duplicadas.
-    dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fecha_max', 'Fase_completo']
+    # Tier y Fase — evita contar 2 o 3 veces lo mismo si el CSV trae
+    # filas duplicadas.
+    # IMPORTANTE: 'Rep' se incluye porque distingue partidas distintas dentro
+    # de una misma serie/jornada (ej: mejor de 3 -> Rep 1, 2, 3). Sin 'Rep' en
+    # esta lista, drop_duplicates colapsaba esas 3 partidas en 1 sola.
+    # 'Fecha_max' NO se usa para deduplicar: es solo informativa y no debe
+    # afectar si dos filas se consideran la misma batalla o no.
+    dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
                   if c in batallas.columns]
     if dedup_cols:
         batallas = batallas.drop_duplicates(subset=dedup_cols).reset_index(drop=True)
@@ -155,9 +160,9 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
             detalle = f"      • {evento} | {ronda}"
             if formato and formato not in ('nan', ''):
                 detalle += f" | Formato: {formato}"
-            if fecha_m and fecha_m not in ('nan', 'NaT'):
-                detalle += f" | ⏰ {fecha_m}"
             lineas.append(detalle)
+            if fecha_m and fecha_m not in ('nan', 'NaT'):
+                lineas.append(f"      ⏰ Fecha límite: {fecha_m}")
 
         lineas.append(f"   🌍 País rival: {pais_rival} ({dif_horas})")
         if tel_rival and tel_rival not in ('nan', ''):
@@ -168,6 +173,46 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
 
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
+
+def contar_pendientes_por(fp: pd.DataFrame, columna_rival: str = None) -> dict:
+    """Cuenta batallas pendientes reales (deduplicadas correctamente, respetando
+    'Rep' como partida distinta) agrupadas por Rival, Formato (Tier), Tier y Aka_evento.
+
+    Devuelve un dict con 4 DataFrames: {'rival':..., 'formato':..., 'tier':..., 'aka_evento':...}
+    cada uno con columnas [<campo>, 'Batallas'].
+    """
+    dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
+                  if c in fp.columns]
+    df = fp.drop_duplicates(subset=dedup_cols).copy() if dedup_cols else fp.copy()
+
+    resultados = {}
+
+    # Por rival: cada fila aporta 1 a cada uno de los dos jugadores (player1 y player2)
+    rivales = pd.concat([df['player1'], df['player2']]).dropna()
+    resultados['rival'] = (
+        rivales.value_counts().rename_axis('Rival').reset_index(name='Batallas')
+    )
+
+    if 'Formato' in df.columns:
+        resultados['formato'] = (
+            df['Formato'].dropna().value_counts()
+              .rename_axis('Formato').reset_index(name='Batallas')
+        )
+
+    if 'Tier' in df.columns:
+        resultados['tier'] = (
+            df['Tier'].dropna().value_counts()
+              .rename_axis('Tier').reset_index(name='Batallas')
+        )
+
+    if 'Aka_evento' in df.columns:
+        resultados['aka_evento'] = (
+            df['Aka_evento'].dropna().value_counts()
+              .rename_axis('Aka_evento').reset_index(name='Batallas')
+        )
+
+    return resultados
+
 
 import requests
 import time
@@ -516,6 +561,27 @@ def show():
         st.dataframe(tabla, use_container_width=True, hide_index=True, height=500)
         st.download_button("📥 Descargar CSV", tabla.to_csv(index=False).encode(),
                            "pendientes.csv", "text/csv", key="dl_pend_csv")
+
+        # ── Resumen de conteo (respeta 'Rep' para no subcontar series Bo3, etc.) ──
+        with st.expander("📊 Conteo de batallas pendientes por Rival / Formato / Tier / Evento"):
+            conteos = contar_pendientes_por(fp)
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("**Por Rival**")
+                st.dataframe(conteos['rival'], use_container_width=True, hide_index=True, height=300)
+            with c2:
+                if 'aka_evento' in conteos:
+                    st.markdown("**Por Evento (Aka_evento)**")
+                    st.dataframe(conteos['aka_evento'], use_container_width=True, hide_index=True, height=300)
+            c3, c4 = st.columns(2)
+            with c3:
+                if 'formato' in conteos:
+                    st.markdown("**Por Formato**")
+                    st.dataframe(conteos['formato'], use_container_width=True, hide_index=True, height=300)
+            with c4:
+                if 'tier' in conteos:
+                    st.markdown("**Por Tier**")
+                    st.dataframe(conteos['tier'], use_container_width=True, hide_index=True, height=300)
 
     # ── WHATSAPP ──────────────────────────────────────────────────────────────
     with tab_wa:
