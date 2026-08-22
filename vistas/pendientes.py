@@ -152,7 +152,7 @@ def enviar_whatsapp(numero: str, mensaje: str,
     payload = {
         "number": numero,
         "text": mensaje,
-        "delay": 1200,
+        "delay": 0,
     }
 
     for intento in range(intentos):
@@ -161,7 +161,7 @@ def enviar_whatsapp(numero: str, mensaje: str,
                 url,
                 headers=headers,
                 json=payload,
-                timeout=(10, 90)   # 10 s conectar, 90 s esperar respuesta
+                timeout=(10, 180)   # 10 s conectar, 90 s esperar respuesta
             )
 
             return {
