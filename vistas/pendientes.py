@@ -138,6 +138,8 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
 import requests
 import time
 
+
+
 def enviar_whatsapp(numero: str, mensaje: str,
                     api_url: str, api_key: str, instancia: str,
                     intentos=2):
@@ -149,10 +151,13 @@ def enviar_whatsapp(numero: str, mensaje: str,
         "apikey": api_key,
     }
 
-    # Formato compatible con Evolution API v2
+    # Estructura explícita para evitar fallos de renderizado en v2
     payload = {
-        "number": numero,
-        "text": mensaje,
+        "number": str(numero).strip(),
+        "text": str(mensaje),
+        "textMessage": {
+            "text": str(mensaje)
+        },
         "options": {
             "delay": 1200,
             "presence": "composing"
@@ -182,7 +187,6 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
         except Exception as e:
             return {"ok": False, "status": 500, "body": str(e)}
-
 
 
         
