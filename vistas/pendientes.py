@@ -175,9 +175,8 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         tel_rival  = rival_data.get('tel_completo', '')
         dif_horas  = diff_horas(pais_participante, pais_rival)
 
-        lineas.append(f"*{idx_rival}. vs {rival}*")
-        lineas.append(f"🔢 Número de batallas: {n_bat_rival}")
-        lineas.append("")
+        plural = 's' if n_bat_rival != 1 else ''
+        lineas.append(f"*{idx_rival}. vs {rival}* — {n_bat_rival} batalla{plural}")
 
         # ── Agrupar partidos idénticos (mismas Rep de una misma serie) ──
         # Varias filas pueden ser la misma serie (ej: mejor de 3 -> Rep 1,2,3)
@@ -196,6 +195,9 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
                 orden_partidos.append(key)
             vistos[key] += 1
 
+        # ── Mensaje compacto: sin líneas en blanco entre el detalle y la
+        # fecha, para que WhatsApp no colapse el mensaje por ser demasiado
+        # largo en cantidad de líneas ────────────────────────────────────
         for evento, ronda, formato, fecha_m in orden_partidos:
             n_partidas = vistos[(evento, ronda, formato, fecha_m)]
             detalle = f"   • {evento} | {ronda}"
@@ -203,10 +205,9 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
                 detalle += f" | Formato: {formato}"
             if n_partidas > 1:
                 detalle += f" | 🎮 {n_partidas} batallas"
-            lineas.append(detalle)
             if fecha_m and fecha_m not in ('nan', 'NaT'):
-                lineas.append(f"   📅 Fecha límite: {fecha_m}")
-            lineas.append("")
+                detalle += f"\n   📅 Fecha límite: {fecha_m}"
+            lineas.append(detalle)
 
         lineas.append(f"🌍 País rival: {pais_rival} ({dif_horas})")
         if tel_rival and tel_rival not in ('nan', ''):
@@ -214,9 +215,6 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         else:
             lineas.append(f"📱 WhatsApp rival: ❌ no cargado")
         lineas.append("")
-        if idx_rival < len(orden_rivales):
-            lineas.append("➖➖➖➖➖➖➖➖➖➖")
-            lineas.append("")
 
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
