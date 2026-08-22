@@ -149,27 +149,47 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         dif_horas  = diff_horas(pais_participante, pais_rival)
 
         lineas.append(f"*{idx_rival}. vs {rival}*")
-        lineas.append(f"   🔢 Número de batallas: {n_bat_rival}")
+        lineas.append(f"🔢 Número de batallas: {n_bat_rival}")
+        lineas.append("")
 
+        # ── Agrupar partidos idénticos (mismas Rep de una misma serie) ──
+        # Varias filas pueden ser la misma serie (ej: mejor de 3 -> Rep 1,2,3)
+        # con idéntico evento/ronda/formato/fecha. Se muestran una sola vez,
+        # indicando cuántas partidas tiene la serie.
+        vistos = {}
+        orden_partidos = []
         for row in filas_rival:
             evento  = _nombre_evento(row)
             formato = str(row.get('Tier', ''))
             fecha_m = str(row.get('Fecha_max', ''))[:10] if 'Fecha_max' in row.index else ''
             ronda   = str(row.get('round', ''))
+            key = (evento, ronda, formato, fecha_m)
+            if key not in vistos:
+                vistos[key] = 0
+                orden_partidos.append(key)
+            vistos[key] += 1
 
-            detalle = f"      • {evento} | {ronda}"
+        for evento, ronda, formato, fecha_m in orden_partidos:
+            n_partidas = vistos[(evento, ronda, formato, fecha_m)]
+            detalle = f"   • {evento} | {ronda}"
             if formato and formato not in ('nan', ''):
                 detalle += f" | Formato: {formato}"
+            if n_partidas > 1:
+                detalle += f" | 🎮 {n_partidas} batallas"
             lineas.append(detalle)
             if fecha_m and fecha_m not in ('nan', 'NaT'):
-                lineas.append(f"      ⏰ Fecha límite: {fecha_m}")
+                lineas.append(f"   📅 Fecha límite: {fecha_m}")
+            lineas.append("")
 
-        lineas.append(f"   🌍 País rival: {pais_rival} ({dif_horas})")
+        lineas.append(f"🌍 País rival: {pais_rival} ({dif_horas})")
         if tel_rival and tel_rival not in ('nan', ''):
-            lineas.append(f"   📱 WhatsApp rival: https://wa.me/{tel_rival}")
+            lineas.append(f"📱 WhatsApp rival: https://wa.me/{tel_rival}")
         else:
-            lineas.append(f"   📱 WhatsApp rival: ❌ no cargado")
+            lineas.append(f"📱 WhatsApp rival: ❌ no cargado")
         lineas.append("")
+        if idx_rival < len(orden_rivales):
+            lineas.append("➖➖➖➖➖➖➖➖➖➖")
+            lineas.append("")
 
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
