@@ -96,10 +96,23 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
     # esta lista, drop_duplicates colapsaba esas 3 partidas en 1 sola.
     # 'Fecha_max' NO se usa para deduplicar: es solo informativa y no debe
     # afectar si dos filas se consideran la misma batalla o no.
-    dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
-                  if c in batallas.columns]
-    if dedup_cols:
-        batallas = batallas.drop_duplicates(subset=dedup_cols).reset_index(drop=True)
+    # IMPORTANTE: se agrega el par de jugadores (normalizado, sin importar si
+    # el jugador quedó en player1 o player2) porque en fase de grupos un mismo
+    # jugador puede enfrentar a VARIOS rivales distintos dentro del mismo
+    # Torneo/Evento/Tier/Fase/Rep (ej: todos Rep=1). Sin esto, drop_duplicates
+    # colapsaba erróneamente partidas contra rivales distintos en una sola.
+    batallas = batallas.copy()
+    batallas['_par_jugadores'] = batallas.apply(
+        lambda r: tuple(sorted([str(r.get('player1', '')).strip().lower(),
+                                 str(r.get('player2', '')).strip().lower()])),
+        axis=1
+    )
+    dedup_cols = ['_par_jugadores'] + [
+        c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
+        if c in batallas.columns
+    ]
+    batallas = batallas.drop_duplicates(subset=dedup_cols).reset_index(drop=True)
+    batallas = batallas.drop(columns=['_par_jugadores'])
 
     nombre = jugador.split()[0].capitalize()
     n_bat  = len(batallas)
@@ -201,9 +214,23 @@ def contar_pendientes_por(fp: pd.DataFrame, columna_rival: str = None) -> dict:
     Devuelve un dict con 4 DataFrames: {'rival':..., 'formato':..., 'tier':..., 'aka_evento':...}
     cada uno con columnas [<campo>, 'Batallas'].
     """
-    dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
-                  if c in fp.columns]
-    df = fp.drop_duplicates(subset=dedup_cols).copy() if dedup_cols else fp.copy()
+    df = fp.copy()
+    if 'player1' in df.columns and 'player2' in df.columns:
+        df['_par_jugadores'] = df.apply(
+            lambda r: tuple(sorted([str(r.get('player1', '')).strip().lower(),
+                                     str(r.get('player2', '')).strip().lower()])),
+            axis=1
+        )
+        dedup_cols = ['_par_jugadores'] + [
+            c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
+            if c in df.columns
+        ]
+        df = df.drop_duplicates(subset=dedup_cols).drop(columns=['_par_jugadores'])
+    else:
+        dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fase_completo', 'Rep']
+                      if c in df.columns]
+        if dedup_cols:
+            df = df.drop_duplicates(subset=dedup_cols)
 
     resultados = {}
 
