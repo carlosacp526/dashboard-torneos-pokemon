@@ -207,7 +207,7 @@ def show():
                                      key="evo_url_input")
         with col_b:
             instancia = st.text_input("Instancia", value=st.session_state.get('evo_inst',''),
-                                       placeholder="poketubi",
+                                       placeholder="Poketubi",
                                        key="evo_inst_input")
         with col_c:
             api_key = st.text_input("API Key", value=st.session_state.get('evo_key',''),
