@@ -50,7 +50,8 @@ def cargar_celulares():
                 pais     = str(row.get('Pais', '')).strip()
                 codigo   = str(row.get('Codigo', '')).strip()
                 # Construir número completo
-                tel_completo = str(row.get('Telefono_completo', '')).strip().replace(' ', '')
+                tel_completo = (str(row.get('Telefono_completo', '')).strip()
+                                .replace('+', '').replace(' ', '').replace('-', ''))
                 if not tel_completo or tel_completo in ('nan', ''):
                     tel_completo = f"+{codigo}{telefono}" if codigo and codigo not in ('nan','') else telefono
                 result[jugador.lower()] = {
