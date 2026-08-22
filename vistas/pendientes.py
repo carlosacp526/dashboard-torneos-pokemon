@@ -87,6 +87,15 @@ def diff_horas(pais_participante: str, pais_rival: str) -> str:
 def construir_mensaje(jugador: str, batallas: pd.DataFrame,
                       celulares: dict, pais_participante: str) -> str:
     """Arma el mensaje de WhatsApp personalizado."""
+    # ── Deduplicar batallas repetidas ────────────────────────────────
+    # Se considera "la misma batalla" cuando coinciden Torneo, Evento,
+    # Tier, Fecha límite y Fase — evita contar 2 o 3 veces lo mismo si
+    # el CSV trae filas duplicadas.
+    dedup_cols = [c for c in ['N_Torneo', 'Aka_evento', 'Tier', 'Fecha_max', 'Fase_completo']
+                  if c in batallas.columns]
+    if dedup_cols:
+        batallas = batallas.drop_duplicates(subset=dedup_cols).reset_index(drop=True)
+
     nombre = jugador.split()[0].capitalize()
     n_bat  = len(batallas)
 
@@ -127,6 +136,8 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
             evento = league
 
         lineas.append(f"*{i}. vs {rival}*")
+        if n_bat > 1:
+            lineas.append(f"   🔢 Batalla N°: {i}")
         lineas.append(f"   📋 {evento} | {ronda}")
         if formato and formato not in ('nan',''):
             lineas.append(f"   🎮 Formato: {formato}")
