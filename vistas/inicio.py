@@ -71,7 +71,7 @@ def show():
         <div class="nav-section">
             <div class="nav-section-title">👤 Jugadores y Competencias</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 👤 Perfil de Jugador\n- 🕒 Batallas Pendientes")
+        st.markdown("- 👤 Perfil de Jugador")
         if st.button("➡️ Ir a Jugadores y Competencias", use_container_width=True, key="btn_jugadores"):
             if "jugadores" in pages:
                 st.switch_page(pages["jugadores"])
