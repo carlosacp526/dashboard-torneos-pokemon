@@ -171,7 +171,7 @@ def enviar_whatsapp(numero: str, mensaje: str,
                 url,
                 headers=headers,
                 json=payload,
-                timeout=(5, 15)
+                timeout=(10, 45)  # connect=10s, read=45s
             )
 
             return {
@@ -182,9 +182,11 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
         except requests.exceptions.ReadTimeout:
             if intento < intentos - 1:
-                time.sleep(2)
+                time.sleep(3)
                 continue
-            return {"ok": False, "status": 408, "body": "Timeout en la solicitud."}
+            return {"ok": False, "status": 408, "body": 
+                    "Timeout — verificá: 1) WhatsApp conectado (QR escaneado) "
+                    "2) URL correcta 3) Instancia activa en Evolution API"}
 
         except Exception as e:
             return {"ok": False, "status": 500, "body": str(e)}
