@@ -221,24 +221,34 @@ def show():
             st.success("Configuración guardada en sesión.")
 
         # Test de conexión
+# Test de conexión
         if st.button("🔌 Probar conexión"):
-            url_test = st.session_state.get('evo_url','')
-            key_test = st.session_state.get('evo_key','')
-            inst_test= st.session_state.get('evo_inst','')
+            url_test  = st.session_state.get('evo_url', '').strip()
+            key_test  = st.session_state.get('evo_key', '').strip()
+            inst_test = st.session_state.get('evo_inst', '').strip() or "Poketubi"
+            
             if not url_test:
                 st.error("Ingresá la URL base primero.")
             else:
                 try:
+                    # Endpoint específico que valida la API Key de la instancia
+                    url_state = f"{url_test.rstrip('/')}/instance/connectionState/{inst_test}"
                     r = requests.get(
-                        f"{url_test.rstrip('/')}/instance/fetchInstances",
-                        headers={"apikey": key_test}, timeout=60
+                        url_state,
+                        headers={"apikey": key_test},
+                        timeout=10
                     )
+                    
                     if r.status_code == 200:
-                        st.success(f"✅ Conexión OK — {r.status_code}")
+                        estado = r.json().get('instance', {}).get('state', 'desconocido')
+                        if estado == 'open':
+                            st.success(f"✅ Conexión OK — Estado WhatsApp: ONLINE ({estado})")
+                        else:
+                            st.warning(f"⚠️ API Conectada pero WhatsApp está: {estado.upper()}. Escanea el QR.")
                     else:
-                        st.warning(f"⚠️ Respuesta {r.status_code}: {r.text[:200]}")
+                        st.error(f"❌ Error {r.status_code}: {r.text}")
                 except Exception as e:
-                    st.error(f"❌ Error: {e}")
+                    st.error(f"❌ Error de red: {e}")
 
     st.markdown("---")
 
