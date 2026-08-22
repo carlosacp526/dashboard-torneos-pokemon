@@ -104,6 +104,7 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         # Info del rival
         rival_data = celulares.get(rival.lower(), {})
         pais_rival = rival_data.get('pais', '?')
+        tel_rival  = rival_data.get('tel_completo', '')
         dif_horas  = diff_horas(pais_participante, pais_rival)
 
         # Info de la batalla
@@ -132,6 +133,10 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         if fecha_m and fecha_m not in ('nan', 'NaT'):
             lineas.append(f"   ⏰ Fecha límite: {fecha_m}")
         lineas.append(f"   🌍 País rival: {pais_rival} ({dif_horas})")
+        if tel_rival and tel_rival not in ('nan', ''):
+            lineas.append(f"   📱 WhatsApp rival: https://wa.me/{tel_rival}")
+        else:
+            lineas.append(f"   📱 WhatsApp rival: ❌ no cargado")
         lineas.append("")
 
     lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
