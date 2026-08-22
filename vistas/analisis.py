@@ -113,14 +113,31 @@ def show():
         pais_counts = df_cel_activos['Pais'].value_counts().reset_index()
         pais_counts.columns = ['País', 'Jugadores']
 
+        BANDERAS = {
+            "Peru": "🇵🇪", "Argentina": "🇦🇷", "Mexico": "🇲🇽",
+            "Venezuela": "🇻🇪", "Colombia": "🇨🇴", "Ecuador": "🇪🇨",
+            "Chile": "🇨🇱", "Bolivia": "🇧🇴", "Paraguay": "🇵🇾",
+            "Uruguay": "🇺🇾", "España": "🇪🇸", "Costa Rica": "🇨🇷",
+            "EEUU": "🇺🇸", "USA": "🇺🇸", "Panama": "🇵🇦",
+            "Guatemala": "🇬🇹", "Honduras": "🇭🇳", "Cuba": "🇨🇺",
+            "Brasil": "🇧🇷", "Portugal": "🇵🇹",
+        }
+        pais_counts['País_flag'] = pais_counts['País'].apply(
+            lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
+        )
+        altura = max(400, len(pais_counts) * 38)
         fig_bar = px.bar(
-            pais_counts, x='Jugadores', y='País', orientation='h',
+            pais_counts, x='Jugadores', y='País_flag', orientation='h',
             color='Jugadores', color_continuous_scale='Blues',
             text='Jugadores', title='Jugadores por País'
         )
         fig_bar.update_traces(textposition='outside')
-        fig_bar.update_layout(yaxis={'categoryorder':'total ascending'},
-                               height=400, showlegend=False)
+        fig_bar.update_layout(
+            yaxis={'categoryorder':'total ascending', 'title': ''},
+            xaxis={'title': 'Jugadores'},
+            height=altura, showlegend=False,
+            margin=dict(l=10, r=40, t=40, b=20)
+        )
         st.plotly_chart(fig_bar, use_container_width=True)
 
         total_con_pais = df_cel_activos['Jugador'].nunique()
