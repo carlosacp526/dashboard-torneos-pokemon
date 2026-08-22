@@ -140,7 +140,7 @@ import time
 
 def enviar_whatsapp(numero: str, mensaje: str,
                     api_url: str, api_key: str, instancia: str,
-                    intentos=3):
+                    intentos=2):
 
     url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
 
@@ -149,19 +149,21 @@ def enviar_whatsapp(numero: str, mensaje: str,
         "apikey": api_key,
     }
 
+    # "delay": 1 fuerza a la API a procesar de inmediato sin pausar la respuesta HTTP
     payload = {
         "number": numero,
         "text": mensaje,
-        "delay": 0,
+        "delay": 1,
     }
 
     for intento in range(intentos):
         try:
+            # Bajamos el timeout a 10s máximo para que Cloudflare no corte la llamada
             r = requests.post(
                 url,
                 headers=headers,
                 json=payload,
-                timeout=(10, 180)   # 10 s conectar, 90 s esperar respuesta
+                timeout=(5, 10)
             )
 
             return {
@@ -172,18 +174,18 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
         except requests.exceptions.ReadTimeout:
             if intento < intentos - 1:
-                time.sleep(5)
+                time.sleep(2)
                 continue
 
             return {
                 "ok": False,
                 "status": 408,
-                "body": "Timeout esperando respuesta de Evolution API."
+                "body": "Timeout: Evolution API tardó demasiado en responder."
             }
 
         except requests.exceptions.ConnectionError:
             if intento < intentos - 1:
-                time.sleep(5)
+                time.sleep(2)
                 continue
 
             return {
@@ -198,7 +200,6 @@ def enviar_whatsapp(numero: str, mensaje: str,
                 "status": 500,
                 "body": str(e)
             }
-
 # def enviar_whatsapp(numero: str, mensaje: str,
 #                     api_url: str, api_key: str, instancia: str) -> dict:
 #     """Envía mensaje via Evolution API."""
