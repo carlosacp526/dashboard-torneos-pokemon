@@ -144,7 +144,6 @@ def enviar_whatsapp(numero: str, mensaje: str,
                     api_url: str, api_key: str, instancia: str,
                     intentos=2):
 
-    # Endpoint exacto de Evolution API v2
     url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
 
     headers = {
@@ -152,20 +151,13 @@ def enviar_whatsapp(numero: str, mensaje: str,
         "apikey": api_key,
     }
 
-    # Limpiar el número (solo dígitos)
+    # Dejar solo dígitos numéricos (ejemplo: 51933448842)
     clean_num = "".join(filter(str.isdigit, str(numero)))
 
-    # Estructura estricta para Evolution API v2.x
+    # Payload simplificado directo para Evolution API v2
     payload = {
         "number": clean_num,
-        "options": {
-            "delay": 1200,
-            "presence": "composing",
-            "linkPreview": False
-        },
-        "textMessage": {
-            "text": str(mensaje)
-        }
+        "text": str(mensaje)
     }
 
     for intento in range(intentos):
@@ -177,23 +169,8 @@ def enviar_whatsapp(numero: str, mensaje: str,
                 timeout=(5, 15)
             )
 
-            if r.status_code in (200, 201):
-                return {"ok": True, "status": r.status_code, "body": r.text}
-            
-            # Si la ruta /message/sendText/{instancia} rebota con 500, probar endpoint alternativo v2
-            url_alt = f"{api_url.rstrip('/')}/message/sendText"
-            payload_alt = {
-                "instance": instancia,
-                "number": clean_num,
-                "text": str(mensaje)
-            }
-            r_alt = requests.post(url_alt, headers=headers, json=payload_alt, timeout=(5, 15))
-            
-            if r_alt.status_code in (200, 201):
-                return {"ok": True, "status": r_alt.status_code, "body": r_alt.text}
-
             return {
-                "ok": False,
+                "ok": r.status_code in (200, 201),
                 "status": r.status_code,
                 "body": r.text
             }
