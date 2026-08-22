@@ -87,6 +87,61 @@ def show():
         st.plotly_chart(fig, use_container_width=True)
 
 
+
+    # ── Jugadores por País ──────────────────────────────────────────
+    st.markdown('<div id="paises"></div>', unsafe_allow_html=True)
+    st.subheader("🌍 Jugadores por País")
+
+    cel_path = None
+    for candidate in ["celulares.xlsx",
+                       os.path.join(os.getcwd(), "celulares.xlsx"),
+                       os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "celulares.xlsx")]:
+        if os.path.exists(candidate):
+            cel_path = candidate
+            break
+
+    if cel_path:
+        df_cel = pd.read_excel(cel_path)[['Jugador','Pais']].dropna(subset=['Pais'])
+        df_cel['Jugador'] = df_cel['Jugador'].str.strip().str.lower()
+
+        jugadores_csv = pd.concat([
+            df['player1'].dropna().str.strip().str.lower(),
+            df['player2'].dropna().str.strip().str.lower()
+        ]).unique()
+
+        df_cel_activos = df_cel[df_cel['Jugador'].isin(jugadores_csv)]
+        pais_counts = df_cel_activos['Pais'].value_counts().reset_index()
+        pais_counts.columns = ['País', 'Jugadores']
+
+        col_map, col_bar = st.columns([1, 1])
+        with col_map:
+            fig_map = px.choropleth(
+                pais_counts, locations='País', locationmode='country names',
+                color='Jugadores', color_continuous_scale='Blues',
+                title='Distribución por País',
+            )
+            fig_map.update_layout(margin=dict(l=0,r=0,t=30,b=0), height=320)
+            st.plotly_chart(fig_map, use_container_width=True)
+
+        with col_bar:
+            fig_bar = px.bar(
+                pais_counts, x='Jugadores', y='País', orientation='h',
+                color='Jugadores', color_continuous_scale='Blues',
+                text='Jugadores', title='Jugadores por País'
+            )
+            fig_bar.update_traces(textposition='outside')
+            fig_bar.update_layout(yaxis={'categoryorder':'total ascending'},
+                                   height=320, showlegend=False)
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        total_con_pais = df_cel_activos['Jugador'].nunique()
+        total_jugadores = len(jugadores_csv)
+        st.caption(f"Países: **{pais_counts['País'].nunique()}** · "
+                   f"Jugadores con país: **{total_con_pais}** de **{total_jugadores}**")
+    else:
+        st.info("Subí **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
+
+
     # ── Clasificación por Evento ────────────────────────────────────
     st.markdown('<div id="clasificacion-evento"></div>', unsafe_allow_html=True)
     st.subheader("Clasificación por Evento")
