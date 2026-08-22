@@ -153,17 +153,13 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
     clean_num = "".join(filter(str.isdigit, str(numero)))
 
-    # Estructura requerida por la versión interna de la API
+    # Formato exacto que pide el validador de tu versión
     payload = {
         "number": clean_num,
+        "text": str(mensaje),
         "options": {
             "delay": 1200,
             "presence": "composing"
-        },
-        "message": {
-            "textMessage": {
-                "text": str(mensaje)
-            }
         }
     }
 
