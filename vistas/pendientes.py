@@ -149,21 +149,23 @@ def enviar_whatsapp(numero: str, mensaje: str,
         "apikey": api_key,
     }
 
-    # "delay": 1 fuerza a la API a procesar de inmediato sin pausar la respuesta HTTP
+    # Formato compatible con Evolution API v2
     payload = {
         "number": numero,
         "text": mensaje,
-        "delay": 1,
+        "options": {
+            "delay": 1200,
+            "presence": "composing"
+        }
     }
 
     for intento in range(intentos):
         try:
-            # Bajamos el timeout a 10s máximo para que Cloudflare no corte la llamada
             r = requests.post(
                 url,
                 headers=headers,
                 json=payload,
-                timeout=(5, 10)
+                timeout=(5, 15)
             )
 
             return {
@@ -176,50 +178,14 @@ def enviar_whatsapp(numero: str, mensaje: str,
             if intento < intentos - 1:
                 time.sleep(2)
                 continue
-
-            return {
-                "ok": False,
-                "status": 408,
-                "body": "Timeout: Evolution API tardó demasiado en responder."
-            }
-
-        except requests.exceptions.ConnectionError:
-            if intento < intentos - 1:
-                time.sleep(2)
-                continue
-
-            return {
-                "ok": False,
-                "status": 503,
-                "body": "No se pudo conectar con Evolution API."
-            }
+            return {"ok": False, "status": 408, "body": "Timeout en la solicitud."}
 
         except Exception as e:
-            return {
-                "ok": False,
-                "status": 500,
-                "body": str(e)
-            }
-# def enviar_whatsapp(numero: str, mensaje: str,
-#                     api_url: str, api_key: str, instancia: str) -> dict:
-#     """Envía mensaje via Evolution API."""
-#     url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
-#     headers = {
-#         "Content-Type": "application/json",
-#         "apikey": api_key,
-#     }
-#     payload = {
-#         "number":  numero,
-#         "text":    mensaje,
-#         "delay":   1200,
-#     }
-#     try:
-#         r = requests.post(url, headers=headers, json=payload, timeout=60)
-#         return {"ok": r.status_code in (200, 201), "status": r.status_code, "body": r.text}
-#     except Exception as e:
-#         return {"ok": False, "status": 0, "body": str(e)}
+            return {"ok": False, "status": 500, "body": str(e)}
 
 
+
+        
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
     st.header("⏳ Batallas Pendientes + WhatsApp")
