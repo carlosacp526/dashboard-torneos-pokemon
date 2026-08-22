@@ -144,7 +144,10 @@ def enviar_whatsapp(numero: str, mensaje: str,
                     api_url: str, api_key: str, instancia: str,
                     intentos=2):
 
-    url = f"{api_url.rstrip('/')}/message/sendText/{instancia}"
+    # Asignar un valor por defecto si la variable llega vacía
+    nombre_instancia = str(instancia).strip() if instancia else "Poketubi"
+
+    url = f"{api_url.rstrip('/')}/message/sendText/{nombre_instancia}"
 
     headers = {
         "Content-Type": "application/json",
@@ -153,7 +156,6 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
     clean_num = "".join(filter(str.isdigit, str(numero)))
 
-    # Formato exacto que pide el validador de tu versión
     payload = {
         "number": clean_num,
         "text": str(mensaje),
@@ -186,7 +188,6 @@ def enviar_whatsapp(numero: str, mensaje: str,
 
         except Exception as e:
             return {"ok": False, "status": 500, "body": str(e)}
-        
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
     st.header("⏳ Batallas Pendientes + WhatsApp")
