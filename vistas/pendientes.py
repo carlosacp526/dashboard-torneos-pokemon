@@ -86,7 +86,7 @@ def diff_horas(pais_participante: str, pais_rival: str) -> str:
 
 def construir_mensaje(jugador: str, batallas: pd.DataFrame,
                       celulares: dict, pais_participante: str) -> str:
-    """Arma el mensaje de WhatsApp personalizado."""
+    """Arma el mensaje de WhatsApp personalizado, agrupado por rival."""
     # ── Deduplicar batallas repetidas ────────────────────────────────
     # Se considera "la misma batalla" cuando coinciden Torneo, Evento,
     # Tier, Fecha límite y Fase — evita contar 2 o 3 veces lo mismo si
@@ -105,44 +105,60 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         "",
     ]
 
-    for i, (_, row) in enumerate(batallas.iterrows(), start=1):
-        rival = str(row.get('player2','')) if str(row.get('player1','')).lower() == jugador.lower() \
-                else str(row.get('player1',''))
-        rival = rival.strip()
+    def _obtener_rival(row):
+        r = str(row.get('player2', '')) if str(row.get('player1', '')).lower() == jugador.lower() \
+            else str(row.get('player1', ''))
+        return r.strip()
 
-        # Info del rival
+    def _nombre_evento(row):
+        torneo   = str(row.get('N_Torneo', '')).replace('.0', '') if pd.notna(row.get('N_Torneo')) else ''
+        aka      = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
+        league   = str(row.get('league', ''))
+        liga_cat = str(row.get('Ligas_categoria', ''))
+        if aka and aka not in ('nan', ''):
+            return aka
+        elif league == 'TORNEO' and torneo:
+            return f"Torneo {torneo}"
+        elif league == 'LIGA':
+            return f"Liga {liga_cat}" if liga_cat not in ('nan', '') else 'Liga'
+        return league
+
+    # ── Agrupar filas por rival, preservando el orden de aparición ────
+    grupos = {}          # rival -> lista de filas (Series)
+    orden_rivales = []   # para respetar el orden original
+    for _, row in batallas.iterrows():
+        rival = _obtener_rival(row)
+        if rival not in grupos:
+            grupos[rival] = []
+            orden_rivales.append(rival)
+        grupos[rival].append(row)
+
+    for idx_rival, rival in enumerate(orden_rivales, start=1):
+        filas_rival   = grupos[rival]
+        n_bat_rival   = len(filas_rival)
+
+        # Info del rival (país / teléfono — es el mismo para todas sus batallas)
         rival_data = celulares.get(rival.lower(), {})
         pais_rival = rival_data.get('pais', '?')
         tel_rival  = rival_data.get('tel_completo', '')
         dif_horas  = diff_horas(pais_participante, pais_rival)
 
-        # Info de la batalla
-        torneo   = str(row.get('N_Torneo', '')).replace('.0','') if pd.notna(row.get('N_Torneo')) else ''
-        aka      = str(row.get('Aka_evento', '')) if 'Aka_evento' in row.index else ''
-        formato  = str(row.get('Tier', ''))
-        fecha_m  = str(row.get('Fecha_max', ''))[:10] if 'Fecha_max' in row.index else ''
-        ronda    = str(row.get('round', ''))
-        liga_cat = str(row.get('Ligas_categoria', ''))
-        league   = str(row.get('league', ''))
+        lineas.append(f"*{idx_rival}. vs {rival}*")
+        lineas.append(f"   🔢 Número de batallas: {n_bat_rival}")
 
-        # Nombre del evento
-        if aka and aka not in ('nan',''):
-            evento = aka
-        elif league == 'TORNEO' and torneo:
-            evento = f"Torneo {torneo}"
-        elif league == 'LIGA':
-            evento = f"Liga {liga_cat}" if liga_cat not in ('nan','') else 'Liga'
-        else:
-            evento = league
+        for row in filas_rival:
+            evento  = _nombre_evento(row)
+            formato = str(row.get('Tier', ''))
+            fecha_m = str(row.get('Fecha_max', ''))[:10] if 'Fecha_max' in row.index else ''
+            ronda   = str(row.get('round', ''))
 
-        lineas.append(f"*{i}. vs {rival}*")
-        if n_bat > 1:
-            lineas.append(f"   🔢 Batalla N°: {i}")
-        lineas.append(f"   📋 {evento} | {ronda}")
-        if formato and formato not in ('nan',''):
-            lineas.append(f"   🎮 Formato: {formato}")
-        if fecha_m and fecha_m not in ('nan', 'NaT'):
-            lineas.append(f"   ⏰ Fecha límite: {fecha_m}")
+            detalle = f"      • {evento} | {ronda}"
+            if formato and formato not in ('nan', ''):
+                detalle += f" | Formato: {formato}"
+            if fecha_m and fecha_m not in ('nan', 'NaT'):
+                detalle += f" | ⏰ {fecha_m}"
+            lineas.append(detalle)
+
         lineas.append(f"   🌍 País rival: {pais_rival} ({dif_horas})")
         if tel_rival and tel_rival not in ('nan', ''):
             lineas.append(f"   📱 WhatsApp rival: https://wa.me/{tel_rival}")
