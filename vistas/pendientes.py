@@ -141,15 +141,29 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
             return f"Liga {liga_cat}" if liga_cat not in ('nan', '') else 'Liga'
         return league
 
-    # ── Agrupar filas por rival, preservando el orden de aparición ────
+    def _fecha_ordenable(row):
+        """Convierte Fecha_max a un valor ordenable; sin fecha va al final."""
+        f = pd.to_datetime(row.get('Fecha_max'), errors='coerce') if 'Fecha_max' in row.index else pd.NaT
+        return f if pd.notna(f) else pd.Timestamp.max
+
+    # ── Agrupar filas por rival, ordenando por fecha límite ────────────
+    # Tanto el orden de los rivales como el de las partidas dentro de cada
+    # rival respetan la fecha límite más próxima primero. Las batallas sin
+    # fecha quedan al final.
     grupos = {}          # rival -> lista de filas (Series)
-    orden_rivales = []   # para respetar el orden original
     for _, row in batallas.iterrows():
         rival = _obtener_rival(row)
         if rival not in grupos:
             grupos[rival] = []
-            orden_rivales.append(rival)
         grupos[rival].append(row)
+
+    for rival in grupos:
+        grupos[rival].sort(key=_fecha_ordenable)
+
+    orden_rivales = sorted(
+        grupos.keys(),
+        key=lambda r: _fecha_ordenable(grupos[r][0])
+    )
 
     for idx_rival, rival in enumerate(orden_rivales, start=1):
         filas_rival   = grupos[rival]
