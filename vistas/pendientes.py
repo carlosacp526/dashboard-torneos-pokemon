@@ -119,7 +119,7 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
 
     lineas = [
         f"¡Hola {nombre}! 👋 Soy el bot de *Poketubi*.",
-        f"Tenés *{n_bat} batalla{'s' if n_bat > 1 else ''} pendiente{'s' if n_bat > 1 else ''}* 🎮",
+        f"Tienes *{n_bat} batalla{'s' if n_bat > 1 else ''} pendiente{'s' if n_bat > 1 else ''}* 🎮",
         "",
     ]
 
