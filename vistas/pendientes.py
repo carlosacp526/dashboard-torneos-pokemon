@@ -151,13 +151,20 @@ def enviar_whatsapp(numero: str, mensaje: str,
         "apikey": api_key,
     }
 
-    # Dejar solo dígitos numéricos (ejemplo: 51933448842)
     clean_num = "".join(filter(str.isdigit, str(numero)))
 
-    # Payload simplificado directo para Evolution API v2
+    # Estructura requerida por la versión interna de la API
     payload = {
         "number": clean_num,
-        "text": str(mensaje)
+        "options": {
+            "delay": 1200,
+            "presence": "composing"
+        },
+        "message": {
+            "textMessage": {
+                "text": str(mensaje)
+            }
+        }
     }
 
     for intento in range(intentos):
