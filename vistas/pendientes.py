@@ -208,13 +208,14 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
     return "\n".join(lineas)
 
 def _sin_replay_cargado(df: pd.DataFrame) -> pd.Series:
-    """True para las filas donde Match_replays está vacío (sin link cargado
-    todavía). Se usa para excluir del flujo de WhatsApp las batallas que ya
-    tienen un replay subido, aunque figuren como pendientes (Walkover == -1)."""
+    """True para las filas donde Match_replays está realmente vacío (nulo o
+    string vacío). Cualquier otro valor -incluido '-' o cualquier texto/link-
+    cuenta como "ya tiene replay" y se excluye del flujo de WhatsApp, aunque
+    la batalla siga figurando como pendiente (Walkover == -1)."""
     if 'Match_replays' not in df.columns:
         return pd.Series(True, index=df.index)
     val = df['Match_replays'].astype(str).str.strip()
-    vacios = val.isin(['', 'nan', 'None', 'NaT', '-']) | df['Match_replays'].isna()
+    vacios = df['Match_replays'].isna() | val.isin(['', 'nan', 'None', 'NaT'])
     return vacios
 
 
