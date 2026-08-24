@@ -121,7 +121,7 @@ def show():
             "EEUU": "🇺🇸", "USA": "🇺🇸", "Panama": "🇵🇦",
             "Guatemala": "🇬🇹", "Honduras": "🇭🇳", "Cuba": "🇨🇺",
             "Brazil": "🇧🇷", "Portugal": "🇵🇹",    "El Salvador": "🇸🇻",
-          "Nicaragua": "🇳🇮"
+          "Nicaragua": "🇳🇮","República Dominicana": "🇩🇴"
         }
         pais_counts['País_flag'] = pais_counts['País'].apply(
             lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
