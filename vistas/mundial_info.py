@@ -530,7 +530,7 @@ MONOTYPE1_TIPOS = {
     71: "GRANDE",
     72: "GRANDE",
     73: "GRANDE",
-    74: "GRANDE",75: "SPECIAL",79:"MEDIANO"
+    74: "GRANDE",75: "SPECIAL",78:"GRANDE",79:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -762,8 +762,31 @@ MONOTYPE1_POSICIONES = {
         "AerosmithJR":     "Top40",
         "Ger":     "Top40",
 
-        }}
-,
+        }},
+             78: {
+      "SINGLES": {
+        "Bloody Cheese":   "Campeón",
+        "SasoriVzla7": "Subcampeón",
+        "Adpg":     "Top4",
+        "Angelowos":     "Top4",
+
+        "Necroz":     "Top8",
+        "skll02":     "Top8",
+        "Porygon Z":     "Top8",
+        "D'AllFather":     "Top8",
+
+
+        "O'Fenomenon't":     "Top16",
+        "MafiaPolar6242":     "Top16",
+        "HaoSigismondi":     "Top16",
+        "ShinkaHMA":     "Top16",
+        "masafesio":     "Top16",
+        "Draco axel":     "Top16",
+        "Elin beacil":     "Top16",
+        "JaLax":     "Top16",
+
+        }},
+
 
                  79: {
       "DOBLES": {
