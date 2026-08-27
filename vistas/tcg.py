@@ -56,12 +56,13 @@ def _load_img(path, size=None, fallback_color=(100,100,100)):
 
 
 def _find_jugador_img(nombre):
-    if not os.path.exists(JUGADORES_DIR): return None
-    clean = nombre.strip().lower().replace(" ","_")
-    for ext in ["png","jpg","jpeg","webp","PNG","JPG","JPEG"]:
-        for variant in [clean, nombre.strip().lower(), nombre.strip()]:
-            p = os.path.join(JUGADORES_DIR, f"{variant}.{ext}")
-            if os.path.exists(p): return p
+    """Misma lógica EXACTA que vistas/jugadores.py: `jugadores/{nombre.replace(' ','_')}.{ext}`,
+    sin pasar a minúsculas, probando extensiones en este orden: png, jpeg, jpg, JPG, JPEG, PNG."""
+    if not nombre: return None
+    clean = nombre.replace(" ", "_")
+    for ext in ['png', 'jpeg', 'jpg', 'JPG', 'JPEG', 'PNG']:
+        p = os.path.join(JUGADORES_DIR, f"{clean}.{ext}")
+        if os.path.exists(p): return p
     return None
 
 
