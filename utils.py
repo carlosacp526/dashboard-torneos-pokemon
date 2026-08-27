@@ -202,6 +202,62 @@ def obtener_logo_liga(liga):
         if os.path.exists(ruta): return ruta
     return "Logo.png" if os.path.exists("Logo.png") else None
 
+def obtener_elo_rank_historico(data_elo, data_filas, jugador, fecha_corte=None):
+    """
+    Devuelve (elo, rank) de `jugador` reconstruido a una fecha específica
+    (`fecha_corte`), usando el mismo criterio que la pestaña "📅 Por Mes" del
+    Ranking Elo (vistas/elo.py): el último Elo conocido de cada jugador hasta
+    esa fecha, tomado partida por partida desde `data_filas`.
+
+    - `data_filas` es el historial de partidas devuelto por `calcular_elo()`,
+      con columnas Jugador_A (siempre el ganador), Jugador_B (siempre el
+      perdedor), Rating_A_NEW, Rating_B_NEW y Fecha.
+    - Si `fecha_corte` es None, se usa el historial completo (Elo/rank final,
+      equivalente al ranking actual).
+    - Si el jugador no tiene partidas hasta esa fecha, devuelve (1000, 0).
+    """
+    if data_filas is None or data_filas.empty or not jugador:
+        return 1000, 0
+
+    hist = data_filas.copy()
+    hist['Fecha'] = pd.to_datetime(hist['Fecha'], errors='coerce')
+
+    if fecha_corte is not None:
+        corte = pd.Timestamp(fecha_corte)
+        hist = hist[hist['Fecha'] <= corte]
+
+    if hist.empty:
+        return 1000, 0
+
+    # Cada partida deja un Elo actualizado tanto para el ganador (A) como
+    # para el perdedor (B) -> se apilan ambos para tener, por fecha, el
+    # Elo de CADA jugador después de CADA partida que jugó.
+    a = hist[['Jugador_A', 'Fecha', 'Rating_A_NEW']].rename(
+        columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+    b = hist[['Jugador_B', 'Fecha', 'Rating_B_NEW']].rename(
+        columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+    largo = pd.concat([a, b], ignore_index=True).dropna(subset=['Jugador', 'Fecha'])
+    if largo.empty:
+        return 1000, 0
+
+    # Último Elo conocido de cada jugador hasta la fecha de corte
+    largo = largo.sort_values('Fecha')
+    ultimo = largo.groupby('Jugador', as_index=False).last()
+    ultimo = ultimo.sort_values('Elo', ascending=False).reset_index(drop=True)
+    ultimo['RANK'] = range(1, len(ultimo) + 1)
+
+    jl = str(jugador).strip().lower()
+    ultimo['_jl'] = ultimo['Jugador'].astype(str).str.strip().str.lower()
+
+    match = ultimo[ultimo['_jl'] == jl]
+    if match.empty:
+        match = ultimo[ultimo['_jl'].str.contains(jl, na=False, regex=False)]
+    if match.empty:
+        return 1000, 0
+
+    return int(match['Elo'].values[0]), int(match['RANK'].values[0])
+
+
 def obtener_banner_torneo(num_torneo):
     for ext in ['png','PNG','jpg','JPG','jpeg','JPEG']:
         for ruta in [
@@ -330,248 +386,6 @@ def build_base_jornada(df_liga):
     base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
     base = base.drop(columns=["Partidas_P1","Partidas_P2"])
     return score_final(base), dj
-
-def generar_tabla_formatos(df_liga, lt):
-    """Win/Total/Rate por formato (Singles/Dobles/VGC) + Puntaje, para una Liga_Temporada."""
-    if 'Liga_Temporada' not in df_liga.columns or 'Formato' not in df_liga.columns:
-        return None
-    d = df_liga[df_liga['Liga_Temporada'] == lt].copy()
-    if d.empty:
-        return None
-
-    def _norm_formato(f):
-        f = str(f).strip().lower()
-        if f in ('singles', 'single', '1v1'): return 'Singles'
-        if f in ('dobles', 'doubles', '2v2'): return 'Dobles'
-        if f in ('vgc', 'vgc doubles'): return 'VGC'
-        return str(f).strip().title()
-
-    d['Formato_norm'] = d['Formato'].apply(_norm_formato)
-    formatos_presentes = [f for f in ['Singles', 'Dobles', 'VGC'] if f in d['Formato_norm'].unique()]
-    if not formatos_presentes:
-        formatos_presentes = sorted(d['Formato_norm'].dropna().unique())
-
-    participantes = sorted(pd.concat([d['player1'], d['player2']]).dropna().unique())
-    filas = []
-    for p in participantes:
-        fila = {'Participantes': p}
-        puntaje = 0
-        for fmt in formatos_presentes:
-            df_fmt = d[d['Formato_norm'] == fmt]
-            total = len(df_fmt[(df_fmt['player1'] == p) | (df_fmt['player2'] == p)])
-            win = len(df_fmt[df_fmt['winner'] == p])
-            rate = round(win / total * 100) if total > 0 else 0
-            fila[f'{fmt}_WIN'] = win
-            fila[f'{fmt}_TOTAL'] = total
-            fila[f'{fmt}_RATE'] = rate
-            puntaje += win
-        fila['Puntaje'] = puntaje
-        filas.append(fila)
-
-    tabla = pd.DataFrame(filas).sort_values('Puntaje', ascending=False).reset_index(drop=True)
-    tabla.attrs['formatos'] = formatos_presentes
-    return tabla
-
-
-def generar_tabla_enfrentamientos(df_liga, lt):
-    """Matriz de enfrentamientos (V/VR/DR/D/NP) entre todos los participantes de una Liga_Temporada.
-    Suma TODAS las batallas jugadas entre cada par (cualquier formato, cualquier jornada), lo que
-    cubre automáticamente ligas con más batallas por jornada (PMS) o encuentros repetidos (PLS).
-    Criterio: margen = victorias_p - victorias_q dentro del cruce.
-        margen >= 2   -> V   (3 pts, victoria clara)
-        margen == 1   -> VR  (2 pts, victoria reñida)
-        margen == -1  -> DR  (1 pt,  derrota reñida)
-        margen <= -2  -> D   (0 pts, derrota clara)
-        margen == 0   -> desempate por pokemons supervivientes acumulados en el cruce
-        sin cruces    -> NP  (no jugaron)
-    """
-    if 'Liga_Temporada' not in df_liga.columns:
-        return None
-    d = df_liga[df_liga['Liga_Temporada'] == lt].copy()
-    if d.empty:
-        return None
-
-    participantes = sorted(pd.concat([d['player1'], d['player2']]).dropna().unique())
-    puntos_map = {'V': 3, 'VR': 2, 'DR': 1, 'D': 0}
-    matriz = pd.DataFrame('', index=participantes, columns=participantes)
-    puntos_totales = {p: 0 for p in participantes}
-
-    for p in participantes:
-        for q in participantes:
-            if p == q:
-                matriz.loc[p, q] = 'X'
-                continue
-            enc = d[((d['player1'] == p) & (d['player2'] == q)) |
-                    ((d['player1'] == q) & (d['player2'] == p))]
-            if enc.empty:
-                matriz.loc[p, q] = 'NP'
-                continue
-            wins_p = int((enc['winner'] == p).sum())
-            wins_q = int((enc['winner'] == q).sum())
-            margen = wins_p - wins_q
-            if margen >= 2:
-                resultado = 'V'
-            elif margen == 1:
-                resultado = 'VR'
-            elif margen == -1:
-                resultado = 'DR'
-            elif margen <= -2:
-                resultado = 'D'
-            else:  # margen == 0 -> desempate por pokemons supervivientes del cruce
-                sob_p = enc.apply(lambda r: r['pokemons Sob'] if r['winner'] == p else 6 - r['pokemons Sob'], axis=1).sum()
-                sob_q = enc.apply(lambda r: r['pokemons Sob'] if r['winner'] == q else 6 - r['pokemons Sob'], axis=1).sum()
-                resultado = 'VR' if sob_p >= sob_q else 'DR'
-            matriz.loc[p, q] = resultado
-            puntos_totales[p] += puntos_map[resultado]
-
-    orden = sorted(participantes, key=lambda p: -puntos_totales[p])
-    matriz = matriz.loc[orden, orden]
-    matriz['Total'] = [puntos_totales[p] for p in orden]
-    return matriz
-
-
-def tabla_formatos_html(tabla):
-    """Renderiza la tabla de Win/Total/Rate por formato como HTML con estilo tipo Poketubi.
-    Resalta en verde, POR FORMATO, a quien(es) tengan más WIN en ESE formato (se permiten empates:
-    si dos o más comparten el máximo de WIN en Singles, por ejemplo, todos quedan resaltados ahí)."""
-    if tabla is None or tabla.empty:
-        return "<p>No hay datos</p>"
-    formatos = tabla.attrs.get('formatos', ['Singles', 'Dobles', 'VGC'])
-    max_win_por_formato = {fmt: tabla[f'{fmt}_WIN'].max() for fmt in formatos}
-    max_punt = tabla['Puntaje'].max()
-
-    css = """
-    <style>
-    .fmt-table {border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:14px;}
-    .fmt-table th, .fmt-table td {border:1px solid #111;padding:6px 10px;text-align:center;}
-    .fmt-group {background:#12233b;color:#fff;font-weight:bold;}
-    .fmt-sub {background:#2E5C8A;color:#fff;font-weight:bold;}
-    .fmt-name {background:#12233b;color:#fff;font-weight:bold;text-align:left;}
-    .fmt-cell {background:#F5B970;color:#000;}
-    .fmt-cell-top {background:#58D68D;color:#000;font-weight:bold;}
-    .fmt-punt {background:#000;color:#fff;font-weight:bold;font-style:italic;}
-    .fmt-punt-top {background:#F1C40F;color:#000;font-weight:bold;font-style:italic;}
-    </style>
-    """
-    header1 = "<tr><th class='fmt-name' rowspan='2'>Participantes</th>"
-    for fmt in formatos:
-        header1 += f"<th class='fmt-group' colspan='3'>{fmt.upper()}</th>"
-    header1 += "<th class='fmt-name' rowspan='2'>Puntaje</th></tr>"
-    header2 = "<tr>"
-    for _ in formatos:
-        header2 += "<th class='fmt-sub'>WIN</th><th class='fmt-sub'>TOTAL</th><th class='fmt-sub'>RATE</th>"
-    header2 += "</tr>"
-
-    rows_html = ""
-    for _, row in tabla.iterrows():
-        rows_html += f"<tr><td class='fmt-name'>{row['Participantes']}</td>"
-        for fmt in formatos:
-            cell_cls = "fmt-cell-top" if row[f'{fmt}_WIN'] == max_win_por_formato[fmt] else "fmt-cell"
-            rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_WIN'])}</td>"
-            rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_TOTAL'])}</td>"
-            rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_RATE'])}%</td>"
-        punt_cls = "fmt-punt-top" if row['Puntaje'] == max_punt else "fmt-punt"
-        rows_html += f"<td class='{punt_cls}'>{int(row['Puntaje'])}</td></tr>"
-
-    return css + f"<table class='fmt-table'>{header1}{header2}{rows_html}</table>"
-
-
-def tabla_enfrentamientos_html(matriz):
-    """Renderiza la matriz de enfrentamientos (V/VR/DR/D/NP) como HTML con estilo tipo Poketubi."""
-    if matriz is None or matriz.empty:
-        return "<p>No hay datos</p>"
-    participantes = [c for c in matriz.columns if c != 'Total']
-
-    colores = {
-        'V':  'background:#2ECC71;color:#fff;font-weight:bold;',
-        'VR': 'background:#82E0AA;color:#000;font-weight:bold;',
-        'DR': 'background:#F1948A;color:#000;font-weight:bold;',
-        'D':  'background:#E74C3C;color:#fff;font-weight:bold;',
-        'NP': 'background:#AED6F1;color:#000;',
-        'X':  'background:#000;color:#fff;font-weight:bold;',
-    }
-
-    css = """
-    <style>
-    .enf-table {border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;}
-    .enf-table th, .enf-table td {border:1px solid #111;padding:5px 8px;text-align:center;}
-    .enf-name {background:#12233b;color:#fff;font-weight:bold;}
-    .enf-total {background:#000;color:#fff;font-weight:bold;}
-    </style>
-    """
-    header = "<tr><th class='enf-name'>x</th>"
-    for p in participantes:
-        header += f"<th class='enf-name'>{p}</th>"
-    header += "<th class='enf-name'>Total</th></tr>"
-
-    rows_html = ""
-    for idx, row in matriz.iterrows():
-        rows_html += f"<tr><td class='enf-name'>{idx}</td>"
-        for p in participantes:
-            val = row[p]
-            style = colores.get(val, '')
-            rows_html += f"<td style='{style}'>{val}</td>"
-        rows_html += f"<td class='enf-total'>{int(row['Total'])}</td></tr>"
-
-    return css + f"<table class='enf-table'>{header}{rows_html}</table>"
-
-
-def obtener_elo_rank_historico(data_elo, data_filas, jugador, fecha_corte=None):
-    """Devuelve (elo, rank) de un jugador usando la MISMA lógica que el Ranking Elo Mensual/Anual:
-    - Si fecha_corte es None -> Elo/Rank actual (idéntico al 'Ranking Elo en Vivo': mismo data_elo,
-      mismo RANK con huecos si hay inactivos).
-    - Si se da fecha_corte -> reconstruye el historial largo (Jugador/Elo/Fecha) a partir de
-      data_filas, se queda solo con las batallas hasta esa fecha, toma el último Elo conocido de
-      cada jugador y arma un ranking fresco entre ellos en ese momento (igual que el mes histórico
-      del Ranking Elo Mensual)."""
-    jl = jugador.lower().strip()
-
-    if fecha_corte is None:
-        if data_elo is None or data_elo.empty:
-            return 1000, 0
-        row = data_elo[data_elo['Participantes'].str.lower().str.strip() == jl]
-        if row.empty:
-            row = data_elo[data_elo['Participantes'].str.lower().str.contains(jl, na=False)]
-        if row.empty:
-            return 1000, 0
-        return int(round(row.iloc[0]['Elo'])), int(row.iloc[0]['RANK'])
-
-    if data_filas is None or data_filas.empty:
-        return 1000, 0
-
-    a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].rename(
-        columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
-    b = data_filas[['Jugador_B', 'Rating_B_NEW', 'Fecha']].rename(
-        columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
-    long_df = pd.concat([a, b], ignore_index=True)
-    long_df['Fecha'] = pd.to_datetime(long_df['Fecha'])
-    long_df = long_df.dropna(subset=['Jugador', 'Fecha'])
-    long_df = long_df[long_df['Fecha'] <= pd.Timestamp(fecha_corte)]
-    long_df = long_df.sort_values('Fecha')
-
-    if long_df.empty:
-        return 1000, 0
-
-    ultimo = long_df.groupby('Jugador')['Elo'].last()
-    ranking = ultimo.sort_values(ascending=False)
-
-    nombre_match = None
-    for nombre in ranking.index:
-        if str(nombre).lower().strip() == jl:
-            nombre_match = nombre
-            break
-    if nombre_match is None:
-        for nombre in ranking.index:
-            if jl in str(nombre).lower():
-                nombre_match = nombre
-                break
-    if nombre_match is None:
-        return 1000, 0
-
-    elo_val = int(round(ranking[nombre_match]))
-    rank_val = int(ranking.index.get_loc(nombre_match)) + 1
-    return elo_val, rank_val
-
 
 CSS_BACK = """
 <style>
