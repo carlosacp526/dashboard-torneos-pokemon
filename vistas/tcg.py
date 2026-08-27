@@ -124,55 +124,84 @@ def _paste_center(base, overlay, cx, cy):
 
 
 # ════════════════════════════════════════════════════════════════
-# ELO a una fecha de corte (misma lógica que la pestaña "Por Mes" de elo.py)
+# ELO a una fecha de corte (misma lógica EXACTA que la pestaña
+# "📅 Ranking Mensual" dentro de "Ranking Elo Mensual y Anual" de elo.py)
 # ════════════════════════════════════════════════════════════════
 
 def _elo_rank_a_fecha(data_filas, jugador, fecha_corte=None):
     """
-    Devuelve (elo, rank) de `jugador` reconstruido a una fecha específica,
-    usando el mismo criterio que la pestaña "📅 Por Mes" de vistas/elo.py:
-    el último Elo conocido de cada jugador hasta esa fecha, tomado partida
-    por partida desde `data_filas` (columnas Jugador_A=ganador, Jugador_B=
-    perdedor, Rating_A_NEW, Rating_B_NEW, Fecha).
+    Devuelve (elo, rank) de `jugador`, replicando EXACTAMENTE la lógica de la
+    pestaña "📅 Ranking Mensual" de vistas/elo.py (`_build_long_history` +
+    `_ranking_periodo`): arma una grilla mes a mes completa (con relleno
+    hacia adelante — ffill — para los meses sin partidas) y toma el Elo
+    acumulado al FINAL del mes de `fecha_corte` (no al día exacto).
 
-    Si `fecha_corte` es None, devuelve el Elo/rank final (historial completo).
-    Si el jugador no tiene partidas hasta esa fecha, devuelve (1000, 0).
+    Si `fecha_corte` es None, usa el mes más reciente (= Ranking Elo en Vivo).
+    Si `fecha_corte` cae en un mes posterior al último dato, se usa el mes
+    más reciente disponible (no hay nada más nuevo que mostrar).
+    Si el jugador no tiene Elo todavía en ese mes, devuelve (1000, 0).
     """
     if data_filas is None or data_filas.empty or not jugador:
         return 1000, 0
 
-    hist = data_filas.copy()
-    hist['Fecha'] = pd.to_datetime(hist['Fecha'], errors='coerce')
+    # ── _build_long_history (idéntico a elo.py) ──────────────────
+    df_a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].copy()
+    df_a['_idx'] = df_a.index
+    df_a = df_a.rename(columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
 
+    df_b = data_filas[['Jugador_B', 'Rating_B_NEW', 'Fecha']].copy()
+    df_b['_idx'] = df_b.index
+    df_b = df_b.rename(columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+
+    long_hist = pd.concat([df_a, df_b], ignore_index=True)
+    long_hist['Fecha'] = pd.to_datetime(long_hist['Fecha'], errors='coerce')
+    long_hist = long_hist.dropna(subset=['Jugador', 'Fecha', 'Elo'])
+    long_hist = long_hist[long_hist['Jugador'] != '']
+    if long_hist.empty:
+        return 1000, 0
+    long_hist = long_hist.sort_values(['Fecha', '_idx']).reset_index(drop=True)
+
+    fecha_min, fecha_max = long_hist['Fecha'].min(), long_hist['Fecha'].max()
+
+    # ── grilla mensual completa con ffill (idéntico a elo.py) ────
+    long_hist['Periodo_M'] = long_hist['Fecha'].dt.to_period('M')
+    idx_last_m = long_hist.groupby(['Periodo_M', 'Jugador'])['_idx'].idxmax()
+    last_m = long_hist.loc[idx_last_m, ['Periodo_M', 'Jugador', 'Elo']].reset_index(drop=True)
+    pivot_m = last_m.pivot(index='Periodo_M', columns='Jugador', values='Elo')
+    pivot_m = pivot_m.reindex(
+        pd.period_range(fecha_min.to_period('M'), fecha_max.to_period('M'), freq='M')
+    ).ffill()
+
+    if pivot_m.empty:
+        return 1000, 0
+
+    # ── elegir el mes (idéntico al selectbox de meses_disp) ──────
     if fecha_corte is not None:
-        corte = pd.Timestamp(fecha_corte)
-        hist = hist[hist['Fecha'] <= corte]
+        periodo_sel = pd.Timestamp(fecha_corte).to_period('M')
+    else:
+        periodo_sel = pivot_m.index[-1]
 
-    if hist.empty:
+    if periodo_sel < pivot_m.index[0]:
+        return 1000, 0
+    if periodo_sel > pivot_m.index[-1]:
+        periodo_sel = pivot_m.index[-1]
+
+    # ── _ranking_periodo (idéntico a elo.py) ──────────────────────
+    serie = pivot_m.loc[periodo_sel].dropna().sort_values(ascending=False)
+    if serie.empty:
         return 1000, 0
 
-    # Cada partida deja un Elo actualizado tanto para el ganador (A) como
-    # para el perdedor (B) -> se apilan ambos para tener, por fecha, el
-    # Elo de CADA jugador después de CADA partida que jugó.
-    a = hist[['Jugador_A', 'Fecha', 'Rating_A_NEW']].rename(
-        columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
-    b = hist[['Jugador_B', 'Fecha', 'Rating_B_NEW']].rename(
-        columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
-    largo = pd.concat([a, b], ignore_index=True).dropna(subset=['Jugador', 'Fecha'])
-    if largo.empty:
-        return 1000, 0
-
-    largo = largo.sort_values('Fecha')
-    ultimo = largo.groupby('Jugador', as_index=False).last()
-    ultimo = ultimo.sort_values('Elo', ascending=False).reset_index(drop=True)
-    ultimo['RANK'] = range(1, len(ultimo) + 1)
+    rank_df = serie.reset_index()
+    rank_df.columns = ['Jugador', 'Elo']
+    rank_df['Elo'] = rank_df['Elo'].round(0).astype(int)
+    rank_df['RANK'] = range(1, len(rank_df) + 1)
 
     jl = str(jugador).strip().lower()
-    ultimo['_jl'] = ultimo['Jugador'].astype(str).str.strip().str.lower()
+    rank_df['_jl'] = rank_df['Jugador'].astype(str).str.strip().str.lower()
 
-    match = ultimo[ultimo['_jl'] == jl]
+    match = rank_df[rank_df['_jl'] == jl]
     if match.empty:
-        match = ultimo[ultimo['_jl'].str.contains(jl, na=False, regex=False)]
+        match = rank_df[rank_df['_jl'].str.contains(jl, na=False, regex=False)]
     if match.empty:
         return 1000, 0
 
@@ -532,16 +561,20 @@ def show():
     with col1:
         jugador = st.selectbox("👤 Jugador", jugadores_unicos)
 
-        # fecha de corte
+        # fecha de corte (mes/año, ya que el Elo se calcula por mes)
         date_min = df["date"].min()
         date_max = df["date"].max()
         usar_fecha = st.checkbox("📅 Usar fecha de corte", value=False)
         fecha_corte = None
         if usar_fecha and pd.notna(date_min) and pd.notna(date_max):
-            fecha_corte = st.date_input("Fecha acumulada hasta:",
-                                         value=date_max.date(),
-                                         min_value=date_min.date(),
-                                         max_value=date_max.date())
+            meses_periodo = pd.period_range(date_min.to_period('M'), date_max.to_period('M'), freq='M')
+            meses_opts = [p.strftime('%Y%m') for p in meses_periodo]  # ej. "202402"
+            mes_sel = st.selectbox(
+                "Acumulado hasta (YEARMONTH):", meses_opts, index=len(meses_opts) - 1,
+                format_func=lambda ym: f"{ym[:4]}-{ym[4:]}",  # se ve "2024-02" en el combo
+            )
+            # fecha_corte = último día de ese mes (para que quede TODO el mes incluido)
+            fecha_corte = pd.Period(mes_sel, freq='M').end_time
 
     with col2:
         # Fondo TCG
