@@ -245,17 +245,6 @@ def calcular_stats(df, jugador, fecha_corte=None):
     dobles_n,  dobles_wr  = fmt_stats("DOBLES")
     vgc_n,     vgc_wr     = fmt_stats("VGC")
 
-    # torneos ganados
-    torneos_camp = []
-    if "N_Torneo" in df.columns:
-        torneos_part = pm_ok["N_Torneo"].dropna().unique()
-        for nt in torneos_part:
-            t_df = df[df["N_Torneo"] == nt]
-            if t_df.empty: continue
-            last = t_df.sort_values("date").iloc[-1]
-            if str(last.get("winner","")).lower().find(jl) >= 0:
-                torneos_camp.append(int(nt))
-
     # ligas participadas en orden cronológico
     ligas_hist = []
     if "league" in pm_ok.columns and "Ligas_categoria" in pm_ok.columns:
@@ -288,9 +277,15 @@ def calcular_stats(df, jugador, fecha_corte=None):
     except Exception as e:
         print(f"Error ELO: {e}")
 
-    # ── SCORE desde base2 (ligas) + base_torneo_final (torneos) ──
+    # ── SCORE desde base2 (ligas) + base_torneo_final (torneos), y
+    # CAMPEONATOS de liga/torneo — misma lógica EXACTA que la pestaña
+    # "🏆 Campeonatos y Logros" de vistas/jugadores.py ──────────────
     score_val = 0.0
+    campeonatos_liga   = []   # nombres de Liga_Temporada donde el jugador quedó RANK 1
+    campeonatos_torneo = []   # números de torneo donde el jugador quedó RANK 1 en la Final
     try:
+        from utils import generar_tabla_temporada, generar_tabla_torneo
+
         df_for_score = df if fecha_corte else load_data()
         base2, _              = build_base_liga(df_for_score)
         base_torneo_final, _  = build_base_torneo(df_for_score)
@@ -307,8 +302,49 @@ def calcular_stats(df, jugador, fecha_corte=None):
                 score_t = float(sub_t["score_completo"].sum())
 
         score_val = round(score_l + score_t, 0)
+
+        # ── Campeonatos de Liga (RANK == 1 en la tabla final de cada
+        # Liga_Temporada) — idéntico al bloque "🥇 Campeonatos de Liga" ──
+        if not base2.empty and "Liga_Temporada" in base2.columns:
+            for lt in base2["Liga_Temporada"].unique():
+                tabla = generar_tabla_temporada(base2, lt)
+                if tabla is not None and not tabla.empty:
+                    j = tabla[tabla["AKA"].str.lower().str.contains(jl, na=False)]
+                    if not j.empty and j["RANK"].iloc[0] == 1:
+                        campeonatos_liga.append(lt)
+
+        # ── Campeonatos de Torneo (RANK == 1 en torneos con ronda "Final"
+        # jugada) — idéntico al bloque "🥇 Campeonatos de Torneo", incluyendo
+        # las reglas especiales manuales (torneo 46 y "Chris FPS" / torneo 61) ──
+        if not base_torneo_final.empty and "Torneo_Temp" in base_torneo_final.columns and "round" in df_for_score.columns:
+            torneos_con_final = df_for_score[
+                (df_for_score["league"] == "TORNEO") &
+                (df_for_score["round"] == "Final") &
+                (df_for_score["Walkover"] >= 0)
+            ]["N_Torneo"].unique()
+
+            CAMPEON_MANUAL = {46: "darmanethan"}
+            es_chris_fps = "chris fps" in jl or jl in "chris fps"
+
+            for nt_manual, campeon_manual in CAMPEON_MANUAL.items():
+                if campeon_manual in jl or jl in campeon_manual:
+                    campeonatos_torneo.append(int(nt_manual))
+
+            if es_chris_fps:
+                campeonatos_torneo.append(61)
+
+            for nt in base_torneo_final[base_torneo_final["Torneo_Temp"].isin(torneos_con_final)]["Torneo_Temp"].unique():
+                if int(nt) in CAMPEON_MANUAL or (int(nt) == 61 and es_chris_fps):
+                    continue  # ya manejado arriba
+                tabla = generar_tabla_torneo(base_torneo_final, nt)
+                if tabla is not None and not tabla.empty:
+                    j = tabla[tabla["AKA"].str.lower().str.contains(jl, na=False)]
+                    if not j.empty and j["RANK"].iloc[0] == 1:
+                        campeonatos_torneo.append(int(nt))
     except Exception as e:
-        print(f"Error SCORE: {e}")
+        print(f"Error SCORE/CAMPEONATOS: {e}")
+
+    torneos_camp = campeonatos_torneo  # compat: lista de torneos ganados
 
     return {
         "jugador":     jugador,
@@ -319,8 +355,10 @@ def calcular_stats(df, jugador, fecha_corte=None):
         "singles_n":   singles_n,  "singles_wr": singles_wr,
         "dobles_n":    dobles_n,   "dobles_wr":  dobles_wr,
         "vgc_n":       vgc_n,      "vgc_wr":     vgc_wr,
-        "torneos":     torneos_camp,
-        "n_torneos":   len(torneos_camp),
+        "torneos":              torneos_camp,             # compat (= campeonatos_torneo)
+        "campeonatos_torneo":   campeonatos_torneo,
+        "campeonatos_liga":     campeonatos_liga,
+        "n_torneos":            len(campeonatos_torneo) + len(campeonatos_liga),
         "ligas_hist":  ligas_hist,
         "liga_vigente":liga_vigente,
         "elo":         elo_val,
@@ -473,9 +511,12 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
 
     f_torn_lbl = _font(16, bold=True)
     f_torn_val = _font(18, bold=True)
-    torn_str = ", ".join(str(t) for t in stats["torneos"][:4]) if stats["torneos"] else "-"
+    _camp_torneo = stats.get("campeonatos_torneo", stats.get("torneos", []))
+    _camp_liga   = stats.get("campeonatos_liga", [])
+    campeonatos_items = [str(t) for t in _camp_torneo] + [str(l) for l in _camp_liga]
+    torn_str = ", ".join(campeonatos_items[:4]) if campeonatos_items else "-"
     if len(torn_str) > 14: torn_str = torn_str[:13]+"…"
-    draw.text((COL1_X+78, copa_y+8),  "Torneo",  font=f_torn_lbl, fill=C_YELLOW)
+    draw.text((COL1_X+78, copa_y+8),  "Campeón",  font=f_torn_lbl, fill=C_YELLOW)
     _text_shadow(draw, torn_str, (COL1_X+78, copa_y+70), f_torn_val, C_WHITE, offset=(2,2))
 
     # separador vertical
@@ -633,8 +674,13 @@ def show():
             st.metric("WIN RATE",  f"{stats['winrate']}%")
             st.metric("BATALLAS",  stats["total"])
             st.metric("SCORE",     stats["score"])
-            st.metric("TORNEOS",   stats["n_torneos"])
+            st.metric("CAMPEONATOS", stats["n_torneos"])
             st.metric("LIGA VIGENTE", stats["liga_vigente"] or "-")
+
+            if stats.get("campeonatos_torneo"):
+                st.markdown(f"**🏆 Campeón de Torneo(s):** {', '.join(str(t) for t in stats['campeonatos_torneo'])}")
+            if stats.get("campeonatos_liga"):
+                st.markdown(f"**🏆 Campeón de Liga(s):** {', '.join(str(l) for l in stats['campeonatos_liga'])}")
 
             if stats["ligas_hist"]:
                 st.markdown(f"**Ligas:** {' → '.join(stats['ligas_hist'])}")
