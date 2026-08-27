@@ -124,6 +124,62 @@ def _paste_center(base, overlay, cx, cy):
 
 
 # ════════════════════════════════════════════════════════════════
+# ELO a una fecha de corte (misma lógica que la pestaña "Por Mes" de elo.py)
+# ════════════════════════════════════════════════════════════════
+
+def _elo_rank_a_fecha(data_filas, jugador, fecha_corte=None):
+    """
+    Devuelve (elo, rank) de `jugador` reconstruido a una fecha específica,
+    usando el mismo criterio que la pestaña "📅 Por Mes" de vistas/elo.py:
+    el último Elo conocido de cada jugador hasta esa fecha, tomado partida
+    por partida desde `data_filas` (columnas Jugador_A=ganador, Jugador_B=
+    perdedor, Rating_A_NEW, Rating_B_NEW, Fecha).
+
+    Si `fecha_corte` es None, devuelve el Elo/rank final (historial completo).
+    Si el jugador no tiene partidas hasta esa fecha, devuelve (1000, 0).
+    """
+    if data_filas is None or data_filas.empty or not jugador:
+        return 1000, 0
+
+    hist = data_filas.copy()
+    hist['Fecha'] = pd.to_datetime(hist['Fecha'], errors='coerce')
+
+    if fecha_corte is not None:
+        corte = pd.Timestamp(fecha_corte)
+        hist = hist[hist['Fecha'] <= corte]
+
+    if hist.empty:
+        return 1000, 0
+
+    # Cada partida deja un Elo actualizado tanto para el ganador (A) como
+    # para el perdedor (B) -> se apilan ambos para tener, por fecha, el
+    # Elo de CADA jugador después de CADA partida que jugó.
+    a = hist[['Jugador_A', 'Fecha', 'Rating_A_NEW']].rename(
+        columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+    b = hist[['Jugador_B', 'Fecha', 'Rating_B_NEW']].rename(
+        columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+    largo = pd.concat([a, b], ignore_index=True).dropna(subset=['Jugador', 'Fecha'])
+    if largo.empty:
+        return 1000, 0
+
+    largo = largo.sort_values('Fecha')
+    ultimo = largo.groupby('Jugador', as_index=False).last()
+    ultimo = ultimo.sort_values('Elo', ascending=False).reset_index(drop=True)
+    ultimo['RANK'] = range(1, len(ultimo) + 1)
+
+    jl = str(jugador).strip().lower()
+    ultimo['_jl'] = ultimo['Jugador'].astype(str).str.strip().str.lower()
+
+    match = ultimo[ultimo['_jl'] == jl]
+    if match.empty:
+        match = ultimo[ultimo['_jl'].str.contains(jl, na=False, regex=False)]
+    if match.empty:
+        return 1000, 0
+
+    return int(match['Elo'].values[0]), int(match['RANK'].values[0])
+
+
+# ════════════════════════════════════════════════════════════════
 # CÁLCULO DE STATS
 # ════════════════════════════════════════════════════════════════
 
@@ -194,13 +250,12 @@ def calcular_stats(df, jugador, fecha_corte=None):
     rank_val = 0
     try:
         from vistas.elo import calcular_elo
-        from utils import obtener_elo_rank_historico
         # siempre se calcula sobre el historial COMPLETO; el recorte por fecha se aplica
         # después, reconstruyendo el Elo acumulado hasta ese momento (no se recalcula el
         # algoritmo de Elo desde cero con datos truncados).
         df_completo = load_data()
         data_elo, data_filas, _ = calcular_elo(df_completo)
-        elo_val, rank_val = obtener_elo_rank_historico(data_elo, data_filas, jugador, fecha_corte)
+        elo_val, rank_val = _elo_rank_a_fecha(data_filas, jugador, fecha_corte)
     except Exception as e:
         print(f"Error ELO: {e}")
 
