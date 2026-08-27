@@ -351,14 +351,21 @@ def show():
                "El Elo se mantiene acumulado desde su última partida aunque no hayan jugado ese mes.")
 
     def _build_long_history(data_filas):
-        a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].rename(
-            columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
-        b = data_filas[['Jugador_B', 'Rating_B_NEW', 'Fecha']].rename(
-            columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
-        long_df = pd.concat([a, b], ignore_index=True)
+        # Añadir índice de partida para respetar el orden exacto del cálculo Elo
+        df_a = data_filas[['Jugador_A', 'Rating_A_NEW', 'Fecha']].copy()
+        df_a['_idx'] = df_a.index
+        df_a = df_a.rename(columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+
+        df_b = data_filas[['Jugador_B', 'Rating_B_NEW', 'Fecha']].copy()
+        df_b['_idx'] = df_b.index
+        df_b = df_b.rename(columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+
+        long_df = pd.concat([df_a, df_b], ignore_index=True)
         long_df['Fecha'] = pd.to_datetime(long_df['Fecha'])
-        long_df = long_df.dropna(subset=['Jugador', 'Fecha'])
-        long_df = long_df.sort_values('Fecha')
+        long_df = long_df.dropna(subset=['Jugador', 'Fecha', 'Elo'])
+        long_df = long_df[long_df['Jugador'] != '']
+        # Ordenar por índice de partida (orden real del cálculo Elo)
+        long_df = long_df.sort_values(['Fecha', '_idx']).reset_index(drop=True)
         return long_df
 
     def _ranking_periodo(pivot_full, periodo_sel):
@@ -387,7 +394,9 @@ def show():
 
         # ---- grilla mensual completa (incluye meses sin partidas, con ffill) ----
         long_hist['Periodo_M'] = long_hist['Fecha'].dt.to_period('M')
-        last_m = long_hist.groupby(['Periodo_M', 'Jugador'])['Elo'].last().reset_index()
+        # Usar idxmax de _idx para tomar el Elo de la partida más reciente del mes
+        idx_last_m = long_hist.groupby(['Periodo_M', 'Jugador'])['_idx'].idxmax()
+        last_m = long_hist.loc[idx_last_m, ['Periodo_M', 'Jugador', 'Elo']].reset_index(drop=True)
         pivot_m_full = last_m.pivot(index='Periodo_M', columns='Jugador', values='Elo')
         pivot_m_full = pivot_m_full.reindex(
             pd.period_range(fecha_min.to_period('M'), fecha_max.to_period('M'), freq='M')
@@ -396,7 +405,8 @@ def show():
 
         # ---- grilla anual completa ----
         long_hist['Periodo_A'] = long_hist['Fecha'].dt.to_period('Y')
-        last_a = long_hist.groupby(['Periodo_A', 'Jugador'])['Elo'].last().reset_index()
+        idx_last_a = long_hist.groupby(['Periodo_A', 'Jugador'])['_idx'].idxmax()
+        last_a = long_hist.loc[idx_last_a, ['Periodo_A', 'Jugador', 'Elo']].reset_index(drop=True)
         pivot_a_full = last_a.pivot(index='Periodo_A', columns='Jugador', values='Elo')
         pivot_a_full = pivot_a_full.reindex(
             pd.period_range(fecha_min.to_period('Y'), fecha_max.to_period('Y'), freq='Y')
