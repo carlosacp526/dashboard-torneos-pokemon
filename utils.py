@@ -202,62 +202,6 @@ def obtener_logo_liga(liga):
         if os.path.exists(ruta): return ruta
     return "Logo.png" if os.path.exists("Logo.png") else None
 
-def obtener_elo_rank_historico(data_elo, data_filas, jugador, fecha_corte=None):
-    """
-    Devuelve (elo, rank) de `jugador` reconstruido a una fecha específica
-    (`fecha_corte`), usando el mismo criterio que la pestaña "📅 Por Mes" del
-    Ranking Elo (vistas/elo.py): el último Elo conocido de cada jugador hasta
-    esa fecha, tomado partida por partida desde `data_filas`.
-
-    - `data_filas` es el historial de partidas devuelto por `calcular_elo()`,
-      con columnas Jugador_A (siempre el ganador), Jugador_B (siempre el
-      perdedor), Rating_A_NEW, Rating_B_NEW y Fecha.
-    - Si `fecha_corte` es None, se usa el historial completo (Elo/rank final,
-      equivalente al ranking actual).
-    - Si el jugador no tiene partidas hasta esa fecha, devuelve (1000, 0).
-    """
-    if data_filas is None or data_filas.empty or not jugador:
-        return 1000, 0
-
-    hist = data_filas.copy()
-    hist['Fecha'] = pd.to_datetime(hist['Fecha'], errors='coerce')
-
-    if fecha_corte is not None:
-        corte = pd.Timestamp(fecha_corte)
-        hist = hist[hist['Fecha'] <= corte]
-
-    if hist.empty:
-        return 1000, 0
-
-    # Cada partida deja un Elo actualizado tanto para el ganador (A) como
-    # para el perdedor (B) -> se apilan ambos para tener, por fecha, el
-    # Elo de CADA jugador después de CADA partida que jugó.
-    a = hist[['Jugador_A', 'Fecha', 'Rating_A_NEW']].rename(
-        columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
-    b = hist[['Jugador_B', 'Fecha', 'Rating_B_NEW']].rename(
-        columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
-    largo = pd.concat([a, b], ignore_index=True).dropna(subset=['Jugador', 'Fecha'])
-    if largo.empty:
-        return 1000, 0
-
-    # Último Elo conocido de cada jugador hasta la fecha de corte
-    largo = largo.sort_values('Fecha')
-    ultimo = largo.groupby('Jugador', as_index=False).last()
-    ultimo = ultimo.sort_values('Elo', ascending=False).reset_index(drop=True)
-    ultimo['RANK'] = range(1, len(ultimo) + 1)
-
-    jl = str(jugador).strip().lower()
-    ultimo['_jl'] = ultimo['Jugador'].astype(str).str.strip().str.lower()
-
-    match = ultimo[ultimo['_jl'] == jl]
-    if match.empty:
-        match = ultimo[ultimo['_jl'].str.contains(jl, na=False, regex=False)]
-    if match.empty:
-        return 1000, 0
-
-    return int(match['Elo'].values[0]), int(match['RANK'].values[0])
-
-
 def obtener_banner_torneo(num_torneo):
     for ext in ['png','PNG','jpg','JPG','jpeg','JPEG']:
         for ruta in [
@@ -386,6 +330,182 @@ def build_base_jornada(df_liga):
     base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
     base = base.drop(columns=["Partidas_P1","Partidas_P2"])
     return score_final(base), dj
+
+def generar_tabla_formatos(df_liga, temporada):
+    """
+    Para cada participante de una temporada de liga, cuenta victorias/total/
+    winrate por Formato (SINGLES, DOBLES, VGC) y arma un PUNTAJE total
+    (suma de victorias en todos los formatos), usado por `tabla_formatos_html`
+    para resaltar en verde a todos los que empatan en el puntaje máximo.
+    """
+    if df_liga is None or df_liga.empty or 'Formato' not in df_liga.columns:
+        return pd.DataFrame()
+
+    d = df_liga[df_liga['Liga_Temporada'] == temporada].copy() \
+        if 'Liga_Temporada' in df_liga.columns else df_liga.copy()
+    if d.empty:
+        return pd.DataFrame()
+
+    participantes = pd.unique(d[['player1', 'player2']].values.ravel('K'))
+    participantes = sorted(p for p in participantes if pd.notna(p) and str(p).strip())
+    if not participantes:
+        return pd.DataFrame()
+
+    formatos = ['SINGLES', 'DOBLES', 'VGC']
+    filas = []
+    for p in participantes:
+        fila = {'AKA': p}
+        puntaje = 0
+        for fmt in formatos:
+            sub = d[d['Formato'].astype(str).str.upper() == fmt]
+            jugadas = sub[(sub['player1'] == p) | (sub['player2'] == p)]
+            total = len(jugadas)
+            win = int((jugadas['winner'] == p).sum())
+            rate = round(win / total * 100, 1) if total > 0 else 0.0
+            fila[f'{fmt}_WIN'] = win
+            fila[f'{fmt}_TOTAL'] = total
+            fila[f'{fmt}_RATE'] = rate
+            puntaje += win
+        fila['PUNTAJE'] = puntaje
+        filas.append(fila)
+
+    tabla = pd.DataFrame(filas).sort_values('PUNTAJE', ascending=False).reset_index(drop=True)
+    return tabla
+
+
+def tabla_formatos_html(tabla):
+    """Renderiza `generar_tabla_formatos` como tabla HTML, resaltando en verde
+    a todos los que comparten el PUNTAJE máximo (empates permitidos)."""
+    if tabla is None or tabla.empty:
+        return ""
+
+    max_pts = tabla['PUNTAJE'].max() if 'PUNTAJE' in tabla.columns else None
+    cols = list(tabla.columns)
+
+    html = "<table style='border-collapse:collapse;width:100%;font-size:0.9em'>"
+    html += "<tr>" + "".join(
+        f"<th style='background:#1B2B3B;color:#F1C40F;padding:6px 10px;border:1px solid #444'>{c}</th>"
+        for c in cols
+    ) + "</tr>"
+
+    for _, row in tabla.iterrows():
+        es_max = max_pts is not None and row.get('PUNTAJE') == max_pts
+        bg = '#2ECC71' if es_max else '#34495E'
+        color = '#000' if es_max else 'white'
+        peso = 'bold' if es_max else 'normal'
+        html += "<tr>"
+        for c in cols:
+            val = row[c]
+            if isinstance(val, float) and c.endswith('_RATE'):
+                val = f"{val:.1f}%"
+            html += (f"<td style='background:{bg};color:{color};font-weight:{peso};"
+                     f"text-align:center;padding:6px 10px;border:1px solid #444'>{val}</td>")
+        html += "</tr>"
+    html += "</table>"
+    return html
+
+
+def generar_tabla_enfrentamientos(df_liga, temporada):
+    """
+    Matriz de enfrentamientos: para cada par de participantes, agrega TODAS
+    las batallas jugadas entre ellos en la temporada (cualquier formato,
+    cualquier jornada) y clasifica el resultado desde la perspectiva del
+    participante de la FILA frente al de la COLUMNA, según el margen de
+    pokemon sobrevivientes de esa(s) batalla(s):
+        V  = victoria clara  (margen >= 3)  -> 3 pts
+        VR = victoria reñida (margen 1-2)   -> 2 pts
+        DR = derrota reñida  (margen 1-2)   -> 1 pt
+        D  = derrota clara   (margen >= 3)  -> 0 pts
+        NP = no se enfrentaron en la temporada
+    Si se enfrentaron más de una vez, se usa el promedio de puntos de todas
+    esas batallas para elegir la etiqueta final.
+
+    ⚠️ El umbral margen>=3 = "clara" es un supuesto razonable a partir de la
+    descripción (V/VR/DR/D con esos puntajes) — si tu criterio real de
+    "reñida" vs "clara" es otro, decime el margen exacto y lo ajusto.
+    """
+    if df_liga is None or df_liga.empty:
+        return pd.DataFrame()
+    if 'Liga_Temporada' not in df_liga.columns:
+        return pd.DataFrame()
+
+    d = df_liga[df_liga['Liga_Temporada'] == temporada].copy()
+    if d.empty or 'pokemons Sob' not in d.columns:
+        return pd.DataFrame()
+
+    d['Perdedor'] = d.apply(lambda r: r['player2'] if r['winner'] == r['player1'] else r['player1'], axis=1)
+    d['Pokes_Ganador'] = d['pokemons Sob']
+    d['Pokes_Perdedor'] = 6 - d['pokemons Sob']
+
+    participantes = pd.unique(d[['player1', 'player2']].values.ravel('K'))
+    participantes = sorted(p for p in participantes if pd.notna(p) and str(p).strip())
+    if not participantes:
+        return pd.DataFrame()
+
+    matriz = pd.DataFrame('NP', index=participantes, columns=participantes)
+
+    for a in participantes:
+        for b in participantes:
+            if a == b:
+                matriz.loc[a, b] = '—'
+                continue
+
+            gano_a = d[(d['winner'] == a) & (d['Perdedor'] == b)]
+            gano_b = d[(d['winner'] == b) & (d['Perdedor'] == a)]
+            n_batallas = len(gano_a) + len(gano_b)
+            if n_batallas == 0:
+                continue
+
+            pts = 0.0
+            for _, r in gano_a.iterrows():
+                margen = r['Pokes_Ganador'] - r['Pokes_Perdedor']
+                pts += 3 if margen >= 3 else 2
+            for _, r in gano_b.iterrows():
+                margen = r['Pokes_Ganador'] - r['Pokes_Perdedor']
+                pts += 0 if margen >= 3 else 1
+
+            promedio = pts / n_batallas
+            if promedio >= 2.5:
+                matriz.loc[a, b] = 'V'
+            elif promedio >= 1.5:
+                matriz.loc[a, b] = 'VR'
+            elif promedio >= 0.5:
+                matriz.loc[a, b] = 'DR'
+            else:
+                matriz.loc[a, b] = 'D'
+
+    matriz.index.name = 'Participantes'
+    return matriz
+
+
+def tabla_enfrentamientos_html(matriz):
+    """Renderiza la matriz de `generar_tabla_enfrentamientos` como HTML coloreado."""
+    if matriz is None or matriz.empty:
+        return ""
+
+    color_map = {
+        'V': '#2ECC71', 'VR': '#82E0AA', 'DR': '#F1948A',
+        'D': '#E74C3C', 'NP': '#5D6D7E', '—': '#2C3E50',
+    }
+
+    html = "<table style='border-collapse:collapse;width:100%;font-size:0.85em'>"
+    html += "<tr><th style='background:#1B2B3B;padding:6px;border:1px solid #444'></th>"
+    for col in matriz.columns:
+        html += f"<th style='background:#1B2B3B;color:#F1C40F;padding:6px;border:1px solid #444'>{col}</th>"
+    html += "</tr>"
+
+    for idx, row in matriz.iterrows():
+        html += (f"<tr><td style='background:#1B2B3B;color:#F1C40F;font-weight:bold;"
+                  f"padding:6px;border:1px solid #444'>{idx}</td>")
+        for col in matriz.columns:
+            val = row[col]
+            bg = color_map.get(val, '#34495E')
+            html += (f"<td style='background:{bg};color:white;text-align:center;"
+                      f"padding:6px;border:1px solid #444'>{val}</td>")
+        html += "</tr>"
+    html += "</table>"
+    return html
+
 
 CSS_BACK = """
 <style>
