@@ -672,7 +672,8 @@ def show():
             st.caption(f"ℹ️ {n_excluidas} batalla(s) con replay ya cargado se excluyeron de WhatsApp.")
 
         # Obtener jugadores únicos con pendientes
-        jugadores_p1 = fp_wa['player1'].dropna().unique().tolist()
+        #jugadores_p1 = fp_wa['player1'].dropna().unique().tolist()
+        jugadores_p1 = fp_wa_msg['player1'].dropna().unique().tolist()
         jugadores_p2 = fp_wa_msg['player2'].dropna().unique().tolist()
         todos_jugadores = sorted(set(jugadores_p1 + jugadores_p2))
 
