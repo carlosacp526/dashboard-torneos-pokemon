@@ -43,6 +43,7 @@ def show():
     st.header("📈 Ranking Elo")
 
     meses_elo = [
+        ("Agosto26.png",    "Agosto 26"),
         ("Julio26.png",    "Julio 26"),
          ("Junio26.png",    "Junio 26"),
          ("Mayo26.png",    "Mayo 2026"),
