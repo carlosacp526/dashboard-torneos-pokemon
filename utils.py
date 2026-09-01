@@ -294,6 +294,70 @@ def build_base_torneo(df):
     return score_final(base), df_t
 
 @st.cache_data(ttl=3600)
+def build_base_llave(df):
+    """
+    Calcula el score_completo agrupando por llave_torneo + Llave_cat.
+    Equivalente a build_base_torneo pero con llave compuesta.
+    """
+    if 'llave_torneo' not in df.columns or 'Llave_cat' not in df.columns:
+        return pd.DataFrame(), pd.DataFrame()
+
+    df_l = df[(df['llave_torneo'].notna()) & (df['Llave_cat'].notna())].copy()
+    if df_l.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Llave compuesta
+    df_l['Llave_completa'] = df_l['llave_torneo'].astype(str) + '_' + df_l['Llave_cat'].astype(str)
+    KEY = 'Llave_completa'
+
+    Ganador = df_l.groupby([KEY, 'winner'])['llave_torneo'].count().reset_index()
+    Ganador.columns = [KEY, 'Participante', 'Victorias']
+
+    P1 = df_l.groupby([KEY, 'player1'])['llave_torneo'].count().reset_index()
+    P1.columns = [KEY, 'Participante', 'Partidas_P1']
+
+    P2 = df_l.groupby([KEY, 'player2'])['llave_torneo'].count().reset_index()
+    P2.columns = [KEY, 'Participante', 'Partidas_P2']
+
+    g_pk = df_l[[KEY, 'winner', 'pokemons Sob', 'pokemon vencidos']].copy()
+    g_pk.columns = [KEY, 'Participante', 'pokes_sobrevivientes', 'poke_vencidos']
+
+    p_pk = df_l[[KEY, 'player1', 'player2', 'winner', 'pokemons Sob', 'pokemon vencidos']].copy()
+    p_pk['Participante'] = p_pk.apply(
+        lambda r: r['player2'] if r['winner'] == r['player1'] else r['player1'], axis=1)
+    p_pk['poke_vencidos']        = 6 - p_pk['pokemons Sob']
+    p_pk['pokes_sobrevivientes'] = p_pk['pokemon vencidos'] - 6
+    p_pk = p_pk[[KEY, 'Participante', 'pokes_sobrevivientes', 'poke_vencidos']]
+
+    data = (pd.concat([p_pk, g_pk])
+              .groupby([KEY, 'Participante'])[['pokes_sobrevivientes', 'poke_vencidos']]
+              .sum().reset_index())
+
+    bp1 = df_l[[KEY, 'player1']].copy(); bp1.columns = [KEY, 'Participante']
+    bp2 = df_l[[KEY, 'player2']].copy(); bp2.columns = [KEY, 'Participante']
+    base = pd.concat([bp1, bp2], ignore_index=True).drop_duplicates()
+
+    base = pd.merge(base, Ganador, how='left', on=[KEY, 'Participante'])
+    base['Victorias'] = base['Victorias'].fillna(0).astype(int)
+    base = pd.merge(base, P1, how='left', on=[KEY, 'Participante'])
+    base = pd.merge(base, P2, how='left', on=[KEY, 'Participante'])
+    base['Partidas_P1'] = base['Partidas_P1'].fillna(0)
+    base['Partidas_P2'] = base['Partidas_P2'].fillna(0)
+    base['Juegos']   = (base['Partidas_P1'] + base['Partidas_P2']).astype(int)
+    base['Derrotas'] = base['Juegos'] - base['Victorias']
+    base = pd.merge(base, data, how='left', on=[KEY, 'Participante'])
+    base['pokes_sobrevivientes'] = base['pokes_sobrevivientes'].fillna(0)
+    base['poke_vencidos']        = base['poke_vencidos'].fillna(0)
+    base = base.drop(columns=['Partidas_P1', 'Partidas_P2'])
+
+    # Agregar columnas originales para referencia
+    llave_ref = df_l[[KEY, 'llave_torneo', 'Llave_cat']].drop_duplicates()
+    base = pd.merge(base, llave_ref, how='left', on=KEY)
+
+    return score_final(base), df_l
+
+
+@st.cache_data(ttl=3600)
 def build_base_jornada(df_liga):
     dj = df_liga.copy()
     dj["N_Jornada"] = dj["N_Torneo"]
