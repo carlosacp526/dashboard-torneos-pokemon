@@ -274,8 +274,58 @@ def evaluar_logros(
     ligas_cat    = pm[pm['league']=='LIGA']['Ligas_categoria'].dropna().nunique() if 'Ligas_categoria' in pm.columns else 0
     tipos_evento = set(pm['league'].dropna().str.upper().unique()) if 'league' in pm.columns else set()
 
-    n_camp_liga   = len(campeonatos_liga)
-    n_camp_torneo = len(campeonatos_torneo)
+    # ── Torneos y ligas FINALIZADOS (sin Walkover == -1) ─────────────────────
+    # Un torneo está finalizado si NO tiene ninguna batalla pendiente (Walkover != -1)
+    def _torneos_finalizados(df_all):
+        """Devuelve set de N_Torneo que no tienen ningún Walkover==-1."""
+        if 'N_Torneo' not in df_all.columns or 'Walkover' not in df_all.columns:
+            return set()
+        todos = set(df_all[df_all['league']=='TORNEO']['N_Torneo'].dropna().astype(int).unique())
+        con_pendientes = set(
+            df_all[(df_all['league']=='TORNEO') & (df_all['Walkover']==-1)]['N_Torneo']
+            .dropna().astype(int).unique()
+        )
+        return todos - con_pendientes
+
+    def _ligas_finalizadas(df_all):
+        """Devuelve set de Liga_Temporada (round prefix) que no tienen Walkover==-1."""
+        if 'Walkover' not in df_all.columns or 'round' not in df_all.columns:
+            return set()
+        df_liga = df_all[df_all['league']=='LIGA'].copy()
+        df_liga['Liga_Temporada'] = df_liga['round'].apply(
+            lambda x: str(x).split(' ')[0]+str(x).split(' ')[1]
+            if pd.notna(x) and len(str(x).split(' ')) > 1 else ''
+        )
+        todas = set(df_liga['Liga_Temporada'].unique())
+        con_pendientes = set(
+            df_liga[df_liga['Walkover']==-1]['Liga_Temporada'].unique()
+        )
+        return todas - con_pendientes
+
+    torneos_finalizados = _torneos_finalizados(df_raw) if df_raw is not None else set()
+    ligas_finalizadas   = _ligas_finalizadas(df_raw)   if df_raw is not None else set()
+
+    # Participación solo en torneos finalizados
+    torneos_part_final = (
+        pm[(pm['league']=='TORNEO') & (pm['N_Torneo'].dropna().astype(int).isin(torneos_finalizados))]
+        ['N_Torneo'].dropna().nunique()
+        if 'N_Torneo' in pm.columns else 0
+    )
+
+    # Campeonatos solo de torneos finalizados
+    campeonatos_torneo_final = [
+        c for c in campeonatos_torneo
+        if int(c.get('Torneo', -1)) in torneos_finalizados
+    ] if campeonatos_torneo else []
+
+    # Campeonatos de liga solo de ligas finalizadas
+    campeonatos_liga_final = [
+        c for c in campeonatos_liga
+        if any(lt in ligas_finalizadas for lt in [c.get('Liga',''), str(c.get('Liga',''))])
+    ] if campeonatos_liga else []
+
+    n_camp_liga   = len(campeonatos_liga_final)    # solo ligas finalizadas
+    n_camp_torneo = len(campeonatos_torneo_final)  # solo torneos finalizados
 
     # ── racha máxima ─────────────────────────────────────────────────────────
     racha_max = 0
@@ -418,7 +468,7 @@ def evaluar_logros(
     def _gano_torneo_formato(fmt_key):
         if 'Formato_esp' not in pm.columns and 'Formato' not in pm.columns: return False
         col = 'Formato_esp' if 'Formato_esp' in pm.columns else 'Formato'
-        for camp in campeonatos_torneo:
+        for camp in campeonatos_torneo_final:
             nt = camp.get('Torneo')
             sub = pm[(pm['league']=='TORNEO') & (pm['N_Torneo']==nt)] if 'N_Torneo' in pm.columns else pd.DataFrame()
             if not sub.empty:
@@ -443,7 +493,7 @@ def evaluar_logros(
 
     # Campeón en primera participación
     primer_torneo_ganado = False
-    if campeonatos_torneo and 'N_Torneo' in pm.columns:
+    if campeonatos_torneo_final and 'N_Torneo' in pm.columns:
         primer_torneo_jugado = pm[pm['league']=='TORNEO']['N_Torneo'].dropna().min() if not pm[pm['league']=='TORNEO'].empty else None
         if primer_torneo_jugado is not None:
             primer_torneo_ganado = any(c.get('Torneo') == int(primer_torneo_jugado) for c in campeonatos_torneo)
@@ -455,13 +505,14 @@ def evaluar_logros(
     r = {}
 
     # PARTICIPACIÓN
-    r["PA01"] = total >= 1
-    r["PA02"] = torneos_part >= 5
-    r["PA03"] = torneos_part >= 25
-    r["PA04"] = torneos_part >= 15
-    r["PA05"] = torneos_part >= 30
-    r["PA06"] = torneos_part >= 50
-    r["PA07"] = torneos_part >= 100
+    # PA01-PA07: participación en torneos — solo torneos finalizados
+    r["PA01"] = torneos_part_final >= 1
+    r["PA02"] = torneos_part_final >= 5
+    r["PA03"] = torneos_part_final >= 25
+    r["PA04"] = torneos_part_final >= 15
+    r["PA05"] = torneos_part_final >= 30
+    r["PA06"] = torneos_part_final >= 50
+    r["PA07"] = torneos_part_final >= 100
     r["PA08"] = n_camp_torneo >= 1 or victorias >= 1
     r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
     r["PA10"] = len(formatos_jugados) >= 3
@@ -491,7 +542,7 @@ def evaluar_logros(
         ]
         return any(mis_victorias['pokemons Sob'].astype(str).str.strip() == str(n_sob_exacto))
 
-    # VI13: Perfección — ganar un torneo ganando TODAS sus partidas sin perder ninguna
+    # VI13: Perfección — ganar un torneo sin perder (solo torneos finalizados)
     def _perfeccion():
         if 'N_Torneo' not in df_raw.columns or 'league' not in df_raw.columns: return False
         torneos_jugados = df_raw[
@@ -501,6 +552,8 @@ def evaluar_logros(
             )
         ]['N_Torneo'].dropna().unique()
         for nt in torneos_jugados:
+            if int(nt) not in torneos_finalizados:  # solo torneos finalizados
+                continue
             sub = df_raw[
                 (df_raw['N_Torneo'] == nt) & (
                     df_raw['player1'].str.lower().str.contains(pq, na=False) |
@@ -509,7 +562,6 @@ def evaluar_logros(
             ]
             if len(sub) < 2: continue
             ganadas = sub['winner'].str.lower().str.contains(pq, na=False).sum()
-            # Ganó todas sus partidas Y llegó a la final
             llego_final = sub['round'].str.lower().str.contains('final', na=False).any()
             if ganadas == len(sub) and llego_final:
                 return True
@@ -575,7 +627,7 @@ def evaluar_logros(
     # ESTRATEGIA
     fmt_esp_col = 'Formato_esp' if 'Formato_esp' in pm.columns else 'Formato'
     fmts_ganados = set()
-    for camp in campeonatos_torneo:
+    for camp in campeonatos_torneo_final:
         nt = camp.get('Torneo')
         if 'N_Torneo' in pm.columns:
             sub = pm[(pm['league']=='TORNEO') & (pm['N_Torneo']==nt)]
@@ -725,7 +777,7 @@ def evaluar_logros(
         if len(campeonatos_torneo) < 2: return False
         if 'N_Torneo' not in df_raw.columns or 'date' not in df_raw.columns: return False
         fechas_camp = []
-        for camp in campeonatos_torneo:
+        for camp in campeonatos_torneo_final:
             nt = camp.get('Torneo')
             sub = df_raw[df_raw['N_Torneo'] == nt]['date']
             sub = pd.to_datetime(sub, errors='coerce').dropna()
@@ -783,7 +835,7 @@ def evaluar_logros(
         if len(campeonatos_torneo) < 2: return False
         if 'N_Torneo' not in df_raw.columns or 'date' not in df_raw.columns: return False
         años_camp = []
-        for camp in campeonatos_torneo:
+        for camp in campeonatos_torneo_final:
             nt = camp.get('Torneo')
             sub = df_raw[df_raw['N_Torneo'] == nt]['date']
             sub = pd.to_datetime(sub, errors='coerce').dropna()
