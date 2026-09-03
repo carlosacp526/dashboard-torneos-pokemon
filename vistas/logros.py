@@ -572,8 +572,9 @@ def evaluar_logros(
     # Lista de campeones actualizable
     CAMPEONES_TORNEO = [
         "Yabadaba", "MaskWolf","Chino","The.Ultracheese","Luigillanos","Renzo","Alechiii","Aikauwu","D'Allfather","Haseo","Joscake","A25","Angello77","Nigga Chan",
-        "Davarv","haiseowo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
-        "Mr.Shadowdusk","Chris FPS","Adpg","SasoriVzla7","skll02","EmperorGambit","ShinkaHMA","Rainer","huevo_pipipi","HaoSigismondi" ,"Bloody Cheese","Chonarthas"
+        "Davarv","haise_owo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
+        "Mr.Shadowdusk","Chris FPS","Adpg","SasoriVzla7","skll02","EmperorGambit","ShinkaHMA","Rainer","huevo_pipipi","HaoSigismondi" ,"Bloody Cheese","Chonarthas",
+        "Hydreigon_chelas" ,"Porygon Z"
         # agregar más aquí
     ]
     def _verdugo_elite():
@@ -798,7 +799,7 @@ def evaluar_logros(
     r["SP05"] = max_wins_rival >= 20
     # SP06: Underdog — ganar a alguien que sea campeón de torneo Y liga
     LEYENDAS = [
-        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru","haseo"
+        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru","haseo" ,"Porygon Z"
         # agregar más aquí
     ]
     def _underdog():

@@ -216,7 +216,7 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
             lineas.append(f"📱 WhatsApp rival: ❌ no cargado")
         lineas.append("")
 
-    lineas.append("¡Coordiná con tu rival lo antes posible! 🔥")
+    lineas.append("¡Coordina con tu rival lo antes posible! 🔥")
     return "\n".join(lineas)
 
 def _sin_replay_cargado(df: pd.DataFrame) -> pd.Series:
