@@ -413,7 +413,7 @@ def show():
         return
 
     # ── Filtros ───────────────────────────────────────────────────────────────
-    col_f1, col_f2, col_f3 = st.columns(3)
+    col_f1, col_f2, col_f3,col_f4 = st.columns(4)
     with col_f1:
         player_filter = st.text_input("🔍 Buscar jugador", "", key="pend_search")
     with col_f2:
@@ -421,6 +421,9 @@ def show():
         tier_sel  = st.selectbox("Tier", tier_opts, key="pend_tier")
     with col_f3:
         league_opts = ["Todos"] + sorted(pending['league'].dropna().unique().tolist())
+        league_sel  = st.selectbox("Evento", league_opts, key="pend_league")
+    with col_f4:
+        league_opts = ["Todos"] + sorted(pending['Aka_evento'].dropna().unique().tolist())
         league_sel  = st.selectbox("Evento", league_opts, key="pend_league")
 
     fp = pending.copy()
