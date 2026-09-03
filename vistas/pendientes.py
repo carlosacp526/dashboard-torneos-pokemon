@@ -424,7 +424,7 @@ def show():
         league_sel  = st.selectbox("Evento", league_opts, key="pend_league")
     with col_f4:
         league_opts = ["Todos"] + sorted(pending['Aka_evento'].dropna().unique().tolist())
-        league_sel  = st.selectbox("Evento", league_opts, key="pend_league")
+        league_sel  = st.selectbox("Aka_evento", league_opts, key="pend_league")
 
     fp = pending.copy()
     if player_filter:
