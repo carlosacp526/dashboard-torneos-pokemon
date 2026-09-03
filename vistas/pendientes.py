@@ -674,7 +674,29 @@ def show():
         if n_excluidas > 0:
             st.caption(f"ℹ️ {n_excluidas} batalla(s) con replay ya cargado se excluyeron de WhatsApp.")
 
-        # Obtener jugadores únicos con pendientes
+        # ── Filtro Aka_evento (solo afecta batallas en el mensaje) ──────────
+        if 'Aka_evento' in fp_wa.columns:
+            akas_disp = sorted(fp_wa['Aka_evento'].dropna().unique().tolist())
+        else:
+            akas_disp = []
+
+        if akas_disp:
+            akas_sel = st.multiselect(
+                "🎯 Filtrar evento en el mensaje (vacío = todos)",
+                options=akas_disp,
+                default=[],
+                key="wa_aka_filtro",
+                placeholder="Todos los eventos..."
+            )
+            if akas_sel:
+                fp_wa_msg = fp_wa[fp_wa['Aka_evento'].isin(akas_sel)].copy()
+                st.caption(f"📋 {len(fp_wa_msg)} batallas del evento seleccionado incluidas en el mensaje.")
+            else:
+                fp_wa_msg = fp_wa.copy()
+        else:
+            fp_wa_msg = fp_wa.copy()
+
+        # Obtener jugadores únicos con pendientes (de fp_wa completo para la lista)
         jugadores_p1 = fp_wa['player1'].dropna().unique().tolist()
         jugadores_p2 = fp_wa['player2'].dropna().unique().tolist()
         todos_jugadores = sorted(set(jugadores_p1 + jugadores_p2))
@@ -726,7 +748,7 @@ def show():
             preview_j = seleccionados[0]
             preview_data = celulares.get(preview_j.lower(), {})
             preview_pais = preview_data.get('pais', 'Peru')
-            bats_preview = fp_wa[(fp_wa['player1']==preview_j)|(fp_wa['player2']==preview_j)]
+            bats_preview = fp_wa_msg[(fp_wa_msg['player1']==preview_j)|(fp_wa_msg['player2']==preview_j)]
             msg_preview  = construir_mensaje(preview_j, bats_preview, celulares, preview_pais)
 
             with st.expander(f"👁️ Preview mensaje — {preview_j}", expanded=True):
@@ -759,7 +781,7 @@ def show():
                     data_j  = celulares.get(jugador.lower(), {})
                     pais_j  = data_j.get('pais', 'Peru')
                     tel_j   = data_j.get('tel_completo', '')
-                    bats_j  = fp_wa[(fp_wa['player1']==jugador)|(fp_wa['player2']==jugador)]
+                    bats_j  = fp_wa_msg[(fp_wa_msg['player1']==jugador)|(fp_wa_msg['player2']==jugador)]
 
                     if not tel_j:
                         resultados.append({'Jugador':jugador,'Estado':'❌ Sin número','Tel':''})
