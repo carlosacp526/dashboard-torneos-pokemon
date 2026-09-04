@@ -663,7 +663,7 @@ def evaluar_logros(
     TORNEOS_TIPOS = {
         "TI01": {76},  # Fuego
         "TI02": {69},  # Agua
-        "TI03": {100},  # Planta
+        "TI03": {84},  # Planta
         "TI04": {100},  # Eléctrico
         "TI05": {100},  # Hielo
         "TI06": {100},  # Lucha
@@ -684,7 +684,7 @@ def evaluar_logros(
         r[kid] = bool(torneos_num & nums)
 
 
-    r["TO01"] = any('RANDOM SINGLES CHAMPIONS' in str(f).upper() for f in formatos_jugados_esp) or  any('MONOTYPE RANDOM BATTLE' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM DOUBLES' in str(f).upper() for f in formatos_jugados_esp)
+    r["TO01"] = any('RANDBATS CHAMPIONS' in str(f).upper() for f in formatos_jugados_esp) or  any('MONOTYPE RANDOM BATTLE' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM DOUBLES' in str(f).upper() for f in formatos_jugados_esp)
     #r["TO01"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
     for kid, nums in TORNEOS_GEN.items():
         r[kid] = bool(torneos_num & nums)
