@@ -1197,6 +1197,8 @@ def show():
                     df['player2'].str.contains(player_query,case=False,na=False)|
                     df['winner'].str.contains(player_query,case=False,na=False))
         player_matches = df[mask].copy()
+        if 'Walkover' in player_matches.columns:
+            player_matches = player_matches[player_matches['Walkover'] != -1].copy()
 
         # Header con imagen
         col_img, col_info = st.columns([1,3])
