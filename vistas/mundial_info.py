@@ -530,7 +530,8 @@ MONOTYPE1_TIPOS = {
     71: "GRANDE",
     72: "GRANDE",
     73: "GRANDE",
-    74: "GRANDE",75: "SPECIAL",78:"GRANDE",79:"MEDIANO"
+    74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO"
+    ,81:"GRANDE",82:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -763,6 +764,33 @@ MONOTYPE1_POSICIONES = {
         "Ger":     "Top40",
 
         }},
+
+
+
+             76: {
+      "SINGLES": {
+        "Porygon Z":   "Campeón",
+        "SasoriVzla7": "Subcampeón",
+        "Elin beacil":     "Top4",
+        "Luigillanos":     "Top4",
+
+        "Saga":     "Top8",
+        "ShinkaHMA":     "Top8",
+        "skll02":     "Top8",
+        "Angello77":     "Top8",
+
+
+        "Bloody Cheese":     "Top16",
+        "Joscake":     "Top16",
+        "Draco axel":     "Top16",
+        "Ricomam":     "Top16",
+        "Arnau":     "Top16",
+        "Okari958":     "Top16",
+        "CaradeCoso":     "Top16",
+        "AerosmithJR":     "Top16",
+
+        }}
+        ,
              78: {
       "SINGLES": {
         "Bloody Cheese":   "Campeón",
@@ -801,7 +829,44 @@ MONOTYPE1_POSICIONES = {
         "JaLax":     "Top8",
 
 
-        }}
+        }}      ,       81: {
+      "SINGLES": {
+        "Porygon Z":   "Campeón",
+        "Angello77": "Subcampeón",
+        "D'AllFather":     "Top4",
+        "lexodia":     "Top4",
+
+        "A25":     "Top8",
+        "ZapeohDev":     "Top8",
+        "Bloody Cheese":     "Top8",
+        "Edenking":     "Top8",
+
+
+        "JaLax":     "Top16",
+        "Draco axel":     "Top16",
+        "MaskWolf":     "Top16",
+        "LABIAMG":     "Top16",
+        "Joscake":     "Top16",
+        "Gold":     "Top16",
+        "Aikauwu":     "Top16",
+        "SasoriVzla7":     "Top16",
+
+        }},
+
+                 82: {
+      "DOBLES": {
+        "Hydreigon_chelas":   "Campeón",
+        "Aikauwu": "Subcampeón",
+        "Fur4nko":     "Top4",
+        "Bloody Cheese":     "Top4",
+
+        "Porygon Z":     "Top8",
+        "Ger":     "Top8",
+        "Necroz":     "Top8",
+        "JaLax":     "Top8"
+
+
+        }}     
         
         }
 MONOTYPE1_LIGAS = {
