@@ -438,7 +438,6 @@ def tabla_formatos_html(tabla):
         return "<p>No hay datos</p>"
     formatos = tabla.attrs.get('formatos', ['Singles', 'Dobles', 'VGC'])
     max_win_por_formato = {fmt: tabla[f'{fmt}_WIN'].max() for fmt in formatos}
-    max_punt = tabla['Puntaje'].max()
 
     css = """
     <style>
@@ -450,7 +449,6 @@ def tabla_formatos_html(tabla):
     .fmt-cell {background:#F5B970;color:#000;}
     .fmt-cell-top {background:#58D68D;color:#000;font-weight:bold;}
     .fmt-punt {background:#000;color:#fff;font-weight:bold;font-style:italic;}
-    .fmt-punt-top {background:#F1C40F;color:#000;font-weight:bold;font-style:italic;}
     </style>
     """
     header1 = "<tr><th class='fmt-name' rowspan='2'>Participantes</th>"
@@ -470,8 +468,7 @@ def tabla_formatos_html(tabla):
             rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_WIN'])}</td>"
             rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_TOTAL'])}</td>"
             rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_RATE'])}%</td>"
-        punt_cls = "fmt-punt-top" if row['Puntaje'] == max_punt else "fmt-punt"
-        rows_html += f"<td class='{punt_cls}'>{int(row['Puntaje'])}</td></tr>"
+        rows_html += f"<td class='fmt-punt'>{int(row['Puntaje'])}</td></tr>"
 
     return css + f"<table class='fmt-table'>{header1}{header2}{rows_html}</table>"
 
