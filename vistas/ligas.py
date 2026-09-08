@@ -190,8 +190,10 @@ def show():
                             if tabla_fmt is None or tabla_fmt.empty:
                                 st.info(f"No hay datos de formato (columna 'Formato') para {temporada}")
                             else:
-                                st.caption("WIN/TOTAL/RATE por formato (Singles, Dobles, VGC). Se permiten empates en Puntaje: "
-                                           "todos los que compartan el puntaje máximo quedan resaltados en verde.")
+                                st.caption("WIN/TOTAL/RATE por formato (Singles, Dobles, VGC). El resaltado en verde se aplica "
+                                           "únicamente a la celda de WIN de quien(es) tengan más victorias en ESE formato "
+                                           "(se permiten empates: si dos o más comparten el máximo de WIN en un formato, todos "
+                                           "quedan resaltados ahí). El Puntaje total no afecta el resaltado.")
                                 st.markdown(tabla_formatos_html(tabla_fmt), unsafe_allow_html=True)
                                 csv_fmt = tabla_fmt.to_csv(index=False).encode('utf-8')
                                 st.download_button(f"📥 Descargar Formatos {temporada}", csv_fmt,

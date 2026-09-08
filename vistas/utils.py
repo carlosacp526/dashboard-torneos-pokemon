@@ -464,10 +464,10 @@ def tabla_formatos_html(tabla):
     for _, row in tabla.iterrows():
         rows_html += f"<tr><td class='fmt-name'>{row['Participantes']}</td>"
         for fmt in formatos:
-            cell_cls = "fmt-cell-top" if row[f'{fmt}_WIN'] == max_win_por_formato[fmt] else "fmt-cell"
-            rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_WIN'])}</td>"
-            rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_TOTAL'])}</td>"
-            rows_html += f"<td class='{cell_cls}'>{int(row[f'{fmt}_RATE'])}%</td>"
+            win_cls = "fmt-cell-top" if row[f'{fmt}_WIN'] == max_win_por_formato[fmt] else "fmt-cell"
+            rows_html += f"<td class='{win_cls}'>{int(row[f'{fmt}_WIN'])}</td>"
+            rows_html += f"<td class='fmt-cell'>{int(row[f'{fmt}_TOTAL'])}</td>"
+            rows_html += f"<td class='fmt-cell'>{int(row[f'{fmt}_RATE'])}%</td>"
         rows_html += f"<td class='fmt-punt'>{int(row['Puntaje'])}</td></tr>"
 
     return css + f"<table class='fmt-table'>{header1}{header2}{rows_html}</table>"
