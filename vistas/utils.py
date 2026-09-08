@@ -90,7 +90,7 @@ def asignar_zona(rank, total, lt):
         if rank in [2,3]: return "Ascenso"
         if rank > total-3: return "Descenso"
         return ""
-    if lt in ('PJST3','PJST4','PJST5'):
+    if lt in ('PJST3','PJST4','PJST5','PJST6'):
         if rank == 1: return "Líder"
         if rank in [2,3]: return "Ascenso"
         if rank > total-2: return "Descenso"
