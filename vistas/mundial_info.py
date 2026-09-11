@@ -978,7 +978,7 @@ MONOTYPE1_POSICIONES = {
         
         }
 MONOTYPE1_LIGAS = {
-    "PJST6": {
+    "PJS": {
         "SINGLES": {
             "Saga": "Participante",       # Jugador1 en SINGLES
             "HallacAs": "Participante",
