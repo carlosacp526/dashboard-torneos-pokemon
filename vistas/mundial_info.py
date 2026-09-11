@@ -531,7 +531,7 @@ MONOTYPE1_TIPOS = {
     72: "GRANDE",
     73: "GRANDE",
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO"
-    ,81:"GRANDE",82:"MEDIANO"
+    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -680,7 +680,7 @@ MONOTYPE1_POSICIONES = {
 
         "Angelowos":     "Top16",
         "Fabricio19jr":     "Top16",
-        "Fur4nk0":     "Top16",
+        "Fur4nko":     "Top16",
         "HaoSigismondi":     "Top16",
         "HideOnCube":     "Top16",
         "Lautaro":     "Top16",
@@ -788,6 +788,56 @@ MONOTYPE1_POSICIONES = {
         "Okari958":     "Top16",
         "CaradeCoso":     "Top16",
         "AerosmithJR":     "Top16",
+
+        }} ,
+            77: {
+      "VGC": {
+      "Akaru":   "Campeón",
+      "LABIAMG": "Subcampeón",
+        "Chonarthas":     "Top4",
+        "Joscake":     "Top4",
+
+        "Bloody Cheese":     "Top8",
+        "Ger":     "Top8",
+        "MilanesaVGC":     "Top8",
+        "Roy Kasoy":     "Top8",
+
+        "Angello77":     "Top16",
+        "Angelowos":     "Top16",
+        "Bamdara":     "Top16",
+        "Car10seduard0":     "Top16",
+        "HaoSigismondi":     "Top16",
+        "Hydreigon_chelas":     "Top16",
+        "Lautaro":     "Top16",
+        "Riubyx":     "Top16",
+
+        "A25":     "Top24",
+        "CaradeCoso":     "Top24",
+        "Miguel Lladoo":     "Top24",
+        "mtdrumr":     "Top24",
+        "ZapeohDev":     "Top24",
+        "Ricomam":     "Top24",
+        "Fur4nko":     "Top24",
+        "JaLax":     "Top24",
+
+        "ShinkaHMA":     "Top32",
+        "D'AllFather":     "Top32",
+        "Tronchi":     "Top32",
+        "Saga":     "Top32",
+        "Yabadaba":     "Top32",
+        "Dino agente":     "Top32",
+        "The Glenko":     "Top32",
+        "Chechin":     "Top32",
+
+
+        "Lolo":     "Top40",
+        "Jorginho":     "Top40",
+        "skll02":     "Top40",
+        "Fabricio19jr":     "Top40",
+        "SasoriVzla7":     "Top40",
+        "MafiaPolar6242":     "Top40",
+        "Chris FPS":     "Top40",
+        "Okari958":     "Top40",
 
         }}
         ,
