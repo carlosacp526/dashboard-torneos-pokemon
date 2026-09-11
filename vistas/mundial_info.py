@@ -355,6 +355,9 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw, penalida
     """
     Calcula puntos separados por formato (SINGLES, DOBLES, VGC).
     El formato se define manualmente en MONOTYPE1_POSICIONES y MONOTYPE1_LIGAS.
+    En MONOTYPE1_LIGAS el puntaje de cada jugador también puede escribirse
+    manualmente, indicando a qué formato va (ver comentario junto a la
+    sección de Ligas más abajo en esta función).
     Aplica penalidades (restas) por formato si se pasan.
     Devuelve dict: {formato: {puntos_jugador, detalle_rows}}
     """
@@ -380,17 +383,50 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw, penalida
                     "Puntos":   pts,
                 })
 
-    # ── Ligas — formato manual + posición calculada desde base2 ─
+    # ── Ligas ────────────────────────────────────────────────────
+    # Soporta DOS formatos de configuración en `ligas_dict`:
+    #
+    # 1) NUEVO (manual, recomendado) — puntaje y formato por jugador:
+    #    "LIGA_TEMP": {
+    #        "SINGLES": {"Jugador1": 30, "Jugador2": 20},
+    #        "VGC":     {"Jugador3": 15},
+    #    }
+    #    Tú decides el puntaje exacto de cada jugador y a qué formato va.
+    #
+    # 2) VIEJO (automático, retrocompatible) — un solo formato para toda
+    #    la liga y el puntaje se calcula solo según el rank en score_completo:
+    #    "LIGA_TEMP": "SINGLES"
     try:
-        base2, _ = build_base_liga(df_raw)
-        for liga_temp, liga_fmt in ligas_dict.items():
-            liga_fmt = str(liga_fmt).upper()
+        base2 = None  # se calcula solo si hace falta (modo viejo)
+        for liga_temp, liga_cfg in ligas_dict.items():
+
+            # ── Modo NUEVO: dict {"FORMATO": {jugador: puntaje}} ──
+            if isinstance(liga_cfg, dict):
+                for fmt_liga, jugadores_pts in liga_cfg.items():
+                    fmt_liga = str(fmt_liga).upper()
+                    if fmt_liga not in rankings: continue
+                    for jugador, pts in jugadores_pts.items():
+                        pts = int(pts)
+                        rankings[fmt_liga][jugador] = rankings[fmt_liga].get(jugador, 0) + pts
+                        detalles[fmt_liga].append({
+                            "Jugador":  jugador,
+                            "Evento":   liga_temp,
+                            "Posición": "Manual",
+                            "Puntos":   pts,
+                        })
+                continue
+
+            # ── Modo VIEJO: string "FORMATO" (cálculo automático) ──
+            liga_fmt = str(liga_cfg).upper()
             if liga_fmt not in rankings: continue
             m = re.match(r'^([A-Z]+)', liga_temp)
             if not m: continue
             prefijo = m.group(1)
             if prefijo not in PUNTAJES: continue
             tabla = PUNTAJES[prefijo]
+
+            if base2 is None:
+                base2, _ = build_base_liga(df_raw)
 
             liga_df = base2[base2["Liga_Temporada"] == liga_temp].copy()
             if liga_df.empty: continue
@@ -920,14 +956,20 @@ MONOTYPE1_POSICIONES = {
         
         }
 MONOTYPE1_LIGAS = {
-    # >>> agrega aquí las liga_temporada con su formato manual
-    # Estructura: "LIGA_TEMPORADA": "FORMATO"
+    # >>> Estructura: "LIGA_TEMPORADA" → { "FORMATO": {jugador: puntaje, ...}, ... }
+    # Escribe el puntaje EXACTO de cada jugador e indica a qué formato
+    # (SINGLES / DOBLES / VGC) van esos puntos. Una misma liga puede repartir
+    # jugadores entre varios formatos si hace falta.
     # Ejemplo:
-    # "PMST7":  "SINGLES",
-    # "PSST6":  "DOBLES",
-    # "PJST6":  "VGC",
-    # "PEST3":  "SINGLES",
-    # "PLST2":  "SINGLES",
+    # "PMST7": {
+    #     "SINGLES": {"Jugador1": 30, "Jugador2": 20},
+    # },
+    # "PSST6": {
+    #     "DOBLES": {"Jugador3": 25, "Jugador4": 10},
+    # },
+    # "PJST6": {
+    #     "VGC": {"Jugador5": 15},
+    # },
 }
 
 # ── PENALIDADES (restar puntos a un jugador en un formato) ────────
