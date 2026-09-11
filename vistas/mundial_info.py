@@ -984,29 +984,30 @@ MONOTYPE1_LIGAS = {
             "HallacAs": "Participante",
             "masafesio": "Top3",
             "Minipapus": "Participante" ,
-            "Ake-Izou": "Participante" 
+            "Ake-Izou": "Participante" ,"MaskWolf": "Participante"
                           },
         "DOBLES": {
             "Willow": "Participante",          # el mismo Jugador1 también jugó DOBLES en esta liga
             "Blazing": "Participante",
-            "Roncito": "Participante"
+            "Roncito": "Participante",
+            "ShinkaHMA": "Participante"
         },
         "VGC": {
             "Pandu": "Participante", 
              "EmperorGambit": "Campeón",
                 "Dino324000": "Participante",
-                  "Bamdara": "Participante"# y también VGC
+                  "Bamdara": "Participante",
+                  "Mar": "Top3",# y también VGC
         },
     }
 }
 
 
 
-#Mar
 #
-#ShinkaHMA
+#
 #skll02
-#MaskWolf
+#
 
 
 
