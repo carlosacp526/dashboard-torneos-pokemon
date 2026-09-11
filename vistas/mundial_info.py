@@ -384,34 +384,58 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw, penalida
                 })
 
     # ── Ligas ────────────────────────────────────────────────────
-    # Soporta DOS formatos de configuración en `ligas_dict`:
+    # Soporta TRES formas de configurar cada jugador dentro de `ligas_dict`:
     #
-    # 1) NUEVO (manual, recomendado) — puntaje y formato por jugador:
-    #    "LIGA_TEMP": {
-    #        "SINGLES": {"Jugador1": 30, "Jugador2": 20},
-    #        "VGC":     {"Jugador3": 15},
+    # 1) POSICIÓN (recomendado) — igual que en MONOTYPE1_POSICIONES, escribes
+    #    la posición y el puntaje se busca solo en la tabla PUNTAJES según
+    #    el prefijo de la liga (PMS, PSS, PES, PJS, PLS):
+    #    "PMST7": {
+    #        "SINGLES": {"Jugador1": "Campeón", "Jugador2": "Top3"},
     #    }
-    #    Tú decides el puntaje exacto de cada jugador y a qué formato va.
     #
-    # 2) VIEJO (automático, retrocompatible) — un solo formato para toda
-    #    la liga y el puntaje se calcula solo según el rank en score_completo:
+    # 2) PUNTAJE MANUAL — escribes el número exacto de puntos:
+    #    "PMST7": {
+    #        "SINGLES": {"Jugador1": 30, "Jugador2": 20},
+    #    }
+    #    (Puedes mezclar posiciones y números dentro del mismo dict.)
+    #
+    # 3) VIEJO (automático, retrocompatible) — un solo formato para toda
+    #    la liga y la posición se calcula sola según el rank en score_completo:
     #    "LIGA_TEMP": "SINGLES"
+    def _prefijo_liga(liga_temp):
+        """Devuelve la clave de PUNTAJES que coincide con el inicio de la liga
+        (ej. 'PMST7' → 'PMS'), probando las claves más largas primero."""
+        liga_up = str(liga_temp).upper()
+        for key in sorted(PUNTAJES.keys(), key=len, reverse=True):
+            if liga_up.startswith(key):
+                return key
+        return None
+
     try:
         base2 = None  # se calcula solo si hace falta (modo viejo)
         for liga_temp, liga_cfg in ligas_dict.items():
 
-            # ── Modo NUEVO: dict {"FORMATO": {jugador: puntaje}} ──
+            # ── Modo dict: {"FORMATO": {jugador: posición o puntaje}} ──
             if isinstance(liga_cfg, dict):
-                for fmt_liga, jugadores_pts in liga_cfg.items():
+                prefijo = _prefijo_liga(liga_temp)
+                tabla   = PUNTAJES.get(prefijo, {})
+                for fmt_liga, jugadores_val in liga_cfg.items():
                     fmt_liga = str(fmt_liga).upper()
                     if fmt_liga not in rankings: continue
-                    for jugador, pts in jugadores_pts.items():
-                        pts = int(pts)
+                    for jugador, val in jugadores_val.items():
+                        if isinstance(val, str):
+                            # posición → buscar puntaje en PUNTAJES
+                            pos = val
+                            pts = tabla.get(pos, 0)
+                        else:
+                            # número → puntaje manual directo
+                            pos = "Manual"
+                            pts = int(val)
                         rankings[fmt_liga][jugador] = rankings[fmt_liga].get(jugador, 0) + pts
                         detalles[fmt_liga].append({
                             "Jugador":  jugador,
                             "Evento":   liga_temp,
-                            "Posición": "Manual",
+                            "Posición": pos,
                             "Puntos":   pts,
                         })
                 continue
@@ -419,10 +443,8 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw, penalida
             # ── Modo VIEJO: string "FORMATO" (cálculo automático) ──
             liga_fmt = str(liga_cfg).upper()
             if liga_fmt not in rankings: continue
-            m = re.match(r'^([A-Z]+)', liga_temp)
-            if not m: continue
-            prefijo = m.group(1)
-            if prefijo not in PUNTAJES: continue
+            prefijo = _prefijo_liga(liga_temp)
+            if prefijo is None: continue
             tabla = PUNTAJES[prefijo]
 
             if base2 is None:
@@ -956,21 +978,39 @@ MONOTYPE1_POSICIONES = {
         
         }
 MONOTYPE1_LIGAS = {
-    # >>> Estructura: "LIGA_TEMPORADA" → { "FORMATO": {jugador: puntaje, ...}, ... }
-    # Escribe el puntaje EXACTO de cada jugador e indica a qué formato
-    # (SINGLES / DOBLES / VGC) van esos puntos. Una misma liga puede repartir
-    # jugadores entre varios formatos si hace falta.
-    # Ejemplo:
-    # "PMST7": {
-    #     "SINGLES": {"Jugador1": 30, "Jugador2": 20},
-    # },
-    # "PSST6": {
-    #     "DOBLES": {"Jugador3": 25, "Jugador4": 10},
-    # },
-    # "PJST6": {
-    #     "VGC": {"Jugador5": 15},
-    # },
+    "PJST6": {
+        "SINGLES": {
+            "Saga": "Participante",       # Jugador1 en SINGLES
+            "HallacAs": "Participante",
+            "masafesio": "Participante",
+            "Minipapus": "Participante"
+        },
+        "DOBLES": {
+            "Willow": "Participante",          # el mismo Jugador1 también jugó DOBLES en esta liga
+            "Blazing": "Participante",
+            "Roncito": "Participante"
+        },
+        "VGC": {
+            "Pandu": "Participante", 
+             # "EmperorGambit": "Campeón",
+                "Dino324000": "Participante",
+                  "Bamdara": "Participante"# y también VGC
+        },
+    }
 }
+
+
+
+#Mar
+#Ake-Izou
+#ShinkaHMA
+#skll02
+#MaskWolf
+
+
+
+
+
 
 # ── PENALIDADES (restar puntos a un jugador en un formato) ────────
 # Estructura: FORMATO → { jugador: [ (puntos_restados, "motivo"), ... ] }
