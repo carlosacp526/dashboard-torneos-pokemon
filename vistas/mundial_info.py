@@ -983,8 +983,9 @@ MONOTYPE1_LIGAS = {
             "Saga": "Participante",       # Jugador1 en SINGLES
             "HallacAs": "Participante",
             "masafesio": "Top3",
-            "Minipapus": "Participante"
-        },
+            "Minipapus": "Participante" ,
+            "Ake-Izou": "Participante" 
+                          },
         "DOBLES": {
             "Willow": "Participante",          # el mismo Jugador1 también jugó DOBLES en esta liga
             "Blazing": "Participante",
@@ -1002,7 +1003,7 @@ MONOTYPE1_LIGAS = {
 
 
 #Mar
-#Ake-Izou
+#
 #ShinkaHMA
 #skll02
 #MaskWolf
