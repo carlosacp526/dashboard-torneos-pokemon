@@ -673,7 +673,7 @@ MONOTYPE1_POSICIONES = {
         "Okari958":     "Top4",
 
         "Dino agente":     "Top8",
-        "LoLo":     "Top8",
+        "Lolo":     "Top8",
         "MilanesaVGC":     "Top8",
         "Saga":     "Top8",
 
