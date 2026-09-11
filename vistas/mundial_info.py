@@ -984,7 +984,9 @@ MONOTYPE1_LIGAS = {
             "HallacAs": "Participante",
             "masafesio": "Top3",
             "Minipapus": "Participante" ,
-            "Ake-Izou": "Participante" ,"MaskWolf": "Participante"
+            "Ake-Izou": "Participante" ,
+            "MaskWolf": "Participante"  ,
+            "skll02": "Participante"
                           },
         "DOBLES": {
             "Willow": "Participante",          # el mismo Jugador1 también jugó DOBLES en esta liga
@@ -1006,7 +1008,7 @@ MONOTYPE1_LIGAS = {
 
 #
 #
-#skll02
+#
 #
 
 
