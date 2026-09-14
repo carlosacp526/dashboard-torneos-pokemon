@@ -10,6 +10,8 @@ from vistas import pendientes
 from vistas import jugadores
 from vistas import inicio, analisis, rankings, elo, ligas, torneos, prediccion,replays
 from vistas import calidad
+from vistas import social
+from vistas import estilo
 from vistas import mundial_info
 from vistas import replays
 from vistas import tcg
@@ -17,6 +19,8 @@ from vistas import roleplay
 from vistas import tiermaker
 from vistas import headtohead
 p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
+p_social     = st.Page(social.show,       title="🕸️ Analítica Social",       url_path="social")
+p_estilo     = st.Page(estilo.show,       title="🎭 Estilo y Comportamiento", url_path="estilo")
 p_mundial    = st.Page(mundial_info.show, title="🌎 Mundial Pokémon",        url_path="mundial")
 p_replays    = st.Page(replays.show,      title="🎮 Uso de Pokémon",         url_path="replays")
 p_inicio     = st.Page(inicio.show,       title="🏠 Inicio",                 url_path="inicio",  default=True)
@@ -44,6 +48,8 @@ st.session_state["_pages"] = {
 
     "elo":        p_elo,
     "calidad":    p_calidad,
+    "social":     p_social,
+    "estilo":     p_estilo,
     "prediccion": p_prediccion,
     "tcg": p_tcg,
     "roleplay": p_roleplay,
@@ -54,7 +60,7 @@ st.session_state["_pages"] = {
 
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas, p_torneos,  p_elo,p_calidad, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker,p_headtohead],
+    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas, p_torneos,  p_elo,p_calidad, p_social, p_estilo, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker,p_headtohead],
 })
 
 pg.run()
