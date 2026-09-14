@@ -215,3 +215,13 @@ def show():
         if st.button("➡️ Ir a Tier Maker", use_container_width=True, key="btn_tiermaker"):
             if "tiermaker" in pages:
                 st.switch_page(pages["tiermaker"])
+
+    with col_o:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">⚔️ Head-to-Head</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- ⚔️ Récord directo entre 2 jugadores\n- 📋 Historial de enfrentamientos\n- ⚡ Elo en paralelo")
+        if st.button("➡️ Ir a Head-to-Head", use_container_width=True, key="btn_headtohead"):
+            if "headtohead" in pages:
+                st.switch_page(pages["headtohead"])
