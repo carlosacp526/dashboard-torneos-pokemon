@@ -8,7 +8,7 @@ st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="�
 from vistas import pendientes
 
 from vistas import jugadores
-from vistas import inicio, analisis, rankings, elo, ligas, prediccion,replays
+from vistas import inicio, analisis, rankings, elo, ligas, torneos, prediccion,replays
 from vistas import calidad
 from vistas import mundial_info
 from vistas import replays
@@ -21,7 +21,8 @@ p_replays    = st.Page(replays.show,      title="🎮 Uso de Pokémon",         
 p_inicio     = st.Page(inicio.show,       title="🏠 Inicio",                 url_path="inicio",  default=True)
 p_analisis   = st.Page(analisis.show,     title="📊 Análisis General",       url_path="analisis")
 p_jugadores  = st.Page(jugadores.show,    title="👤 Jugadores",              url_path="jugadores")
-p_ligas      = st.Page(ligas.show,        title="🏆 Ligas y Torneos",        url_path="ligas")
+p_ligas      = st.Page(ligas.show,        title="🏆 Ligas",                  url_path="ligas")
+p_torneos    = st.Page(torneos.show,      title="🥊 Torneos",                url_path="torneos")
 p_rankings   = st.Page(rankings.show,     title="🏅 Historico",               url_path="rankings")
 p_elo        = st.Page(elo.show,          title="⚡ Ranking Elo",            url_path="elo")
 p_prediccion = st.Page(prediccion.show,   title="🤖 Predicción",             url_path="prediccion")
@@ -37,7 +38,8 @@ st.session_state["_pages"] = {
     "mundial":    p_mundial,
     "replays":    p_replays,
     "ligas":      p_ligas,
-    
+    "torneos":    p_torneos,
+
     "elo":        p_elo,
     "calidad":    p_calidad,
     "prediccion": p_prediccion,
@@ -49,7 +51,7 @@ st.session_state["_pages"] = {
 
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas,  p_elo,p_calidad, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker],
+    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas, p_torneos,  p_elo,p_calidad, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker],
 })
 
 pg.run()

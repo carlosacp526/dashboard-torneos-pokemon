@@ -110,13 +110,14 @@ def show():
         if st.button("➡️ Ir a Ratio de uso ", use_container_width=True, key="btn_replay"):
             if "replays" in pages:
                 st.switch_page(pages["replays"])
+
     with col_f:
         st.markdown("""
         <div class="nav-section">
-            <div class="nav-section-title">🏆 Ligas y Torneos</div>
+            <div class="nav-section-title">🏆 Ligas</div>
         </div>""", unsafe_allow_html=True)
-        st.markdown("- 📋 Tablas por temporada\n- 🎯 Resultados por jornada\n- 🏟️ Tablas de torneos\n- 🥇 Campeonatos")
-        if st.button("➡️ Ir a Ligas y Torneos", use_container_width=True, key="btn_ligas"):
+        st.markdown("- 📋 Tablas por temporada\n- 🎯 Resultados por jornada\n- 🎯 Formatos y enfrentamientos")
+        if st.button("➡️ Ir a Ligas", use_container_width=True, key="btn_ligas"):
             if "ligas" in pages:
                 st.switch_page(pages["ligas"])
 
@@ -128,6 +129,16 @@ def show():
     with col_g:
         st.markdown("""
         <div class="nav-section">
+            <div class="nav-section-title">🥊 Torneos</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 🏟️ Tablas de torneos\n- 🥇 Campeonatos\n- 📊 Podio y estadísticas")
+        if st.button("➡️ Ir a Torneos", use_container_width=True, key="btn_torneos"):
+            if "torneos" in pages:
+                st.switch_page(pages["torneos"])
+
+    with col_h:
+        st.markdown("""
+        <div class="nav-section">
             <div class="nav-section-title">⚡ Ranking Elo</div>
         </div>""", unsafe_allow_html=True)
         st.markdown("- 📊 Tabla Elo en tiempo real\n- 📈 Elo por Formato \n- 🔥 Elo por Tier \n- 🆚 Elo historico por jugador")
@@ -135,7 +146,7 @@ def show():
             if "elo" in pages:
                 st.switch_page(pages["elo"])
 
-    with col_h:
+    with col_i:
         st.markdown("""
         <div class="nav-section">
             <div class="nav-section-title">🔬 Calidad de Ligas</div>
@@ -145,10 +156,12 @@ def show():
             if "calidad" in pages:
                 st.switch_page(pages["calidad"])
 
+    st.markdown("<br>", unsafe_allow_html=True)
 
+    # ── Fila 4 ───────────────────────────────────────────────────────
+    col_j, col_k, col_l = st.columns(3)
 
-
-    with col_i:
+    with col_j:
         st.markdown("""
         <div class="nav-section">
             <div class="nav-section-title">🤖 Predicción</div>
@@ -158,12 +171,7 @@ def show():
             if "prediccion" in pages:
                 st.switch_page(pages["prediccion"])
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Fila 4 ───────────────────────────────────────────────────────
-    col_j, col_k, col_l = st.columns(3)
-
-    with col_j:
+    with col_k:
         st.markdown("""
         <div class="nav-section">
             <div class="nav-section-title">🃏 Carta TCG</div>
@@ -173,7 +181,7 @@ def show():
             if "tcg" in pages:
                 st.switch_page(pages["tcg"])
 
-    with col_k:
+    with col_l:
         st.markdown("""
         <div class="nav-section">
             <div class="nav-section-title">🎭 Roleplay</div>
@@ -183,7 +191,12 @@ def show():
             if "roleplay" in pages:
                 st.switch_page(pages["roleplay"])
 
-    with col_l:
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Fila 5 ───────────────────────────────────────────────────────
+    col_m, col_n, col_o = st.columns(3)
+
+    with col_m:
         st.markdown("""
         <div class="nav-section">
             <div class="nav-section-title">⏳ Pendientes</div>
@@ -193,12 +206,7 @@ def show():
             if "pendientes" in pages:
                 st.switch_page(pages["pendientes"])
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Fila 5 ───────────────────────────────────────────────────────
-    col_m, col_n, col_o = st.columns(3)
-
-    with col_m:
+    with col_n:
         st.markdown("""
         <div class="nav-section">
             <div class="nav-section-title">🏆 Tier Maker</div>
