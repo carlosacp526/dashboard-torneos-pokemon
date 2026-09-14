@@ -423,8 +423,8 @@ def show():
         league_opts = ["Todos"] + sorted(pending['league'].dropna().unique().tolist())
         league_sel  = st.selectbox("Evento", league_opts, key="pend_league")
     with col_f4:
-        league_opts = ["Todos"] + sorted(pending['Aka_evento'].dropna().unique().tolist())
-        league_sel  = st.selectbox("Aka_evento", league_opts, key="pend_event")
+        aka_opts = ["Todos"] + sorted(pending['Aka_evento'].dropna().unique().tolist())
+        aka_sel  = st.selectbox("Aka_evento", aka_opts, key="pend_event")
 
     fp = pending.copy()
     if player_filter:
@@ -434,6 +434,8 @@ def show():
         fp = fp[fp['Tier'] == tier_sel]
     if league_sel != "Todos":
         fp = fp[fp['league'] == league_sel]
+    if aka_sel != "Todos":
+        fp = fp[fp['Aka_evento'] == aka_sel]
 
     has_fecha_max = 'Fecha_max' in fp.columns
 
@@ -525,10 +527,15 @@ def show():
                 fp_cal['_tier']   = fp_cal['Tier'].astype(str).replace({'nan': '?', 'None': '?'}) \
                     if 'Tier' in fp_cal.columns else '?'
 
+                # Se agrupa por fecha+evento SOLAMENTE: si un mismo evento tiene
+                # varios Tier jugándose en la misma fecha límite (ej. PMST7 con
+                # 3 tiers ese día), es UNA sola tarjeta con los 3 tiers adentro,
+                # no una tarjeta repetida por cada tier.
                 resumen = (
-                    fp_cal.groupby(['_fecha', '_evento', '_tier'], dropna=False)
+                    fp_cal.groupby(['_fecha', '_evento'], dropna=False)
                           .agg(
                               Pendientes=('_tier', 'size'),
+                              Tiers=('_tier', lambda s: sorted(s.dropna().unique().tolist())),
                               league=('league', lambda s: s.mode().iloc[0] if not s.mode().empty else ''),
                               N_Torneo=('N_Torneo', 'first') if 'N_Torneo' in fp_cal.columns else ('_tier', 'first'),
                               Ligas_categoria=('Ligas_categoria', 'first') if 'Ligas_categoria' in fp_cal.columns else ('_tier', 'first'),
@@ -561,12 +568,12 @@ def show():
                     </style>
                 """, unsafe_allow_html=True)
 
-                resumen = resumen.sort_values(['_fecha', '_evento', '_tier']).reset_index(drop=True)
+                resumen = resumen.sort_values(['_fecha', '_evento']).reset_index(drop=True)
 
                 cards = ""
                 for _, r in resumen.iterrows():
-                    fecha, ev, tier, n, lg = r['_fecha'], r['_evento'], r['_tier'], r['Pendientes'], r['league']
-                    tc = TIER_COLORS_CAL.get(tier, '#7F8C8D')
+                    fecha, ev, tiers, n, lg = r['_fecha'], r['_evento'], r['Tiers'], r['Pendientes'], r['league']
+                    tc = TIER_COLORS_CAL.get(tiers[0], '#7F8C8D') if tiers else '#7F8C8D'
 
                     es_hoy    = fecha == hoy.date()
                     es_pasado = fecha < hoy.date()
@@ -597,6 +604,12 @@ def show():
                                      f"text-overflow:ellipsis;white-space:nowrap'>"
                                      f"{_fase_raw[:22]}</div>")
 
+                    tier_badges_html = "".join(
+                        f"<div class='tierbadge' style='background:{TIER_COLORS_CAL.get(t, '#7F8C8D')}'>{t}</div>"
+                        for t in tiers
+                    )
+                    tiers_label = f"🎯 {len(tiers)} tiers" if len(tiers) > 1 else "🎯 1 tier"
+
                     cards += (
                         "<div class='raidcard'>"
                         f"{poster_html}"
@@ -605,11 +618,13 @@ def show():
                         "<div class='body'>"
                         f"<div class='ev' title='{ev}'>{ev}</div>"
                         f"<div style='display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px'>"
-                        f"<div class='tierbadge' style='background:{tc}'>Tier {tier}</div>"
+                        f"{tier_badges_html}"
                         f"<div class='pend' style='background:{tc}22;border:1px solid {tc};color:{tc}'>⏳ {n}</div>"
                         f"{fase_html}"
                         f"</div>"
-                        "</div></div>"
+                        + (f"<div style='font-size:0.75em;color:#9aa0b6;margin-top:4px'>{tiers_label} se juegan esta fecha</div>"
+                           if len(tiers) > 1 else "")
+                        + "</div></div>"
                     )
                 st.markdown(f"<div class='raidrow'>{cards}</div>", unsafe_allow_html=True)
 
