@@ -4,8 +4,6 @@ import numpy as np
 import requests
 import os, sys, re
 import datetime
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields
@@ -152,7 +150,7 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
     descargar/leer (replay borrado, error de red, etc.).
     """
     try:
-        resp = requests.get(url.strip() + ".json", verify=False, timeout=10)
+        resp = requests.get(url.strip() + ".json", timeout=10)
         resp.raise_for_status()
         data = resp.json()
     except Exception:

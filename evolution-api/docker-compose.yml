@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: evolution
       POSTGRES_USER: evolution
-      POSTGRES_PASSWORD: evolutionpass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
     volumes:
       - evolution_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -32,14 +32,14 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # Cambia esta clave por una tuya, larga y sin espacios: es tu API key
-      - AUTHENTICATION_API_KEY=Poketubi123***
+      # La API key vive en .env (no versionado) — ver .env.example
+      - AUTHENTICATION_API_KEY=${AUTHENTICATION_API_KEY:?falta AUTHENTICATION_API_KEY en .env}
       - AUTHENTICATION_TYPE=apikey
 
       # Base de datos (obligatoria desde v2)
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://evolution:evolutionpass@postgres:5432/evolution?schema=public
+      - DATABASE_CONNECTION_URI=postgresql://evolution:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}@postgres:5432/evolution?schema=public
       - DATABASE_CONNECTION_CLIENT_NAME=evolution_exchange
       - DATABASE_SAVE_DATA_INSTANCE=true
       - DATABASE_SAVE_DATA_NEW_MESSAGE=true
