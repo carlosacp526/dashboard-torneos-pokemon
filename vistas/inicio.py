@@ -157,3 +157,53 @@ def show():
         if st.button("➡️ Ir a Predicción", use_container_width=True, key="btn_prediccion"):
             if "prediccion" in pages:
                 st.switch_page(pages["prediccion"])
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Fila 4 ───────────────────────────────────────────────────────
+    col_j, col_k, col_l = st.columns(3)
+
+    with col_j:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🃏 Carta TCG</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 🃏 Carta estilo trading card\n- 📸 Foto del jugador\n- 📊 Stats resumidas")
+        if st.button("➡️ Ir a Carta TCG", use_container_width=True, key="btn_tcg"):
+            if "tcg" in pages:
+                st.switch_page(pages["tcg"])
+
+    with col_k:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🎭 Roleplay</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 🎭 Torneo de draft por tiers\n- 📋 Equipos y Pokémon\n- 🏆 Formato VGC")
+        if st.button("➡️ Ir a Roleplay", use_container_width=True, key="btn_roleplay"):
+            if "roleplay" in pages:
+                st.switch_page(pages["roleplay"])
+
+    with col_l:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">⏳ Pendientes</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- ⏳ Batallas sin jugar\n- 📱 Recordatorio por WhatsApp\n- 📥 Descarga de pendientes")
+        if st.button("➡️ Ir a Pendientes", use_container_width=True, key="btn_pendientes"):
+            if "pendientes" in pages:
+                st.switch_page(pages["pendientes"])
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Fila 5 ───────────────────────────────────────────────────────
+    col_m, col_n, col_o = st.columns(3)
+
+    with col_m:
+        st.markdown("""
+        <div class="nav-section">
+            <div class="nav-section-title">🏆 Tier Maker</div>
+        </div>""", unsafe_allow_html=True)
+        st.markdown("- 🏆 Tier list de jugadores\n- 🎯 Ranking visual\n- 📊 Por temporada/formato")
+        if st.button("➡️ Ir a Tier Maker", use_container_width=True, key="btn_tiermaker"):
+            if "tiermaker" in pages:
+                st.switch_page(pages["tiermaker"])
