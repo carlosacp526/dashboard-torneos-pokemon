@@ -28,13 +28,96 @@ def calidad_nivel(promedio: float):
     else:                   return 1, "🔴 Débil",      "#E74C3C"  # peor
 
 ID_LABELS = {
-    "ID1": "Equilibrio Q4/Q3",
-    "ID2": "Ratio Top",
-    "ID3": "Ratio Tail",
-    "ID4": "Ratio Centro",
-    "ID5": "Sobrevivientes",
-    "ID6": "Resist. Derrota",
-    "ID7": "Walkovers",
+    "ID1": "⚖️ Equilibrio de Marcador",
+    "ID2": "👑 Techo Permeable",
+    "ID3": "🌱 Piso con Chispa",
+    "ID4": "🎯 Medio Dinámico",
+    "ID5": "🔥 Partidas Reñidas",
+    "ID6": "🛡️ Pelea Hasta el Final",
+    "ID7": "✅ Asistencia",
+}
+
+# Glosario completo: nombre entendible + qué mide + cómo se calcula + umbrales,
+# para cada uno de los 7 indicadores que alimentan el índice final de calidad.
+ID_GLOSARIO = {
+    "ID1": {
+        "nombre": "⚖️ Equilibrio de Marcador",
+        "pregunta": "¿Se reparte parejo entre victorias arrasadoras y victorias ajustadas?",
+        "que_mide": (
+            "Compara cuántas jornadas terminan en **barrido** (el jugador gana casi todo, Q4) "
+            "contra cuántas terminan en **victoria ajustada** (gana más de la mitad pero no todo, Q3). "
+            "Una liga sana tiene de ambas — si casi todo es barrido, los partidos se sienten predecibles; "
+            "si casi todo es ajustado, puede faltar contundencia."
+        ),
+        "como_se_calcula": "RATIO_VR_V = (jornadas Q4 ÷ jornadas Q3) × 100. Ideal cercano a 100% (mismo número de unas y otras).",
+        "umbrales": "🟢 Excelente: 75–125% &nbsp;·&nbsp; 🟡 Buena: 55–155% &nbsp;·&nbsp; 🔴 Regular: fuera de ese rango",
+    },
+    "ID2": {
+        "nombre": "👑 Techo Permeable",
+        "pregunta": "¿Los mejores jugadores también pierden alguna vez?",
+        "que_mide": (
+            "Mide si el **top 3** de la liga (los de mayor winrate) tiene jornadas malas de vez en cuando. "
+            "Si el top nunca baja de Q3/Q4, el liderato es predecible desde la jornada 1; "
+            "si el top cae seguido a Q1/Q2, el título se define compitiendo, no de antemano."
+        ),
+        "como_se_calcula": "RATIO TOP = (jornadas del top3 en Q1/Q2 ÷ jornadas del top3 en Q3/Q4) × 100.",
+        "umbrales": "🟢 Excelente: ≥ 42% &nbsp;·&nbsp; 🟡 Buena: ≥ 33% &nbsp;·&nbsp; 🔴 Regular: < 33%",
+    },
+    "ID3": {
+        "nombre": "🌱 Piso con Chispa",
+        "pregunta": "¿Los últimos lugares logran alguna jornada buena?",
+        "que_mide": (
+            "El espejo del indicador anterior, pero con el **tail 3** (los de menor winrate). "
+            "Si la cola nunca levanta cabeza, esos jugadores compiten sin esperanza real; "
+            "si de vez en cuando tienen una gran jornada, la liga se mantiene interesante para todos."
+        ),
+        "como_se_calcula": "RATIO TAIL = (jornadas del tail3 en Q3/Q4 ÷ jornadas del tail3 en Q1/Q2) × 100.",
+        "umbrales": "🟢 Excelente: ≥ 42% &nbsp;·&nbsp; 🟡 Buena: ≥ 28% &nbsp;·&nbsp; 🔴 Regular: < 28%",
+    },
+    "ID4": {
+        "nombre": "🎯 Medio Dinámico",
+        "pregunta": "¿El bloque de la mitad de tabla tiene resultados variados?",
+        "que_mide": (
+            "Mira a los jugadores que no son ni top3 ni tail3 (el **centro** de la tabla) y compara "
+            "sus jornadas extremas (Q1 o Q4) contra sus jornadas intermedias (Q2 o Q3). "
+            "Un centro sano se mueve — sube y baja — en vez de quedarse siempre plano o irse siempre a los extremos."
+        ),
+        "como_se_calcula": "RATIO CENTRAL = (jornadas del centro en Q1/Q4 ÷ jornadas del centro en Q2/Q3) × 100.",
+        "umbrales": "🟢 Excelente: 40–100% &nbsp;·&nbsp; 🟡 Buena: ≤ 140% &nbsp;·&nbsp; 🔴 Regular: > 140%",
+    },
+    "ID5": {
+        "nombre": "🔥 Partidas Reñidas",
+        "pregunta": "¿Qué tan cerradas son las partidas, en promedio?",
+        "que_mide": (
+            "Usa el promedio de **Pokémon sobrevivientes** por partida (ponderado según qué tan buena "
+            "fue la jornada) como termómetro de qué tan reñidos fueron los combates. "
+            "Más sobrevivientes en jornadas altas = partidas más cerradas y menos golizas."
+        ),
+        "como_se_calcula": "Promedio ponderado de Pokémon sobrevivientes en jornadas Q4/Q3/Q2, normalizado a escala porcentual.",
+        "umbrales": "🟢 Excelente: ≥ 30 &nbsp;·&nbsp; 🟡 Buena: ≥ 19 &nbsp;·&nbsp; 🔴 Regular: < 19",
+    },
+    "ID6": {
+        "nombre": "🛡️ Pelea Hasta el Final",
+        "pregunta": "¿Cuánto resiste el que va perdiendo antes de caer?",
+        "que_mide": (
+            "Mide cuántos Pokémon **derrota el perdedor** antes de que se acabe la partida. "
+            "Una derrota 6-0 sin pelea no es lo mismo que una derrota 6-4 — este indicador premia "
+            "las derrotas competitivas sobre las aplastantes."
+        ),
+        "como_se_calcula": "Promedio ponderado de Pokémon vencidos por el perdedor en jornadas Q3/Q2/Q1, normalizado a escala porcentual.",
+        "umbrales": "🟢 Excelente: ≥ 59 &nbsp;·&nbsp; 🟡 Buena: ≥ 54 &nbsp;·&nbsp; 🔴 Regular: < 54",
+    },
+    "ID7": {
+        "nombre": "✅ Asistencia",
+        "pregunta": "¿Se juegan las partidas o se pierden por inasistencia?",
+        "que_mide": (
+            "El más directo de todos: qué porcentaje de partidas de la liga terminaron en **walkover** "
+            "(un jugador no se presentó). Muchos walkovers dañan la competencia sin importar qué tan "
+            "parejos sean los demás indicadores."
+        ),
+        "como_se_calcula": "WO% = (partidas con walkover ÷ total de partidas de la liga) × 100.",
+        "umbrales": "🟢 Excelente: 0% &nbsp;·&nbsp; 🟡 Buena: ≤ 6% &nbsp;·&nbsp; 🔴 Regular: > 6%",
+    },
 }
 
 
@@ -293,7 +376,7 @@ def show():
     st.markdown("---")
 
     # ── Tabs ──────────────────────────────────────────────────────────────────
-    tab1, tab2, tab3 = st.tabs(["🔢 Tabla Completa", "📈 Comparativa", "📖 Interpretación"])
+    tab1, tab2, tab3 = st.tabs(["🔢 Tabla Completa", "📈 Comparativa", "📖 Glosario e Interpretación"])
 
     with tab1:
         display_cols = ['formato','CALIDAD_LIGA','ID1','ID2','ID3','ID4','ID5','ID6','ID7',
@@ -327,6 +410,23 @@ def show():
             )
 
         id_cols_style = ['ID1','ID2','ID3','ID4','ID5','ID6','ID7']
+
+        # Nombres de columnas más entendibles (solo para lo que ve el usuario)
+        COLUMN_RENAME = {
+            'formato':        'Formato',
+            'CALIDAD_LIGA':   'Nivel de Calidad',
+            'ID1': ID_LABELS['ID1'], 'ID2': ID_LABELS['ID2'], 'ID3': ID_LABELS['ID3'],
+            'ID4': ID_LABELS['ID4'], 'ID5': ID_LABELS['ID5'], 'ID6': ID_LABELS['ID6'],
+            'ID7': ID_LABELS['ID7'],
+            'RATIO_VR_V':     '% Barridos vs Ajustadas',
+            'RATIO TOP':      '% Top con jornada floja',
+            'RATIO TAIL':     '% Cola con jornada buena',
+            'RATIO CENTRAL':  '% Centro con altibajos',
+            'SOB PROM':       'Pokémon vivos (prom.)',
+            'VEN CENT':       'Resistencia en derrota',
+            'WO%':            '% Walkovers',
+        }
+
         try:
             # pandas >= 2.1 usa map en vez de applymap
             styled = tabla_display.style\
@@ -336,9 +436,15 @@ def show():
             styled = tabla_display.style\
                 .applymap(color_calidad, subset=['CALIDAD_LIGA'] if 'CALIDAD_LIGA' in tabla_display.columns else [])\
                 .applymap(color_score, subset=[c for c in id_cols_style if c in tabla_display.columns])
+        styled = styled.format_index(lambda c: COLUMN_RENAME.get(c, c), axis=1)
         st.dataframe(styled, use_container_width=True)
+        st.caption(
+            "¿Qué significa cada columna? Revisa la pestaña **📖 Glosario e Interpretación** — "
+            "cada indicador tiene su nombre técnico (ID1–ID7), qué mide y cómo se calcula."
+        )
 
-        csv = tabla.to_csv().encode('utf-8')
+        csv_display = tabla_display.rename(columns=COLUMN_RENAME)
+        csv = csv_display.to_csv().encode('utf-8')
         st.download_button("📥 Descargar CSV", csv, "calidad_ligas.csv", "text/csv")
 
     with tab2:
@@ -428,10 +534,23 @@ def show():
 
     with tab3:
         st.markdown("""
-### Sistema normalizado — funciona para 3, 5 o 7 partidas por jornada
+## 🧭 ¿Cómo leer la calidad de una liga?
 
+La calidad de una liga se arma en **tres pasos**, de lo más fino a lo más general:
+
+1. **Cada jornada de cada jugador** se clasifica en un cuartil (Q1 a Q4) según su winrate.
+2. **7 indicadores** (uno por cada aspecto de la competitividad) resumen esos cuartiles en una
+   nota de 1 (🟢 Excelente) a 3 (🔴 Regular).
+3. Los 7 indicadores se **promedian** en un solo número, que se traduce en **5 niveles finales**
+   de calidad — de 🏆 Élite a 🔴 Débil — para responder de un vistazo si una liga es buena o no.
+""")
+
+        st.markdown("### Paso 1 — Clasificar cada jornada por cuartil")
+        st.markdown("""
 En vez de usar niveles fijos de victorias (0,1,2,3), cada jornada se clasifica
-por el **winrate del jugador** (victorias / partidas jugadas) en cuatro cuartiles:
+por el **winrate del jugador** (victorias ÷ partidas jugadas) en cuatro cuartiles.
+Esto hace que una jornada 5-0 y una 3-0 sean equivalentes (ambas Q4), y permite
+comparar ligas con distinto número de partidas por jornada de forma justa.
 
 | Cuartil | Winrate | Significado |
 |---------|---------|-------------|
@@ -439,37 +558,43 @@ por el **winrate del jugador** (victorias / partidas jugadas) en cuatro cuartile
 | Q3 | 50–74% | Sobre el promedio |
 | Q2 | 25–49% | Bajo el promedio |
 | Q1 | < 25%  | Cola de esa jornada |
+""")
 
-Esto hace que una jornada 5-0 y una 3-0 sean equivalentes (ambas Q4),
-y permite comparar ligas con distintos formatos de manera justa.
+        st.markdown("---")
+        st.markdown("### Paso 2 — Los 7 indicadores de competitividad")
+        st.caption(
+            "Cada indicador responde una pregunta concreta sobre la liga y da una nota de 1 a 3 "
+            "(🟢 1 = Excelente, 🟡 2 = Buena, 🔴 3 = Regular). Los umbrales están calibrados con "
+            "los datos reales de las 19 ligas históricas."
+        )
+        for id_key in ["ID1", "ID2", "ID3", "ID4", "ID5", "ID6", "ID7"]:
+            g = ID_GLOSARIO[id_key]
+            with st.expander(f"{g['nombre']}  ·  *{g['pregunta']}*", expanded=False):
+                st.markdown(f"**Nombre técnico:** `{id_key}`")
+                st.markdown(f"**Qué mide:** {g['que_mide']}")
+                st.markdown(f"**Cómo se calcula:** {g['como_se_calcula']}")
+                st.markdown(f"**Umbrales de nota:** {g['umbrales']}", unsafe_allow_html=True)
 
----
+        st.markdown("---")
+        st.markdown("### Paso 3 — El índice final: ¿es buena la liga o no?")
+        st.markdown("""
+El **Índice de Calidad de Liga** es el promedio simple de los 7 indicadores (ID1 a ID7).
+Como cada uno va de 1 (mejor) a 3 (peor), el promedio también queda en esa escala —
+**mientras más bajo, mejor**. Ese promedio continuo se traduce en 5 niveles finales,
+calibrados con los percentiles reales observados en las ligas históricas:
 
-### Indicadores — umbrales calibrados con datos reales de las 19 ligas
+| Nivel | Promedio | ¿Qué significa para la liga? |
+|-------|----------|-------------------------------|
+| 🏆 **Élite** | < 1.65 | Top ~5%. Competitividad excepcional en casi todos los aspectos. |
+| 🟢 **Excelente** | 1.65 – 1.80 | Muy buena competencia, sin desequilibrios importantes. |
+| 🟡 **Buena** | 1.80 – 2.05 | Liga competitiva, con una o dos áreas que podrían mejorar. |
+| 🟠 **Regular** | 2.05 – 2.20 | Desequilibrios notables en varios indicadores a la vez. |
+| 🔴 **Débil** | > 2.20 | Problemas serios de competitividad, asistencia o ambos. |
 
-| Indicador | Qué mide | 🟢 1 Excelente | 🟡 2 Buena | 🔴 3 Regular |
-|-----------|----------|----------------|------------|--------------|
-| **ID1** Equilibrio Q4/Q3 | ¿Igual cantidad de barridos que victorias ajustadas? (rango: 30–157%) | 75–125% | 55–155% | fuera del rango |
-| **ID2** Ratio Top | ¿El top3 también pierde jornadas? (rango: 28–50%) | ≥ 42% | ≥ 33% | < 33% |
-| **ID3** Ratio Tail | ¿El tail3 logra jornadas buenas? (rango: 12–50%) | ≥ 42% | ≥ 28% | < 28% |
-| **ID4** Ratio Centro | ¿El bloque medio tiene resultados mixtos? (rango: 20–200%) | 40–100% | ≤ 140% | > 140% |
-| **ID5** Sobrevivientes | Partidas reñidas = más Pokémon vivos (rango: 11–45) | ≥ 30 | ≥ 19 | < 19 |
-| **ID6** Resist. Derrota | Pkm vencidos por el perdedor (rango: 51–74) | ≥ 59 | ≥ 54 | < 54 |
-| **ID7** Walkovers | % de partidas jugadas por WO (rango: 0–21.6%) | 0% | ≤ 6% | > 6% |
-
----
-
-### Escala de calidad general — 5 niveles
-
-**CALIDAD_LIGA** = promedio continuo de ID1 a ID7, clasificado por percentiles reales:
-
-| Nivel | Promedio | Descripción |
-|-------|----------|-------------|
-| 🏆 **Élite** | < 1.65 | Liga excepcionalmente competitiva |
-| 🟢 **Excelente** | 1.65–1.80 | Muy buena competencia en todos los aspectos |
-| 🟡 **Buena** | 1.80–2.05 | Liga competitiva con algunas áreas de mejora |
-| 🟠 **Regular** | 2.05–2.20 | Desequilibrios notables en varios indicadores |
-| 🔴 **Débil** | > 2.20 | Liga con problemas de competitividad o asistencia |
+**En resumen:** una liga "buena" es aquella donde el marcador se reparte parejo, los mejores
+también pierden alguna vez, los últimos logran remontar, el centro de tabla se mueve, las
+partidas son reñidas, las derrotas se pelean hasta el final, y casi nadie falta a jugar.
+Cuantos más de esos 7 puntos cumpla, más alto sube en la escala de 5 niveles.
 """)
 
     st.markdown("---")
