@@ -1,7 +1,3 @@
-# Datos personales de jugadores (números de WhatsApp) — no debe ser público
-celulares.xlsx
-celulares_.xlsx
-
 # Credenciales del WhatsApp gateway
 evolution-api/.env
 
