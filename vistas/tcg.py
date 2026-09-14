@@ -285,24 +285,34 @@ def calcular_stats(df, jugador, fecha_corte=None):
     campeonatos_liga   = []   # nombres de Liga_Temporada donde el jugador quedó RANK 1
     campeonatos_torneo = []   # números de torneo donde el jugador quedó RANK 1 en la Final
     try:
-        from utils import generar_tabla_temporada, generar_tabla_torneo
+        from utils import generar_tabla_temporada, generar_tabla_torneo, build_base_llave
 
         df_for_score = df if fecha_corte else load_data()
         base2, _              = build_base_liga(df_for_score)
         base_torneo_final, _  = build_base_torneo(df_for_score)
 
+        # Score de LIGA: por TEMPORADA completa. build_base_llave agrupa Liga por
+        # JORNADA (llave_torneo es el número de jornada, no la temporada) así que
+        # para Liga seguimos usando build_base_liga, no build_base_llave.
         score_l = 0.0
-        score_t = 0.0
         if not base2.empty and "Participante" in base2.columns and "score_completo" in base2.columns:
             sub_l = base2[base2["Participante"].str.lower().str.strip() == jl]
             if not sub_l.empty:
                 score_l = float(sub_l["score_completo"].sum())
-        if not base_torneo_final.empty and "Participante" in base_torneo_final.columns and "score_completo" in base_torneo_final.columns:
-            sub_t = base_torneo_final[base_torneo_final["Participante"].str.lower().str.strip() == jl]
-            if not sub_t.empty:
-                score_t = float(sub_t["score_completo"].sum())
 
-        score_val = round(score_l + score_t, 0)
+        # Score de TORNEO + ASCENSO + CYPHER: para estas 3 categorías
+        # llave_torneo == N_Torneo (evento completo), así que build_base_llave
+        # agrupa igual que build_base_torneo pero además suma Ascenso/Cypher, que
+        # antes no aportaban nada al score. Se excluyen las filas de LIGA (ver arriba).
+        score_otros = 0.0
+        df_no_liga = df_for_score[df_for_score["league"] != "LIGA"] if "league" in df_for_score.columns else df_for_score
+        base_llave, _ = build_base_llave(df_no_liga)
+        if not base_llave.empty and "Participante" in base_llave.columns and "score_completo" in base_llave.columns:
+            sub_llave = base_llave[base_llave["Participante"].str.lower().str.strip() == jl]
+            if not sub_llave.empty:
+                score_otros = float(sub_llave["score_completo"].sum())
+
+        score_val = round(score_l + score_otros, 0)
 
         # ── Campeonatos de Liga (RANK == 1 en la tabla final de cada
         # Liga_Temporada) — idéntico al bloque "🥇 Campeonatos de Liga" ──

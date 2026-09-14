@@ -310,6 +310,8 @@ def build_base_llave(df):
         return pd.DataFrame(), pd.DataFrame()
 
     df_l = df[(df['llave_torneo'].notna()) & (df['Llave_cat'].notna())].copy()
+    if 'Walkover' in df_l.columns:
+        df_l = df_l[df_l['Walkover'] >= 0].copy()
     if df_l.empty:
         return pd.DataFrame(), pd.DataFrame()
 
