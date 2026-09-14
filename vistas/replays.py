@@ -142,6 +142,114 @@ def _parsear_teamsheet_texto(html_bloque: str):
     return sets
 
 
+def _parsear_showteam_packed(packed: str):
+    """
+    Parsea el 'packed team' que Showdown manda en las líneas del log
+    |showteam|p1|... / |showteam|p2|... cuando AMBOS jugadores aceptan
+    Open Team Sheets (típico en VGC con Regulation activa). A diferencia
+    de lo que se revela en batalla, esto trae el set COMPLETO de CADA
+    Pokémon del equipo -incluso los que nunca salieron a pelear-: especie,
+    item, habilidad, los 4 movimientos y teratipo.
+
+    Cada Pokémon viene separado por ']', y cada campo dentro de un
+    Pokémon separado por '|' en este orden:
+        nickname|species|item|ability|moves(,)|nature|evs|gender|ivs|shiny|level|misc(,)
+    - 'species' vacío significa que no se usó apodo -> la especie es 'nickname'.
+    - El teratipo real (no el tipo base) es el ÚLTIMO campo separado por ','
+      dentro de 'misc' (los anteriores son happiness/pokeball/hpType/gmax/dynamax).
+    - Las Open Team Sheets de VGC oficialmente NO revelan EVs/IVs/naturaleza
+      (regla real del torneo), por eso esos campos suelen venir vacíos: no es
+      un error de parseo, es la info que Showdown realmente manda.
+    """
+    sets = []
+    for bloque in packed.split(']'):
+        bloque = bloque.strip()
+        if not bloque:
+            continue
+        campos = bloque.split('|')
+        if len(campos) < 4:
+            continue
+        nickname = campos[0].strip()
+        species  = campos[1].strip() or nickname
+        item     = campos[2].strip()
+        ability  = campos[3].strip()
+        moves    = [m.strip() for m in campos[4].split(',') if m.strip()] if len(campos) > 4 else []
+        tera = ''
+        if len(campos) > 11 and campos[11]:
+            partes_misc = campos[11].split(',')
+            if partes_misc:
+                tera = partes_misc[-1].strip()
+        if not species:
+            continue
+        sets.append({
+            "pokemon": species,
+            "item": item or None,
+            "ability": ability or None,
+            "tera": tera or None,
+            "moves": moves,
+        })
+    return sets
+
+
+def _canon_id(nombre: str) -> str:
+    """ID canónico (minúsculas, sin espacios/guiones/apóstrofes) para poder
+    reconocer que 'Follow Me' (formato lindo del log en batalla) y 'FollowMe'
+    (formato compacto de Open Team Sheets) son EL MISMO movimiento, y no
+    duplicarlo en la lista final."""
+    return re.sub(r'[^a-z0-9]', '', nombre.lower())
+
+
+# Nombres compactos que el separador genérico (espacio antes de cada mayúscula)
+# no puede reconstruir bien porque el nombre real lleva guión, apóstrofe o una
+# preposición en minúscula. Cubre los casos más comunes en VGC/doubles; lo que
+# no esté acá igual queda legible, solo sin el guión/apóstrofe exacto.
+NOMBRES_ESPECIALES = {
+    "uturn": "U-turn", "xscissor": "X-Scissor", "willowisp": "Will-O-Wisp",
+    "softboiled": "Soft-Boiled", "selfdestruct": "Self-Destruct",
+    "sandattack": "Sand-Attack", "freezedry": "Freeze-Dry",
+    "wakeupslap": "Wake-Up Slap", "poweruppunch": "Power-Up Punch",
+    "babydolleyes": "Baby-Doll Eyes", "doubleedge": "Double-Edge",
+    "trickortreat": "Trick-or-Treat", "lockon": "Lock-On",
+    "multiattack": "Multi-Attack", "mudslap": "Mud-Slap", "vcreate": "V-create",
+    "kingsshield": "King's Shield", "landswrath": "Land's Wrath",
+    "forestscurse": "Forest's Curse", "naturesmadness": "Nature's Madness",
+    "watersedge": "Water's Edge", "kingsrock": "King's Rock",
+    "heavydutyboots": "Heavy-Duty Boots", "nevermeltice": "Never-Melt Ice",
+    "wellbakedbody": "Well-Baked Body", "swordofruin": "Sword of Ruin",
+    "beadsofruin": "Beads of Ruin", "tabletsofruin": "Tablets of Ruin",
+    "vesselofruin": "Vessel of Ruin",
+}
+
+
+def _espaciar_compacto(nombre: str) -> str:
+    """Mejor esfuerzo para volver legible un nombre compacto tipo 'FollowMe'
+    -> 'Follow Me' cuando SOLO lo tenemos así (de Open Team Sheets) y nunca
+    se vio en el log en batalla ya formateado con espacios/guiones."""
+    especial = NOMBRES_ESPECIALES.get(_canon_id(nombre))
+    if especial:
+        return especial
+    return re.sub(r'(?<=[a-z0-9])(?=[A-Z])', ' ', nombre).strip()
+
+
+def _agregar_valor(reg: dict, campo: str, nombre: str):
+    """Agrega un movimiento/habilidad/item a reg[campo] (dict id_canónico ->
+    nombre a mostrar), deduplicando aunque venga formateado distinto según la
+    fuente. Si ya había una versión con espacios/guiones (la que manda el log
+    en batalla, siempre bien formateada) no la pisa con la forma compacta de
+    Open Team Sheets; si solo tenemos la compacta, se muestra espaciada."""
+    if not nombre:
+        return
+    cid = _canon_id(nombre)
+    if not cid:
+        return
+    es_compacto = not any(c in nombre for c in (' ', '-', "'"))
+    actual = reg[campo].get(cid)
+    if actual is None:
+        reg[campo][cid] = _espaciar_compacto(nombre) if es_compacto else nombre
+    elif not es_compacto:
+        reg[campo][cid] = nombre  # llegó una versión mejor formateada -> reemplaza
+
+
 def _extraer_detalle_replay(url: str, formato_esp: str = ""):
     """
     Descarga y parsea un replay del log público de Showdown.
@@ -188,6 +296,9 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
     activo = {}       # "p1a" -> especie actualmente en esa posición
     registros = {}    # (pid, especie) -> {moves, abilities, items, tera}
 
+    def _reg_vacio():
+        return {"moves": {}, "abilities": {}, "items": {}, "tera": None}
+
     def _get_reg(pos: str):
         pid = pos[:2]
         especie = activo.get(pos)
@@ -195,7 +306,7 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
             return None
         key = (pid, especie)
         if key not in registros:
-            registros[key] = {"moves": set(), "abilities": set(), "items": set(), "tera": None}
+            registros[key] = _reg_vacio()
         return registros[key]
 
     for line in log_lines:
@@ -217,21 +328,21 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
             if len(parts) >= 4:
                 reg = _get_reg(parts[2].split(":")[0].strip())
                 if reg:
-                    reg["moves"].add(parts[3].strip())
+                    _agregar_valor(reg, "moves", parts[3].strip())
 
         elif line.startswith("|-ability|"):
             parts = line.split("|")
             if len(parts) >= 4:
                 reg = _get_reg(parts[2].split(":")[0].strip())
                 if reg:
-                    reg["abilities"].add(parts[3].strip())
+                    _agregar_valor(reg, "abilities", parts[3].strip())
 
         elif line.startswith("|-item|") or line.startswith("|-enditem|"):
             parts = line.split("|")
             if len(parts) >= 4:
                 reg = _get_reg(parts[2].split(":")[0].strip())
                 if reg:
-                    reg["items"].add(parts[3].strip())
+                    _agregar_valor(reg, "items", parts[3].strip())
 
         elif line.startswith("|-terastallize|"):
             parts = line.split("|")
@@ -264,19 +375,52 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 continue
             key = (dueño, especie)
             if key not in registros:
-                registros[key] = {"moves": set(), "abilities": set(), "items": set(), "tera": None}
+                registros[key] = _reg_vacio()
             if s["ability"]:
-                registros[key]["abilities"].add(s["ability"])
+                _agregar_valor(registros[key], "abilities", s["ability"])
             if s["item"]:
-                registros[key]["items"].add(s["item"])
+                _agregar_valor(registros[key], "items", s["item"])
             if s["tera"]:
                 registros[key]["tera"] = s["tera"]
             for mv in s["moves"]:
-                registros[key]["moves"].add(mv)
+                _agregar_valor(registros[key], "moves", mv)
 
             equipos.setdefault(dueño, [])
             if especie not in equipos[dueño]:
                 equipos[dueño].append(especie)
+
+    # ── Open Team Sheets oficiales (protocolo |showteam|p1|... / p2) ──
+    # Esta es la fuente REAL que usa Showdown cuando ambos jugadores
+    # aceptan Open Team Sheets (frecuente en VGC): trae el equipo COMPLETO
+    # con especie, item, habilidad, los 4 movimientos y teratipo de cada
+    # Pokémon, incluso los que nunca salieron a pelear. Se procesa siempre
+    # (no solo si Formato == VGC) porque el mecanismo no depende del
+    # formato, sino de si los jugadores aceptaron mostrar equipos.
+    for line in log_lines:
+        if not line.startswith("|showteam|"):
+            continue
+        partes = line.split("|", 3)
+        if len(partes) < 4:
+            continue
+        pid, packed = partes[2].strip(), partes[3]
+
+        for s in _parsear_showteam_packed(packed):
+            especie = s["pokemon"]
+            key = (pid, especie)
+            if key not in registros:
+                registros[key] = _reg_vacio()
+            if s["ability"]:
+                _agregar_valor(registros[key], "abilities", s["ability"])
+            if s["item"]:
+                _agregar_valor(registros[key], "items", s["item"])
+            if s["tera"]:
+                registros[key]["tera"] = s["tera"]
+            for mv in s["moves"]:
+                _agregar_valor(registros[key], "moves", mv)
+
+            equipos.setdefault(pid, [])
+            if especie not in equipos[pid]:
+                equipos[pid].append(especie)
 
     # ── Ganador ────────────────────────────────────────────────
     ganador_pid = None
@@ -299,9 +443,9 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 "status": "ok",
                 "player_id": pid,
                 "pokemon": especie,
-                "moves": "; ".join(sorted(reg.get("moves", set()))),
-                "abilities": "; ".join(sorted(reg.get("abilities", set()))),
-                "items": "; ".join(sorted(reg.get("items", set()))),
+                "moves": "; ".join(sorted(reg.get("moves", {}).values())),
+                "abilities": "; ".join(sorted(reg.get("abilities", {}).values())),
+                "items": "; ".join(sorted(reg.get("items", {}).values())),
                 "tera": reg.get("tera") or "",
                 "win": "" if ganador_pid is None else str(pid == ganador_pid),
                 "formato_esp": formato_esp,

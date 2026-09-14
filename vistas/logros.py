@@ -516,7 +516,7 @@ def evaluar_logros(
     r["PA08"] = n_camp_torneo >= 1 or victorias >= 1
     r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
     r["PA10"] = len(formatos_jugados) >= 3
-    HAT_TRICK_PLAYERS={"Yabadaba","Angello","Haseo"}
+    HAT_TRICK_PLAYERS={"Yabadaba","Angello","Haseo","Akaru"}
     # VICTORIAS
     r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
     ##r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
@@ -799,7 +799,8 @@ def evaluar_logros(
     r["SP05"] = max_wins_rival >= 20
     # SP06: Underdog — ganar a alguien que sea campeón de torneo Y liga
     LEYENDAS = [
-        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru","haseo" ,"Porygon Z"
+        "luigillanos", "darmanethan", "ricomam", "alechiii","joscake","angello77","elin beacil" ,"akaru","haseo" ,"porygon z"
+       
         # agregar más aquí
     ]
     def _underdog():
