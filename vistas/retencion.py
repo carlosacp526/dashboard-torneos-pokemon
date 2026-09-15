@@ -1,8 +1,11 @@
 """
 retencion.py — Participación y Retención
-Recencia de jugadores, actividad mensual, ratio de fuga (churn) y predicción de
-riesgo de fuga con XGBoost, construidos sobre la actividad mensual real (partidas
-jugadas o con walkover; se excluyen las pendientes sin fecha).
+Recencia, actividad mensual, Roll Rate (transición entre estados de recencia),
+Vintage/Cosechas (retención por cohorte de debut), ratio de fuga, predicción de
+fuga con XGBoost y un watchlist de alertas que combina todo lo anterior.
+
+Todo se construye sobre la actividad mensual real (partidas jugadas o con
+walkover; las pendientes sin fecha, Walkover == -1, no cuentan como actividad).
 """
 import streamlit as st
 import pandas as pd
@@ -36,6 +39,33 @@ FEATURE_LABELS = {
     'gap_ratio':             'Consistencia (meses activos ÷ antigüedad)',
 }
 
+# Horizonte de "fuga confirmada" usado como target del modelo, justificado con
+# Roll Rate: la probabilidad de recuperación se desploma justo al cruzar este
+# umbral (ver compute_roll_rate / sección "Roll Rate" en show()).
+HORIZONTE_FUGA_MESES = 2
+
+BUCKET_KEYS = ['Activo', 'Reciente', 'EnRiesgo', 'Inactivo']
+BUCKET_META = {
+    'Activo':   ('🟢', 'Activo (mes actual)'),
+    'Reciente': ('🟡', 'Reciente (1-2 meses)'),
+    'EnRiesgo': ('🟠', 'En riesgo (3-5 meses)'),
+    'Inactivo': ('🔴', 'Inactivo (6+ meses)'),
+}
+BUCKET_COLORS = {'Activo': '#2ECC71', 'Reciente': '#F1C40F', 'EnRiesgo': '#E67E22', 'Inactivo': '#E74C3C'}
+PLACEHOLDER_NOMBRES = {'walk over (w.o)'}  # no es un jugador real: relleno cuando el rival no se presentó
+
+
+def _bucket_key(meses_recencia):
+    if meses_recencia <= 0: return 'Activo'
+    if meses_recencia <= 2: return 'Reciente'
+    if meses_recencia <= 5: return 'EnRiesgo'
+    return 'Inactivo'
+
+
+def _bucket_label(key):
+    emoji, desc = BUCKET_META.get(key, ('⚫', key))
+    return f"{emoji} {desc}"
+
 
 # ── Paso 1: panel mensual jugador × mes ──────────────────────────────────────
 def _prep(df_raw):
@@ -48,11 +78,8 @@ def _prep(df_raw):
     return df
 
 
-PLACEHOLDER_NOMBRES = {'walk over (w.o)'}  # no es un jugador real: relleno cuando el rival no se presentó
-
-
 def _build_player_rows(df):
-    cols = ['ym', 'winner', 'Walkover']
+    cols = ['ym', 'winner', 'Walkover', 'league'] + [c for c in ['Formato', 'Tier'] if c in df.columns]
     a = df[['player1'] + cols].rename(columns={'player1': 'jugador'})
     b = df[['player2'] + cols].rename(columns={'player2': 'jugador'})
     long = pd.concat([a, b], ignore_index=True)
@@ -65,10 +92,14 @@ def _build_player_rows(df):
 
 
 @st.cache_data(ttl=3600)
+def build_long_rows(_df_raw):
+    return _build_player_rows(_prep(_df_raw))
+
+
+@st.cache_data(ttl=3600)
 def build_monthly_panel(_df_raw):
     """Una fila por (jugador, mes): partidas, victorias y walkovers de ese mes."""
-    df = _prep(_df_raw)
-    long = _build_player_rows(df)
+    long = build_long_rows(_df_raw)
     if long.empty:
         return pd.DataFrame(columns=['jugador', 'ym', 'partidas', 'victorias', 'walkovers'])
     panel = long.groupby(['jugador', 'ym']).agg(
@@ -79,6 +110,16 @@ def build_monthly_panel(_df_raw):
     return panel
 
 
+def compute_diversidad(long_df):
+    """Diversidad histórica de cada jugador: en cuántas ligas/formatos/tiers distintos ha competido."""
+    if long_df.empty:
+        return pd.DataFrame(columns=['jugador', 'ligas_distintas'])
+    named = {'ligas_distintas': ('league', 'nunique')}
+    if 'Formato' in long_df.columns: named['formatos_distintos'] = ('Formato', 'nunique')
+    if 'Tier' in long_df.columns: named['tiers_distintos'] = ('Tier', 'nunique')
+    return long_df.groupby('jugador').agg(**named).reset_index()
+
+
 # ── Paso 2: recencia ──────────────────────────────────────────────────────────
 def compute_recencia(panel):
     if panel.empty:
@@ -86,14 +127,8 @@ def compute_recencia(panel):
     mes_ref = panel['ym'].max()
     last_seen = panel.groupby('jugador')['ym'].max().reset_index(name='ultimo_mes')
     last_seen['meses_recencia'] = last_seen['ultimo_mes'].apply(lambda m: (mes_ref - m).n)
-
-    def bucket(m):
-        if m <= 0: return '🟢 Activo (mes actual)'
-        if m <= 2: return '🟡 Reciente (1-2 meses)'
-        if m <= 5: return '🟠 En riesgo (3-5 meses)'
-        return '🔴 Inactivo (6+ meses)'
-
-    last_seen['segmento'] = last_seen['meses_recencia'].apply(bucket)
+    last_seen['bucket'] = last_seen['meses_recencia'].apply(_bucket_key)
+    last_seen['segmento'] = last_seen['bucket'].apply(_bucket_label)
     last_seen['ultimo_mes'] = last_seen['ultimo_mes'].astype(str)
     return last_seen.sort_values('meses_recencia'), mes_ref
 
@@ -117,7 +152,7 @@ def compute_monthly_activity(panel):
     return pd.DataFrame(rows)
 
 
-# ── Paso 4: ratio de fuga mes a mes ──────────────────────────────────────────
+# ── Paso 4: ratio de fuga mes a mes (regla simple: activo hoy, ausente el mes siguiente) ──
 def compute_churn_ratio(panel):
     if panel.empty:
         return pd.DataFrame()
@@ -180,6 +215,11 @@ def build_feature_grid(panel):
         lambda s: s.shift(3).rolling(3, min_periods=1).sum()).fillna(0)
     grid['racha_actual']       = g['activo'].transform(
         lambda s: pd.Series(_racha_consecutiva(s.tolist()), index=s.index))
+    # Recencia EN CADA MES (no solo al final): meses consecutivos inactivo hasta esa fila.
+    # Es el insumo del análisis Roll Rate — reutiliza la misma racha, sobre el complemento de 'activo'.
+    grid['recencia_en_mes'] = g['activo'].transform(
+        lambda s: pd.Series(_racha_consecutiva([1 - v for v in s.tolist()]), index=s.index))
+    grid['bucket'] = grid['recencia_en_mes'].apply(_bucket_key)
 
     grid['winrate_acum']        = (grid['victorias_acum'] / grid['partidas_acum']).fillna(0)
     grid['winrate_last3']       = (grid['victorias_last3'] / grid['partidas_last3']).fillna(0)
@@ -187,12 +227,65 @@ def build_feature_grid(panel):
     grid['gap_ratio']           = (grid['meses_activos_acum'] / grid['tenure_meses']).fillna(0)
     grid['tendencia']           = grid['partidas_last3'] - grid['partidas_prev3']
 
-    activo_next = g['activo'].transform(lambda s: s.shift(-1))
-    grid['label_churn'] = activo_next.apply(lambda x: (1 - int(x)) if pd.notna(x) else np.nan)
+    # ── Target de fuga: "fuga confirmada" = no vuelve a jugar en los próximos
+    # HORIZONTE_FUGA_MESES meses. Justificado empíricamente con Roll Rate: desde
+    # "Reciente" (1-2 meses ausente) la probabilidad de volver el mes siguiente es
+    # ~39%; recién al llegar a "En riesgo" (3+ meses) esa probabilidad se desploma
+    # a ~12%. Etiquetar como fuga la primera ausencia sería una falsa alarma en
+    # ~4 de cada 10 casos, así que el target exige ausencia sostenida.
+    activo_next = [g['activo'].transform(lambda s: s.shift(-h)) for h in range(1, HORIZONTE_FUGA_MESES + 1)]
+    horizonte_ok = pd.concat(activo_next, axis=1).notna().all(axis=1)
+    todos_inactivos = pd.concat([a.fillna(1) == 0 for a in activo_next], axis=1).all(axis=1)
+    grid['label_churn'] = np.where(horizonte_ok, todos_inactivos.astype(int), np.nan)
     return grid
 
 
-# ── Paso 6: entrenamiento XGBoost (split temporal, sin fuga de datos) ───────
+# ── Paso 6: Roll Rate — matriz de transición entre estados de recencia ──────
+def compute_roll_rate(grid):
+    """
+    Para cada jugador y cada mes de su historial, en qué 'bucket' de recencia
+    está (Activo/Reciente/En riesgo/Inactivo) y a qué bucket pasa el mes
+    siguiente. Es exactamente la lógica de Roll Rate de análisis de cartera
+    (delinquency roll rate): mide qué tan reversible es cada estado.
+    """
+    if grid.empty:
+        return pd.DataFrame(), pd.Series(dtype=int)
+    g = grid.sort_values(['jugador', 'ym']).copy()
+    g['bucket_next'] = g.groupby('jugador')['bucket'].shift(-1)
+    trans = g.dropna(subset=['bucket_next'])
+    if trans.empty:
+        return pd.DataFrame(), pd.Series(dtype=int)
+    mat = pd.crosstab(trans['bucket'], trans['bucket_next'], normalize='index') * 100
+    mat = mat.reindex(index=BUCKET_KEYS, columns=BUCKET_KEYS).fillna(0).round(1)
+    n_por_bucket = trans['bucket'].value_counts().reindex(BUCKET_KEYS).fillna(0).astype(int)
+    return mat, n_por_bucket
+
+
+# ── Paso 7: Vintage / Cosechas — retención por cohorte de debut ────────────
+def compute_vintage(grid, max_offset=24, min_jugadores=5):
+    """
+    Agrupa a los jugadores por su 'cosecha' (mes de su primera partida) y mide
+    qué % de cada cosecha sigue activo en cada mes-de-antigüedad (offset).
+    Es el análisis de Vintage estándar de retención: muestra la forma natural
+    de la caída de actividad, independiente de cuándo se sumó cada jugador.
+    """
+    if grid.empty:
+        return pd.DataFrame(), pd.DataFrame(), pd.Series(dtype=int)
+    g = grid.copy()
+    g['offset'] = g.groupby('jugador').cumcount()
+    cohort_size = g.groupby('jugador')['primer_mes'].first().value_counts().sort_index()
+
+    por_cohorte = g.groupby(['primer_mes', 'offset'])['activo'].mean().reset_index(name='activo_rate')
+    por_cohorte['primer_mes'] = por_cohorte['primer_mes'].astype(str)
+
+    curva = g.groupby('offset')['activo'].agg(['mean', 'count']).reset_index()
+    curva.columns = ['offset', 'activo_rate', 'n_jugadores']
+    curva = curva[(curva['offset'] <= max_offset) & (curva['n_jugadores'] >= min_jugadores)].copy()
+    curva['activo_%'] = (curva['activo_rate'] * 100).round(1)
+    return por_cohorte, curva, cohort_size
+
+
+# ── Paso 8: entrenamiento XGBoost (split temporal, sin fuga de datos) ───────
 @st.cache_resource(ttl=3600, show_spinner=False)
 def train_churn_model(_grid, data_hash):
     import xgboost as xgb
@@ -250,22 +343,80 @@ def predict_riesgo_actual(model, grid):
     return actuales.sort_values('prob_fuga_%', ascending=False), mes_actual
 
 
+# ── Paso 9: Watchlist — KPI compuesto de alerta temprana ────────────────────
+def build_watchlist(grid, model, diversidad):
+    """
+    Une dos fuentes en una sola prioridad 0-100:
+    - Activos hoy: probabilidad de fuga confirmada del modelo XGBoost (aviso
+      temprano, antes de que falten a jugar).
+    - Ya ausentes (Reciente / En riesgo): probabilidad histórica de recuperación
+      de su bucket actual, tomada directo de la matriz Roll Rate — todavía
+      recuperables, pero la ventana se cierra rápido.
+    """
+    mat, _ = compute_roll_rate(grid)
+    riesgo_modelo, _ = predict_riesgo_actual(model, grid)
+    filas = []
+
+    if not riesgo_modelo.empty:
+        act = riesgo_modelo.copy()
+        act['tipo_alerta'] = '🔮 Activo — riesgo de fuga próxima'
+        act['prioridad'] = act['prob_fuga_%']
+        act['detalle'] = act['prob_fuga_%'].apply(lambda p: f"{p:.0f}% prob. de no volver en {HORIZONTE_FUGA_MESES} meses (modelo)")
+        filas.append(act[['jugador', 'tipo_alerta', 'prioridad', 'detalle', 'racha_actual',
+                           'tendencia', 'walkover_rate_last6', 'winrate_acum']])
+
+    filas_ausentes = _build_ausentes(grid, mat)
+    if not filas_ausentes.empty:
+        filas.append(filas_ausentes)
+
+    if not filas:
+        return pd.DataFrame()
+    watch = pd.concat(filas, ignore_index=True)
+    watch = watch.merge(diversidad, on='jugador', how='left')
+    watch['prioridad'] = watch['prioridad'].round(1)
+    return watch.sort_values('prioridad', ascending=False).reset_index(drop=True)
+
+
+def _build_ausentes(grid, mat):
+    mes_actual = grid['ym'].max()
+    ultima_fila = grid.sort_values('ym').groupby('jugador').last().reset_index()
+    ausentes = ultima_fila[ultima_fila['bucket'].isin(['Reciente', 'EnRiesgo'])].copy()
+    if ausentes.empty or mat.empty:
+        return pd.DataFrame()
+    ausentes['prob_recuperacion'] = ausentes['bucket'].apply(
+        lambda b: mat.loc[b, 'Activo'] if b in mat.index else 0.0)
+    ausentes['prioridad'] = (100 - ausentes['prob_recuperacion']).round(1)
+    ausentes['tipo_alerta'] = ausentes['bucket'].map({
+        'Reciente': '⏸️ Ya ausente (1-2 meses) — recuperable',
+        'EnRiesgo': '⚠️ Ya ausente (3-5 meses) — última ventana',
+    })
+    ausentes['detalle'] = ausentes.apply(
+        lambda r: f"{r['recencia_en_mes']} mes(es) sin jugar · {r['prob_recuperacion']:.0f}% prob. histórica de volver el próximo mes desde este estado",
+        axis=1)
+    return ausentes[['jugador', 'tipo_alerta', 'prioridad', 'detalle', 'racha_actual',
+                      'tendencia', 'walkover_rate_last6', 'winrate_acum']]
+
+
 # ════════════════════════════════════════════════════════════════════════════
 def show():
     st.header("🔁 Participación y Retención")
     st.caption(
-        "Recencia de jugadores, actividad mensual, ratio de fuga (churn) y predicción de riesgo "
-        "de fuga con XGBoost. Se basa en actividad mensual real (partidas jugadas o con walkover; "
-        "las pendientes sin fecha no cuentan como actividad)."
+        "Recencia, Roll Rate, Vintage/Cosechas, ratio de fuga, predicción con XGBoost y un watchlist "
+        "de alertas — todo basado en actividad mensual real (partidas jugadas o con walkover; las "
+        "pendientes sin fecha no cuentan como actividad)."
     )
 
     with st.spinner("Cargando datos..."):
         df_raw = load_data()
         panel = build_monthly_panel(df_raw)
+        long_rows = build_long_rows(df_raw)
+        diversidad = compute_diversidad(long_rows)
 
     if panel.empty:
         st.error("No hay suficientes partidas con fecha para calcular retención.")
         return
+
+    grid = build_feature_grid(panel)
 
     meses_all = sorted(panel['ym'].unique())
     mes_actual = meses_all[-1]
@@ -286,18 +437,16 @@ def show():
     else:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("👥 Jugadores con historial", len(recencia))
-        for col, seg in zip([c2, c3, c4], ['🟢 Activo (mes actual)', '🟡 Reciente (1-2 meses)', '🔴 Inactivo (6+ meses)']):
-            col.metric(seg, int((recencia['segmento'] == seg).sum()))
+        for col, key in zip([c2, c3, c4], ['Activo', 'Reciente', 'Inactivo']):
+            col.metric(_bucket_label(key), int((recencia['bucket'] == key).sum()))
 
         colh, colt = st.columns([2, 3])
         with colh:
-            dist = recencia['segmento'].value_counts().reindex(
-                ['🟢 Activo (mes actual)', '🟡 Reciente (1-2 meses)', '🟠 En riesgo (3-5 meses)', '🔴 Inactivo (6+ meses)']
-            ).fillna(0).reset_index()
-            dist.columns = ['Segmento', 'Jugadores']
-            fig = px.bar(dist, x='Segmento', y='Jugadores', color='Segmento', text='Jugadores',
-                         color_discrete_map={'🟢 Activo (mes actual)': '#2ECC71', '🟡 Reciente (1-2 meses)': '#F1C40F',
-                                              '🟠 En riesgo (3-5 meses)': '#E67E22', '🔴 Inactivo (6+ meses)': '#E74C3C'})
+            dist = recencia['bucket'].value_counts().reindex(BUCKET_KEYS).fillna(0).reset_index()
+            dist.columns = ['bucket', 'Jugadores']
+            dist['Segmento'] = dist['bucket'].apply(_bucket_label)
+            fig = px.bar(dist, x='Segmento', y='Jugadores', color='bucket', text='Jugadores',
+                         color_discrete_map=BUCKET_COLORS)
             fig.update_traces(textposition='outside')
             fig.update_layout(showlegend=False, title=f"Distribución de recencia (referencia: {mes_ref})")
             st.plotly_chart(fig, use_container_width=True)
@@ -305,8 +454,9 @@ def show():
             buscar = st.text_input("🔍 Buscar jugador", "", key="ret_rec_buscar")
             vista = recencia[recencia['jugador'].str.contains(buscar, case=False, na=False)] if buscar else recencia
             st.dataframe(
-                vista.rename(columns={'jugador': 'Jugador', 'ultimo_mes': 'Último mes activo',
-                                       'meses_recencia': 'Meses sin jugar', 'segmento': 'Segmento'}),
+                vista[['jugador', 'ultimo_mes', 'meses_recencia', 'segmento']].rename(
+                    columns={'jugador': 'Jugador', 'ultimo_mes': 'Último mes activo',
+                             'meses_recencia': 'Meses sin jugar', 'segmento': 'Segmento'}),
                 use_container_width=True, hide_index=True, height=330,
             )
 
@@ -325,12 +475,92 @@ def show():
         with st.expander("Ver tabla"):
             st.dataframe(actividad, use_container_width=True, hide_index=True)
 
+    # ── Roll Rate ─────────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("🎯 Roll Rate — ¿qué tan reversible es cada estado?")
+    st.caption(
+        "Adaptado del *roll rate* que usan bancos y suscripciones para medir mora: en vez de deuda, "
+        "aquí el 'estado' es la recencia (Activo → Reciente → En riesgo → Inactivo). La matriz muestra, "
+        "de los jugadores que ESTE mes están en el estado de la fila, a qué estado pasan EL MES SIGUIENTE. "
+        "Filas 100% = todos los jugadores que pasaron por ese estado."
+    )
+    mat, n_bucket = compute_roll_rate(grid)
+    if mat.empty:
+        st.info("Sin suficiente historial para calcular Roll Rate.")
+    else:
+        mat_disp = mat.copy()
+        mat_disp.index = [_bucket_label(k) for k in mat_disp.index]
+        mat_disp.columns = [_bucket_label(k) for k in mat_disp.columns]
+
+        fig_rr = go.Figure(data=go.Heatmap(
+            z=mat.values, x=[_bucket_label(k) for k in BUCKET_KEYS], y=[_bucket_label(k) for k in BUCKET_KEYS],
+            colorscale=[[0, '#1b2a3d'], [1, '#2ECC71']], text=mat.values, texttemplate="%{text:.0f}%",
+            hovertemplate="De %{y} pasan a %{x}: %{z:.1f}%<extra></extra>",
+        ))
+        fig_rr.update_layout(title="Matriz de transición mes a mes (%)", height=420,
+                              xaxis_title="Estado el mes siguiente", yaxis_title="Estado este mes",
+                              yaxis=dict(autorange='reversed'))
+        st.plotly_chart(fig_rr, use_container_width=True)
+
+        prob_recuperar_reciente = mat.loc['Reciente', 'Activo'] if 'Reciente' in mat.index else 0
+        prob_recuperar_riesgo = mat.loc['EnRiesgo', 'Activo'] if 'EnRiesgo' in mat.index else 0
+        prob_recuperar_inactivo = mat.loc['Inactivo', 'Activo'] if 'Inactivo' in mat.index else 0
+        c1, c2, c3 = st.columns(3)
+        c1.metric("🟡→🟢 Recupera desde Reciente", f"{prob_recuperar_reciente:.0f}%", help=f"n={n_bucket.get('Reciente',0)}")
+        c2.metric("🟠→🟢 Recupera desde En riesgo", f"{prob_recuperar_riesgo:.0f}%", help=f"n={n_bucket.get('EnRiesgo',0)}")
+        c3.metric("🔴→🟢 Recupera desde Inactivo", f"{prob_recuperar_inactivo:.0f}%", help=f"n={n_bucket.get('Inactivo',0)}")
+        st.info(
+            f"**Por qué el modelo no marca 'fuga' desde la primera ausencia:** un jugador en 🟡 Reciente "
+            f"todavía tiene **{prob_recuperar_reciente:.0f}%** de probabilidad de volver el mes siguiente. "
+            f"Esa probabilidad se desploma a **{prob_recuperar_riesgo:.0f}%** en 🟠 En riesgo, y a solo "
+            f"**{prob_recuperar_inactivo:.0f}%** en 🔴 Inactivo (prácticamente un estado sin retorno). "
+            f"Por eso el target del modelo exige **{HORIZONTE_FUGA_MESES} meses seguidos sin jugar**: "
+            "es el punto donde, según los propios datos, ya casi no hay vuelta atrás."
+        )
+        with st.expander("Ver matriz en tabla"):
+            st.dataframe(mat_disp, use_container_width=True)
+
+    # ── Vintage / Cosechas ───────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("📈 Vintage / Cosechas — retención por generación de jugadores")
+    st.caption(
+        "Cada 'cosecha' es el grupo de jugadores que debutó el mismo mes. El eje X es su antigüedad "
+        "(meses desde su primera partida, no el calendario), y el eje Y qué % de esa cosecha sigue "
+        "activo en cada mes de antigüedad. Sirve para ver la forma natural de la caída de actividad."
+    )
+    por_cohorte, curva, cohort_size = compute_vintage(grid)
+    if curva.empty:
+        st.info("Sin suficiente historial para el análisis de cosechas.")
+    else:
+        fig_v = px.line(curva, x='offset', y='activo_%', markers=True,
+                         hover_data=['n_jugadores'],
+                         title="Curva de retención promedio por antigüedad (todas las cosechas)")
+        fig_v.update_layout(xaxis_title="Meses desde el debut", yaxis_title="% de la cosecha activo ese mes")
+        st.plotly_chart(fig_v, use_container_width=True)
+
+        caida_m1 = curva.loc[curva['offset'] == 1, 'activo_%']
+        estable = curva.loc[curva['offset'].between(6, 12), 'activo_%'].mean()
+        if not caida_m1.empty:
+            st.info(
+                f"**Lectura:** el primer mes tras debutar, la actividad cae a **{caida_m1.iloc[0]:.0f}%** "
+                f"(normal — muchos prueban una liga/torneo puntual y no vuelven de inmediato), y luego la "
+                f"comunidad se **estabiliza alrededor de {estable:.0f}%** en vez de seguir cayendo a cero. "
+                "Esto confirma que la ausencia de 1 mes es una señal débil por sí sola (consistente con "
+                "Roll Rate) — muchos 'ausentes' vuelven cuando arranca la siguiente liga o torneo."
+            )
+        with st.expander("Ver heatmap por cosecha"):
+            heat = por_cohorte.pivot(index='primer_mes', columns='offset', values='activo_rate') * 100
+            fig_h = px.imshow(heat, color_continuous_scale='RdYlGn', aspect='auto',
+                               labels=dict(x="Meses desde el debut", y="Cosecha (mes de debut)", color="% activo"))
+            st.plotly_chart(fig_h, use_container_width=True)
+
     # ── Ratio de fuga ─────────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("📉 Ratio de Fuga")
+    st.subheader("📉 Ratio de Fuga (regla simple, 1 mes)")
     st.caption(
-        "De los jugadores activos en un mes, qué % NO vuelve a aparecer al mes siguiente. "
-        "`ratio_fuga_% = fugados ÷ activos del mes × 100`."
+        "De los jugadores activos en un mes, qué % NO vuelve a aparecer al mes siguiente. Es la versión "
+        "'cruda' mes a mes (sin el horizonte de 2 meses que usa el modelo) — útil como pulso rápido, "
+        "pero recuerda que Roll Rate muestra que buena parte de esta gente sí vuelve más adelante."
     )
     churn_ts = compute_churn_ratio(panel_calc)
     if churn_ts.empty:
@@ -342,7 +572,7 @@ def show():
         c3.metric("📆 Últimos 6 meses", f"{churn_ts['ratio_fuga_%'].tail(6).mean():.1f}%")
 
         fig3 = px.line(churn_ts, x='mes', y='ratio_fuga_%', markers=True, text='ratio_fuga_%',
-                        title="Ratio de fuga mensual")
+                        title="Ratio de fuga mensual (1 mes)")
         fig3.update_traces(texttemplate='%{text:.0f}%', textposition='top center')
         fig3.add_hline(y=churn_ts['ratio_fuga_%'].mean(), line_dash="dash", line_color="gray",
                         annotation_text="Promedio histórico")
@@ -353,16 +583,16 @@ def show():
 
     # ── Predicción de fuga (XGBoost) ────────────────────────────────────────
     st.markdown("---")
-    st.subheader("🤖 Predicción de Fuga (XGBoost)")
+    st.subheader("🤖 Predicción de Fuga Confirmada (XGBoost)")
     st.caption(
-        "Modelo entrenado con el historial mensual de cada jugador (antigüedad, actividad reciente, "
-        "winrate, racha, tendencia, % de walkovers, consistencia) para estimar la probabilidad de que "
-        "un jugador **activo hoy** no vuelva a jugar el próximo mes. Validado con los meses más recientes "
-        "(split temporal, sin mezclar futuro con pasado)."
+        f"Modelo entrenado con el historial mensual de cada jugador (antigüedad, actividad reciente, "
+        f"winrate, racha, tendencia, % de walkovers, consistencia) para estimar la probabilidad de que "
+        f"un jugador **activo hoy** no vuelva a jugar en los próximos **{HORIZONTE_FUGA_MESES} meses** "
+        "— el horizonte de 'fuga confirmada' justificado en la sección Roll Rate de arriba. Validado con "
+        "los meses más recientes (split temporal, sin mezclar futuro con pasado)."
     )
 
     with st.spinner("Entrenando modelo..."):
-        grid = build_feature_grid(panel)
         model, metrics, importancias = train_churn_model(grid, len(df_raw))
 
     if model is None:
@@ -409,23 +639,84 @@ def show():
                           title="Qué variables pesan más en la predicción de fuga")
             st.plotly_chart(fig4, use_container_width=True)
 
+    # ── Watchlist — KPI compuesto de alerta temprana ─────────────────────────
     st.markdown("---")
-    with st.expander("📖 Glosario — cómo se calcula todo en esta sección"):
-        st.markdown("""
+    st.subheader("🚨 Watchlist — Jugadores próximos a irse")
+    st.caption(
+        "Combina el modelo (jugadores activos con alta probabilidad de fuga) con los ya ausentes "
+        "(Reciente/En riesgo, priorizados por qué tan reversible es su estado según Roll Rate), "
+        "más señales operativas (walkovers), de tendencia y de diversidad de competencias."
+    )
+    if model is None:
+        st.info("El watchlist necesita el modelo entrenado arriba.")
+    else:
+        watch = build_watchlist(grid, model, diversidad)
+        if watch.empty:
+            st.info("Sin jugadores para el watchlist con los datos actuales.")
+        else:
+            top_n = st.slider("Mostrar top N", 5, min(100, len(watch)), min(25, len(watch)), key="ret_watch_top")
+            tabla_w = watch.head(top_n).copy()
+            tabla_w['walkover_rate_last6'] = (tabla_w['walkover_rate_last6'] * 100).round(1)
+            tabla_w['winrate_acum'] = (tabla_w['winrate_acum'] * 100).round(1)
+            cols_show = ['jugador', 'tipo_alerta', 'prioridad', 'detalle', 'racha_actual',
+                         'tendencia', 'walkover_rate_last6', 'winrate_acum']
+            if 'ligas_distintas' in tabla_w.columns:
+                cols_show.append('ligas_distintas')
+            st.dataframe(
+                tabla_w[cols_show].rename(columns={
+                    'jugador': 'Jugador', 'tipo_alerta': 'Tipo de alerta', 'prioridad': 'Prioridad (0-100)',
+                    'detalle': 'Detalle', 'racha_actual': 'Racha actual', 'tendencia': 'Tendencia (partidas)',
+                    'walkover_rate_last6': '% WO últ. 6m', 'winrate_acum': 'Winrate histórico %',
+                    'ligas_distintas': 'Ligas/torneos distintos (histórico)',
+                }),
+                use_container_width=True, hide_index=True, height=500,
+            )
+            st.download_button("📥 Descargar watchlist (CSV)",
+                                tabla_w.to_csv(index=False).encode('utf-8'),
+                                "watchlist_fuga.csv", "text/csv")
+
+    st.markdown("---")
+    with st.expander("📖 Glosario y justificación metodológica"):
+        st.markdown(f"""
 **Actividad mensual:** un jugador cuenta como "activo" en un mes si aparece como jugador1 o jugador2 en
 al menos una partida con fecha en ese mes (jugada o walkover; las pendientes sin fecha no cuentan).
 
 **Recencia:** meses transcurridos entre el mes más reciente con datos y el último mes en que el jugador
 estuvo activo. 0 = jugó este mes; 6+ = no juega hace medio año o más.
 
-**Ratio de fuga (churn):** de los jugadores activos en un mes M, el % que NO aparece activo en el mes M+1.
-Se calcula mes a mes; el mes en curso se excluye por defecto porque todavía no tiene "mes siguiente" completo
-para medir si sus jugadores realmente se fueron.
+**Roll Rate:** técnica tomada de análisis de mora/cartera (bancos, suscripciones): en vez de seguir el
+estado de una deuda, aquí seguimos el estado de recencia de cada jugador mes a mes y medimos la
+probabilidad de que pase a cada otro estado el mes siguiente. Es la forma más directa de responder
+"¿cuándo es realmente probable que un jugador se vaya?" — no con una regla arbitraria, sino con la
+probabilidad real de recuperación observada en los datos.
 
-**Predicción de fuga (XGBoost):** por cada jugador y cada mes de su historial se calculan variables usando
-*solo* información hasta ese mes (antigüedad, partidas y winrate recientes, racha de meses consecutivos,
-tendencia, % de walkovers, consistencia), y la etiqueta es si ese jugador dejó de aparecer el mes siguiente.
-El modelo se valida con los meses más recientes (nunca con los mismos meses de entrenamiento) para evitar que
-"vea el futuro". Con eso, se puntúa a los jugadores activos en el mes actual para estimar quién tiene mayor
-probabilidad de dejar de jugar el próximo mes.
+**Vintage / Cosechas:** técnica de cohortes (también de banca/suscripciones): agrupa jugadores por su
+mes de debut y mide qué % de cada cohorte sigue activo en cada mes de antigüedad. Muestra la forma
+natural de la curva de actividad (caída inicial, luego estabilización), sin mezclar cosechas viejas
+con nuevas.
+
+**Por qué el target de fuga usa {HORIZONTE_FUGA_MESES} meses y no 1:** Roll Rate muestra que un jugador
+recién ausente (🟡 Reciente) todavía tiene una probabilidad alta de volver al mes siguiente, y Vintage
+muestra que la comunidad no decae a cero sino que se estabiliza — ambas señales dicen que una sola
+ausencia es ruido, no fuga. El target "fuga confirmada" exige {HORIZONTE_FUGA_MESES} meses consecutivos
+sin jugar, justo el punto (visible en la matriz Roll Rate) donde la probabilidad de recuperación se
+desploma. Esto reduce falsas alarmas y hace que las probabilidades del modelo sean más confiables.
+
+**Ratio de fuga (regla simple, 1 mes):** de los jugadores activos en un mes M, el % que NO aparece
+activo en el mes M+1. Se muestra aparte como referencia rápida, pero es más ruidosa que el target del
+modelo por lo explicado arriba.
+
+**Predicción de fuga (XGBoost):** por cada jugador y cada mes de su historial se calculan variables
+usando *solo* información hasta ese mes (antigüedad, partidas y winrate recientes, racha de meses
+consecutivos, tendencia, % de walkovers, consistencia), y la etiqueta es si ese jugador dejó de aparecer
+los siguientes {HORIZONTE_FUGA_MESES} meses. El modelo se valida con los meses más recientes (nunca con
+los mismos meses de entrenamiento) para evitar que "vea el futuro".
+
+**Watchlist (KPI de alerta temprana):** une dos poblaciones en una sola prioridad 0-100 — jugadores
+**activos** con alta probabilidad del modelo (aviso antes de que falten), y jugadores **ya ausentes**
+en Reciente/En riesgo, priorizados por qué tan baja es su probabilidad histórica de recuperación según
+Roll Rate (cuanto más baja, más urgente actuar). Se complementa con señales de **cumplimiento/salud
+operativa** (% de walkovers recientes), **competitividad/momentum** (tendencia de partidas, winrate
+histórico) y **diversidad** (en cuántas ligas/torneos distintos ha competido — quien solo compitió en
+una liga puntual es más propenso a desaparecer cuando esa liga termina).
 """)
