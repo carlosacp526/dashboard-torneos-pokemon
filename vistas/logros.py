@@ -684,7 +684,9 @@ def evaluar_logros(
         r[kid] = bool(torneos_num & nums)
 
 
-    r["TO01"] = any('RANDBATS CHAMPIONS' in str(f).upper() for f in formatos_jugados_esp) or  any('MONOTYPE RANDOM BATTLE' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM SINGLES' in str(f).upper() for f in formatos_jugados_esp) or any('RANDOM DOUBLES' in str(f).upper() for f in formatos_jugados_esp)
+    _FORMATOS_CAOS = ('RANDBATS CHAMPIONS', 'MONOTYPE RANDOM BATTLE', 'RANDOM SINGLES',
+                       'RANDOM DOUBLES', 'RANDOM DOBLES CHAMPIONS', 'BABY RANDOM SINGLES')
+    r["TO01"] = any(fc in str(f).upper() for f in formatos_jugados_esp for fc in _FORMATOS_CAOS)
     #r["TO01"] = any('SINGLES' in str(f).upper() for f in formatos_jugados)
     for kid, nums in TORNEOS_GEN.items():
         r[kid] = bool(torneos_num & nums)
