@@ -164,7 +164,7 @@ LOGROS = [
 # ── TIPOS (18) ───────────────────────────────────────────────────────────────
 {"id":"TI01","num":101,"cat":"Torneo","rareza":"Bronce","icon":"🔥","xp":200,"name":"Maestro Fuego",    "desc":"Participa en torneo Monotype Fuego (T76)"},
 {"id":"TI02","num":102,"cat":"Torneo","rareza":"Bronce","icon":"💧","xp":200,"name":"Maestro Agua",     "desc":"Participa en torneo Monotype Agua (T69)"},
-{"id":"TI03","num":103,"cat":"Torneo","rareza":"Bronce","icon":"🌿","xp":200,"name":"Maestro Planta",   "desc":"Participa en torneo Monotype Planta (T??)"},
+{"id":"TI03","num":103,"cat":"Torneo","rareza":"Bronce","icon":"🌿","xp":200,"name":"Maestro Planta",   "desc":"Participa en torneo Monotype Planta (T83)"},
 {"id":"TI04","num":104,"cat":"Torneo","rareza":"Bronce","icon":"⚡","xp":200,"name":"Maestro Eléctrico","desc":"Participa en torneo Monotype Eléctrico (T??)"},
 {"id":"TI05","num":105,"cat":"Torneo","rareza":"Bronce","icon":"🧊","xp":200,"name":"Maestro Hielo",    "desc":"Participa en torneo Monotype Hielo (T??)"},
 {"id":"TI06","num":106,"cat":"Torneo","rareza":"Bronce","icon":"👊","xp":200,"name":"Maestro Lucha",    "desc":"Participa en torneo Monotype Lucha (T??)"},
@@ -663,7 +663,7 @@ def evaluar_logros(
     TORNEOS_TIPOS = {
         "TI01": {76},  # Fuego
         "TI02": {69},  # Agua
-        "TI03": {84},  # Planta
+        "TI03": {83},  # Planta
         "TI04": {100},  # Eléctrico
         "TI05": {100},  # Hielo
         "TI06": {100},  # Lucha
