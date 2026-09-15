@@ -898,7 +898,7 @@ def evaluar_logros(
     #              any('PMS' in str(l) for l in ligas_jugadas))
     
     GANADORES_LIGA = {
-        "PJS": {"lautaro","alonso26ca", "alechiii","lexodia","porygon z"},
+        "PJS": {"lautaro","alonso26ca", "alechiii","lexodia","porygon z","emperorgambit"},
         "PES": {"caradecoso","chescor"},
         "PSS": {"ricomam","haseo","elin beacil","roy kasoy","akaru"},
         "PMS": {"luigillanos","joscake","angello77","lautaro","darmanethan"},
