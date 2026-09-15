@@ -17,6 +17,8 @@ COPA_PATH   = os.path.join(TCG_DIR, "Copa.png")
 JUGADORES_DIR = os.path.join(ROOT, "jugadores")
 POKEMON_DIR   = os.path.join(TCG_DIR, "pokemon")
 LIGAS_DIR     = os.path.join(TCG_DIR, "ligas")
+FONTS_DIR     = os.path.join(TCG_DIR, "fonts")
+DISPLAY_FONT  = os.path.join(FONTS_DIR, "LuckiestGuy-Regular.ttf")
 
 # ── Dimensiones carta (proporción TCG estándar 63x88mm → ×10) ────
 CW, CH = 630, 880
@@ -84,7 +86,10 @@ def _find_liga_img(liga):
 
 
 def _font(size, bold=False):
-    """Intenta cargar fuente, fallback a default."""
+    """Fuente estilo cómic (Luckiest Guy) para el look TCG; fallback a Arial/DejaVu."""
+    if os.path.exists(DISPLAY_FONT):
+        try: return ImageFont.truetype(DISPLAY_FONT, size)
+        except Exception: pass
     candidates = []
     if bold:
         candidates = [
@@ -105,11 +110,9 @@ def _font(size, bold=False):
     return ImageFont.load_default()
 
 
-def _text_shadow(draw, text, xy, font, fill, shadow=(0,0,0,160), offset=(2,3)):
-    """Dibuja texto con sombra."""
-    sx, sy = xy[0]+offset[0], xy[1]+offset[1]
-    draw.text((sx, sy), text, font=font, fill=shadow)
-    draw.text(xy, text, font=font, fill=fill)
+def _text_shadow(draw, text, xy, font, fill, shadow=(0,0,0,230), offset=(2,3), stroke_width=3):
+    """Dibuja texto con contorno grueso (look TCG), no sombra difusa."""
+    draw.text(xy, text, font=font, fill=fill, stroke_width=stroke_width, stroke_fill=shadow)
 
 
 def _rounded_rect(draw, xy, radius, fill=None, outline=None, width=2):
@@ -480,37 +483,33 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
                           fill=(40,40,60,230), outline=C_GOLD, width=2)
             draw.text((CW-56, 38), liga_v, font=f_lv, fill=C_GOLD, anchor="mm")
 
-    # ── NOMBRE JUGADOR ────────────────────────────────────────────
+    # ── NOMBRE JUGADOR — directo sobre la plantilla, con contorno ─
     NOMBRE_Y = NAME_ZONE["y"]
-    _rounded_rect(draw, [70, NOMBRE_Y-2, CW-70, NOMBRE_Y+50], radius=10,
-                  fill=(15, 15, 25, 210))
-    f_nombre = _font(42, bold=True)
+    f_nombre = _font(46, bold=True)
     nombre_upper = stats["jugador"].upper()
-    bbox = draw.textbbox((0,0), nombre_upper, font=f_nombre)
+    bbox = draw.textbbox((0,0), nombre_upper, font=f_nombre, stroke_width=4)
     nw = bbox[2] - bbox[0]
     nx = (CW - nw) // 2
-    _text_shadow(draw, nombre_upper, (nx, NOMBRE_Y+2), f_nombre, C_YELLOW,
-                 shadow=(0,0,0,230), offset=(2,3))
+    _text_shadow(draw, nombre_upper, (nx, NOMBRE_Y), f_nombre, C_WHITE,
+                 shadow=C_BLACK, stroke_width=4)
 
-    # ── SECCIÓN STATS — fondo oscuro semitransparente ────────────
+    # ── SECCIÓN STATS — sin panel: se apoya en la textura de la plantilla ─
     STATS_Y = STATS_ZONE["y"]
     PANEL_X = STATS_ZONE["x"]
     PANEL_W = STATS_ZONE["w"]
     PANEL_H = STATS_ZONE["h"]
-    _rounded_rect(draw, [PANEL_X, STATS_Y-6, PANEL_X+PANEL_W, STATS_Y+PANEL_H], radius=10,
-                  fill=(15, 15, 25, 215))
 
     f_label = _font(18, bold=True)
-    f_val   = _font(40, bold=True)
+    f_val   = _font(38, bold=True)
     f_small = _font(15, bold=True)
-    f_med   = _font(24, bold=True)
+    f_med   = _font(22, bold=True)
 
     # columna izquierda: BATALLAS + WIN RATE
     COL1_X = PANEL_X + 18
-    draw.text((COL1_X, STATS_Y),       "BATALLAS:",  font=f_label, fill=C_YELLOW)
-    draw.text((COL1_X+130, STATS_Y),   "WIN RATE:",  font=f_label, fill=C_YELLOW)
-    _text_shadow(draw, str(stats["total"]),      (COL1_X,     STATS_Y+22), f_val, C_WHITE, offset=(2,3))
-    _text_shadow(draw, f"{stats['winrate']}%",   (COL1_X+130, STATS_Y+22), f_val, C_WHITE, offset=(2,3))
+    _text_shadow(draw, "BATALLAS:",  (COL1_X,     STATS_Y),    f_label, C_YELLOW, stroke_width=2)
+    _text_shadow(draw, "WIN RATE:",  (COL1_X+130, STATS_Y),    f_label, C_YELLOW, stroke_width=2)
+    _text_shadow(draw, str(stats["total"]),      (COL1_X,     STATS_Y+22), f_val, C_WHITE, stroke_width=3)
+    _text_shadow(draw, f"{stats['winrate']}%",   (COL1_X+130, STATS_Y+22), f_val, C_WHITE, stroke_width=3)
 
     # copa + torneos
     copa_y = STATS_Y + 80
@@ -527,15 +526,15 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
     campeonatos_items = [str(t) for t in _camp_torneo] + [str(l) for l in _camp_liga]
     torn_str = ", ".join(campeonatos_items[:4]) if campeonatos_items else "-"
     if len(torn_str) > 14: torn_str = torn_str[:13]+"…"
-    draw.text((COL1_X+78, copa_y+8),  "Campeón",  font=f_torn_lbl, fill=C_YELLOW)
-    _text_shadow(draw, torn_str, (COL1_X+78, copa_y+70), f_torn_val, C_WHITE, offset=(2,2))
+    _text_shadow(draw, "Campeón",  (COL1_X+78, copa_y+8),  f_torn_lbl, C_YELLOW, stroke_width=2)
+    _text_shadow(draw, torn_str, (COL1_X+78, copa_y+70), f_torn_val, C_WHITE, stroke_width=2)
 
     # separador vertical
     draw.line([(CW//2-5, STATS_Y-2), (CW//2-5, STATS_Y+PANEL_H-12)], fill=C_GOLD, width=2)
 
     # columna derecha: BATALLAS || WIN RATE por formato
     COL2_X = CW//2 + 12
-    draw.text((COL2_X+45, STATS_Y), "BATALLAS || WIN RATE", font=f_small, fill=C_YELLOW)
+    _text_shadow(draw, "BATALLAS || WIN RATE", (COL2_X+45, STATS_Y), f_small, C_YELLOW, stroke_width=2)
 
     fmt_rows = [
         ("SINGLES", stats["singles_n"], stats["singles_wr"]),
@@ -544,19 +543,26 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
     ]
     for idx, (label, n_val, wr_val) in enumerate(fmt_rows):
         fy = STATS_Y + 38 + idx * 48
-        draw.text((COL2_X,      fy+5), label,         font=f_small, fill=C_YELLOW)
-        _text_shadow(draw, str(n_val),    (COL2_X+105, fy), f_med, C_WHITE, offset=(2,2))
-        _text_shadow(draw, f"{wr_val}%",  (COL2_X+170, fy), f_med, C_WHITE, offset=(2,2))
+        _text_shadow(draw, label,         (COL2_X,      fy+5), f_small, C_YELLOW, stroke_width=2)
+        _text_shadow(draw, str(n_val),    (COL2_X+105, fy), f_med, C_WHITE, stroke_width=2)
+        _text_shadow(draw, f"{wr_val}%",  (COL2_X+170, fy), f_med, C_WHITE, stroke_width=2)
 
-    # ── SCORE — panel propio ──────────────────────────────────────
+    # ── SCORE — directo sobre la plantilla ────────────────────────
+    # algunas plantillas traen impresa una franja "weakness/resistance/retreat"
+    # justo en esta zona; se tapa con el color de la textura vecina (no negro)
+    # para que la franja desaparezca sin reintroducir una caja opaca vistosa.
     SCORE_Y = STATS_Y + PANEL_H + 5
-    _rounded_rect(draw, [PANEL_X, SCORE_Y, PANEL_X+PANEL_W, SCORE_Y+50], radius=10,
-                  fill=(15, 15, 25, 220))
+    try:
+        sample_color = carta.convert("RGB").getpixel((PANEL_X+20, STATS_Y+PANEL_H-15))
+    except Exception:
+        sample_color = (30, 30, 40)
+    draw.rectangle([PANEL_X-6, SCORE_Y-6, PANEL_X+PANEL_W+6, CH-32-4], fill=sample_color)
+
     f_score_lbl = _font(26, bold=True)
-    f_score_val = _font(46, bold=True)
-    draw.text((PANEL_X+18, SCORE_Y+12), "SCORE:", font=f_score_lbl, fill=C_YELLOW)
+    f_score_val = _font(44, bold=True)
+    _text_shadow(draw, "SCORE:", (PANEL_X+18, SCORE_Y+12), f_score_lbl, C_YELLOW, stroke_width=3)
     _text_shadow(draw, str(stats["score"]), (PANEL_X+135, SCORE_Y+2), f_score_val, C_BLUE,
-                 shadow=(0,30,100,230), offset=(2,3))
+                 shadow=C_BLACK, stroke_width=3)
 
     # ── LIGAS HISTÓRICAS (a la derecha del SCORE) ────────────────
     LIGA_ICON_SIZE = 42
@@ -576,14 +582,14 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
                 draw.text((lx+LIGA_ICON_SIZE//2, liga_y+LIGA_ICON_SIZE//2),
                           liga_key[:3], font=_font(10, bold=True), fill=C_GOLD, anchor="mm")
 
-    # ── LIGA VIGENTE (footer) ────────────────────────────────────
+    # ── LIGA VIGENTE (footer) ──────────────────────────────────────
     FOOTER_Y = CH - 32
     _rounded_rect(draw, [PANEL_X, FOOTER_Y-4, PANEL_X+PANEL_W, FOOTER_Y+26], radius=8,
                   fill=(15, 15, 25, 230))
     f_footer = _font(18, bold=True)
     liga_v_str = f"LIGA VIGENTE: {stats['liga_vigente']}" if stats['liga_vigente'] else "LIGA VIGENTE: -"
     _text_shadow(draw, liga_v_str, (PANEL_X+15, FOOTER_Y), f_footer, C_GOLD,
-                 shadow=(0,0,0,220), offset=(2,2))
+                 shadow=C_BLACK, stroke_width=2)
 
     return carta.convert("RGB")
 
