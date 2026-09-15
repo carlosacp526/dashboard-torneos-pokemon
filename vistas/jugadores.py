@@ -850,7 +850,7 @@ def generar_pdf_jugador(
                 img_buf = _load_img_pdf(logro['num'])
                 if img_buf is not None:
                     try:
-                        iw = MEDAL_R * 2.1; ih = MEDAL_R * 2.5
+                        iw = MEDAL_R * 2.1 * 0.88; ih = MEDAL_R * 2.5 * 0.88
                         img_buf.seek(0)
                         cv.drawImage(ImageReader(img_buf), cx_-iw/2, cy_-ih*0.52,
                                      width=iw, height=ih, preserveAspectRatio=True, mask='auto')
@@ -875,15 +875,6 @@ def generar_pdf_jugador(
                     if not unlocked:
                         sf(cv, colors.HexColor("#2a2a2a"))
                         cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
-
-                if CELL_H > 16:
-                    name_col = C_TEXT if unlocked else C_SUBTEXT
-                    img_bottom = cy_ - MEDAL_R * 1.3
-                    txt(cv, logro['name'][:14], cx_, img_bottom - 1,
-                        size=max(3.0, min(4.5, CELL_W/10)),
-                        col=name_col,
-                        font="Helvetica-Bold" if unlocked else "Helvetica",
-                        anchor="center")
 
                 if unlocked and CELL_H > 13:
                     sf(cv, C_GREEN)
@@ -1082,7 +1073,7 @@ def generar_pdf_jugador(
                 img_buf = _load_img_pdf(logro['num'])
                 if img_buf is not None:
                     try:
-                        iw = MEDAL_R6 * 2.1; ih = MEDAL_R6 * 2.5
+                        iw = MEDAL_R6 * 2.1 * 0.88; ih = MEDAL_R6 * 2.5 * 0.88
                         img_buf.seek(0)
                         cv.drawImage(ImageReader(img_buf), cx_-iw/2, cy_-ih*0.52,
                                      width=iw, height=ih, preserveAspectRatio=True, mask='auto')
@@ -1107,15 +1098,6 @@ def generar_pdf_jugador(
                     if not unlocked:
                         sf(cv, colors.HexColor("#2a2a2a"))
                         cv.circle(cx_, cy_, MEDAL_R6*0.86, fill=1, stroke=0)
-
-                if CELL_H6 > 16:
-                    name_col = C_TEXT if unlocked else C_SUBTEXT
-                    img_bottom = cy_ - MEDAL_R6 * 1.3
-                    txt(cv, logro['name'][:14], cx_, img_bottom - 1,
-                        size=max(3.0, min(4.5, CELL_W6/10)),
-                        col=name_col,
-                        font="Helvetica-Bold" if unlocked else "Helvetica",
-                        anchor="center")
 
                 if unlocked and CELL_H6 > 13:
                     sf(cv, C_GREEN)
