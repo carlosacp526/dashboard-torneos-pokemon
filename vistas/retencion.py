@@ -52,7 +52,10 @@ BUCKET_META = {
     'Inactivo': ('🔴', 'Inactivo (6+ meses)'),
 }
 BUCKET_COLORS = {'Activo': '#2ECC71', 'Reciente': '#F1C40F', 'EnRiesgo': '#E67E22', 'Inactivo': '#E74C3C'}
-PLACEHOLDER_NOMBRES = {'walk over (w.o)'}  # no es un jugador real: relleno cuando el rival no se presentó
+PLACEHOLDER_NOMBRES = {
+    'walk over (w.o)',  # relleno cuando el rival no se presentó
+    'pendiente',        # relleno de llave de bracket aún sin definir (ej. "Semifinal" antes de conocer al clasificado)
+}
 
 
 def _bucket_key(meses_recencia):
@@ -71,11 +74,26 @@ def _bucket_label(key):
 def _prep(df_raw):
     df = normalize_columns(df_raw.copy())
     df = ensure_fields(df)
-    if 'Walkover' in df.columns:
-        df = df[df['Walkover'] != -1].copy()  # -1 = pendiente, sin fecha, no es actividad real
-    df = df.dropna(subset=['date']).copy()
-    df['ym'] = df['date'].dt.to_period('M')
     return df
+
+
+def _split_completado_pendiente(df):
+    """
+    Walkover == -1 = partida pendiente/asignada (sin fecha jugada, Fecha_max solo
+    es el plazo límite). No cuenta como partida jugada (no aporta a partidas,
+    victorias, winrate ni walkovers), PERO sí es una señal real de actividad: el
+    jugador está enrolado ahora mismo en una llave/jornada en curso. Se separa
+    aquí para poder usarla solo para el estado "activo" del mes actual, sin
+    contaminar el historial de partidas jugadas.
+    """
+    if 'Walkover' not in df.columns:
+        completado = df.dropna(subset=['date']).copy()
+        completado['ym'] = completado['date'].dt.to_period('M')
+        return completado, df.iloc[0:0]
+    completado = df[df['Walkover'] != -1].dropna(subset=['date']).copy()
+    completado['ym'] = completado['date'].dt.to_period('M')
+    pendiente = df[df['Walkover'] == -1].copy()
+    return completado, pendiente
 
 
 def _build_player_rows(df):
@@ -91,22 +109,60 @@ def _build_player_rows(df):
     return long
 
 
+def _jugadores_pendientes(df_pendiente):
+    """Cuenta cuántas partidas pendientes tiene asignadas cada jugador, ahora mismo."""
+    if df_pendiente.empty:
+        return pd.Series(dtype=int)
+    jp = pd.concat([df_pendiente['player1'], df_pendiente['player2']]).astype(str).str.strip()
+    jp = jp[(jp != '') & (jp != 'nan')]
+    jp = jp[~jp.str.lower().isin(PLACEHOLDER_NOMBRES)]
+    return jp.value_counts()
+
+
 @st.cache_data(ttl=3600)
 def build_long_rows(_df_raw):
-    return _build_player_rows(_prep(_df_raw))
+    df = _prep(_df_raw)
+    completado, _ = _split_completado_pendiente(df)
+    return _build_player_rows(completado)
 
 
 @st.cache_data(ttl=3600)
 def build_monthly_panel(_df_raw):
-    """Una fila por (jugador, mes): partidas, victorias y walkovers de ese mes."""
-    long = build_long_rows(_df_raw)
+    """
+    Una fila por (jugador, mes): partidas, victorias y walkovers jugados ese mes,
+    más 'pendientes' — partidas asignadas y todavía sin jugar. Las pendientes se
+    acreditan al mes más reciente con datos (el "ahora" del panel): si un jugador
+    no jugaba hace meses pero tiene una partida pendiente asignada, se le cuenta
+    como activo este mes (está enrolado en una llave en curso), aunque esa
+    partida en sí no sume a su historial de partidas/winrate.
+    """
+    df = _prep(_df_raw)
+    completado, pendiente = _split_completado_pendiente(df)
+    long = _build_player_rows(completado)
     if long.empty:
-        return pd.DataFrame(columns=['jugador', 'ym', 'partidas', 'victorias', 'walkovers'])
+        return pd.DataFrame(columns=['jugador', 'ym', 'partidas', 'victorias', 'walkovers', 'pendientes'])
+
     panel = long.groupby(['jugador', 'ym']).agg(
         partidas=('gano', 'size'),
         victorias=('gano', 'sum'),
         walkovers=('walkover_flag', 'sum'),
     ).reset_index()
+    panel['pendientes'] = 0
+
+    n_pend = _jugadores_pendientes(pendiente)
+    if not n_pend.empty:
+        mes_ref = panel['ym'].max()
+        idx_actual = panel['ym'] == mes_ref
+        panel.loc[idx_actual, 'pendientes'] = panel.loc[idx_actual, 'jugador'].map(n_pend).fillna(0).astype(int)
+
+        ya_en_mes_actual = set(panel.loc[idx_actual, 'jugador'])
+        nuevos = [j for j in n_pend.index if j not in ya_en_mes_actual]
+        if nuevos:
+            extra = pd.DataFrame({
+                'jugador': nuevos, 'ym': mes_ref, 'partidas': 0, 'victorias': 0,
+                'walkovers': 0, 'pendientes': [int(n_pend[j]) for j in nuevos],
+            })
+            panel = pd.concat([panel, extra], ignore_index=True)
     return panel
 
 
@@ -129,6 +185,9 @@ def compute_recencia(panel):
     last_seen['meses_recencia'] = last_seen['ultimo_mes'].apply(lambda m: (mes_ref - m).n)
     last_seen['bucket'] = last_seen['meses_recencia'].apply(_bucket_key)
     last_seen['segmento'] = last_seen['bucket'].apply(_bucket_label)
+    pend = panel.rename(columns={'ym': 'ultimo_mes'})[['jugador', 'ultimo_mes', 'pendientes']]
+    last_seen = last_seen.merge(pend, on=['jugador', 'ultimo_mes'], how='left')
+    last_seen['pendientes'] = last_seen['pendientes'].fillna(0).astype(int)
     last_seen['ultimo_mes'] = last_seen['ultimo_mes'].astype(str)
     return last_seen.sort_values('meses_recencia'), mes_ref
 
@@ -190,7 +249,7 @@ def build_feature_grid(panel):
 
     all_months = pd.period_range(panel['ym'].min(), panel['ym'].max(), freq='M')
     jugadores = panel['jugador'].unique()
-    base = panel.set_index(['jugador', 'ym'])[['partidas', 'victorias', 'walkovers']]
+    base = panel.set_index(['jugador', 'ym'])[['partidas', 'victorias', 'walkovers', 'pendientes']]
     idx = pd.MultiIndex.from_product([jugadores, all_months], names=['jugador', 'ym'])
     grid = base.reindex(idx, fill_value=0).reset_index()
 
@@ -198,7 +257,9 @@ def build_feature_grid(panel):
     grid = grid.merge(primer_mes, on='jugador', how='left')
     grid = grid[grid['ym'] >= grid['primer_mes']].copy()
     grid = grid.sort_values(['jugador', 'ym']).reset_index(drop=True)
-    grid['activo'] = (grid['partidas'] > 0).astype(int)
+    # "Activo" = jugó una partida ese mes O tiene una pendiente asignada (enrolado
+    # en una llave/jornada en curso, aunque todavía no la haya jugado).
+    grid['activo'] = ((grid['partidas'] > 0) | (grid['pendientes'] > 0)).astype(int)
 
     g = grid.groupby('jugador')
     grid['tenure_meses']       = g.cumcount() + 1
@@ -363,7 +424,7 @@ def build_watchlist(grid, model, diversidad):
         act['prioridad'] = act['prob_fuga_%']
         act['detalle'] = act['prob_fuga_%'].apply(lambda p: f"{p:.0f}% prob. de no volver en {HORIZONTE_FUGA_MESES} meses (modelo)")
         filas.append(act[['jugador', 'tipo_alerta', 'prioridad', 'detalle', 'racha_actual',
-                           'tendencia', 'walkover_rate_last6', 'winrate_acum']])
+                           'tendencia', 'walkover_rate_last6', 'winrate_acum', 'pendientes']])
 
     filas_ausentes = _build_ausentes(grid, mat)
     if not filas_ausentes.empty:
@@ -394,7 +455,7 @@ def _build_ausentes(grid, mat):
         lambda r: f"{r['recencia_en_mes']} mes(es) sin jugar · {r['prob_recuperacion']:.0f}% prob. histórica de volver el próximo mes desde este estado",
         axis=1)
     return ausentes[['jugador', 'tipo_alerta', 'prioridad', 'detalle', 'racha_actual',
-                      'tendencia', 'walkover_rate_last6', 'winrate_acum']]
+                      'tendencia', 'walkover_rate_last6', 'winrate_acum', 'pendientes']]
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -402,8 +463,10 @@ def show():
     st.header("🔁 Participación y Retención")
     st.caption(
         "Recencia, Roll Rate, Vintage/Cosechas, ratio de fuga, predicción con XGBoost y un watchlist "
-        "de alertas — todo basado en actividad mensual real (partidas jugadas o con walkover; las "
-        "pendientes sin fecha no cuentan como actividad)."
+        "de alertas — basado en actividad mensual real (partidas jugadas o con walkover) más las "
+        "partidas **pendientes** (Walkover = -1): no suman al historial de partidas/winrate, pero sí "
+        "cuentan como actividad del mes actual, porque tener una llave asignada y sin jugar significa "
+        "que el jugador sigue enrolado en una competencia en curso."
     )
 
     with st.spinner("Cargando datos..."):
@@ -454,10 +517,16 @@ def show():
             buscar = st.text_input("🔍 Buscar jugador", "", key="ret_rec_buscar")
             vista = recencia[recencia['jugador'].str.contains(buscar, case=False, na=False)] if buscar else recencia
             st.dataframe(
-                vista[['jugador', 'ultimo_mes', 'meses_recencia', 'segmento']].rename(
+                vista[['jugador', 'ultimo_mes', 'meses_recencia', 'segmento', 'pendientes']].rename(
                     columns={'jugador': 'Jugador', 'ultimo_mes': 'Último mes activo',
-                             'meses_recencia': 'Meses sin jugar', 'segmento': 'Segmento'}),
+                             'meses_recencia': 'Meses sin jugar', 'segmento': 'Segmento',
+                             'pendientes': 'Partidas pendientes'}),
                 use_container_width=True, hide_index=True, height=330,
+            )
+            st.caption(
+                "**Partidas pendientes** son llaves ya asignadas y aún sin jugar (Walkover = -1): cuentan "
+                "como actividad de este mes — un jugador con una pendiente asignada aparece como 🟢 Activo "
+                "aunque su última partida jugada haya sido hace tiempo."
             )
 
     # ── Jugadores por mes ─────────────────────────────────────────────────────
@@ -621,10 +690,11 @@ def show():
                 cB.metric("🟠 Riesgo medio (30-60%)", int((riesgo['riesgo'] == '🟠 Medio').sum()))
                 cC.metric("🟢 Bajo riesgo (<30%)", int((riesgo['riesgo'] == '🟢 Bajo').sum()))
                 tabla_riesgo = riesgo[['jugador', 'riesgo', 'prob_fuga_%', 'partidas_last3', 'partidas_last6',
-                                        'racha_actual', 'winrate_acum']].rename(columns={
+                                        'racha_actual', 'winrate_acum', 'pendientes']].rename(columns={
                     'jugador': 'Jugador', 'riesgo': 'Riesgo', 'prob_fuga_%': 'Prob. fuga %',
                     'partidas_last3': 'Partidas últ. 3m', 'partidas_last6': 'Partidas últ. 6m',
                     'racha_actual': 'Racha (meses)', 'winrate_acum': 'Winrate histórico',
+                    'pendientes': 'Pendientes asignadas',
                 })
                 tabla_riesgo['Winrate histórico'] = (tabla_riesgo['Winrate histórico'] * 100).round(1)
                 st.dataframe(tabla_riesgo, use_container_width=True, hide_index=True, height=450)
@@ -659,7 +729,7 @@ def show():
             tabla_w['walkover_rate_last6'] = (tabla_w['walkover_rate_last6'] * 100).round(1)
             tabla_w['winrate_acum'] = (tabla_w['winrate_acum'] * 100).round(1)
             cols_show = ['jugador', 'tipo_alerta', 'prioridad', 'detalle', 'racha_actual',
-                         'tendencia', 'walkover_rate_last6', 'winrate_acum']
+                         'tendencia', 'walkover_rate_last6', 'winrate_acum', 'pendientes']
             if 'ligas_distintas' in tabla_w.columns:
                 cols_show.append('ligas_distintas')
             st.dataframe(
@@ -667,7 +737,7 @@ def show():
                     'jugador': 'Jugador', 'tipo_alerta': 'Tipo de alerta', 'prioridad': 'Prioridad (0-100)',
                     'detalle': 'Detalle', 'racha_actual': 'Racha actual', 'tendencia': 'Tendencia (partidas)',
                     'walkover_rate_last6': '% WO últ. 6m', 'winrate_acum': 'Winrate histórico %',
-                    'ligas_distintas': 'Ligas/torneos distintos (histórico)',
+                    'pendientes': 'Pendientes asignadas', 'ligas_distintas': 'Ligas/torneos distintos (histórico)',
                 }),
                 use_container_width=True, hide_index=True, height=500,
             )
@@ -678,8 +748,10 @@ def show():
     st.markdown("---")
     with st.expander("📖 Glosario y justificación metodológica"):
         st.markdown(f"""
-**Actividad mensual:** un jugador cuenta como "activo" en un mes si aparece como jugador1 o jugador2 en
-al menos una partida con fecha en ese mes (jugada o walkover; las pendientes sin fecha no cuentan).
+**Actividad mensual:** un jugador cuenta como "activo" en un mes si jugó al menos una partida con fecha
+ese mes (jugada o walkover), O si tiene una **partida pendiente** asignada (Walkover = -1) — esa
+pendiente se acredita al mes más reciente con datos: no suma a su historial de partidas/winrate, pero
+sí demuestra que sigue enrolado en una llave/jornada en curso.
 
 **Recencia:** meses transcurridos entre el mes más reciente con datos y el último mes en que el jugador
 estuvo activo. 0 = jugó este mes; 6+ = no juega hace medio año o más.
