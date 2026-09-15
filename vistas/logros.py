@@ -114,7 +114,7 @@ LOGROS = [
     {"id":"TO03","num":55,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌿","xp":200,  "name":"Maestro de Johto",      "desc":"Participa en torneo Gen2 (T29, T65 ,T68)"},
     {"id":"TO04","num":56,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌊","xp":200,  "name":"Maestro de Hoenn",      "desc":"Participa en torneo Gen3 (T34, T70 ,T68)"},
     {"id":"TO05","num":57,"cat":"Torneo",       "rareza":"Bronce",    "icon":"❄️","xp":200,  "name":"Maestro de Sinnoh",     "desc":"Participa en torneo Gen4 (T38, T68)"},
-    {"id":"TO06","num":58,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌆","xp":200,  "name":"Maestro de Unova",      "desc":"Participa en torneo Gen5 (T44, T68)"},
+    {"id":"TO06","num":58,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌆","xp":200,  "name":"Maestro de Unova",      "desc":"Participa en torneo Gen5 (T44, T68, T87)"},
     {"id":"TO07","num":59,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🗼","xp":200,  "name":"Maestro de Kalos",      "desc":"Participa en torneo Gen6 (T50, T68)"},
     {"id":"TO08","num":60,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌺","xp":200,  "name":"Maestro de Alola",      "desc":"Participa en torneo Gen7 (T57, T68)"},
     {"id":"TO09","num":61,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Galar",      "desc":"Participa en torneo Gen8 (T60, T68)"},
@@ -656,7 +656,7 @@ def evaluar_logros(
     # TORNEO
     TORNEOS_GEN = {
         "TO02": {27,58,68}, "TO03": {29,65,68}, "TO04": {34,70,68},
-        "TO05": {38,68},    "TO06": {44,68},    "TO07": {50,68},
+        "TO05": {38,68},    "TO06": {44,68,87}, "TO07": {50,68},
         "TO08": {57,68},    "TO09": {60,68},    "TO10": {66,68}
     }
 
