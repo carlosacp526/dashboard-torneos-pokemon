@@ -600,19 +600,13 @@ def generar_pdf_jugador(
 
         RAREZA_ORDEN_PDF = ["Bronce","Plata","Oro","Legendario"]
         RAR_COL  = {"Bronce":"#cd7f32","Plata":"#b0bec5","Oro":"#f5c518","Legendario":"#9c27b0"}
-        RAR_BG   = {"Bronce":"#1a0e00","Plata":"#0a1018","Oro":"#1a1400","Legendario":"#120018"}
-        RAR_COL_G = RAR_COL
+        RAR_BG   = {"Bronce":"#1e150c","Plata":"#141b23","Oro":"#201a08","Legendario":"#180f22"}
         RAR_ORDER = {"Bronce":0,"Plata":1,"Oro":2,"Legendario":3}
 
         total_ok  = sum(desbloqueados.values())
         total_all = len(LOGROS)
         xp_ganado = sum(l['xp'] for l in LOGROS if desbloqueados.get(l['id']))
         xp_total_posible = sum(l['xp'] for l in LOGROS)
-
-        def _load_img_pdf(num):
-            import io as _io
-            b = _get_img_bytes(num)
-            return _io.BytesIO(b) if b else None
 
         def _draw_header_logros(cv, player_query, rar_name, rar_col_hex, pag_num, total_pag=5):
             HDR2 = 44
@@ -658,129 +652,29 @@ def generar_pdf_jugador(
                     px2+PILL_W/2, XP_Y+2.5,
                     size=4.8, col=colors.white, font="Helvetica-Bold", anchor="center")
 
-        # ── GUÍA DE LOGROS — datos ────────────────────────────────
-        LOGROS_GUIA = [
-            (1,"Primer Paso","Participación","Bronce",50,"Participa en tu primer torneo oficial"),
-            (2,"De Vuelta al Ruedo","Participación","Bronce",100,"Participa en 5 torneos"),
-            (3,"Veterano","Participación","Plata",500,"Participa en 25 torneos"),
-            (4,"Sin Faltar Uno","Participación","Plata",300,"Participa en 15 torneos"),
-            (5,"Constancia","Participación","Plata",700,"Participa en 30 torneos"),
-            (6,"Leyenda Viviente","Participación","Oro",500,"Participa en 50 torneos"),
-            (7,"Centurión","Participación","Oro",1000,"Participa en 100 torneos"),
-            (8,"Debut Exitoso","Participación","Bronce",75,"Gana tu primera partida en un torneo"),
-            (9,"Explorador","Participación","Bronce",150,"Participa en Liga, Cypher o Ascenso"),
-            (10,"Sin Miedo al Reto","Participación","Bronce",100,"Inscríbete en Singles, Dobles y VGC"),
-            (11,"Primera Victoria","Victorias","Bronce",100,"Gana tu primera partida en Liga"),
-            (12,"Hat Trick","Victorias","Oro",1500,"Gana torneo en Singles, Dobles y VGC"),
-            (13,"Racha Imparable","Victorias","Plata",300,"Gana 3 partidas consecutivas"),
-            (14,"Máquina de Ganar","Victorias","Oro",600,"Gana 5 partidas consecutivas"),
-            (15,"Campeón del Torneo","Victorias","Oro",600,"Gana un torneo"),
-            (16,"Bicampeón","Victorias","Oro",800,"Gana 2 torneos"),
-            (17,"Tricampeón","Victorias","Oro",1000,"Gana 3 torneos"),
-            (18,"Pentacampeón","Victorias","Legendario",1600,"Gana 5 torneos"),
-            (19,"Decacampeón","Victorias","Legendario",2000,"Gana 10 torneos"),
-            (20,"Campeón de Campeones","Victorias","Legendario",3000,"Gana más de 10 torneos"),
-            (21,"Dominador","Victorias","Plata",400,"Gana 50 partidas en total"),
-            (22,"Centurión de Batallas","Victorias","Oro",800,"Gana 100 partidas en total"),
-            (23,"Perfección","Victorias","Legendario",1600,"Gana torneo sin perder ninguna partida"),
-            (24,"Verdugo de Élite","Victorias","Plata",350,"Derrota a 5 jugadores campeones"),
-            (25,"Asesino de Gigantes","Victorias","Oro",700,"Derrota a 3 campeones de la PMS"),
-            (26,"Sin Compasión","Victorias","Plata",400,"Gana con 6 Pokémon sobrevivientes"),
-            (27,"Remontada Épica","Victorias","Plata",600,"Gana con 1 Pokémon sobreviviente"),
-            (28,"Clutch","Victorias","Plata",350,"Gana con 0 Pokémon vivos"),
-            (29,"Escalando","Ranking","Bronce",50,"Aumenta WR de un mes a otro en 1%"),
-            (30,"Ascenso Meteórico","Ranking","Plata",400,"Aumenta WR de un mes a otro en 20%"),
-            (31,"Top 100","Ranking","Bronce",200,"Alcanza 10 pts de Score_completo"),
-            (32,"Top 50","Ranking","Plata",400,"Alcanza 20 pts de Score_completo"),
-            (33,"Top 10","Ranking","Oro",800,"Alcanza 30 pts de Score_completo"),
-            (34,"Número Uno","Ranking","Legendario",1600,"Alcanza 50 pts de Score_completo"),
-            (35,"ELO 1000","Ranking","Bronce",100,"Alcanza 1000 pts de ELO histórico"),
-            (36,"ELO 1200","Ranking","Plata",300,"Alcanza 1200 pts de ELO histórico"),
-            (37,"ELO 1300","Ranking","Oro",600,"Alcanza 1300 pts de ELO histórico"),
-            (38,"ELO Máster","Ranking","Legendario",1600,"Alcanza 1500 pts de ELO histórico"),
-            (39,"Maestro de Tipos","Estrategia","Bronce",50,"Participa en torneo NAT DEX MONOTYPE"),
-            (40,"Mastro del Random","Estrategia","Bronce",150,"Participa torneo de Random Singles"),
-            (41,"Anti-Meta","Estrategia","Bronce",100,"40% WR en un formato (5+ partidas/mes)"),
-            (42,"Stall Master","Estrategia","Plata",300,"50% WR en un formato (5+ partidas/mes)"),
-            (43,"Hyper Offense","Estrategia","Plata",300,"60% WR en un formato (5+ partidas/mes)"),
-            (44,"Maestro del Meta","Estrategia","Oro",900,"70% WR en un formato (5+ partidas/mes)"),
-            (45,"Coleccionista","Estrategia","Oro",800,"Juega más de 10 Tiers"),
-            (46,"Fiel a sus Raíces","Estrategia","Bronce",50,"Participa torneo en formato Singles"),
-            (47,"Maestro de OU","Estrategia","Bronce",50,"Participa en torneo en Formato_esp OU"),
-            (48,"Maestro de DOU","Estrategia","Bronce",50,"Participa torneo en Formato_esp DOU"),
-            (49,"Maestro de VGC","Estrategia","Bronce",50,"Participa torneo en Formato_esp VGC"),
-            (50,"Maestro de LC","Estrategia","Bronce",50,"Participa torneo en Formato_esp LC"),
-            (51,"Maestro de UBERS","Estrategia","Bronce",50,"Participa torneo en Formato_esp UBERS"),
-            (52,"Campeón OUs","Estrategia","Plata",400,"Participa torneo en OU y DOU"),
-            (53,"Campeón del Caos","Torneo","Bronce",100,"Participa torneo con Random"),
-            (54,"Maestro de Kanto","Torneo","Bronce",200,"Participa en torneo Gen1"),
-            (55,"Maestro de Johto","Torneo","Bronce",200,"Participa en torneo Gen2"),
-            (56,"Maestro de Hoenn","Torneo","Bronce",200,"Participa en torneo Gen3"),
-            (57,"Maestro de Sinnoh","Torneo","Bronce",200,"Participa en torneo Gen4"),
-            (58,"Maestro de Unova","Torneo","Bronce",200,"Participa en torneo Gen5"),
-            (59,"Maestro de Kalos","Torneo","Bronce",200,"Participa en torneo Gen6"),
-            (60,"Maestro de Alola","Torneo","Bronce",200,"Participa en torneo Gen7"),
-            (61,"Maestro de Galar","Torneo","Bronce",200,"Participa en torneo Gen8"),
-            (62,"Maestro de Paldea","Torneo","Bronce",200,"Participa en torneo Gen9"),
-            (63,"Gran Maestro","Torneo","Legendario",2000,"Gana Mundial T46 o T68"),
-            (64,"El Viajero","Ligas","Legendario",2000,"Participa en al menos 2 ligas"),
-            (65,"Bienvenido","Social","Bronce",100,"Participa en la Liga Junior"),
-            (66,"Mentor","Social","Plata",300,"Participa en la Liga Senior"),
-            (67,"Embajador","Social","Oro",600,"Participa en la Liga Master"),
-            (68,"Fair Play","Social","Plata",250,"Sin Walk Over en 5 meses"),
-            (69,"Deportista","Social","Oro",500,"Sin Walk Over en contra en 6 meses"),
-            (70,"Atleta","Social","Bronce",150,"Sin Walk Over en contra en 1 mes"),
-            (71,"Árbitro Honorario","Social","Plata",300,"Sin Walk Over en contra en 3 meses"),
-            (72,"Jugador Honorable","Social","Oro",700,"Sin Walk Over dado en 1 año"),
-            (73,"Leyenda de la Comunidad","Social","Legendario",3000,"Premio BP del año o 500 partidas"),
-            (74,"Principiante de Suerte","Especial","Oro",1000,"Gana 10 batallas"),
-            (75,"Regreso del Rey","Especial","Oro",800,"Vuelve a ganar torneo después de 1 año"),
-            (76,"Nemesis","Especial","Plata",400,"Gana 5 veces al mismo rival"),
-            (77,"Duelo de Titanes","Especial","Plata",300,"Gana 10 veces al mismo rival"),
-            (78,"Rivales por Siempre","Especial","Oro",1000,"Gana 20 veces al mismo rival"),
-            (79,"Underdog","Especial","Oro",900,"Gana a un campeón de torneo y liga"),
-            (80,"El Invicto","Especial","Legendario",3000,"Sin perder en torneos en 1 mes (mín 10)"),
-            (81,"Speedrunner","Especial","Oro",800,"Gana dos torneos en el mismo año"),
-            (82,"Jugador del Año","Especial","Legendario",2000,"Gana 50 partidas en un año"),
-            (83,"Veterano de Guerra","Especial","Oro",1000,"Juega en la misma liga 3 temporadas"),
-            (84,"El Inmortal","Especial","Oro",1000,"Máx. 10 derrotas en liga en una temporada"),
-            (85,"Mortal","Especial","Bronce",100,"Máx. 15 derrotas en liga en una temporada"),
-            (86,"Plebeyo","Especial","Bronce",100,"Máx. 20 derrotas en liga en una temporada"),
-            (87,"El Último en Pie","Especial","Oro",700,"Gana una liga: PJS, PES, PSS, PMS o PLS"),
-            (88,"Role Play","Especial","Plata",300,"Participa en torneo NAT DEX DOBLES"),
-            (89,"Novato Feliz","Especial","Bronce",100,"Pierde una batalla"),
-            (90,"Leyendas de Ligas","Especial","Legendario",1600,"Participa en la Liga Legends"),
-            (91,"Maestro del Natdex","Estrategia","Bronce",150,"Participa en batalla de NAT DEX"),
-            (92,"Coleccionista Bronce","Progresión","Bronce",100,"Desbloquea 10 logros de rareza Bronce"),
-            (93,"Coleccionista Plata","Progresión","Plata",300,"Desbloquea 10 logros de rareza Plata"),
-            (94,"Coleccionista Oro","Progresión","Oro",600,"Desbloquea 10 logros de rareza Oro"),
-            (95,"Completista","Progresión","Oro",800,"Desbloquea 50 logros en total"),
-            (96,"El Maestro Total","Progresión","Legendario",2000,"Desbloquea 80 logros"),
-            (97,"XP Acumulado 1K","Progresión","Bronce",50,"Acumula 1,000 puntos XP"),
-            (98,"XP Acumulado 10K","Progresión","Plata",250,"Acumula 10,000 puntos XP"),
-            (99,"XP Acumulado 15K","Progresión","Oro",500,"Acumula 15,000 puntos XP"),
-            (100,"XP Acumulado 20K","Progresión","Legendario",1600,"Acumula 20,000 puntos XP"),
-            (101,"Maestro Fuego","Torneo","Bronce",200,"Participa en torneo Monotype Fuego"),
-            (102,"Maestro Agua","Torneo","Bronce",200,"Participa en torneo Monotype Agua (T69)"),
-            (103,"Maestro Planta","Torneo","Bronce",200,"Participa en torneo Monotype Planta"),
-            (104,"Maestro Eléctrico","Torneo","Bronce",200,"Participa en torneo Monotype Eléctrico"),
-            (105,"Maestro Hielo","Torneo","Bronce",200,"Participa en torneo Monotype Hielo"),
-            (106,"Maestro Lucha","Torneo","Bronce",200,"Participa en torneo Monotype Lucha"),
-            (107,"Maestro Veneno","Torneo","Bronce",200,"Participa en torneo Monotype Veneno"),
-            (108,"Maestro Tierra","Torneo","Bronce",200,"Participa en torneo Monotype Tierra"),
-            (109,"Maestro Volador","Torneo","Bronce",200,"Participa en torneo Monotype Volador"),
-            (110,"Maestro Psíquico","Torneo","Bronce",200,"Participa en torneo Monotype Psíquico"),
-            (111,"Maestro Bicho","Torneo","Bronce",200,"Participa en torneo Monotype Bicho"),
-            (112,"Maestro Roca","Torneo","Bronce",200,"Participa en torneo Monotype Roca"),
-            (113,"Maestro Fantasma","Torneo","Bronce",200,"Participa en torneo Monotype Fantasma"),
-            (114,"Maestro Dragón","Torneo","Bronce",200,"Participa en torneo Monotype Dragón"),
-            (115,"Maestro Siniestro","Torneo","Bronce",200,"Participa en torneo Monotype Siniestro"),
-            (116,"Maestro Acero","Torneo","Bronce",200,"Participa en torneo Monotype Acero"),
-            (117,"Maestro Hada","Torneo","Bronce",200,"Participa en torneo Monotype Hada"),
-            (118,"Maestro Normal","Torneo","Bronce",200,"Participa en torneo Monotype Normal"),
-        ]
+        # ── ICONOS DE LOGROS — recorte del emblema (sin texto incrustado) ──
+        _medal_icon_cache = {}
+        def _load_medal_icon(num):
+            if num in _medal_icon_cache:
+                return _medal_icon_cache[num]
+            b = _get_img_bytes(num)
+            result = (None, 1.0)
+            if b:
+                try:
+                    from PIL import Image as _PILImage
+                    im = _PILImage.open(io.BytesIO(b)).convert("RGBA")
+                    w, h = im.size
+                    im = im.crop((0, int(h*0.17), w, int(h*0.77)))
+                    out = io.BytesIO()
+                    im.save(out, format="PNG")
+                    out.seek(0)
+                    result = (out.getvalue(), im.size[0] / im.size[1])
+                except Exception:
+                    result = (b, 0.8)
+            _medal_icon_cache[num] = result
+            return result
 
-        # ── PÁGINAS 2-5 — una por rareza ──────────────────────────
+        # ── PÁGINAS 2-5 — lista unificada de logros por rareza ────
         for pag_idx, rar_name in enumerate(RAREZA_ORDEN_PDF):
             cv.showPage()
             sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
@@ -789,172 +683,110 @@ def generar_pdf_jugador(
                                 RAR_COL[rar_name], pag_idx+2, 5)
 
             HDR2     = 44
-            GRID_TOP = PH - HDR2 - 52
-            GRID_BOT = MARGIN + 6
-            GRID_H   = GRID_TOP - GRID_BOT
-            GRID_W   = PW - MARGIN*2
-            HEADER_SEC = 11
+            AREA_TOP = PH - HDR2 - 52
+            AREA_BOT = MARGIN + 6
+            AREA_H   = AREA_TOP - AREA_BOT
+            AREA_W   = PW - MARGIN*2
+            HEADER_SEC = 15
 
             rar_list = sorted([l for l in LOGROS if l['rareza']==rar_name], key=lambda x: x['num'])
             rar_col  = colors.HexColor(RAR_COL[rar_name])
             rar_bg   = colors.HexColor(RAR_BG[rar_name])
 
-            # ── PARTE SUPERIOR: iconos de logros ─────────────────
-            # Bronce tiene más logros → menos zona iconos, más guía
-            ICON_RATIO = {"Bronce": 0.38, "Plata": 0.45, "Oro": 0.48, "Legendario": 0.40}
-            ICON_ZONE_H = GRID_H * ICON_RATIO.get(rar_name, 0.48)
-            ICON_TOP    = GRID_TOP
-            ICON_BOT    = GRID_TOP - ICON_ZONE_H
+            # panel que enmarca toda la sección de esta rareza, con filo dorado
+            rrect(cv, MARGIN, AREA_BOT, AREA_W, AREA_H, r=6,
+                  fill_col=rar_bg, stroke_col=C_GOLD, lw=0.6)
 
-            # header rareza
-            rrect(cv, MARGIN, ICON_TOP - HEADER_SEC, GRID_W, HEADER_SEC,
+            # cabecera de progreso de la rareza
+            rrect(cv, MARGIN, AREA_TOP - HEADER_SEC, AREA_W, HEADER_SEC,
                   r=4, fill_col=rar_col)
             n_ok_r = sum(1 for l in rar_list if desbloqueados.get(l['id']))
             xp_r   = sum(l['xp'] for l in rar_list if desbloqueados.get(l['id']))
             txt(cv, f"{rar_name.upper()}   {n_ok_r} / {len(rar_list)}   ·   {xp_r:,} XP obtenidos",
-                MARGIN + GRID_W/2, ICON_TOP - HEADER_SEC + 3,
-                size=6.5, col=C_BG, font="Helvetica-Bold", anchor="center")
+                MARGIN + AREA_W/2, AREA_TOP - HEADER_SEC + 4.5,
+                size=7, col=C_BG, font="Helvetica-Bold", anchor="center")
 
-            # fondo zona iconos
-            rrect(cv, MARGIN, ICON_BOT, GRID_W, ICON_ZONE_H - HEADER_SEC,
-                  r=4, fill_col=rar_bg)
-
-            N_L      = len(rar_list)
-            AVAIL_H  = ICON_ZONE_H - HEADER_SEC - 4
-            AVAIL_W  = GRID_W - 4
-            MAX_COLS = {"Bronce":18,"Plata":12,"Oro":14,"Legendario":14}
-            cap      = MAX_COLS.get(rar_name, N_L)
-            best_cols = max(1, min(cap, N_L))
-            for try_cols in range(min(cap, N_L), 0, -1):
-                cw = AVAIL_W / try_cols
-                ch = AVAIL_H / (-(-N_L // try_cols))
-                if cw >= 11 and ch >= 11:
-                    best_cols = try_cols
-                    break
-            NCOLS  = best_cols
-            NROWS  = -(-N_L // NCOLS)
-            CELL_W = AVAIL_W / NCOLS
-            CELL_H = AVAIL_H / NROWS
-            MEDAL_R = min(CELL_W, CELL_H) * 0.36
+            # ── grilla de tarjetas: icono + nombre + descripción + xp ──
+            N_L  = len(rar_list)
+            COLS = 2 if N_L <= 16 else (3 if N_L <= 30 else (4 if N_L <= 45 else 5))
+            ROWS = -(-N_L // COLS)
+            GAP  = 6
+            PAD  = 8
+            list_x   = MARGIN + PAD
+            list_w   = AREA_W - PAD*2
+            list_top = AREA_TOP - HEADER_SEC - GAP
+            list_bot = AREA_BOT + PAD
+            list_h   = list_top - list_bot
+            col_w = (list_w - GAP*(COLS-1)) / COLS
+            row_h = (list_h - GAP*(ROWS-1)) / ROWS
 
             for idx, logro in enumerate(rar_list):
-                col_i = idx % NCOLS
-                row_i = idx // NCOLS
-                cx_   = MARGIN + 2 + col_i*CELL_W + CELL_W/2
-                cy_   = ICON_TOP - HEADER_SEC - 2 - row_i*CELL_H - CELL_H/2
+                col_i = idx % COLS
+                row_i = idx // COLS
+                tx = list_x + col_i*(col_w+GAP)
+                ty = list_top - row_i*(row_h+GAP) - row_h
 
                 unlocked = desbloqueados.get(logro['id'], False)
-                RC = RAREZA_COLORS.get(rar_name, RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
 
-                img_drawn = False
-                img_buf = _load_img_pdf(logro['num'])
-                if img_buf is not None:
+                tile_bg = colors.HexColor("#182234") if unlocked else colors.HexColor("#12161d")
+                rrect(cv, tx, ty, col_w, row_h, r=5, fill_col=tile_bg)
+                accent = rar_col if unlocked else colors.HexColor("#3a3f47")
+                rrect(cv, tx, ty, 4, row_h, r=2, fill_col=accent)
+
+                icon_sz = max(14, min(row_h - 10, col_w*0.17, 30))
+                icon_bw = icon_sz * 1.34
+                icon_x  = tx + 11
+                icon_y  = ty + row_h/2 - icon_sz/2
+
+                drawn = False
+                img_bytes, ar = _load_medal_icon(logro['num'])
+                if img_bytes:
                     try:
-                        iw = MEDAL_R * 2.1; ih = MEDAL_R * 2.5
-                        img_buf.seek(0)
-                        cv.drawImage(ImageReader(img_buf), cx_-iw/2, cy_-ih*0.52,
-                                     width=iw, height=ih, preserveAspectRatio=True, mask='auto')
+                        cv.drawImage(ImageReader(io.BytesIO(img_bytes)), icon_x, icon_y,
+                                     width=icon_bw, height=icon_sz,
+                                     preserveAspectRatio=True, mask='auto')
                         if not unlocked:
                             cv.saveState()
-                            cv.setFillColorRGB(0.05, 0.05, 0.05)
-                            cv.setFillAlpha(0.7) if hasattr(cv,'setFillAlpha') else None
-                            cv.rect(cx_-iw/2, cy_-ih*0.52, iw, ih, fill=1, stroke=0)
+                            cv.setFillColorRGB(0.04, 0.04, 0.04)
+                            if hasattr(cv, 'setFillAlpha'): cv.setFillAlpha(0.68)
+                            cv.rect(icon_x, icon_y, icon_bw, icon_sz, fill=1, stroke=0)
                             cv.restoreState()
-                        img_drawn = True
+                        drawn = True
                     except Exception:
-                        img_drawn = False
+                        drawn = False
 
-                if not img_drawn:
-                    rrect(cv, cx_-MEDAL_R*0.2, cy_+MEDAL_R*0.52,
-                          MEDAL_R*0.4, MEDAL_R*0.48, r=1,
-                          fill_col=colors.HexColor(RC['ribbon']))
-                    sf(cv, colors.HexColor(RC['ring']))
-                    cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
-                    sf(cv, colors.HexColor(RC['c1']))
-                    cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
-                    if not unlocked:
-                        sf(cv, colors.HexColor("#2a2a2a"))
-                        cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
+                if not drawn:
+                    RC = RAREZA_COLORS.get(rar_name, RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
+                    ccx, ccy = icon_x + icon_bw/2, ty + row_h/2
+                    cr = min(icon_bw, icon_sz)/2
+                    sf(cv, colors.HexColor(RC['ring'])); cv.circle(ccx, ccy, cr, fill=1, stroke=0)
+                    sf(cv, colors.HexColor(RC['c1']));   cv.circle(ccx, ccy, cr*0.82, fill=1, stroke=0)
 
-                if CELL_H > 16:
-                    name_col = C_TEXT if unlocked else C_SUBTEXT
-                    img_bottom = cy_ - MEDAL_R * 1.3
-                    txt(cv, logro['name'][:14], cx_, img_bottom - 1,
-                        size=max(3.0, min(4.5, CELL_W/10)),
-                        col=name_col,
-                        font="Helvetica-Bold" if unlocked else "Helvetica",
-                        anchor="center")
-
-                if unlocked and CELL_H > 13:
-                    sf(cv, C_GREEN)
-                    cv.circle(cx_+MEDAL_R*0.58, cy_+MEDAL_R*0.58, MEDAL_R*0.22, fill=1, stroke=0)
-                    txt(cv, "V", cx_+MEDAL_R*0.58, cy_+MEDAL_R*0.50,
-                        size=max(2.5, MEDAL_R*0.25), col=C_WHITE,
+                if unlocked:
+                    chk_x = icon_x + icon_bw - 2
+                    chk_y = icon_y + icon_sz - 2
+                    sf(cv, C_GREEN); cv.circle(chk_x, chk_y, 4.6, fill=1, stroke=0)
+                    txt(cv, "V", chk_x, chk_y-1.6, size=5.2, col=C_WHITE,
                         font="Helvetica-Bold", anchor="center")
 
-            # ── PARTE INFERIOR: guía de logros de esta rareza ─────
-            GUIA_TOP = ICON_BOT - 4
-            GUIA_BOT = GRID_BOT
-            GUIA_H   = GUIA_TOP - GUIA_BOT
-            GUIA_W   = GRID_W
+                text_x = icon_x + icon_bw + 9
+                text_w = tx + col_w - text_x - 8
+                name_col = C_TEXT if unlocked else C_SUBTEXT
+                f_name = 7.0 if row_h >= 40 else 6.2
+                max_chars_n = max(6, int(text_w / (f_name*0.52)))
+                name = logro['name']
+                name_s = name if len(name) <= max_chars_n else name[:max_chars_n-1]+"…"
+                txt(cv, name_s, text_x, ty+row_h*0.63, size=f_name, col=name_col, font="Helvetica-Bold")
 
-            guia_rar = sorted([l for l in LOGROS_GUIA if l[3]==rar_name], key=lambda x: x[0])
+                f_desc = 5.6 if row_h >= 40 else 5.0
+                desc = logro.get('desc', '')
+                max_chars_d = max(8, int(text_w / (f_desc*0.5)))
+                desc_s = desc if len(desc) <= max_chars_d else desc[:max_chars_d-1]+"…"
+                txt(cv, desc_s, text_x, ty+row_h*0.30, size=f_desc, col=C_SUBTEXT, font="Helvetica")
 
-            # header guía
-            rrect(cv, MARGIN, GUIA_TOP - HEADER_SEC, GUIA_W, HEADER_SEC,
-                  r=4, fill_col=colors.HexColor("#1a2a3a"))
-            txt(cv, f"GUÍA — {rar_name.upper()}",
-                MARGIN + GUIA_W/2, GUIA_TOP - HEADER_SEC + 3,
-                size=6.5, col=C_ACCENT, font="Helvetica-Bold", anchor="center")
-
-            # fondo guía
-            rrect(cv, MARGIN, GUIA_BOT, GUIA_W, GUIA_H - HEADER_SEC,
-                  r=4, fill_col=colors.HexColor("#0d1117"))
-
-            # layout 2 columnas para la guía
-            COL_W   = (GUIA_W - 6) / 2
-            ROW_H2  = max(7.5, (GUIA_H - HEADER_SEC - 4) / max(-(-len(guia_rar)//2), 1))
-            ROW_H2  = min(ROW_H2, 13.0)
-            B_W = 18; B_H = ROW_H2 - 3
-            NAME_X = B_W + 18; XP_X = COL_W - 3
-            NAME_Y = ROW_H2 * 0.28; DESC_Y = ROW_H2 * 0.65
-
-            mid_g    = -(-len(guia_rar) // 2)
-            col_data = [guia_rar[:mid_g], guia_rar[mid_g:]]
-
-            for col_i, col_items in enumerate(col_data):
-                cx_off = MARGIN + col_i * (COL_W + 6)
-                cy_cur = GUIA_TOP - HEADER_SEC - 2
-
-                for logro in col_items:
-                    num, name, cat, rareza, xp, desc = logro
-                    row_y = cy_cur - ROW_H2
-                    if row_y < GUIA_BOT: break
-
-                    rrect(cv, cx_off, row_y, COL_W, ROW_H2 - 0.4,
-                          r=1, fill_col=colors.HexColor("#161c28"))
-
-                    rar_hex = RAR_COL_G.get(rareza, "#888")
-                    rar_txt = colors.white
-                    rrect(cv, cx_off+1, row_y+1.2, B_W, B_H,
-                          r=1, fill_col=colors.HexColor(rar_hex))
-                    txt(cv, f"#{num:03d}", cx_off+1+B_W/2, row_y+ROW_H2*0.42,
-                        size=3.2, col=rar_txt, font="Helvetica-Bold", anchor="center")
-
-                    max_name = int((COL_W - NAME_X - 28) / 2.85)
-                    name_s = name if len(name) <= max_name else name[:max_name-1]+"…"
-                    txt(cv, name_s, cx_off+NAME_X, row_y+NAME_Y,
-                        size=4.8, col=C_TEXT, font="Helvetica-Bold", anchor="left")
-
-                    max_desc = int((COL_W - NAME_X - 28) / 2.45)
-                    desc_s = desc if len(desc) <= max_desc else desc[:max_desc-1]+"…"
-                    txt(cv, desc_s, cx_off+NAME_X, row_y+DESC_Y,
-                        size=3.9, col=C_SUBTEXT, font="Helvetica", anchor="left")
-
-                    txt(cv, f"{xp:,}xp", cx_off+XP_X, row_y+NAME_Y,
-                        size=4.0, col=C_GOLD, font="Helvetica-Bold", anchor="right")
-
-                    cy_cur -= ROW_H2
+                xp_col = C_GOLD if unlocked else C_SUBTEXT
+                txt(cv, f"{logro['xp']:,} XP", tx+col_w-9, ty+row_h-11,
+                    size=6, col=xp_col, font="Helvetica-Bold", anchor="right")
 
             # footer
             txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. {pag_idx+2} / 6",
@@ -1051,78 +883,70 @@ def generar_pdf_jugador(
                 MARGIN + GRID6_W/2, sec_y6+sec_h6-HEADER_SEC6+3,
                 size=6.5, col=C_BG, font="Helvetica-Bold", anchor="center")
 
+            # muro compacto de insignias (el detalle completo ya está en las
+            # páginas 2-5; aquí solo un vistazo general prolijo)
             N_L6     = len(rar_list6)
-            AVAIL_H6 = sec_h6 - HEADER_SEC6 - 2
-            AVAIL_W6 = GRID6_W - 4
-            MAX_COLS6 = {"Bronce":18,"Plata":12,"Oro":14,"Legendario":14}
+            AVAIL_H6 = sec_h6 - HEADER_SEC6 - 6
+            AVAIL_W6 = GRID6_W - 6
+            GAP6     = 2.5
+            MAX_COLS6 = {"Bronce":18,"Plata":13,"Oro":14,"Legendario":10}
             cap6 = MAX_COLS6.get(rar_name6, N_L6)
             best_cols6 = max(1, min(cap6, N_L6))
             for try_cols in range(min(cap6, N_L6), 0, -1):
-                cw6 = AVAIL_W6 / try_cols
-                ch6 = AVAIL_H6 / (-(-N_L6 // try_cols))
-                if cw6 >= 11 and ch6 >= 11:
+                cw6 = (AVAIL_W6 - GAP6*(try_cols-1)) / try_cols
+                rows6 = -(-N_L6 // try_cols)
+                ch6 = (AVAIL_H6 - GAP6*(rows6-1)) / rows6
+                if cw6 >= 10 and ch6 >= 10:
                     best_cols6 = try_cols
                     break
             NCOLS6  = best_cols6
             NROWS6  = -(-N_L6 // NCOLS6)
-            CELL_W6 = AVAIL_W6 / NCOLS6
-            CELL_H6 = AVAIL_H6 / NROWS6
-            MEDAL_R6 = min(CELL_W6, CELL_H6) * 0.36
+            CELL_W6 = (AVAIL_W6 - GAP6*(NCOLS6-1)) / NCOLS6
+            CELL_H6 = (AVAIL_H6 - GAP6*(NROWS6-1)) / NROWS6
+            CELL6   = min(CELL_W6, CELL_H6)
 
             for idx, logro in enumerate(rar_list6):
                 col_i = idx % NCOLS6
                 row_i = idx // NCOLS6
-                cx_   = MARGIN + 2 + col_i*CELL_W6 + CELL_W6/2
-                cy_   = sec_y6 + AVAIL_H6 - row_i*CELL_H6 - CELL_H6/2
+                bx_   = MARGIN + 3 + col_i*(CELL_W6+GAP6)
+                by_   = sec_y6 + AVAIL_H6 - row_i*(CELL_H6+GAP6) - CELL6
 
                 unlocked = desbloqueados.get(logro['id'], False)
                 RC = RAREZA_COLORS.get(rar_name6, RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
 
-                img_drawn = False
-                img_buf = _load_img_pdf(logro['num'])
-                if img_buf is not None:
+                chip_bg = colors.HexColor(RC['c2']) if unlocked else colors.HexColor("#1c1f24")
+                rrect(cv, bx_, by_, CELL6, CELL6, r=2.5, fill_col=chip_bg)
+
+                drawn = False
+                img_bytes, ar = _load_medal_icon(logro['num'])
+                if img_bytes:
                     try:
-                        iw = MEDAL_R6 * 2.1; ih = MEDAL_R6 * 2.5
-                        img_buf.seek(0)
-                        cv.drawImage(ImageReader(img_buf), cx_-iw/2, cy_-ih*0.52,
-                                     width=iw, height=ih, preserveAspectRatio=True, mask='auto')
+                        pad6 = CELL6*0.12
+                        ih6 = CELL6 - pad6*2
+                        iw6 = ih6 * ar if ar else ih6
+                        iw6 = min(iw6, CELL6 - pad6*2)
+                        cv.drawImage(ImageReader(io.BytesIO(img_bytes)),
+                                     bx_+(CELL6-iw6)/2, by_+pad6*0.6,
+                                     width=iw6, height=ih6,
+                                     preserveAspectRatio=True, mask='auto')
                         if not unlocked:
                             cv.saveState()
-                            cv.setFillColorRGB(0.05, 0.05, 0.05)
-                            cv.setFillAlpha(0.7) if hasattr(cv,'setFillAlpha') else None
-                            cv.rect(cx_-iw/2, cy_-ih*0.52, iw, ih, fill=1, stroke=0)
+                            cv.setFillColorRGB(0.04, 0.04, 0.04)
+                            if hasattr(cv, 'setFillAlpha'): cv.setFillAlpha(0.62)
+                            cv.rect(bx_, by_, CELL6, CELL6, fill=1, stroke=0)
                             cv.restoreState()
-                        img_drawn = True
+                        drawn = True
                     except Exception:
-                        img_drawn = False
+                        drawn = False
 
-                if not img_drawn:
-                    rrect(cv, cx_-MEDAL_R6*0.2, cy_+MEDAL_R6*0.52,
-                          MEDAL_R6*0.4, MEDAL_R6*0.48, r=1,
-                          fill_col=colors.HexColor(RC['ribbon']))
-                    sf(cv, colors.HexColor(RC['ring']))
-                    cv.circle(cx_, cy_, MEDAL_R6, fill=1, stroke=0)
-                    sf(cv, colors.HexColor(RC['c1']))
-                    cv.circle(cx_, cy_, MEDAL_R6*0.86, fill=1, stroke=0)
-                    if not unlocked:
-                        sf(cv, colors.HexColor("#2a2a2a"))
-                        cv.circle(cx_, cy_, MEDAL_R6*0.86, fill=1, stroke=0)
+                if not drawn:
+                    ccx, ccy = bx_+CELL6/2, by_+CELL6/2
+                    sf(cv, colors.HexColor(RC['ring'])); cv.circle(ccx, ccy, CELL6*0.4, fill=1, stroke=0)
+                    sf(cv, colors.HexColor(RC['c1']));   cv.circle(ccx, ccy, CELL6*0.32, fill=1, stroke=0)
 
-                if CELL_H6 > 16:
-                    name_col = C_TEXT if unlocked else C_SUBTEXT
-                    img_bottom = cy_ - MEDAL_R6 * 1.3
-                    txt(cv, logro['name'][:14], cx_, img_bottom - 1,
-                        size=max(3.0, min(4.5, CELL_W6/10)),
-                        col=name_col,
-                        font="Helvetica-Bold" if unlocked else "Helvetica",
-                        anchor="center")
-
-                if unlocked and CELL_H6 > 13:
+                if unlocked and CELL6 > 12:
                     sf(cv, C_GREEN)
-                    cv.circle(cx_+MEDAL_R6*0.58, cy_+MEDAL_R6*0.58, MEDAL_R6*0.22, fill=1, stroke=0)
-                    txt(cv, "V", cx_+MEDAL_R6*0.58, cy_+MEDAL_R6*0.50,
-                        size=max(2.5, MEDAL_R6*0.25), col=C_WHITE,
-                        font="Helvetica-Bold", anchor="center")
+                    cv.circle(bx_+CELL6-3, by_+CELL6-3, min(3.2, CELL6*0.14), fill=1, stroke=0)
 
         txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 6 / 6",
             PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
