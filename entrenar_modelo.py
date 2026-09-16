@@ -68,6 +68,73 @@ def _instancia_key(row, lcat):
     return f"{lcat}_{torneo_id}"
 
 
+def _fase_final_literal(row):
+    """True solo si la fase es la GRAN FINAL (no semis/cuartos/octavos, que hoy
+    se agrupan todos en 'eliminatorias'). Disponible tanto para partidas jugadas
+    como pendientes, porque se lee de Fase_completo/round (metadata del cruce,
+    no del resultado)."""
+    fase_raw = str(row.get("Fase_completo", row.get("round", ""))).lower()
+    return "final" in fase_raw and "semifinal" not in fase_raw and "cuartos" not in fase_raw
+
+
+def build_typical_max_rep(df_ok):
+    """Duración típica (moda) de una serie por formato, medida en cantidad de
+    Rep, a partir de cruces YA COMPLETADOS. Se usa como referencia fija para
+    marcar 'es_decisivo' tanto en entrenamiento como en predicción, sin
+    depender de si una serie pendiente todavía puede alargarse (evita leakage:
+    la regla no mira el resultado final de la serie en curso, solo el patrón
+    histórico de ese formato)."""
+    series_max = {}
+    for _, r in df_ok.iterrows():
+        fmt = str(r.get("Formato", "SINGLES")).upper()
+        p1, p2 = str(r["player1"]).strip(), str(r["player2"]).strip()
+        lcat = _liga_cat(r)
+        instancia = _instancia_key(r, lcat)
+        rep = pd.to_numeric(r.get("Rep", 1), errors="coerce")
+        rep = int(rep) if pd.notna(rep) else 1
+        key = (frozenset({p1, p2}), instancia, fmt)
+        series_max[key] = max(series_max.get(key, 1), rep)
+
+    por_fmt = {}
+    for (_, _, fmt), mx in series_max.items():
+        por_fmt.setdefault(fmt, []).append(mx)
+    # p90 (no moda ni max): la moda colapsa a 1 en cualquier empate entre series
+    # cortas y largas —dejando "es_decisivo" siempre en 1 y sin poder de
+    # discriminación—, y el máximo puro es sensible a un único outlier. El
+    # percentil 90 captura la duración larga "normal" de ese formato sin
+    # depender de un caso aislado.
+    typical = {fmt: max(1, int(np.ceil(np.percentile(vals, 90)))) for fmt, vals in por_fmt.items()}
+    todos = [v for vals in por_fmt.values() for v in vals]
+    typical["_default"] = max(1, int(np.ceil(np.percentile(todos, 90)))) if todos else 1
+    return typical
+
+
+def add_match_context(df, typical_max_rep):
+    """Agrega al DataFrame de cruces (jugados o pendientes) 3 columnas de
+    CONTEXTO DE ESTA BATALLA PUNTUAL (no del historial de los jugadores):
+      - ctx_rep_bucket:      n° de partida de la serie (1..5, 5 = "5 o más")
+      - ctx_es_decisivo:     1 si este Rep alcanza la duración típica de una
+                              serie de este formato (ej. partida 3 de un Bo3)
+      - ctx_es_final_torneo: 1 si la fase es literalmente la gran final
+    Sin esto, dos batallas distintas de un mismo torneo/serie recibían
+    exactamente las mismas features (solo se usaban stats históricas de los
+    jugadores, nunca el Rep/fase de la batalla que se está prediciendo)."""
+    df = df.copy()
+    if "Rep" not in df.columns: df["Rep"] = 1
+    if "Formato" not in df.columns: df["Formato"] = "SINGLES"
+    if "Fase_completo" not in df.columns and "round" not in df.columns: df["Fase_completo"] = ""
+
+    rep_num = pd.to_numeric(df["Rep"], errors="coerce").fillna(1).astype(int)
+    df["ctx_rep_bucket"] = rep_num.clip(upper=5)
+
+    fmt_up = df["Formato"].fillna("SINGLES").astype(str).str.upper()
+    typ = fmt_up.map(typical_max_rep).fillna(typical_max_rep.get("_default", 1))
+    df["ctx_es_decisivo"] = (rep_num >= typ).astype(int)
+
+    df["ctx_es_final_torneo"] = df.apply(_fase_final_literal, axis=1).astype(int)
+    return df
+
+
 # ════════════════════════════════════════════════════════════════
 # 2. HISTORIAL POR JUGADOR
 # ════════════════════════════════════════════════════════════════
@@ -238,9 +305,13 @@ def build_derived(cos):
 # 5. DATASET
 # ════════════════════════════════════════════════════════════════
 
+CTX_COLS = ["ctx_rep_bucket", "ctx_es_decisivo", "ctx_es_final_torneo"]
+
+
 def build_dataset(df_battles, cos):
     df_ok = df_battles[df_battles["Walkover"] == 0].copy()
     feat_cols = [c for c in cos.columns if c not in ["jugador", "ym"]]
+    ctx_cols = [c for c in CTX_COLS if c in df_ok.columns]
 
     cos_idx = cos.set_index(["jugador", "ym"])
 
@@ -262,13 +333,17 @@ def build_dataset(df_battles, cos):
         for c in feat_cols:
             fila[f"{c}_g"] = cos_g[c] if c in cos_g.index else np.nan
             fila[f"{c}_p"] = cos_p[c] if c in cos_p.index else np.nan
+        # contexto de ESTA batalla puntual (Rep/fase) — igual para ambos jugadores,
+        # no se ve afectado por el swap _g/_p de abajo porque describe el cruce, no a un jugador
+        for c in ctx_cols:
+            fila[c] = r[c]
         rows.append(fila)
 
     data = pd.DataFrame(rows)
     if data.empty:
         raise ValueError("No se pudieron construir filas.")
 
-    all_feat = [f"{c}_g" for c in feat_cols] + [f"{c}_p" for c in feat_cols]
+    all_feat = [f"{c}_g" for c in feat_cols] + [f"{c}_p" for c in feat_cols] + ctx_cols
     all_feat = [c for c in all_feat if c in data.columns]
 
     data = data.sample(frac=1, random_state=42).reset_index(drop=True)
@@ -392,6 +467,10 @@ def build_pred_features(df_pend, cos, top_feat):
                   "Aka_evento": r.get("Aka_evento",""),
                   "round":      r.get("round",""),
                   "N_Torneo":   r.get("N_Torneo","")}
+        # contexto de esta batalla puntual (Rep/fase de ESTE cruce pendiente)
+        for c in CTX_COLS:
+            if c in r.index:
+                fila[c] = r[c]
         for c in feat_cols_base:
             fila[f"{c}_g"] = cos1[c] if cos1 is not None and c in cos1.index else np.nan
             fila[f"{c}_p"] = cos2[c] if cos2 is not None and c in cos2.index else np.nan
@@ -424,9 +503,15 @@ def main():
     print(f"      {len(df_raw)} filas.")
 
     df, df_pend_raw = _prep(df_raw)
+
+    # contexto Rep/fase de cada batalla puntual (para diferenciar distintas
+    # partidas de una misma serie/torneo, no solo el historial de jugadores)
+    typical_max_rep = build_typical_max_rep(df[df["Walkover"] == 0])
+    df = add_match_context(df, typical_max_rep)
+    df_pend = add_match_context(df_pend_raw.copy(), typical_max_rep)
+
     df_train = df[(df["Walkover"] == 0) & (df["ym"] <= TRAIN_END)].copy()
     df_val   = df[(df["Walkover"] == 0) & (df["ym"] >= VAL_START)].copy()
-    df_pend  = df_pend_raw.copy()
     print(f"      Train: {len(df_train)} | Val: {len(df_val)} | Pendientes: {len(df_pend)}")
 
     print("\n[2/7] Historial base...")
