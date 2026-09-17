@@ -163,11 +163,22 @@ def show():
         else: st.dataframe(stats_df, use_container_width=True)
     with tab2:
         if not stats_df.empty:
-            fig = px.bar(stats_df.head(20), x='Jugador', y='Winrate%',
-                         title=f"Top 20 por Winrate — {selected_league}",
-                         color='Winrate%', color_continuous_scale='RdYlGn')
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            max_partidas_liga = int(stats_df['Partidas'].max())
+            min_partidas_liga = st.slider(
+                "Mínimo de partidas jugadas", 1, max_partidas_liga,
+                min(3, max_partidas_liga), key="minb_evento",
+                help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
+            )
+            stats_wr_liga = stats_df[stats_df['Partidas'] >= min_partidas_liga]
+            if stats_wr_liga.empty:
+                st.info("Nadie cumple ese mínimo de partidas.")
+            else:
+                fig = px.bar(stats_wr_liga.head(20), x='Jugador', y='Winrate%',
+                             title=f"Top 20 por Winrate — {selected_league} (mín. {min_partidas_liga} partidas)",
+                             color='Winrate%', color_continuous_scale='RdYlGn',
+                             hover_data=['Partidas'])
+                fig.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig, use_container_width=True)
     with tab3:
         if not stats_df.empty:
             fig = px.bar(stats_df.nlargest(15,'Partidas'), x='Jugador', y='Partidas',
@@ -192,11 +203,22 @@ def show():
         else: st.dataframe(stats_df, use_container_width=True)
     with tab2:
         if not stats_df.empty:
-            fig = px.bar(stats_df.head(20), x='Jugador', y='Winrate%',
-                         title=f"Top 20 por Winrate — {selected_tier}",
-                         color='Winrate%', color_continuous_scale='RdYlGn')
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            max_partidas_tier = int(stats_df['Partidas'].max())
+            min_partidas_tier = st.slider(
+                "Mínimo de partidas jugadas", 1, max_partidas_tier,
+                min(3, max_partidas_tier), key="minb_tier",
+                help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
+            )
+            stats_wr_tier = stats_df[stats_df['Partidas'] >= min_partidas_tier]
+            if stats_wr_tier.empty:
+                st.info("Nadie cumple ese mínimo de partidas.")
+            else:
+                fig = px.bar(stats_wr_tier.head(20), x='Jugador', y='Winrate%',
+                             title=f"Top 20 por Winrate — {selected_tier} (mín. {min_partidas_tier} partidas)",
+                             color='Winrate%', color_continuous_scale='RdYlGn',
+                             hover_data=['Partidas'])
+                fig.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig, use_container_width=True)
     with tab3:
         if not stats_df.empty:
             fig = px.bar(stats_df.nlargest(15,'Partidas'), x='Jugador', y='Partidas',
