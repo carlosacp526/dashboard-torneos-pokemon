@@ -676,13 +676,15 @@ def show():
     with tab_wa:
         st.subheader("📱 Enviar recordatorios por WhatsApp")
 
-        # ── Acceso protegido por contraseña ─────────────────────────────────
+        # ── Acceso protegido por contraseña (se compara por hash, nunca en
+        #    texto plano) ────────────────────────────────────────────────
+        import hashlib
         try:
-            wa_password = st.secrets.get("whatsapp_password", "")
+            wa_password_hash = st.secrets.get("whatsapp_password_hash", "")
         except Exception:
-            wa_password = ""
-        wa_password = wa_password or os.environ.get("WHATSAPP_PASSWORD", "")
-        if not wa_password:
+            wa_password_hash = ""
+        wa_password_hash = wa_password_hash or os.environ.get("WHATSAPP_PASSWORD_HASH", "")
+        if not wa_password_hash:
             # Fallback: leer el archivo directo (independiente del cwd desde
             # donde se haya lanzado `streamlit run`, que es de donde depende
             # la resolución normal de st.secrets).
@@ -694,19 +696,19 @@ def show():
                 )
                 if os.path.exists(secrets_path):
                     with open(secrets_path, "rb") as f:
-                        wa_password = tomllib.load(f).get("whatsapp_password", "")
+                        wa_password_hash = tomllib.load(f).get("whatsapp_password_hash", "")
             except Exception:
                 pass
         if not st.session_state.get("wa_unlocked", False):
-            if not wa_password:
-                st.error("⚠️ No hay contraseña configurada (whatsapp_password en .streamlit/secrets.toml "
-                         "o variable de entorno WHATSAPP_PASSWORD). Configurala para habilitar el acceso.")
+            if not wa_password_hash:
+                st.error("⚠️ No hay contraseña configurada (whatsapp_password_hash en .streamlit/secrets.toml "
+                         "o variable de entorno WHATSAPP_PASSWORD_HASH). Configurala para habilitar el acceso.")
                 st.stop()
             with st.form("wa_login_form"):
                 pwd_input = st.text_input("🔒 Contraseña para acceder", type="password")
                 submitted = st.form_submit_button("Ingresar")
             if submitted:
-                if pwd_input == wa_password:
+                if hashlib.sha256(pwd_input.encode("utf-8")).hexdigest() == wa_password_hash:
                     st.session_state["wa_unlocked"] = True
                     st.rerun()
                 else:
