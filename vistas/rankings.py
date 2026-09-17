@@ -15,17 +15,17 @@ def show():
     st.header("🏆 Salón de la Fama - Campeones")
 
     tab_champ = st.tabs(["2026-II","2026-I","2025-III","2025-II","2025-I","2024","2023","2022","2021"])
-    images = [ ("campeones_2026_II.png","Campeones 2026-II"), ("campeones_2026_I.png","Campeones 2026-I"), ("campeones_2025_III.png","Campeones 2025-III"),
-              ("campeones_2025_II.png","Campeones 2025-II"),
-              ("campeones_2025_I.png","Campeones 2025-I"),
-              ("campeones_2024.png","Campeones 2024"),
-              ("campeones_2023.png","Campeones 2023"),
-               ("campeones_2022.png","Campeones 2022"),
-              ("campeones_2021.png","Campeones 2021")         
-              
-              
-              
-              
+    images = [ ("campeones/campeones_2026_II.png","Campeones 2026-II"), ("campeones/campeones_2026_I.png","Campeones 2026-I"), ("campeones/campeones_2025_III.png","Campeones 2025-III"),
+              ("campeones/campeones_2025_II.png","Campeones 2025-II"),
+              ("campeones/campeones_2025_I.png","Campeones 2025-I"),
+              ("campeones/campeones_2024.png","Campeones 2024"),
+              ("campeones/campeones_2023.png","Campeones 2023"),
+               ("campeones/campeones_2022.png","Campeones 2022"),
+              ("campeones/campeones_2021.png","Campeones 2021")
+
+
+
+
              ]
 
     for tab, (img, caption) in zip(tab_champ, images):
@@ -43,25 +43,25 @@ def show():
     st.header("📈 Ranking Elo")
 
     meses_elo = [
-        ("Agosto26.png",    "Agosto 26"),
-        ("Julio26.png",    "Julio 26"),
-         ("Junio26.png",    "Junio 26"),
-         ("Mayo26.png",    "Mayo 2026"),
-        ("Abril26.png",    "Abril 2026"),
-        ("Marzo26.png",    "Marzo 2026"),
-        ("Febrero26.png",    "Febrero 2026"),
-          ("Enero26.png",      "Enero 2026"),
-            ("Diciembre25.png",  "Diciembre 2025"),
-         
-        ("Noviembre25.png",  "Noviembre 2025"),
-         ("Octubre25.png",    "Octubre 2025"),
-            ("Septiembre25.png", "Septiembre 2025"),
-                ("Agosto25.png",     "Agosto 2025"),
-                ("Julio25.png",      "Julio 2025"),
-  ("Junio25.png",      "Junio 2025"),
-       ("Mayo25.png",       "Mayo 2025"),
-       ("Abril25.png",      "Abril 2025"),
-               ("Marzo25.png",      "Marzo 2025"),
+        ("elo/Agosto26.png",    "Agosto 26"),
+        ("elo/Julio26.png",    "Julio 26"),
+         ("elo/Junio26.png",    "Junio 26"),
+         ("elo/Mayo26.png",    "Mayo 2026"),
+        ("elo/Abril26.png",    "Abril 2026"),
+        ("elo/Marzo26.png",    "Marzo 2026"),
+        ("elo/Febrero26.png",    "Febrero 2026"),
+          ("elo/Enero26.png",      "Enero 2026"),
+            ("elo/Diciembre25.png",  "Diciembre 2025"),
+
+        ("elo/Noviembre25.png",  "Noviembre 2025"),
+         ("elo/Octubre25.png",    "Octubre 2025"),
+            ("elo/Septiembre25.png", "Septiembre 2025"),
+                ("elo/Agosto25.png",     "Agosto 2025"),
+                ("elo/Julio25.png",      "Julio 2025"),
+  ("elo/Junio25.png",      "Junio 2025"),
+       ("elo/Mayo25.png",       "Mayo 2025"),
+       ("elo/Abril25.png",      "Abril 2025"),
+               ("elo/Marzo25.png",      "Marzo 2025"),
     ]
     tab_elo = st.tabs([label for _, label in meses_elo])
     for tab, (img, label) in zip(tab_elo, meses_elo):

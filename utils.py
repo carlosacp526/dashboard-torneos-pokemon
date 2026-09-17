@@ -4,11 +4,11 @@ import streamlit as st
 import os
 
 LOGOS_LIGAS = {
-    "PES": "logo_pes.PNG",
-    "PSS": "logo_pss.PNG",
-    "PJS": "logo_pjs.PNG",
-    "PMS": "logo_pms.PNG",
-    "PLS": "logo_pls.png",
+    "PES": "logos_ligas/logo_pes.PNG",
+    "PSS": "logos_ligas/logo_pss.PNG",
+    "PJS": "logos_ligas/logo_pjs.PNG",
+    "PMS": "logos_ligas/logo_pms.PNG",
+    "PLS": "logos_ligas/logo_pls.png",
 }
 
 @st.cache_data(ttl=3600)
@@ -193,10 +193,10 @@ def obtener_banner(liga):
         return LOGOS_LIGAS[liga]
     for ext in ['png','PNG','jpeg','jpg','JPEG','JPG']:
         for ruta in [
+            f"banners_ligas/banner_{liga.lower()}.{ext}",
+            f"banners_ligas/banner_{liga}.{ext}",
             f"banner_{liga.lower()}.{ext}",
             f"banner_{liga}.{ext}",
-            f"banner/{liga.lower()}.{ext}",
-            f"banner/{liga}.{ext}",
             f"{liga.lower()}.{ext}",
             f"{liga}.{ext}",
         ]:
@@ -205,7 +205,8 @@ def obtener_banner(liga):
 def obtener_logo_liga(liga):
     if liga in LOGOS_LIGAS and os.path.exists(LOGOS_LIGAS[liga]):
         return LOGOS_LIGAS[liga]
-    for ruta in [f"logo_{liga.lower()}.png", f"logo_{liga.lower()}.PNG", f"logos/{liga.lower()}.png"]:
+    for ruta in [f"logos_ligas/logo_{liga.lower()}.png", f"logos_ligas/logo_{liga.lower()}.PNG",
+                 f"logo_{liga.lower()}.png", f"logo_{liga.lower()}.PNG"]:
         if os.path.exists(ruta): return ruta
     return "Logo.png" if os.path.exists("Logo.png") else None
 

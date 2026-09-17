@@ -846,7 +846,7 @@ def show():
 
         # ── Sub-tab: Ranking del Mundial ─────────────────────────
         with sub_rank:
-            _render_ranking_csv("score_mundial.csv", "PUNTAJES_MUNDIAL.png",
+            _render_ranking_csv("score_mundial.csv", "mundial/PUNTAJES_MUNDIAL.png",
                                 top_n=17, label_mundial="Generaciones")
 
         # ── Sub-tab: Ladder Torneo 68 ───────────────────────────
@@ -928,8 +928,8 @@ def show():
             for i, (tab, nombre_torneo) in enumerate(zip(tabs_gen, TORNEOS_GEN)):
                 with tab:
                     st.markdown(f"##### 🎯 {nombre_torneo}")
-                    img1 = f"gen{i+1}_img1.png"
-                    img2 = f"gen{i+1}_img2.png"
+                    img1 = f"gen/gen{i+1}_img1.png"
+                    img2 = f"gen/gen{i+1}_img2.png"
                     col1, col2 = st.columns(2)
                     with col1:
                         if os.path.exists(img1):
@@ -947,7 +947,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     with tab_origins:
         st.header("🟠 Mundial Pokémon — Origins  (Primer mundial)")
-        _render_ranking_csv("score_mundial2.csv", "PUNTAJES_MUNDIAL2.png",
+        _render_ranking_csv("score_mundial2.csv", "mundial/PUNTAJES_MUNDIAL2.png",
                             top_n=16, label_mundial="Origins")
 
     # ══════════════════════════════════════════════════════════════

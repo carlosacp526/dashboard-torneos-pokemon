@@ -164,8 +164,8 @@ def generar_pdf_jugador(
             ultima_liga = str(ligas_part.iloc[-1]).strip()
             if ultima_liga and ultima_liga not in ('nan','No Posee Liga',''):
                 # Buscar logo sin fallback a Logo.png
-                LOGOS_MAP = {"PES":"logo_pes.PNG","PSS":"logo_pss.PNG",
-                             "PJS":"logo_pjs.PNG","PMS":"logo_pms.PNG","PLS":"logo_pls.png"}
+                LOGOS_MAP = {"PES":"logos_ligas/logo_pes.PNG","PSS":"logos_ligas/logo_pss.PNG",
+                             "PJS":"logos_ligas/logo_pjs.PNG","PMS":"logos_ligas/logo_pms.PNG","PLS":"logos_ligas/logo_pls.png"}
                 logo_path = None
                 # Check dict first
                 if ultima_liga in LOGOS_MAP and os.path.exists(LOGOS_MAP[ultima_liga]):
@@ -173,9 +173,9 @@ def generar_pdf_jugador(
                 # Then try variations
                 if not logo_path:
                     for ext in ['PNG','png','JPG','jpg','JPEG','jpeg']:
-                        for pat in [f"logo_{ultima_liga.lower()}.{ext}",
-                                     f"Logo_{ultima_liga}.{ext}",
-                                     f"logos/{ultima_liga.lower()}.{ext}"]:
+                        for pat in [f"logos_ligas/logo_{ultima_liga.lower()}.{ext}",
+                                     f"logos_ligas/Logo_{ultima_liga}.{ext}",
+                                     f"logo_{ultima_liga.lower()}.{ext}"]:
                             if os.path.exists(pat):
                                 logo_path = pat; break
                         if logo_path: break
@@ -266,12 +266,12 @@ def generar_pdf_jugador(
             if tipo == 'liga':
                 # Extract 3-letter prefix: PJST1→PJS, PEST2→PES
                 pref = str(val)[:3].upper()
-                LOGOS_MAP2 = {"PES":"logo_pes.PNG","PSS":"logo_pss.PNG",
-                              "PJS":"logo_pjs.PNG","PMS":"logo_pms.PNG","PLS":"logo_pls.png"}
+                LOGOS_MAP2 = {"PES":"logos_ligas/logo_pes.PNG","PSS":"logos_ligas/logo_pss.PNG",
+                              "PJS":"logos_ligas/logo_pjs.PNG","PMS":"logos_ligas/logo_pms.PNG","PLS":"logos_ligas/logo_pls.png"}
                 # Try banner first
                 for ext in ['png','PNG','jpg','JPG']:
-                    for ruta in [f"banner_{str(val).lower()}.{ext}",
-                                  f"banner/{str(val).lower()}.{ext}"]:
+                    for ruta in [f"banners_ligas/banner_{str(val).lower()}.{ext}",
+                                  f"banner_{str(val).lower()}.{ext}"]:
                         if os.path.exists(ruta):
                             ban_path = ruta; break
                     if ban_path: break
@@ -281,7 +281,7 @@ def generar_pdf_jugador(
                         ban_path = LOGOS_MAP2[pref]
                     else:
                         for ext in ['PNG','png','jpg','JPG']:
-                            p = f"logo_{pref.lower()}.{ext}"
+                            p = f"logos_ligas/logo_{pref.lower()}.{ext}"
                             if os.path.exists(p): ban_path = p; break
             else:
                 try: ban_path = obtener_banner_torneo(int(val))
