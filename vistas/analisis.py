@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, compute_player_stats
+from utils import load_data, normalize_columns, ensure_fields, compute_player_score
 
 def show():
     df_raw = load_data()
@@ -29,6 +29,38 @@ def show():
     c6.metric("Eventos LIGA",    df[df.league=="LIGA"]["Ligas_categoria"].nunique())
     c7.metric("Eventos ASCENSO", df[df.league=="ASCENSO"]["N_Torneo"].nunique())
     c8.metric("Eventos CYPHER",  df[df.league=="CYPHER"]["N_Torneo"].nunique())
+
+    # ── Winrate General por Jugador ──────────────────────────────────
+    # Filtro global de partidas mínimas: se define UNA sola vez acá y se reutiliza
+    # más abajo en "Clasificación por Evento" y "Clasificación por Tiers", en vez
+    # de pedirlo por separado en cada sección.
+    st.markdown('<div id="winrate-general"></div>', unsafe_allow_html=True)
+    st.subheader("🏆 Winrate General por Jugador")
+    st.caption("Todo el historial, sin filtrar por evento ni tier. El mínimo de partidas de acá aplica también a las secciones de abajo.")
+
+    stats_global = compute_player_score(df)
+    max_partidas_global = int(stats_global['Partidas'].max()) if not stats_global.empty else 1
+    min_partidas_global = st.slider(
+        "Mínimo de partidas jugadas (global)", 1, max_partidas_global,
+        min(5, max_partidas_global), key="minb_global",
+        help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
+    )
+    stats_global_f = stats_global[stats_global['Partidas'] >= min_partidas_global]
+
+    tab_g1, tab_g2 = st.tabs(["📊 Tabla","🏆 Top Winrate"])
+    with tab_g1:
+        if stats_global_f.empty: st.info("Nadie cumple ese mínimo de partidas.")
+        else: st.dataframe(stats_global_f, use_container_width=True)
+    with tab_g2:
+        if stats_global_f.empty:
+            st.info("Nadie cumple ese mínimo de partidas.")
+        else:
+            fig = px.bar(stats_global_f.head(20), x='Jugador', y='Winrate%',
+                         title=f"Top 20 por Winrate — General (mín. {min_partidas_global} partidas)",
+                         color='Winrate%', color_continuous_scale='RdYlGn',
+                         hover_data=['Partidas','Score'])
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
 
     # ── Evolución temporal ──────────────────────────────────────────
     st.markdown('<div id="evolucion"></div>', unsafe_allow_html=True)
@@ -155,7 +187,7 @@ def show():
     selected_league = st.selectbox("Selecciona Evento", options=sorted(leagues))
     league_df = df[df['league'].fillna('Sin Evento') == selected_league]
     st.write(f"Mostrando {len(league_df)} partidas en **{selected_league}**")
-    stats_df = compute_player_stats(league_df)
+    stats_df = compute_player_score(league_df)
 
     tab1, tab2, tab3 = st.tabs(["📊 Tabla","🏆 Top Winrate","👥 Más activos"])
     with tab1:
@@ -163,20 +195,14 @@ def show():
         else: st.dataframe(stats_df, use_container_width=True)
     with tab2:
         if not stats_df.empty:
-            max_partidas_liga = int(stats_df['Partidas'].max())
-            min_partidas_liga = st.slider(
-                "Mínimo de partidas jugadas", 1, max_partidas_liga,
-                min(3, max_partidas_liga), key="minb_evento",
-                help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
-            )
-            stats_wr_liga = stats_df[stats_df['Partidas'] >= min_partidas_liga]
+            stats_wr_liga = stats_df[stats_df['Partidas'] >= min_partidas_global]
             if stats_wr_liga.empty:
-                st.info("Nadie cumple ese mínimo de partidas.")
+                st.info(f"Nadie cumple el mínimo global de {min_partidas_global} partidas (ajústalo arriba, en Winrate General).")
             else:
                 fig = px.bar(stats_wr_liga.head(20), x='Jugador', y='Winrate%',
-                             title=f"Top 20 por Winrate — {selected_league} (mín. {min_partidas_liga} partidas)",
+                             title=f"Top 20 por Winrate — {selected_league} (mín. {min_partidas_global} partidas)",
                              color='Winrate%', color_continuous_scale='RdYlGn',
-                             hover_data=['Partidas'])
+                             hover_data=['Partidas','Score'])
                 fig.update_layout(xaxis_tickangle=-45)
                 st.plotly_chart(fig, use_container_width=True)
     with tab3:
@@ -195,7 +221,7 @@ def show():
     selected_tier = st.selectbox("Selecciona Tier", options=sorted(tiers))
     tier_df = df[df['Tier'].fillna('Sin Tiers') == selected_tier]
     st.write(f"Mostrando {len(tier_df)} partidas en **{selected_tier}**")
-    stats_df = compute_player_stats(tier_df)
+    stats_df = compute_player_score(tier_df)
 
     tab1, tab2, tab3 = st.tabs(["📊 Tabla","🏆 Top Winrate","👥 Más activos"])
     with tab1:
@@ -203,20 +229,14 @@ def show():
         else: st.dataframe(stats_df, use_container_width=True)
     with tab2:
         if not stats_df.empty:
-            max_partidas_tier = int(stats_df['Partidas'].max())
-            min_partidas_tier = st.slider(
-                "Mínimo de partidas jugadas", 1, max_partidas_tier,
-                min(3, max_partidas_tier), key="minb_tier",
-                help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
-            )
-            stats_wr_tier = stats_df[stats_df['Partidas'] >= min_partidas_tier]
+            stats_wr_tier = stats_df[stats_df['Partidas'] >= min_partidas_global]
             if stats_wr_tier.empty:
-                st.info("Nadie cumple ese mínimo de partidas.")
+                st.info(f"Nadie cumple el mínimo global de {min_partidas_global} partidas (ajústalo arriba, en Winrate General).")
             else:
                 fig = px.bar(stats_wr_tier.head(20), x='Jugador', y='Winrate%',
-                             title=f"Top 20 por Winrate — {selected_tier} (mín. {min_partidas_tier} partidas)",
+                             title=f"Top 20 por Winrate — {selected_tier} (mín. {min_partidas_global} partidas)",
                              color='Winrate%', color_continuous_scale='RdYlGn',
-                             hover_data=['Partidas'])
+                             hover_data=['Partidas','Score'])
                 fig.update_layout(xaxis_tickangle=-45)
                 st.plotly_chart(fig, use_container_width=True)
     with tab3:

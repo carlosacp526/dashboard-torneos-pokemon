@@ -71,6 +71,56 @@ def compute_player_stats(df):
     out = pd.DataFrame(rows, columns=['Jugador','Partidas','Victorias','Derrotas','Winrate%'])
     return out.sort_values('Winrate%', ascending=False).reset_index(drop=True)
 
+def compute_player_score(df):
+    """Igual que compute_player_stats, pero agrega la columna Score (score_completo),
+    la misma fórmula que usan las tablas de liga/torneo (ver score_final), calculada
+    por jugador sobre cualquier subconjunto de partidas (no solo una temporada)."""
+    completed = df[
+        df['status'].fillna('').str.lower().isin(
+            ['completed','done','finished','vencida','terminada','win','won','loss','lost']
+        ) | df['winner'].notna()
+    ].copy()
+    cols_out = ['Jugador','Partidas','Victorias','Derrotas','Winrate%','Score']
+    if completed.empty:
+        return pd.DataFrame(columns=cols_out)
+
+    g_pk = completed[['winner','pokemons Sob','pokemon vencidos']].copy()
+    g_pk.columns = ['Participante','pokes_sobrevivientes','poke_vencidos']
+    p_pk = completed[['player1','player2','winner','pokemons Sob','pokemon vencidos']].copy()
+    p_pk['Participante'] = p_pk.apply(lambda r: r['player2'] if r['winner']==r['player1'] else r['player1'], axis=1)
+    p_pk['poke_vencidos'] = 6 - p_pk['pokemons Sob']
+    p_pk['pokes_sobrevivientes'] = p_pk['pokemon vencidos'] - 6
+    p_pk = p_pk[['Participante','pokes_sobrevivientes','poke_vencidos']]
+    data = pd.concat([p_pk, g_pk]).groupby('Participante')[['pokes_sobrevivientes','poke_vencidos']].sum().reset_index()
+
+    bp1 = completed[['player1']].rename(columns={'player1':'Participante'})
+    bp2 = completed[['player2']].rename(columns={'player2':'Participante'})
+    base = pd.concat([bp1, bp2], ignore_index=True).drop_duplicates()
+    base = base[base['Participante'].notna() & (base['Participante'].astype(str).str.strip() != '')]
+
+    Ganador = completed.groupby('winner').size().reset_index(name='Victorias').rename(columns={'winner':'Participante'})
+    P1 = completed.groupby('player1').size().reset_index(name='Partidas_P1').rename(columns={'player1':'Participante'})
+    P2 = completed.groupby('player2').size().reset_index(name='Partidas_P2').rename(columns={'player2':'Participante'})
+
+    base = base.merge(Ganador, how='left', on='Participante')
+    base['Victorias'] = base['Victorias'].fillna(0).astype(int)
+    base = base.merge(P1, how='left', on='Participante').merge(P2, how='left', on='Participante')
+    base['Partidas_P1'] = base['Partidas_P1'].fillna(0)
+    base['Partidas_P2'] = base['Partidas_P2'].fillna(0)
+    base['Juegos'] = (base['Partidas_P1'] + base['Partidas_P2']).astype(int)
+    base['Derrotas'] = base['Juegos'] - base['Victorias']
+    base = base.merge(data, how='left', on='Participante')
+    base['pokes_sobrevivientes'] = base['pokes_sobrevivientes'].fillna(0)
+    base['poke_vencidos'] = base['poke_vencidos'].fillna(0)
+    base = base.drop(columns=['Partidas_P1','Partidas_P2'])
+    base = base[base['Juegos'] > 0]
+
+    scored = score_final(base)
+    scored['Winrate%'] = (scored['Victorias'] / scored['Juegos'] * 100).round(2)
+    out = scored.rename(columns={'Participante':'Jugador','Juegos':'Partidas','score_completo':'Score'})
+    out['Score'] = out['Score'].round(2)
+    return out[cols_out].sort_values('Winrate%', ascending=False).reset_index(drop=True)
+
 def score_final(data):
     d = data.copy()
     d["% victorias"] = d["Victorias"] / d["Juegos"]
