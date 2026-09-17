@@ -76,11 +76,32 @@ GRUPOS = [
     },
 ]
 
-# Clases propias de Inicio (tarjetas, píldoras, encabezados de grupo). El tema oscuro
-# base (fondo, color de texto, botones) ahora se inyecta una sola vez en app.py para
-# que aplique a todas las páginas — ver GLOBAL_THEME_CSS ahí.
+# Paleta oscura (violeta sobre casi-negro, tarjetas en degradado, píldoras lavanda) —
+# aplicada solo al contenedor principal de Inicio, sin tocar la barra lateral de
+# navegación ni el resto de las páginas.
 CARD_CSS = """
 <style>
+[data-testid="stMain"] {
+    background: linear-gradient(180deg, #0F0B1E 0%, #150F29 100%) !important;
+}
+[data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3,
+[data-testid="stMain"] p, [data-testid="stMain"] span, [data-testid="stMain"] label {
+    color: #EDE9F6;
+}
+[data-testid="stMain"] hr { border-color: rgba(255,255,255,0.12); }
+
+.stButton > button, div[data-testid="stButton"] > button {
+    background: #fff !important; color: #000 !important; border: none !important;
+    border-radius: 999px !important; font-weight: 700 !important; padding: 0.5rem 1.1rem !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+}
+.stButton > button *, div[data-testid="stButton"] > button * {
+    color: #000 !important;
+}
+.stButton > button:hover, div[data-testid="stButton"] > button:hover {
+    background: #ECE6F9 !important; color: #000 !important;
+}
+
 .nav-card, .stat-card {
     background: linear-gradient(135deg, #2C1B4E 0%, #4A2F82 100%);
     border-radius: 18px; padding: 1.3rem 1.4rem; margin-bottom: 0.7rem; height: 100%;
