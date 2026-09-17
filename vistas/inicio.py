@@ -9,44 +9,6 @@ from utils import load_data, normalize_columns, ensure_fields
 # tarjetas blancas idénticas que había.
 GRUPOS = [
     {
-        "titulo": "🏆 Competencia",
-        "color": "#E67E22",
-        "items": [
-            ("ligas", "🏆", "Ligas",
-             ["📋 Tablas por temporada", "🎯 Resultados por jornada", "🎯 Formatos y enfrentamientos"]),
-            ("torneos", "🥊", "Torneos",
-             ["🏟️ Tablas de torneos", "🥇 Campeonatos", "📊 Podio y estadísticas"]),
-            ("roleplay", "🎭", "Roleplay",
-             ["🎭 Torneo de draft por tiers", "📋 Equipos y Pokémon", "🏆 Formato VGC"]),
-            ("rankings", "🏅", "Histórico",
-             ["🏆 Salón de la Fama", "📜 Historial de combates"]),
-        ],
-    },
-    {
-        "titulo": "⚡ Rankings & Calidad",
-        "color": "#F1C40F",
-        "items": [
-            ("elo", "⚡", "Ranking Elo",
-             ["📊 Tabla Elo en tiempo real", "📈 Elo por Formato", "🔥 Elo por Tier", "🆚 Elo histórico por jugador"]),
-            ("calidad", "🔬", "Calidad de Ligas",
-             ["📊 Indicadores por temporada", "🌡️ Heatmap de competitividad", "🎯 Ratio élite / cola", "📈 Participación y sobrevivientes"]),
-            ("tiermaker", "🏆", "Tier Maker",
-             ["🏆 Tier list de jugadores", "🎯 Ranking visual", "📊 Por temporada/formato"]),
-        ],
-    },
-    {
-        "titulo": "👤 Jugadores",
-        "color": "#3498DB",
-        "items": [
-            ("jugadores", "👤", "Jugadores y Competencias",
-             ["👤 Perfil de Jugador"]),
-            ("headtohead", "⚔️", "Head-to-Head",
-             ["⚔️ Récord directo entre 2 jugadores", "📋 Historial de enfrentamientos", "⚡ Elo en paralelo"]),
-            ("tcg", "🃏", "Carta TCG",
-             ["🃏 Carta estilo trading card", "📸 Foto del jugador", "📊 Stats resumidas"]),
-        ],
-    },
-    {
         "titulo": "🔬 Análisis",
         "color": "#9B59B6",
         "items": [
@@ -60,6 +22,44 @@ GRUPOS = [
              ["🕸️ Grafo de rivalidades", "👑 Némesis y presas favoritas", "😲 Índice de Sorpresas"]),
             ("estilo", "🎭", "Estilo y Comportamiento",
              ["🎭 Huella de estilo en 5 ejes", "⏰ Ranking de Confiabilidad"]),
+        ],
+    },
+    {
+        "titulo": "👤 Jugadores",
+        "color": "#3498DB",
+        "items": [
+            ("jugadores", "👤", "Jugadores y Competencias",
+             ["👤 Perfil de Jugador"]),
+            ("tcg", "🃏", "Carta TCG",
+             ["🃏 Carta estilo trading card", "📸 Foto del jugador", "📊 Stats resumidas"]),
+            ("headtohead", "⚔️", "Head-to-Head",
+             ["⚔️ Récord directo entre 2 jugadores", "📋 Historial de enfrentamientos", "⚡ Elo en paralelo"]),
+        ],
+    },
+    {
+        "titulo": "🏆 Competencia",
+        "color": "#E67E22",
+        "items": [
+            ("rankings", "🏅", "Histórico",
+             ["🏆 Salón de la Fama", "📜 Historial de combates"]),
+            ("ligas", "🏆", "Ligas",
+             ["📋 Tablas por temporada", "🎯 Resultados por jornada", "🎯 Formatos y enfrentamientos"]),
+            ("torneos", "🥊", "Torneos",
+             ["🏟️ Tablas de torneos", "🥇 Campeonatos", "📊 Podio y estadísticas"]),
+            ("roleplay", "🎭", "Roleplay",
+             ["🎭 Torneo de draft por tiers", "📋 Equipos y Pokémon", "🏆 Formato VGC"]),
+        ],
+    },
+    {
+        "titulo": "⚡ Rankings & Calidad",
+        "color": "#F1C40F",
+        "items": [
+            ("elo", "⚡", "Ranking Elo",
+             ["📊 Tabla Elo en tiempo real", "📈 Elo por Formato", "🔥 Elo por Tier", "🆚 Elo histórico por jugador"]),
+            ("calidad", "🔬", "Calidad de Ligas",
+             ["📊 Indicadores por temporada", "🌡️ Heatmap de competitividad", "🎯 Ratio élite / cola", "📈 Participación y sobrevivientes"]),
+            ("tiermaker", "🏆", "Tier Maker",
+             ["🏆 Tier list de jugadores", "🎯 Ranking visual", "📊 Por temporada/formato"]),
         ],
     },
     {
@@ -93,6 +93,15 @@ CARD_CSS = """
     font-size: 1.1rem; color: white; margin: 1.4rem 0 0.8rem 0;
 }
 .inicio-lead { text-align: center; color: #888; font-size: 1.05rem; margin-top: -0.4rem; }
+.stat-card {
+    background: rgba(255,255,255,0.96); border-radius: 12px; padding: 0.9rem 0.5rem;
+    text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+    border-bottom: 4px solid var(--accent, #667eea); margin-bottom: 0.6rem;
+}
+.stat-icon { font-size: 1.4rem; line-height: 1; }
+.stat-valor { font-size: 1.6rem; font-weight: 800; color: #222; margin: 0.15rem 0; }
+.stat-label { font-size: 0.78rem; color: #777; text-transform: uppercase; letter-spacing: 0.03em; }
+.stat-subtitulo { color: #999; font-size: 0.85rem; margin: 0.4rem 0 0.3rem 0; }
 </style>
 """
 
@@ -103,6 +112,16 @@ def _render_card(col, icono, titulo, bullets, color):
         <div class="nav-card" style="--accent: {color}">
             <div class="nav-card-title">{icono} {titulo}</div>
             <p class="nav-card-body">{"<br>".join(bullets)}</p>
+        </div>""", unsafe_allow_html=True)
+
+
+def _stat_card(col, icono, valor, etiqueta, color):
+    with col:
+        st.markdown(f"""
+        <div class="stat-card" style="--accent: {color}">
+            <div class="stat-icon">{icono}</div>
+            <div class="stat-valor">{valor:,}</div>
+            <div class="stat-label">{etiqueta}</div>
         </div>""", unsafe_allow_html=True)
 
 
@@ -131,17 +150,21 @@ def show():
         ) | df['winner'].notna()
     )
 
-    # ── Métricas (mismo contenido de siempre) ───────────────────────────────
+    # ── Métricas (mismo contenido de siempre, con más calidez visual) ───────
     st.subheader("⚡ Resumen general")
-    c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
-    c1.metric("Total partidas", len(df))
-    c2.metric("Completadas", int(completed_mask.sum()))
-    c3.metric("Jugadores únicos", int(pd.unique(df[['player1', 'player2']].values.ravel('K')).size))
-    c4.metric("Eventos", df['league'].fillna('Sin liga').nunique())
-    c5.metric("TORNEO", df[df.league == "TORNEO"]["N_Torneo"].nunique())
-    c6.metric("LIGA", df[df.league == "LIGA"]["Ligas_categoria"].nunique())
-    c7.metric("ASCENSO", df[df.league == "ASCENSO"]["N_Torneo"].nunique())
-    c8.metric("CYPHER", df[df.league == "CYPHER"]["N_Torneo"].nunique())
+    ACCENT = "#667eea"
+    c1, c2, c3, c4 = st.columns(4)
+    _stat_card(c1, "🎮", len(df), "Total partidas", ACCENT)
+    _stat_card(c2, "✅", int(completed_mask.sum()), "Completadas", ACCENT)
+    _stat_card(c3, "👥", int(pd.unique(df[['player1', 'player2']].values.ravel('K')).size), "Jugadores únicos", ACCENT)
+    _stat_card(c4, "🗂️", df['league'].fillna('Sin liga').nunique(), "Eventos", ACCENT)
+
+    st.markdown('<p class="stat-subtitulo">Por tipo de competencia</p>', unsafe_allow_html=True)
+    c5, c6, c7, c8 = st.columns(4)
+    _stat_card(c5, "🥊", df[df.league == "TORNEO"]["N_Torneo"].nunique(), "Torneo", "#E67E22")
+    _stat_card(c6, "🏆", df[df.league == "LIGA"]["Ligas_categoria"].nunique(), "Liga", "#3498DB")
+    _stat_card(c7, "📈", df[df.league == "ASCENSO"]["N_Torneo"].nunique(), "Ascenso", "#2ECC71")
+    _stat_card(c8, "🔐", df[df.league == "CYPHER"]["N_Torneo"].nunique(), "Cypher", "#9B59B6")
 
     pages = st.session_state.get("_pages", {})
 
