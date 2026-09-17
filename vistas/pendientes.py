@@ -682,6 +682,21 @@ def show():
         except Exception:
             wa_password = ""
         wa_password = wa_password or os.environ.get("WHATSAPP_PASSWORD", "")
+        if not wa_password:
+            # Fallback: leer el archivo directo (independiente del cwd desde
+            # donde se haya lanzado `streamlit run`, que es de donde depende
+            # la resolución normal de st.secrets).
+            try:
+                import tomllib
+                secrets_path = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    ".streamlit", "secrets.toml"
+                )
+                if os.path.exists(secrets_path):
+                    with open(secrets_path, "rb") as f:
+                        wa_password = tomllib.load(f).get("whatsapp_password", "")
+            except Exception:
+                pass
         if not st.session_state.get("wa_unlocked", False):
             if not wa_password:
                 st.error("⚠️ No hay contraseña configurada (whatsapp_password en .streamlit/secrets.toml "
