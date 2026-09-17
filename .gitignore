@@ -2,6 +2,7 @@ celulares_.xlsx
 
 # Credenciales del WhatsApp gateway
 evolution-api/.env
+.streamlit/secrets.toml
 
 # Python
 __pycache__/

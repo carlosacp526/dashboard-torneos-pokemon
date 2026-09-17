@@ -676,6 +676,28 @@ def show():
     with tab_wa:
         st.subheader("📱 Enviar recordatorios por WhatsApp")
 
+        # ── Acceso protegido por contraseña ─────────────────────────────────
+        try:
+            wa_password = st.secrets.get("whatsapp_password", "")
+        except Exception:
+            wa_password = ""
+        wa_password = wa_password or os.environ.get("WHATSAPP_PASSWORD", "")
+        if not st.session_state.get("wa_unlocked", False):
+            if not wa_password:
+                st.error("⚠️ No hay contraseña configurada (whatsapp_password en .streamlit/secrets.toml "
+                         "o variable de entorno WHATSAPP_PASSWORD). Configurala para habilitar el acceso.")
+                st.stop()
+            with st.form("wa_login_form"):
+                pwd_input = st.text_input("🔒 Contraseña para acceder", type="password")
+                submitted = st.form_submit_button("Ingresar")
+            if submitted:
+                if pwd_input == wa_password:
+                    st.session_state["wa_unlocked"] = True
+                    st.rerun()
+                else:
+                    st.error("❌ Contraseña incorrecta.")
+            st.stop()
+
         if not celulares:
             st.warning(f"⚠️ No se encontró **{EXCEL_CELULARES}**. "
                        "Subí el archivo Excel con columnas: Jugador, Telefono, Pais, Codigo.")
