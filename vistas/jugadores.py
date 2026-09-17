@@ -1383,6 +1383,9 @@ def show():
             if not base2.empty and 'Liga_Temporada' in base2.columns:
                 campeonatos_liga = []
                 for lt in base2['Liga_Temporada'].unique():
+                    liga_en_curso = ((df_raw['Llave_cat'] == lt) & (df_raw['Walkover'] == -1)).any()
+                    if liga_en_curso:
+                        continue  # aun quedan jornadas sin jugar: todavia no hay campeon
                     tabla = generar_tabla_temporada(base2, lt)
                     if tabla is not None and not tabla.empty:
                         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
