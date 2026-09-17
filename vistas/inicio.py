@@ -100,7 +100,7 @@ CARD_CSS = """
 .nav-card:hover, .stat-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,0.5); }
 
 .card-pill {
-    display: inline-block; background: #ECE6F9; color: #2C1B4E; font-weight: 700;
+    display: inline-block; background: #000; color: #fff; font-weight: 700;
     font-size: 0.85rem; padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.7rem;
 }
 .nav-card-title { color: #fff !important; font-size: 1.12rem; font-weight: 700; margin-bottom: 0.45rem; }
