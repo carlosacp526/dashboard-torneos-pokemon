@@ -118,12 +118,15 @@ CARD_CSS = """
 .stat-subtitulo { color: rgba(255,255,255,0.45) !important; font-size: 0.85rem; margin: 0.4rem 0 0.3rem 0; }
 
 .stButton > button, div[data-testid="stButton"] > button {
-    background: #fff !important; color: #241B3A !important; border: none !important;
+    background: #fff !important; color: #000 !important; border: none !important;
     border-radius: 999px !important; font-weight: 700 !important; padding: 0.5rem 1.1rem !important;
     box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
 }
+.stButton > button *, div[data-testid="stButton"] > button * {
+    color: #000 !important;
+}
 .stButton > button:hover, div[data-testid="stButton"] > button:hover {
-    background: #ECE6F9 !important; color: #241B3A !important;
+    background: #ECE6F9 !important; color: #000 !important;
 }
 </style>
 """
