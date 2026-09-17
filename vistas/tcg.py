@@ -713,16 +713,3 @@ def show():
             mime="image/png",
             use_container_width=True,
         )
-
-    st.markdown("---")
-    st.markdown("#### 📁 Estructura de carpetas esperada")
-    st.code("""
-dashboard-torneos-pokemon/
-├── jugadores/             ← fotos: davarv.png, luigillanos.png ...
-└── tcg/
-    ├── logo_poketubi.png      ← logo esquina superior izquierda
-    ├── copa.png               ← trofeo dorado
-    ├── fondos/                ← plantillas: yellow.png, blue.png ...
-    ├── pokemon/               ← registeel.png, pikachu.png ...
-    └── ligas/                 ← PMS.png, PSS.png, PJS.png ...
-    """)
