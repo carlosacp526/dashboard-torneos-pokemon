@@ -96,6 +96,18 @@ def hline(c, x, y, w):
     ss(c, C_LINE); c.setLineWidth(0.4); c.line(x, y, x+w, y)
 
 
+def _es_jugador(col, query):
+    """Compara una columna de nombres contra `query` por IGUALDAD exacta
+    (case/espacios-insensitive), no por substring. Se usa para resolver
+    identidad ("¿esta fila es de este jugador?") una vez que `query` ya es
+    un nombre puntual (viene del buscador de la página o de un jugador ya
+    resuelto), a diferencia del cuadro de búsqueda/sugerencias, que sí puede
+    ser fuzzy a propósito. Evita que nombres cortos que son substring de
+    otros (p.ej. "Mar" de "Omarjmata", "Ger" de "MONTIEL JAEGER") mezclen
+    estadísticas de jugadores distintos — ver revisión de código."""
+    return col.astype(str).str.strip().str.lower() == str(query).strip().lower()
+
+
 def generar_pdf_jugador(
     player_query, player_matches, p_stats_quick,
     ligas_jugador, torneos_jugador,
@@ -198,7 +210,7 @@ def generar_pdf_jugador(
 
     jq = None
     if not p_stats_quick.empty:
-        m = p_stats_quick['Jugador'].str.contains(player_query, case=False)
+        m = _es_jugador(p_stats_quick['Jugador'], player_query)
         if m.any(): jq = p_stats_quick[m].iloc[0]
 
     partidas  = int(jq['Partidas'])   if jq is not None else len(player_matches)
@@ -330,7 +342,7 @@ def generar_pdf_jugador(
             _pm['_mes'] = _pm['date'].dt.to_period('M')
             for _mes, _grp in _pm.groupby('_mes'):
                 _tot = len(_grp)
-                _w   = int(_grp['winner'].str.contains(player_query, case=False, na=False).sum())
+                _w   = int(_es_jugador(_grp['winner'], player_query).sum())
                 if _tot >= 1:
                     wr_mensual.append({'mes': str(_mes), 'WR': round(_w/_tot*100,1),
                                        'n': _tot, 'V': _w, 'D': _tot-_w})
@@ -488,7 +500,7 @@ def generar_pdf_jugador(
             for val in matches[col_key].dropna().unique():
                 s = matches[matches[col_key]==val]
                 if len(s) >= 1:
-                    w = int(s['winner'].str.contains(player_query, case=False, na=False).sum())
+                    w = int(_es_jugador(s['winner'], player_query).sum())
                     result[str(val)] = (round(w/len(s)*100, 1), len(s))
         return result
 
@@ -1168,6 +1180,11 @@ def show():
 
     if 'selected_player' in st.session_state and st.session_state.selected_player:
         player_query = st.session_state.selected_player
+        # Ya se resolvió a UN jugador puntual y real (vino de un botón de sugerencia,
+        # no de texto libre): de acá en más siempre exacto, sin importar el checkbox,
+        # para no mezclar sus stats con las de otro jugador cuyo nombre lo contenga
+        # (p.ej. "Mar" quedaría mezclado con "Omarjmata" si siguiera en modo difuso).
+        exact_search = True
         st.success(f"✅ Jugador seleccionado: **{player_query}**")
         if st.button("🔄 Buscar otro jugador"):
             del st.session_state.selected_player
@@ -1201,7 +1218,7 @@ def show():
             st.write(f"**Partidas encontradas:** {len(player_matches)}")
             p_stats_quick = compute_player_stats(player_matches)
             if not p_stats_quick.empty:
-                jq = p_stats_quick[p_stats_quick['Jugador'].str.contains(player_query,case=False)]
+                jq = p_stats_quick[_es_jugador(p_stats_quick['Jugador'], player_query)]
                 if not jq.empty:
                     c1,c2,c3,c4 = st.columns(4)
                     c1.metric("🎮 Partidas",  int(jq['Partidas'].iloc[0]))
@@ -1217,8 +1234,8 @@ def show():
             (df_raw["league"] == "TORNEO") &
             (df_raw["Walkover"] == -1) &
             (
-                df_raw["player1"].str.contains(player_query, case=False, na=False) |
-                df_raw["player2"].str.contains(player_query, case=False, na=False)
+                _es_jugador(df_raw["player1"], player_query) |
+                _es_jugador(df_raw["player2"], player_query)
             )
         ]["N_Torneo"].dropna().unique()
 
@@ -1280,15 +1297,6 @@ def show():
 
         # ── Walkovers ──────────────────────────────────────────────────
         st.markdown("### ⚠️ Walkovers")
-
-        # WO recibidos (el jugador perdió por WO — Walkover == 1 y es el perdedor)
-        wo_recibidos = df_raw[
-            (df_raw["Walkover"] == 1) & (
-                df_raw["player1"].str.lower().str.strip() == player_query.lower().strip() if exact_search else
-                df_raw["player1"].str.contains(player_query, case=False, na=False) |
-                df_raw["player2"].str.contains(player_query, case=False, na=False)
-            )
-        ].copy()
 
         # WO dados (el jugador ganó por WO — Walkover == 1 y es el ganador)
         # En el CSV: Walkover == 1 significa que hubo walkover en esa partida
@@ -1591,7 +1599,7 @@ def show():
         with tab2:
             p_stats = compute_player_stats(player_matches)
             if not p_stats.empty:
-                jqs = p_stats[p_stats['Jugador'].str.contains(player_query,case=False)]
+                jqs = p_stats[_es_jugador(p_stats['Jugador'], player_query)]
                 if not jqs.empty:
                     wins = int(jqs['Victorias'].iloc[0]); losses = int(jqs['Derrotas'].iloc[0])
                     fig = px.pie(values=[wins,losses], names=['Victorias','Derrotas'],
@@ -1604,7 +1612,7 @@ def show():
             for ev in player_matches['league'].dropna().unique():
                 ev_s = compute_player_stats(player_matches[player_matches['league']==ev])
                 if not ev_s.empty:
-                    js = ev_s[ev_s['Jugador'].str.contains(player_query,case=False)]
+                    js = ev_s[_es_jugador(ev_s['Jugador'], player_query)]
                     if not js.empty:
                         spe.append({'Evento':ev,'Partidas':int(js['Partidas'].iloc[0]),
                                     'Victorias':int(js['Victorias'].iloc[0]),'Derrotas':int(js['Derrotas'].iloc[0]),
@@ -1625,7 +1633,7 @@ def show():
             for tier in player_matches['Tier'].dropna().unique():
                 ts = compute_player_stats(player_matches[player_matches['Tier']==tier])
                 if not ts.empty:
-                    js = ts[ts['Jugador'].str.contains(player_query,case=False)]
+                    js = ts[_es_jugador(ts['Jugador'], player_query)]
                     if not js.empty:
                         spt.append({'Tier':tier,'Partidas':int(js['Partidas'].iloc[0]),
                                     'Victorias':int(js['Victorias'].iloc[0]),'Derrotas':int(js['Derrotas'].iloc[0]),
@@ -1647,7 +1655,7 @@ def show():
                 for fmt in player_matches['Formato'].dropna().unique():
                     fs = compute_player_stats(player_matches[player_matches['Formato']==fmt])
                     if not fs.empty:
-                        js = fs[fs['Jugador'].str.contains(player_query,case=False)]
+                        js = fs[_es_jugador(fs['Jugador'], player_query)]
                         if not js.empty:
                             spf.append({'Formato':fmt,'Partidas':int(js['Partidas'].iloc[0]),
                                         'Victorias':int(js['Victorias'].iloc[0]),'Derrotas':int(js['Derrotas'].iloc[0]),
@@ -1670,7 +1678,7 @@ def show():
                 for mes in sorted(pm_copy['mes'].dropna().unique()):
                     ms = compute_player_stats(pm_copy[pm_copy['mes']==mes])
                     if not ms.empty:
-                        js = ms[ms['Jugador'].str.contains(player_query,case=False)]
+                        js = ms[_es_jugador(ms['Jugador'], player_query)]
                         if not js.empty:
                             spm.append({'Mes':mes,'Partidas':int(js['Partidas'].iloc[0]),
                                         'Victorias':int(js['Victorias'].iloc[0]),'Derrotas':int(js['Derrotas'].iloc[0]),
@@ -1694,7 +1702,7 @@ def show():
                 for yr in sorted(pm_copy2['año'].dropna().unique()):
                     ys = compute_player_stats(pm_copy2[pm_copy2['año']==yr])
                     if not ys.empty:
-                        js = ys[ys['Jugador'].str.contains(player_query,case=False)]
+                        js = ys[_es_jugador(ys['Jugador'], player_query)]
                         if not js.empty:
                             spa.append({'Año':int(yr),'Partidas':int(js['Partidas'].iloc[0]),
                                         'Victorias':int(js['Victorias'].iloc[0]),'Derrotas':int(js['Derrotas'].iloc[0]),
@@ -1821,8 +1829,8 @@ def show():
             # Preparar walkovers
             wo_pdf = df_raw[
                 (df_raw["Walkover"] == 1) & (
-                    df_raw["player1"].str.contains(player_query, case=False, na=False) |
-                    df_raw["player2"].str.contains(player_query, case=False, na=False)
+                    _es_jugador(df_raw["player1"], player_query) |
+                    _es_jugador(df_raw["player2"], player_query)
                 )
             ].copy()
             if not wo_pdf.empty:
@@ -1834,13 +1842,13 @@ def show():
 
             # Preparar rivales
             rivales_pdf = []
-            for rival in player_matches[player_matches['player1'].str.contains(player_query,case=False,na=False)]['player2'].dropna().unique().tolist() +                           player_matches[player_matches['player2'].str.contains(player_query,case=False,na=False)]['player1'].dropna().unique().tolist():
+            for rival in player_matches[_es_jugador(player_matches['player1'], player_query)]['player2'].dropna().unique().tolist() +                           player_matches[_es_jugador(player_matches['player2'], player_query)]['player1'].dropna().unique().tolist():
                 rm = player_matches[
-                    player_matches['player1'].str.contains(rival,case=False,na=False) |
-                    player_matches['player2'].str.contains(rival,case=False,na=False)
+                    _es_jugador(player_matches['player1'], rival) |
+                    _es_jugador(player_matches['player2'], rival)
                 ]
                 if len(rm) >= 4:
-                    v = rm[rm['winner'].str.contains(player_query,case=False,na=False)].shape[0]
+                    v = rm[_es_jugador(rm['winner'], player_query)].shape[0]
                     d = len(rm) - v
                     wr = round(v/len(rm)*100, 1) if len(rm) > 0 else 0
                     rivales_pdf.append({'Rival':rival,'Partidas':len(rm),'Victorias':v,'Derrotas':d,'Winrate%':wr,

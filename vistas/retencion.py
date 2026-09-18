@@ -211,6 +211,12 @@ def compute_monthly_activity(panel):
     return pd.DataFrame(rows)
 
 
+def _ym_siguiente(ym):
+    """Mes calendario inmediatamente posterior a ym (formato AAAAMM)."""
+    anio, mes = divmod(int(ym), 100)
+    return (anio + 1) * 100 + 1 if mes == 12 else anio * 100 + mes + 1
+
+
 # ── Paso 4: ratio de fuga mes a mes (regla simple: activo hoy, ausente el mes siguiente) ──
 def compute_churn_ratio(panel):
     if panel.empty:
@@ -219,6 +225,11 @@ def compute_churn_ratio(panel):
     rows = []
     for i in range(len(meses) - 1):
         m, m_next = meses[i], meses[i + 1]
+        if m_next != _ym_siguiente(m):
+            # Hay un mes intermedio sin ninguna batalla en toda la liga: m y m_next
+            # no son calendáricamente consecutivos, así que no se puede medir fuga
+            # "mes a mes" entre ellos sin sobrestimarla/subestimarla.
+            continue
         activos_m = set(panel.loc[panel['ym'] == m, 'jugador'])
         if not activos_m:
             continue

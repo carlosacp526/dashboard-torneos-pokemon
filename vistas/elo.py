@@ -216,30 +216,31 @@ def calcular_elo_tier(df_raw, tier):
     dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
     data_elo = pd.merge(data_elo, dfechas, how='left', left_on='Participantes', right_on='Jugador')
     del data_elo['Jugador']
-    cutoff = pd.Timestamp.now() - pd.DateOffset(months=100)
+    cutoff = pd.Timestamp.now() - pd.DateOffset(months=12)
     data_elo['Actividad'] = data_elo['Fecha'].apply(lambda x: 'Activo' if pd.notna(x) and x>=cutoff else 'Inactivo')
     data_elo = data_elo.sort_values('Elo', ascending=False).reset_index(drop=True)
     data_elo['RANK'] = range(1, len(data_elo)+1)
     return data_elo, data_filas
 
 def get_player_elo_history(player_query, data_filas, exact=False):
-    if exact:
-        mask = (data_filas['Jugador_A'].str.lower() == player_query.lower()) | \
-               (data_filas['Jugador_B'].str.lower() == player_query.lower())
-    else:
-        mask = data_filas['Jugador_A'].str.contains(player_query, case=False, na=False) | \
-               data_filas['Jugador_B'].str.contains(player_query, case=False, na=False)
+    def _match(col):
+        if exact:
+            return col.str.lower() == player_query.lower()
+        return col.str.contains(player_query, case=False, na=False)
+
+    mask = _match(data_filas['Jugador_A']) | _match(data_filas['Jugador_B'])
 
     d = data_filas[mask].copy()
     if d.empty:
         return pd.DataFrame()
 
     # Determinar si ganó ANTES de hacer el swap (Jugador_A siempre es el ganador en data_filas)
-    d['Win'] = d['Jugador_A'].str.contains(player_query, case=False, na=False)
+    # Usa el mismo criterio (exacto o contains) que el filtro de arriba, para no
+    # confundir victoria/derrota cuando el nombre buscado es substring del rival.
+    d['Win'] = _match(d['Jugador_A'])
 
     # Ahora sí hacer el swap para que el jugador buscado quede en columna A
-    is_b = d['Jugador_B'].str.contains(player_query, case=False, na=False) & \
-           ~d['Jugador_A'].str.contains(player_query, case=False, na=False)
+    is_b = _match(d['Jugador_B']) & ~_match(d['Jugador_A'])
 
     d_swap = d[is_b].copy()
     d_swap[['Jugador_A','Jugador_B']]       = d_swap[['Jugador_B','Jugador_A']].values

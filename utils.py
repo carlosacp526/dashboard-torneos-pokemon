@@ -88,8 +88,10 @@ def compute_player_score(df):
     g_pk.columns = ['Participante','pokes_sobrevivientes','poke_vencidos']
     p_pk = completed[['player1','player2','winner','pokemons Sob','pokemon vencidos']].copy()
     p_pk['Participante'] = p_pk.apply(lambda r: r['player2'] if r['winner']==r['player1'] else r['player1'], axis=1)
-    p_pk['poke_vencidos'] = 6 - p_pk['pokemons Sob']
-    p_pk['pokes_sobrevivientes'] = p_pk['pokemon vencidos'] - 6
+    # El perdedor derrotó (6 - supervivientes del ganador) y le sobrevivieron (6 - vencidos por el ganador).
+    # clip(lower=0) por seguridad ante datos fuera de rango (ver entrenar_modelo.py:build_historial).
+    p_pk['poke_vencidos'] = (6 - p_pk['pokemons Sob']).clip(lower=0)
+    p_pk['pokes_sobrevivientes'] = (6 - p_pk['pokemon vencidos']).clip(lower=0)
     p_pk = p_pk[['Participante','pokes_sobrevivientes','poke_vencidos']]
     data = pd.concat([p_pk, g_pk]).groupby('Participante')[['pokes_sobrevivientes','poke_vencidos']].sum().reset_index()
 
@@ -291,8 +293,8 @@ def build_base_liga(df):
     g_pk.columns = ["Liga_Temporada","Participante","pokes_sobrevivientes","poke_vencidos"]
     p_pk = df_liga[["Liga_Temporada","player1","player2","winner","pokemons Sob","pokemon vencidos"]].copy()
     p_pk["Participante"] = p_pk.apply(lambda r: r["player2"] if r["winner"]==r["player1"] else r["player1"], axis=1)
-    p_pk["poke_vencidos"] = 6 - p_pk["pokemons Sob"]
-    p_pk["pokes_sobrevivientes"] = p_pk["pokemon vencidos"] - 6
+    p_pk["poke_vencidos"] = (6 - p_pk["pokemons Sob"]).clip(lower=0)
+    p_pk["pokes_sobrevivientes"] = (6 - p_pk["pokemon vencidos"]).clip(lower=0)
     p_pk = p_pk[["Liga_Temporada","Participante","pokes_sobrevivientes","poke_vencidos"]]
     data = pd.concat([p_pk, g_pk]).groupby(["Liga_Temporada","Participante"])[["pokes_sobrevivientes","poke_vencidos"]].sum().reset_index()
 
@@ -329,8 +331,8 @@ def build_base_torneo(df):
     g_pk.columns = ["Torneo_Temp","Participante","pokes_sobrevivientes","poke_vencidos"]
     p_pk = df_t[["Torneo_Temp","player1","player2","winner","pokemons Sob","pokemon vencidos"]].copy()
     p_pk["Participante"] = p_pk.apply(lambda r: r["player2"] if r["winner"]==r["player1"] else r["player1"], axis=1)
-    p_pk["poke_vencidos"] = 6 - p_pk["pokemons Sob"]
-    p_pk["pokes_sobrevivientes"] = p_pk["pokemon vencidos"] - 6
+    p_pk["poke_vencidos"] = (6 - p_pk["pokemons Sob"]).clip(lower=0)
+    p_pk["pokes_sobrevivientes"] = (6 - p_pk["pokemon vencidos"]).clip(lower=0)
     p_pk = p_pk[["Torneo_Temp","Participante","pokes_sobrevivientes","poke_vencidos"]]
     data = pd.concat([p_pk, g_pk]).groupby(["Torneo_Temp","Participante"])[["pokes_sobrevivientes","poke_vencidos"]].sum().reset_index()
 
@@ -385,8 +387,8 @@ def build_base_llave(df):
     p_pk = df_l[[KEY, 'player1', 'player2', 'winner', 'pokemons Sob', 'pokemon vencidos']].copy()
     p_pk['Participante'] = p_pk.apply(
         lambda r: r['player2'] if r['winner'] == r['player1'] else r['player1'], axis=1)
-    p_pk['poke_vencidos']        = 6 - p_pk['pokemons Sob']
-    p_pk['pokes_sobrevivientes'] = p_pk['pokemon vencidos'] - 6
+    p_pk['poke_vencidos']        = (6 - p_pk['pokemons Sob']).clip(lower=0)
+    p_pk['pokes_sobrevivientes'] = (6 - p_pk['pokemon vencidos']).clip(lower=0)
     p_pk = p_pk[[KEY, 'Participante', 'pokes_sobrevivientes', 'poke_vencidos']]
 
     data = (pd.concat([p_pk, g_pk])
@@ -433,8 +435,8 @@ def build_base_jornada(df_liga):
     gk.columns = ["Liga_Temporada","N_Jornada","Participante","pokes_sobrevivientes","poke_vencidos"]
     pk = dj[["Liga_Temporada","N_Jornada","player1","player2","winner","pokemons Sob","pokemon vencidos"]].copy()
     pk["Participante"] = pk.apply(lambda r: r["player2"] if r["winner"]==r["player1"] else r["player1"], axis=1)
-    pk["poke_vencidos"] = 6 - pk["pokemons Sob"]
-    pk["pokes_sobrevivientes"] = pk["pokemon vencidos"] - 6
+    pk["poke_vencidos"] = (6 - pk["pokemons Sob"]).clip(lower=0)
+    pk["pokes_sobrevivientes"] = (6 - pk["pokemon vencidos"]).clip(lower=0)
     pk = pk[["Liga_Temporada","N_Jornada","Participante","pokes_sobrevivientes","poke_vencidos"]]
     dataj = pd.concat([pk, gk]).groupby(["Liga_Temporada","N_Jornada","Participante"])[["pokes_sobrevivientes","poke_vencidos"]].sum().reset_index()
 

@@ -586,7 +586,7 @@ def evaluar_logros(
             if pq not in winner_r: continue  # el jugador no ganó esta partida
             rival = p2 if pq in p1 else p1
             for camp in CAMPEONES_TORNEO:
-                if camp.lower() in rival:
+                if camp.lower() == rival:
                     rivales_campeon_derrotados.add(rival)
         return len(rivales_campeon_derrotados) >= 5
     r["VI14"] = _verdugo_elite()
@@ -605,7 +605,7 @@ def evaluar_logros(
             if pq not in winner_r: continue
             rival = p2 if pq in p1 else p1
             for camp in CAMPEONES_PMS:
-                if camp.lower() in rival:
+                if camp.lower() == rival:
                     derrotados.add(rival)
         return len(derrotados) >= 3
     r["VI15"] = _asesino_gigantes()
@@ -904,7 +904,7 @@ def evaluar_logros(
         "PES": {"caradecoso","chescor"},
         "PSS": {"ricomam","haseo","elin beacil","roy kasoy","akaru"},
         "PMS": {"luigillanos","joscake","angello77","lautaro","darmanethan"},
-        "PLS": {"Car10seduard0"}
+        "PLS": {"car10seduard0"}
     }
 
     r["SP14"] = any(

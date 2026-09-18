@@ -6,14 +6,10 @@ import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, score_final
-import pickle, hashlib
+import pickle
 from datetime import datetime
 
 MODEL_CACHE_PATH = "modelo_prediccion.pkl"
-
-def _data_hash(_df_raw):
-    """Hash rápido para detectar cambios en el CSV."""
-    return hashlib.md5(str(len(_df_raw)).encode() + str(_df_raw.iloc[-1].values).encode()).hexdigest()[:8]
 
 def load_model(df_raw):
     """
@@ -56,7 +52,7 @@ def make_pred_row(j1, j2, latest_stats, feature_cols):
     return row[feature_cols].fillna(0)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)
 def _build_df_j(_df_raw):
     """Reconstruye df_j (una fila por jugador por batalla) desde df_raw."""
     df = normalize_columns(_df_raw.copy())

@@ -24,11 +24,27 @@ sys.path.insert(0, ROOT)
 from utils import load_data, normalize_columns, ensure_fields
 
 VENTANAS   = [1, 3, 5, 7, 9, 12, 15, 18, 24, 36]
-TRAIN_END  = 202602
-VAL_START  = 202603
+VAL_MONTHS = 2   # cuántos meses calendario (los más recientes) se reservan para validación
 LIGAS_STD  = ["PMS", "PSS", "PES", "PJS", "PLS"]
 TOP_N_FEAT = 15
 REP_BUCKETS = [1, 2, 3, 4, 5]   # 5 representa "5 o más" repeticiones del mismo cruce
+
+
+def compute_train_val_split(df, val_months=VAL_MONTHS):
+    """Calcula TRAIN_END/VAL_START dinámicamente a partir del mes más reciente
+    presente en los datos (en vez de fechas fijas tipo 202602/202603), para que
+    cada vez que se reentrene el modelo automáticamente se sigan usando los
+    últimos `val_months` como validación y TODO lo anterior como train — sin
+    depender de que alguien recuerde actualizar una constante hardcodeada a
+    medida que pasa el tiempo (si no se actualiza, los datos nuevos terminan
+    cayendo siempre en validación y nunca se usan para entrenar)."""
+    ym_max = int(df["ym"].max())
+    fecha_max = pd.Timestamp(year=ym_max // 100, month=ym_max % 100, day=1)
+    val_start_dt = fecha_max - pd.DateOffset(months=val_months - 1)
+    train_end_dt = val_start_dt - pd.DateOffset(months=1)
+    val_start = val_start_dt.year * 100 + val_start_dt.month
+    train_end = train_end_dt.year * 100 + train_end_dt.month
+    return train_end, val_start
 
 # ════════════════════════════════════════════════════════════════
 # 1. PREPARACIÓN BASE
@@ -510,8 +526,10 @@ def main():
     df = add_match_context(df, typical_max_rep)
     df_pend = add_match_context(df_pend_raw.copy(), typical_max_rep)
 
+    TRAIN_END, VAL_START = compute_train_val_split(df[df["Walkover"] == 0])
     df_train = df[(df["Walkover"] == 0) & (df["ym"] <= TRAIN_END)].copy()
     df_val   = df[(df["Walkover"] == 0) & (df["ym"] >= VAL_START)].copy()
+    print(f"      Split: train hasta {TRAIN_END}, val desde {VAL_START}")
     print(f"      Train: {len(df_train)} | Val: {len(df_val)} | Pendientes: {len(df_pend)}")
 
     print("\n[2/7] Historial base...")
