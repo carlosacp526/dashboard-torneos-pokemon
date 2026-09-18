@@ -357,12 +357,15 @@ def show():
         with col_j2:
             p2 = st.selectbox("🎮 Jugador 2", [p for p in all_players if p != p1], key="pp2")
 
-        col_cfg1, col_cfg2, col_cfg3 = st.columns(3)
+        tiers_disp = sorted(df_j["Tier"].dropna().unique().tolist())
+        col_cfg1, col_cfg2, col_cfg3, col_cfg4 = st.columns(4)
         with col_cfg1:
             fmt_p  = st.selectbox("Formato", ["SINGLES","DOBLES","VGC"], key="pfmt")
         with col_cfg2:
             lcat_p = st.selectbox("Competencia", ["TORNEO","LIGA","ASCENSO","CYPHER"], key="plcat")
         with col_cfg3:
+            tier_p = st.selectbox("Tier", tiers_disp, key="ptier")
+        with col_cfg4:
             best_idx = list(trained.keys()).index(best_name)
             mod_p = st.selectbox("Modelo ML", list(trained.keys()), index=best_idx, key="pmod")
 
@@ -438,18 +441,19 @@ def show():
 
             st.markdown("<br>", unsafe_allow_html=True)
             nivel = "Alta 🟢" if conf > 0.7 else ("Media 🟡" if conf > 0.6 else "Baja 🔴")
-            m1, m2, m3, m4 = st.columns(4)
+            m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Confianza",  f"{conf*100:.1f}%")
             m2.metric("Nivel",      nivel)
             m3.metric("Modelo",     mod_p)
             m4.metric("Formato",    fmt_p)
+            m5.metric("Tier",       tier_p)
 
             conf_txt = "muy alta" if conf > 0.75 else ("moderada" if conf > 0.6 else "baja")
             wr1t = f"{stats1['winrate_ac']*100:.1f}%" if stats1 else "?"
             wr2t = f"{stats2['winrate_ac']*100:.1f}%" if stats2 else "?"
             st.info(f"""
 **{fav}** es favorito según *{mod_p}* con confianza **{conf_txt}** ({conf*100:.1f}%).
-Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** en **{lcat_p}**.
+Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier **{tier_p}** en **{lcat_p}**.
 {"El modelo tiene ventaja estadística clara." if conf > 0.7 else "Stats parejas — cualquier resultado es posible."}
             """)
 

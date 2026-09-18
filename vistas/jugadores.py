@@ -165,7 +165,8 @@ def generar_pdf_jugador(
             if ultima_liga and ultima_liga not in ('nan','No Posee Liga',''):
                 # Buscar logo sin fallback a Logo.png
                 LOGOS_MAP = {"PES":"logos_ligas/logo_pes.PNG","PSS":"logos_ligas/logo_pss.PNG",
-                             "PJS":"logos_ligas/logo_pjs.PNG","PMS":"logos_ligas/logo_pms.PNG","PLS":"logos_ligas/logo_pls.png"}
+                             "PJS":"logos_ligas/logo_pjs.PNG","PMS":"logos_ligas/logo_pms.PNG","PLS":"logos_ligas/logo_pls.png",
+                             "PGS":"logos_ligas/logo_pgs.PNG"}
                 logo_path = None
                 # Check dict first
                 if ultima_liga in LOGOS_MAP and os.path.exists(LOGOS_MAP[ultima_liga]):
@@ -267,7 +268,8 @@ def generar_pdf_jugador(
                 # Extract 3-letter prefix: PJST1→PJS, PEST2→PES
                 pref = str(val)[:3].upper()
                 LOGOS_MAP2 = {"PES":"logos_ligas/logo_pes.PNG","PSS":"logos_ligas/logo_pss.PNG",
-                              "PJS":"logos_ligas/logo_pjs.PNG","PMS":"logos_ligas/logo_pms.PNG","PLS":"logos_ligas/logo_pls.png"}
+                              "PJS":"logos_ligas/logo_pjs.PNG","PMS":"logos_ligas/logo_pms.PNG","PLS":"logos_ligas/logo_pls.png",
+                              "PGS":"logos_ligas/logo_pgs.PNG"}
                 # Try banner first
                 for ext in ['png','PNG','jpg','JPG']:
                     for ruta in [f"banners_ligas/banner_{str(val).lower()}.{ext}",
