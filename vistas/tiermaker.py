@@ -126,11 +126,30 @@ def _score_por_jugador(df: pd.DataFrame) -> dict:
     return todo.groupby('_key')['score_completo'].mean().round(2).to_dict()
 
 
+VENTANAS_WINRATE = [
+    ('1m',  1,  'Último mes'),
+    ('3m',  3,  'Últimos 3 meses'),
+    ('6m',  6,  'Últimos 6 meses'),
+    ('12m', 12, 'Último año'),
+]
+
+
 @st.cache_data(ttl=1800, show_spinner=False)
 def _construir_tabla_jugadores() -> pd.DataFrame:
     df = ensure_fields(normalize_columns(load_data()))
     stats = compute_player_stats(df)  # Jugador, Partidas, Victorias, Derrotas, Winrate%
     scores = _score_por_jugador(df)
+
+    # Winrate por ventana de tiempo (últ. mes / 3m / 6m / año), reusando la misma
+    # lógica de compute_player_stats sobre el subconjunto de partidas de cada
+    # ventana. La fecha de referencia es la última fecha con datos (no "hoy" del
+    # sistema), igual que en Participación y Retención.
+    fecha_ref = df['date'].max()
+    stats_ventana = {}
+    if pd.notna(fecha_ref):
+        for sufijo, meses, _ in VENTANAS_WINRATE:
+            sub = df[df['date'] >= (fecha_ref - pd.DateOffset(months=meses))]
+            stats_ventana[sufijo] = compute_player_stats(sub).set_index('Jugador')
 
     filas = []
     for _, row in stats.iterrows():
@@ -152,7 +171,7 @@ def _construir_tabla_jugadores() -> pd.DataFrame:
         )
         img_path = _buscar_imagen(jugador)
 
-        filas.append({
+        fila = {
             'Jugador':      jugador,
             'Partidas':     int(row['Partidas']),
             'Victorias':    int(row['Victorias']),
@@ -163,7 +182,16 @@ def _construir_tabla_jugadores() -> pd.DataFrame:
             'Tier':         tier_top if tier_top not in ('nan', None) else '',
             'tiene_imagen': img_path is not None,
             '_img_path':    img_path,
-        })
+        }
+        for sufijo, _, _ in VENTANAS_WINRATE:
+            tabla_v = stats_ventana.get(sufijo)
+            if tabla_v is not None and jugador in tabla_v.index:
+                fila[f'Winrate_{sufijo}']  = float(tabla_v.loc[jugador, 'Winrate%'])
+                fila[f'Partidas_{sufijo}'] = int(tabla_v.loc[jugador, 'Partidas'])
+            else:
+                fila[f'Winrate_{sufijo}']  = None
+                fila[f'Partidas_{sufijo}'] = 0
+        filas.append(fila)
 
     return pd.DataFrame(filas)
 
@@ -323,7 +351,12 @@ def _render_tiermaker_html(jugadores: list, formatos: list, tiers_jugados: list)
     card.draggable = true;
     card.dataset.name = p.nombre;
     const scoreTxt = (p.score === null || p.score === undefined) ? 's/d' : p.score;
-    card.title = `${{p.nombre}}\\nPartidas: ${{p.partidas}}  |  Winrate: ${{p.winrate}}%\\nScore: ${{scoreTxt}}  |  Formato: ${{p.formato || '-'}}`;
+    const wrTxt = (v, n) => (v === null || v === undefined) ? `s/d (${{n}}p)` : `${{v}}% (${{n}}p)`;
+    card.title = `${{p.nombre}}\\n` +
+      `Partidas: ${{p.partidas}}  |  Winrate total: ${{p.winrate}}%\\n` +
+      `Últ. mes: ${{wrTxt(p.winrate_1m, p.partidas_1m)}}  |  Últ. 3 meses: ${{wrTxt(p.winrate_3m, p.partidas_3m)}}\\n` +
+      `Últ. 6 meses: ${{wrTxt(p.winrate_6m, p.partidas_6m)}}  |  Últ. año: ${{wrTxt(p.winrate_12m, p.partidas_12m)}}\\n` +
+      `Score: ${{scoreTxt}}  |  Formato: ${{p.formato || '-'}}`;
     if (p.img) {{
       card.innerHTML = `<img src="${{p.img}}"><div class="tm-name">${{p.nombre}}</div>`;
     }} else {{
@@ -525,7 +558,7 @@ def show():
     for _, r in tabla_f.iterrows():
         img_b64 = _imagen_base64(r['_img_path']) if r['tiene_imagen'] else None
         score = r['Score']
-        jugadores_payload.append({
+        payload = {
             'nombre':      r['Jugador'],
             'img':         img_b64,
             'partidas':    r['Partidas'],
@@ -535,7 +568,12 @@ def show():
             'score':       (round(float(score), 2) if pd.notna(score) else None),
             'formato':     r['Formato'],
             'tier_jugado': r['Tier'],
-        })
+        }
+        for sufijo, _, _ in VENTANAS_WINRATE:
+            wr = r[f'Winrate_{sufijo}']
+            payload[f'winrate_{sufijo}']  = (round(float(wr), 2) if pd.notna(wr) else None)
+            payload[f'partidas_{sufijo}'] = int(r[f'Partidas_{sufijo}'])
+        jugadores_payload.append(payload)
 
     formatos      = sorted({j['formato'] for j in jugadores_payload if j['formato']})
     tiers_jugados = sorted({j['tier_jugado'] for j in jugadores_payload if j['tier_jugado']})
