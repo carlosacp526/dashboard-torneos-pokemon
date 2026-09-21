@@ -5,7 +5,9 @@ Fuente: logros_pokemon.xlsx
 
 import streamlit as st
 import pandas as pd
-import os, base64, glob
+import os, base64, glob, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from vistas.elo import cargar_paises, _pais_de
 
 # ── Imágenes embebidas directamente (sin dependencia de paths) ───────────────
 try:
@@ -132,6 +134,10 @@ LOGROS = [
     {"id":"SO07","num":71,"cat":"Social",       "rareza":"Plata",     "icon":"⚖️","xp":300,  "name":"Árbitro Honorario",     "desc":"Sin Walk Over en contra en 3  meses"},
     {"id":"SO08","num":72,"cat":"Social",       "rareza":"Oro",       "icon":"📋","xp":700,  "name":"Jugador Honorable",     "desc":"Sin Walk Over ni a favor ni en contra en 1 año"},
     {"id":"SO09","num":73,"cat":"Social",       "rareza":"Legendario","icon":"🏅","xp":3000, "name":"Leyenda de la Comunidad","desc":"Premio BP del año o  300 partidas"},
+    {"id":"SO10","num":119,"cat":"Social",      "rareza":"Bronce",    "icon":"🌎","xp":150,  "name":"Explorador Internacional","desc":"Derrota a jugadores de 3 países distintos"},
+    {"id":"SO11","num":120,"cat":"Social",      "rareza":"Plata",     "icon":"🌎","xp":400,  "name":"Viajero Frecuente",      "desc":"Derrota a jugadores de 5 países distintos"},
+    {"id":"SO12","num":121,"cat":"Social",      "rareza":"Oro",       "icon":"🌎","xp":900,  "name":"Diplomático de Batalla", "desc":"Derrota a jugadores de 10 países distintos"},
+    {"id":"SO13","num":122,"cat":"Social",      "rareza":"Legendario","icon":"🌎","xp":2000, "name":"Conquistador Global",    "desc":"Derrota a jugadores de 15 países distintos"},
     # ── ESPECIAL (17) ────────────────────────────────────────────────────────
     {"id":"SP01","num":74,"cat":"Especial",     "rareza":"Oro",       "icon":"🍀","xp":1000, "name":"Principiante de Suerte","desc":"Gana 10 batallas"},
     {"id":"SP02","num":75,"cat":"Especial",     "rareza":"Oro",       "icon":"👑","xp":800,  "name":"Regreso del Rey",       "desc":"Vuelve a ganar un torneo después de un año"},
@@ -255,11 +261,16 @@ def evaluar_logros(
 
     # rivales únicos
     rivales = set()
-    for _, r in pm.iterrows():
-        p1 = str(r.get('player1','')).strip().lower()
-        p2 = str(r.get('player2','')).strip().lower()
+    rivales_derrotados = set()
+    for _, row_ in pm.iterrows():
+        p1 = str(row_.get('player1','')).strip().lower()
+        p2 = str(row_.get('player2','')).strip().lower()
+        winner = str(row_.get('winner','')).strip().lower()
         if pq in p1: rivales.add(p2)
         elif pq in p2: rivales.add(p1)
+        if pq in winner:
+            if pq in p1: rivales_derrotados.add(p2)
+            elif pq in p2: rivales_derrotados.add(p1)
 
     if 'date' in pm.columns:
         pm['date'] = pd.to_datetime(pm['date'], errors='coerce')
@@ -769,7 +780,19 @@ def evaluar_logros(
         total >= 300
     )
 
+    # SO10-SO13: derrotar jugadores de N países distintos (usa el mismo Excel
+    # de teléfonos que Pendientes/Elo — celulares.xlsx, columna Pais).
+    _paises_map = cargar_paises()
+    _paises_derrotados = {
+        _pais_de(_paises_map, _riv) for _riv in rivales_derrotados
+    }
+    _paises_derrotados.discard('')
+    n_paises_derrotados = len(_paises_derrotados)
 
+    r["SO10"] = n_paises_derrotados >= 3
+    r["SO11"] = n_paises_derrotados >= 5
+    r["SO12"] = n_paises_derrotados >= 10
+    r["SO13"] = n_paises_derrotados >= 15
 
     # ESPECIAL
     r["SP01"] = victorias>=10
