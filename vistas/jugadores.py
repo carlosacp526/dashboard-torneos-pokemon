@@ -8,7 +8,7 @@ from utils import (load_data, normalize_columns, ensure_fields, compute_player_s
                    build_base_liga, build_base_torneo, build_base_jornada)
 from vistas.logros import (LOGROS, evaluar_logros, RAREZA_COLORS, CAT_COLORS,
                             CATEGORIAS_ORDEN, BW_COLORS, medal_svg, _get_img_bytes)
-from vistas.elo import calcular_elo
+from vistas.elo import calcular_elo, cargar_paises, _pais_de, _pais_con_bandera
 
 
 
@@ -1215,6 +1215,9 @@ def show():
                 st.info("📷 Imagen no disponible")
         with col_info:
             st.write(f"### {player_query}")
+            pais_jugador = _pais_de(cargar_paises(), player_query)
+            if pais_jugador:
+                st.markdown(_pais_con_bandera(pais_jugador), unsafe_allow_html=True)
             st.write(f"**Partidas encontradas:** {len(player_matches)}")
             p_stats_quick = compute_player_stats(player_matches)
             if not p_stats_quick.empty:
