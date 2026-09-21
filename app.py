@@ -64,9 +64,16 @@ st.session_state["_pages"] = {
    "logros_analisis": p_logros_analisis
 }
 
+# Mismas 5 categorías que usa la grilla de tarjetas de Inicio (vistas/inicio.py
+# GRUPOS), para que el menú lateral y el landing page queden consistentes en
+# vez de tener 19 páginas sueltas bajo un único "Secciones".
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas, p_torneos,  p_elo,p_calidad,p_retencion, p_social, p_estilo, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker,p_headtohead,p_logros_analisis],
+    "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis],
+    "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
+    "🏆 Competencia": [p_rankings, p_ligas, p_torneos, p_roleplay],
+    "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker],
+    "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion],
 })
 
 pg.run()
