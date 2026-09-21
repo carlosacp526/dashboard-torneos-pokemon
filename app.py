@@ -19,6 +19,7 @@ from vistas import roleplay
 from vistas import tiermaker
 from vistas import headtohead
 from vistas import retencion
+from vistas import logros_analisis
 p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
 p_retencion  = st.Page(retencion.show,    title="🔁 Participación y Retención", url_path="retencion")
 p_social     = st.Page(social.show,       title="🕸️ Analítica Social",       url_path="social")
@@ -38,6 +39,7 @@ p_roleplay = st.Page(roleplay.show,   title="🎭 Roleplay",             url_pat
 p_pendientes = st.Page(pendientes.show, title="⏳ Pendientes", url_path="pendientes")
 p_tiermaker  = st.Page(tiermaker.show,  title="🏆 Tier Maker", url_path="tiermaker")
 p_headtohead = st.Page(headtohead.show, title="⚔️ Head-to-Head", url_path="headtohead")
+p_logros_analisis = st.Page(logros_analisis.show, title="🧭 Análisis de Logros", url_path="logros-analisis")
 st.session_state["_pages"] = {
     "inicio":     p_inicio,
     "analisis":   p_analisis,
@@ -58,12 +60,13 @@ st.session_state["_pages"] = {
     "roleplay": p_roleplay,
    "pendientes": p_pendientes,
    "tiermaker": p_tiermaker,
-   "headtohead": p_headtohead
+   "headtohead": p_headtohead,
+   "logros_analisis": p_logros_analisis
 }
 
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas, p_torneos,  p_elo,p_calidad,p_retencion, p_social, p_estilo, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker,p_headtohead],
+    "📊 Secciones": [p_analisis, p_jugadores,p_rankings,p_mundial,p_replays, p_ligas, p_torneos,  p_elo,p_calidad,p_retencion, p_social, p_estilo, p_prediccion,p_tcg ,p_roleplay,p_pendientes,p_tiermaker,p_headtohead,p_logros_analisis],
 })
 
 pg.run()

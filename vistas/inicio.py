@@ -22,6 +22,8 @@ GRUPOS = [
              ["🕸️ Grafo de rivalidades", "👑 Némesis y presas favoritas", "😲 Índice de Sorpresas"]),
             ("estilo", "🎭", "Estilo y Comportamiento",
              ["🎭 Huella de estilo en 5 ejes", "⏰ Ranking de Confiabilidad"]),
+            ("logros_analisis", "🧭", "Análisis de Logros",
+             ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🏆 Ranking de jugadores"]),
         ],
     },
     {
