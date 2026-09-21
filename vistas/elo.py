@@ -255,11 +255,38 @@ def get_player_elo_history(player_query, data_filas, exact=False):
     return d
 
 
+# ── Paises (mismo Excel que usa Pendientes para WhatsApp) ──────────────
+EXCEL_CELULARES = "celulares.xlsx"
+
+@st.cache_data(ttl=300)
+def cargar_paises():
+    """Lee el Excel de telefonos y devuelve {jugador_lower: pais}."""
+    for path in [EXCEL_CELULARES, "celulares_xlsx.xlsx"]:
+        if os.path.exists(path):
+            df = pd.read_excel(path)
+            df.columns = [c.strip() for c in df.columns]
+            paises = {}
+            for _, row in df.iterrows():
+                jugador = str(row.get('Jugador', '')).strip()
+                pais = str(row.get('Pais', '')).strip()
+                if jugador and jugador.lower() != 'nan':
+                    paises[jugador.lower()] = pais if pais and pais.lower() != 'nan' else ''
+            return paises
+    return {}
+
+
+def _pais_de(paises: dict, jugador: str) -> str:
+    return paises.get(str(jugador).strip().lower(), '')
+
+
 def show():
     df_raw = load_data()
 
     with st.spinner("Calculando Elo..."):
         data_elo, data_filas, elo_raw = calcular_elo(df_raw)
+
+    paises = cargar_paises()
+    data_elo['Pais'] = data_elo['Participantes'].apply(lambda j: _pais_de(paises, j))
 
     activos = data_elo[data_elo['Actividad'] == 'Activo'].copy().reset_index(drop=True)
     activos['RANK'] = range(1, len(activos) + 1)
@@ -278,11 +305,13 @@ def show():
         with podio[idx]:
             jugador = top10.loc[idx, 'Participantes']
             elo_val = int(top10.loc[idx, 'Elo'])
+            pais_val = top10.loc[idx, 'Pais'] or "—"
             st.markdown(f"""
             <div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
                         border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:center">
                 <div style="font-size:2rem">{medallas[idx]}</div>
                 <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
+                <div style="font-size:0.8rem;color:#aaa">🌎 {pais_val}</div>
                 <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
                 <div style="font-size:0.8rem;color:#aaa">ELO</div>
             </div>""", unsafe_allow_html=True)
@@ -299,12 +328,12 @@ def show():
 
     # Tabla top 10
     st.subheader("🏆 Top 10 Activos")
-    cols_show = ['RANK','Participantes','Elo','Actividad']
+    cols_show = ['RANK','Participantes','Pais','Elo','Actividad']
     st.markdown("""
     <style>
     .top-table { width:100%; border-collapse:collapse; font-size:15px; }
     .top-table th { background:#333; color:white; padding:8px 12px; text-align:left; }
-    .top-table td { padding:8px 12px; border-bottom:1px solid #444; color:white; }
+    .top-table td { background:#222; padding:8px 12px; border-bottom:1px solid #444; color:white; }
     .rank-1 { background-color:#FFD700 !important; color:#000 !important; font-weight:bold; }
     .rank-2 { background-color:#C0C0C0 !important; color:#000 !important; font-weight:bold; }
     .rank-3 { background-color:#CD7F32 !important; color:#000 !important; font-weight:bold; }
@@ -313,10 +342,12 @@ def show():
     rows_html = ""
     for _, row in top10[cols_show].iterrows():
         cls = {1:"rank-1", 2:"rank-2", 3:"rank-3"}.get(row['RANK'], "")
-        rows_html += f"<tr class='{cls}'><td>{int(row['RANK'])}</td><td>{row['Participantes']}</td><td>{int(row['Elo'])}</td><td>{row['Actividad']}</td></tr>"
+        pais_cell = row['Pais'] or "—"
+        rows_html += (f"<tr class='{cls}'><td>{int(row['RANK'])}</td><td>{row['Participantes']}</td>"
+                      f"<td>{pais_cell}</td><td>{int(row['Elo'])}</td><td>{row['Actividad']}</td></tr>")
     st.markdown(f"""
     <table class="top-table">
-        <thead><tr><th>RANK</th><th>Jugador</th><th>Elo</th><th>Actividad</th></tr></thead>
+        <thead><tr><th>RANK</th><th>Jugador</th><th>Pais</th><th>Elo</th><th>Actividad</th></tr></thead>
         <tbody>{rows_html}</tbody>
     </table><br>
     """, unsafe_allow_html=True)
