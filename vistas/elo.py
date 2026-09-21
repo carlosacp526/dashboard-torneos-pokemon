@@ -279,6 +279,45 @@ def _pais_de(paises: dict, jugador: str) -> str:
     return paises.get(str(jugador).strip().lower(), '')
 
 
+# ── Banderas ──────────────────────────────────────────────────────────────
+# Se usa una imagen real de bandera (flagcdn.com) en vez del emoji de
+# indicador regional: en Windows, Chromium suele mostrar el emoji de bandera
+# como dos letras sueltas (ej. "MX") en lugar de la banderita, porque depende
+# de que el sistema tenga una fuente con esa ligadura - la imagen se ve igual
+# en cualquier sistema/navegador.
+PAIS_ISO2 = {
+    'argentina': 'AR', 'bolivia': 'BO', 'brazil': 'BR', 'chile': 'CL',
+    'colombia': 'CO', 'costa rica': 'CR', 'cuba': 'CU', 'eeuu': 'US',
+    'ecuador': 'EC', 'el salvador': 'SV', 'espana': 'ES', 'guatemala': 'GT',
+    'honduras': 'HN', 'mexico': 'MX', 'nicaragua': 'NI', 'panama': 'PA',
+    'peru': 'PE', 'republica dominicana': 'DO', 'venezuela': 'VE',
+}
+
+def _iso2_de(pais: str) -> str:
+    if not pais:
+        return ''
+    key = str(pais).strip().lower()
+    key = (key.replace('á', 'a').replace('é', 'e').replace('í', 'i')
+              .replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n'))
+    return PAIS_ISO2.get(key, '')
+
+
+def _bandera_img(pais: str, w: int = 20) -> str:
+    iso2 = _iso2_de(pais)
+    if not iso2:
+        return ''
+    return (f'<img src="https://flagcdn.com/w40/{iso2.lower()}.png" width="{w}" '
+            f'style="vertical-align:middle;border-radius:2px;margin-right:5px;'
+            f'box-shadow:0 0 1px rgba(0,0,0,.5);">')
+
+
+def _pais_con_bandera(pais: str) -> str:
+    if not pais:
+        return '—'
+    img = _bandera_img(pais)
+    return f'<span style="white-space:nowrap">{img}{pais}</span>' if img else pais
+
+
 def show():
     df_raw = load_data()
 
@@ -305,13 +344,13 @@ def show():
         with podio[idx]:
             jugador = top10.loc[idx, 'Participantes']
             elo_val = int(top10.loc[idx, 'Elo'])
-            pais_val = top10.loc[idx, 'Pais'] or "—"
+            pais_val = _pais_con_bandera(top10.loc[idx, 'Pais'])
             st.markdown(f"""
             <div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
                         border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:center">
                 <div style="font-size:2rem">{medallas[idx]}</div>
                 <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
-                <div style="font-size:0.8rem;color:#aaa">🌎 {pais_val}</div>
+                <div style="font-size:0.85rem;color:#aaa">{pais_val}</div>
                 <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
                 <div style="font-size:0.8rem;color:#aaa">ELO</div>
             </div>""", unsafe_allow_html=True)
@@ -342,7 +381,7 @@ def show():
     rows_html = ""
     for _, row in top10[cols_show].iterrows():
         cls = {1:"rank-1", 2:"rank-2", 3:"rank-3"}.get(row['RANK'], "")
-        pais_cell = row['Pais'] or "—"
+        pais_cell = _pais_con_bandera(row['Pais'])
         rows_html += (f"<tr class='{cls}'><td>{int(row['RANK'])}</td><td>{row['Participantes']}</td>"
                       f"<td>{pais_cell}</td><td>{int(row['Elo'])}</td><td>{row['Actividad']}</td></tr>")
     st.markdown(f"""
