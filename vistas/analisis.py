@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, compute_player_score
+from utils import load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats
 
 def show():
     df_raw = load_data()
@@ -177,6 +177,68 @@ def show():
         total_jugadores = len(jugadores_csv)
         st.caption(f"Países: **{pais_counts['País'].nunique()}** · "
                    f"Jugadores con país: **{total_con_pais}** de **{total_jugadores}**")
+
+        # ── Winrate por País (filtrable por Tier) ────────────────────
+        st.markdown("---")
+        st.subheader("🏆 Winrate por País")
+
+        tiers_disponibles = (sorted(df['Tier'].dropna().astype(str).str.strip().unique().tolist())
+                              if 'Tier' in df.columns else [])
+        tiers_disponibles = [t for t in tiers_disponibles if t and t.lower() != 'nan']
+        tier_sel = st.selectbox(
+            "Filtrar por Tier", ["Todos"] + tiers_disponibles, key="winrate_pais_tier"
+        )
+
+        df_tier = df
+        if tier_sel != "Todos" and 'Tier' in df.columns:
+            df_tier = df[df['Tier'].astype(str).str.strip() == tier_sel]
+
+        stats_jugadores = compute_player_stats(df_tier)
+
+        if stats_jugadores.empty:
+            st.info(f"No hay partidas registradas para el tier **{tier_sel}**." if tier_sel != "Todos"
+                    else "No hay datos suficientes para calcular winrate.")
+        else:
+            stats_jugadores = stats_jugadores.copy()
+            stats_jugadores['Jugador_norm'] = stats_jugadores['Jugador'].str.strip().str.lower()
+            df_cel_key = df_cel.rename(columns={'Jugador': 'Jugador_key'})
+
+            stats_pais = stats_jugadores.merge(
+                df_cel_key, left_on='Jugador_norm', right_on='Jugador_key', how='inner'
+            )
+
+            if stats_pais.empty:
+                st.info(f"Ningún jugador con país registrado tiene partidas en el tier **{tier_sel}**."
+                        if tier_sel != "Todos" else "Ningún jugador con país registrado tiene partidas.")
+            else:
+                resumen_pais = stats_pais.groupby('Pais').agg(
+                    Partidas=('Partidas', 'sum'), Victorias=('Victorias', 'sum')
+                ).reset_index()
+                resumen_pais = resumen_pais[resumen_pais['Partidas'] > 0].copy()
+                resumen_pais['Winrate%'] = (resumen_pais['Victorias'] / resumen_pais['Partidas'] * 100).round(2)
+                resumen_pais['País_flag'] = resumen_pais['Pais'].apply(
+                    lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
+                )
+                resumen_pais = resumen_pais.sort_values('Winrate%', ascending=False)
+
+                altura_wr = max(400, len(resumen_pais) * 38)
+                titulo_wr = "Winrate por País" + (f" — Tier {tier_sel}" if tier_sel != "Todos" else "")
+                fig_wr = px.bar(
+                    resumen_pais, x='Winrate%', y='País_flag', orientation='h',
+                    color='Winrate%', color_continuous_scale='RdYlGn', range_color=[0, 100],
+                    text='Winrate%', title=titulo_wr
+                )
+                fig_wr.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                fig_wr.update_layout(
+                    yaxis={'categoryorder': 'total ascending', 'title': ''},
+                    xaxis={'title': 'Winrate %', 'range': [0, 100]},
+                    height=altura_wr, showlegend=False,
+                    margin=dict(l=10, r=40, t=40, b=20)
+                )
+                st.plotly_chart(fig_wr, use_container_width=True)
+                st.caption(f"Basado en **{int(resumen_pais['Partidas'].sum())}** partidas de "
+                           f"**{stats_pais['Jugador_norm'].nunique()}** jugadores con país registrado"
+                           + (f", tier **{tier_sel}**." if tier_sel != "Todos" else "."))
     else:
         st.info("Subí **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
 
