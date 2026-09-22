@@ -48,6 +48,19 @@ VENTANAS_POKE = ["m36", "m24", "m18", "m12", "m9", "m5"]
 PLACEHOLDER_NOMBRES = {'walk over (w.o)', 'pendiente'}
 
 
+def _aka_por_torneo(df_raw):
+    """Nombre de evento (Aka_evento) más frecuente para cada N_Torneo — para
+    mostrar algo más útil que solo el número en el selector de Torneo."""
+    if "N_Torneo" not in df_raw.columns or "Aka_evento" not in df_raw.columns:
+        return {}
+    d = df_raw[df_raw["N_Torneo"].notna() & df_raw["Aka_evento"].notna()].copy()
+    if d.empty:
+        return {}
+    d["N_Torneo"] = d["N_Torneo"].astype(int)
+    moda = d.groupby("N_Torneo")["Aka_evento"].agg(lambda s: s.mode().iat[0] if not s.mode().empty else s.iloc[0])
+    return moda.to_dict()
+
+
 def _sin_placeholders(df):
     if df.empty:
         return df
@@ -272,25 +285,19 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
     temporadas_con_pendientes = set(df_pend_all["Liga_Temporada"].unique()) if not df_pend_all.empty else set()
 
     temporadas_en_curso = [lt for lt in temporadas_disp if lt in temporadas_con_pendientes]
-    default_lt = temporadas_en_curso[-1] if temporadas_en_curso else temporadas_disp[-1]
-    default_idx = temporadas_disp.index(default_lt)
+    if not temporadas_en_curso:
+        st.info("Ninguna temporada de liga tiene cruces pendientes ahora mismo — todas las tablas ya están cerradas, no hay nada que simular.")
+        return
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        lt = st.selectbox(
-            "Temporada de liga",
-            temporadas_disp, index=default_idx,
-            format_func=lambda x: f"{x} 🟢 en curso" if x in temporadas_con_pendientes else f"{x} ✅ cerrada",
-        )
+        lt = st.selectbox("Temporada de liga (en curso)", temporadas_en_curso, index=len(temporadas_en_curso) - 1)
     with col2:
         mod_sel = st.selectbox("Modelo ML", list(trained.keys()),
                                 index=list(trained.keys()).index(best_name) if best_name in trained else 0,
                                 key="liga_mod")
     with col3:
         n_sims = st.slider("Simulaciones", 200, 5000, 1000, step=200, key="liga_nsims")
-
-    if not temporadas_en_curso:
-        st.info("Ninguna temporada de liga tiene cruces pendientes ahora mismo — todas las tablas ya están cerradas, no hay nada que simular.")
 
     base_lt = base2[base2["Liga_Temporada"] == lt][
         ["Participante", "Victorias", "Juegos", "Derrotas", "pokes_sobrevivientes", "poke_vencidos"]
@@ -365,24 +372,25 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
     torneos_con_pendientes = set(df_pend_all["N_Torneo"].unique()) if not df_pend_all.empty else set()
 
     torneos_en_curso = [t for t in torneos_disp if t in torneos_con_pendientes]
-    default_t = torneos_en_curso[-1] if torneos_en_curso else torneos_disp[-1]
-    default_idx = torneos_disp.index(default_t)
+    if not torneos_en_curso:
+        st.info("Ningún torneo tiene cruces pendientes ahora mismo — todos ya están cerrados, no hay nada que simular.")
+        return
+
+    aka_por_torneo = _aka_por_torneo(df_raw)
 
     col1, col2, col3 = st.columns(3)
     with col1:
         nt = st.selectbox(
-            "Torneo", torneos_disp, index=default_idx,
-            format_func=lambda x: f"Torneo {x} 🟢 en curso" if x in torneos_con_pendientes else f"Torneo {x} ✅ cerrado",
+            "Torneo (en curso)", torneos_en_curso, index=len(torneos_en_curso) - 1,
+            format_func=lambda x: f"Torneo {x} — {aka_por_torneo[x]}" if x in aka_por_torneo else f"Torneo {x}",
         )
+    nombre_torneo = f"Torneo {nt} ({aka_por_torneo[nt]})" if nt in aka_por_torneo else f"Torneo {nt}"
     with col2:
         mod_sel = st.selectbox("Modelo ML", list(trained.keys()),
                                 index=list(trained.keys()).index(best_name) if best_name in trained else 0,
                                 key="torneo_mod")
     with col3:
         n_sims = st.slider("Simulaciones", 200, 5000, 1000, step=200, key="torneo_nsims")
-
-    if not torneos_en_curso:
-        st.info("Ningún torneo tiene cruces pendientes ahora mismo — todos ya están cerrados, no hay nada que simular.")
 
     base_nt = base_t[base_t["Torneo_Temp"] == nt][
         ["Participante", "Victorias", "Juegos", "Derrotas", "pokes_sobrevivientes", "poke_vencidos"]
@@ -393,7 +401,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
     st.markdown("---")
 
     if pend_nt.empty:
-        st.success(f"✅ El **Torneo {nt}** no tiene cruces pendientes — la tabla ya es definitiva, no hace falta simular.")
+        st.success(f"✅ El **{nombre_torneo}** no tiene cruces pendientes — la tabla ya es definitiva, no hace falta simular.")
         tabla_actual = score_final(base_nt.copy()).sort_values(
             ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
         tabla_actual["RANK"] = range(1, len(tabla_actual) + 1)
@@ -403,6 +411,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
                      use_container_width=True, hide_index=True)
         return
 
+    st.caption(f"📌 {nombre_torneo}")
     st.metric("🎯 Cruces pendientes en este torneo", len(pend_nt))
 
     model = trained[mod_sel]
@@ -418,7 +427,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
     ganador = odds_df.sort_values("Campeón", ascending=False).iloc[0]
     st.success(f"🏆 Favorito a Campeón: **{ganador['Jugador']}** ({ganador['Campeón']:.1f}% de las simulaciones).")
 
-    _mostrar_resultado(odds_df, ZONAS_TORNEO, COLORS_TORNEO, f"Probabilidad de podio — Torneo {nt}", n_sims, f"torneo_odds_{nt}.csv")
+    _mostrar_resultado(odds_df, ZONAS_TORNEO, COLORS_TORNEO, f"Probabilidad de podio — {nombre_torneo}", n_sims, f"torneo_odds_{nt}.csv")
 
     with st.expander("📖 Metodología y límites"):
         st.markdown(f"""
