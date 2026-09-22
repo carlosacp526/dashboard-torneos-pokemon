@@ -109,6 +109,20 @@ def calcular_logros_comunidad(_df_raw):
     return pd.DataFrame(filas).set_index("Jugador")
 
 
+def _umbrales(sub, total_jugadores):
+    """Para un subconjunto de columnas (una categoria o una rareza): % de
+    jugadores que llegaron a cada umbral de completitud DENTRO de ese
+    subconjunto (no del catalogo entero) - al menos 1, la mitad, 3/4, y el
+    100% (todas las de ese subconjunto)."""
+    frac = sub.sum(axis=1) / sub.shape[1]
+    return {
+        "% con ≥1": round((frac > 0).sum() / total_jugadores * 100, 1),
+        "% con ≥50%": round((frac >= 0.5).sum() / total_jugadores * 100, 1),
+        "% con ≥75%": round((frac >= 0.75).sum() / total_jugadores * 100, 1),
+        "% completo (100%)": round((frac >= 0.999).sum() / total_jugadores * 100, 1),
+    }
+
+
 def _color_pct(val):
     if val >= 60: return "#2ECC71"
     if val >= 30: return "#F1C40F"
@@ -161,23 +175,19 @@ def show():
     # ═══════════════════════ Por categoría ═══════════════════════
     with tabs[0]:
         st.markdown("### Cobertura por categoría")
-        st.caption("Por cada categoría: % promedio de esa categoría que tiene un jugador típico, y "
-                   "cuántos jugadores desbloquearon al menos 1 logro de esa categoría.")
+        st.caption("Por cada categoría: % de jugadores que llegaron a distintos niveles de "
+                   "completitud DENTRO de esa categoría — al menos 1, la mitad, 3/4, o el 100%.")
         filas_cat = []
         for cat in CATEGORIAS_ORDEN:
             ids_cat = logros_df[logros_df["cat"] == cat].index.tolist()
             if not ids_cat:
                 continue
             sub = matriz[ids_cat]
-            jugadores_con_1 = int((sub.sum(axis=1) > 0).sum())
-            pct_prom = (sub.sum(axis=1) / len(ids_cat) * 100).mean()
             pct_global = sub.values.sum() / (len(ids_cat) * total_jugadores) * 100
-            filas_cat.append({
-                "Categoría": cat, "N° logros": len(ids_cat),
-                "Jugadores con ≥1": jugadores_con_1,
-                "% jugadores con ≥1": round(jugadores_con_1 / total_jugadores * 100, 1),
-                "% desbloqueo global": round(pct_global, 1),
-            })
+            fila = {"Categoría": cat, "N° logros": len(ids_cat)}
+            fila.update(_umbrales(sub, total_jugadores))
+            fila["% desbloqueo global"] = round(pct_global, 1)
+            filas_cat.append(fila)
         cat_df = pd.DataFrame(filas_cat).sort_values("% desbloqueo global", ascending=False)
 
         fig = px.bar(cat_df, x="% desbloqueo global", y="Categoría", orientation="h",
@@ -187,13 +197,26 @@ def show():
         fig.update_layout(yaxis={"categoryorder": "total ascending"}, showlegend=False,
                            height=max(350, len(cat_df) * 45), margin=dict(l=10, r=40, t=40, b=20))
         st.plotly_chart(fig, use_container_width=True)
+
+        cat_umbral_long = cat_df.melt(
+            id_vars=["Categoría"], value_vars=["% con ≥1", "% con ≥50%", "% con ≥75%", "% completo (100%)"],
+            var_name="Umbral", value_name="% de jugadores")
+        fig_u = px.bar(cat_umbral_long, x="% de jugadores", y="Categoría", color="Umbral",
+                       orientation="h", barmode="group",
+                       category_orders={"Umbral": ["% con ≥1", "% con ≥50%", "% con ≥75%", "% completo (100%)"],
+                                         "Categoría": cat_df["Categoría"].tolist()},
+                       title="Niveles de completitud dentro de cada categoría")
+        fig_u.update_layout(height=max(400, len(cat_df) * 70), margin=dict(l=10, r=10, t=40, b=20))
+        st.plotly_chart(fig_u, use_container_width=True)
+
         st.dataframe(cat_df, use_container_width=True, hide_index=True)
 
     # ═══════════════════════ Por rareza ═══════════════════════
     with tabs[1]:
         st.markdown("### Cobertura por rareza")
-        st.caption("Cuántos jugadores llegaron a desbloquear al menos una medalla de cada nivel de "
-                   "dificultad — el salto entre niveles muestra qué tan filtrante es cada rareza.")
+        st.caption("Cuántos jugadores llegaron a cada nivel de completitud DENTRO de cada rareza "
+                   "— al menos 1, la mitad, 3/4, o el 100% de esa rareza. El achicamiento entre "
+                   "umbrales muestra qué tan filtrante es cada nivel de dificultad.")
         filas_rar = []
         for rareza in RAREZA_ORDEN:
             ids_rar = logros_df[logros_df["rareza"] == rareza].index.tolist()
@@ -202,27 +225,29 @@ def show():
             sub = matriz[ids_rar]
             jugadores_con_1 = int((sub.sum(axis=1) > 0).sum())
             pct_global = sub.values.sum() / (len(ids_rar) * total_jugadores) * 100
-            filas_rar.append({
-                "Rareza": rareza, "N° logros": len(ids_rar),
-                "Jugadores con ≥1": jugadores_con_1,
-                "% jugadores con ≥1": round(jugadores_con_1 / total_jugadores * 100, 1),
-                "% desbloqueo global": round(pct_global, 1),
-            })
+            fila = {"Rareza": rareza, "N° logros": len(ids_rar), "Jugadores con ≥1": jugadores_con_1}
+            fila.update(_umbrales(sub, total_jugadores))
+            fila["% desbloqueo global"] = round(pct_global, 1)
+            filas_rar.append(fila)
         rar_df = pd.DataFrame(filas_rar)
 
+        rar_umbral_long = rar_df.melt(
+            id_vars=["Rareza"], value_vars=["% con ≥1", "% con ≥50%", "% con ≥75%", "% completo (100%)"],
+            var_name="Umbral", value_name="% de jugadores")
         c1, c2 = st.columns(2)
         with c1:
-            fig_r = px.bar(rar_df, x="Rareza", y="% jugadores con ≥1", color="Rareza",
-                            color_discrete_map={r: RAREZA_COLORS[r]["c1"] for r in RAREZA_ORDEN},
-                            category_orders={"Rareza": RAREZA_ORDEN}, text="% jugadores con ≥1",
-                            title="% de jugadores con al menos 1 logro de esa rareza")
+            fig_r = px.bar(rar_umbral_long, x="Rareza", y="% de jugadores", color="Umbral",
+                            barmode="group", category_orders={"Rareza": RAREZA_ORDEN,
+                                "Umbral": ["% con ≥1", "% con ≥50%", "% con ≥75%", "% completo (100%)"]},
+                            text="% de jugadores",
+                            title="% de jugadores por umbral de completitud, dentro de cada rareza")
             fig_r.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-            fig_r.update_layout(showlegend=False, margin=dict(l=10, r=10, t=40, b=20))
+            fig_r.update_layout(margin=dict(l=10, r=10, t=40, b=20), legend_title="")
             st.plotly_chart(fig_r, use_container_width=True)
         with c2:
             fig_r2 = px.funnel(rar_df, x="Jugadores con ≥1", y="Rareza",
                                 category_orders={"Rareza": RAREZA_ORDEN[::-1]},
-                                title="Embudo: cuántos jugadores llegan a cada nivel")
+                                title="Embudo: cuántos jugadores llegan a cada nivel (≥1 logro)")
             st.plotly_chart(fig_r2, use_container_width=True)
         st.dataframe(rar_df, use_container_width=True, hide_index=True)
 
