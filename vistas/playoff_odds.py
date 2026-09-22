@@ -168,26 +168,43 @@ def show():
         st.info("No hay temporadas de liga con datos.")
         return
 
+    # Todos los cruces de LIGA pendientes, de una — para saber de entrada qué
+    # temporadas siguen en curso y arrancar ahí por default (si no, el selector
+    # cae en la última temporada de la lista aunque ya esté cerrada, y la página
+    # "no genera nada" a simple vista porque no hay nada que simular).
+    df_pend_all = df_raw[df_raw.get("Walkover") == -1].copy() if "Walkover" in df_raw.columns else df_raw.iloc[0:0]
+    if "league" in df_pend_all.columns and not df_pend_all.empty:
+        df_pend_all = df_pend_all[df_pend_all["league"] == "LIGA"].copy()
+        df_pend_all["Liga_Temporada"] = df_pend_all["round"].apply(_liga_temporada)
+    else:
+        df_pend_all = df_pend_all.iloc[0:0]
+    temporadas_con_pendientes = set(df_pend_all["Liga_Temporada"].unique()) if not df_pend_all.empty else set()
+
+    temporadas_en_curso = [lt for lt in temporadas_disp if lt in temporadas_con_pendientes]
+    default_lt = temporadas_en_curso[-1] if temporadas_en_curso else temporadas_disp[-1]
+    default_idx = temporadas_disp.index(default_lt)
+
     col1, col2, col3 = st.columns(3)
     with col1:
-        lt = st.selectbox("Temporada de liga", temporadas_disp, index=len(temporadas_disp) - 1)
+        lt = st.selectbox(
+            "Temporada de liga",
+            temporadas_disp, index=default_idx,
+            format_func=lambda x: f"{x} 🟢 en curso" if x in temporadas_con_pendientes else f"{x} ✅ cerrada",
+        )
     with col2:
         mod_sel = st.selectbox("Modelo ML", list(trained.keys()),
                                 index=list(trained.keys()).index(best_name) if best_name in trained else 0)
     with col3:
         n_sims = st.slider("Simulaciones", 200, 5000, 1000, step=200)
 
+    if not temporadas_en_curso:
+        st.info("Ninguna temporada de liga tiene cruces pendientes ahora mismo — todas las tablas ya están cerradas, no hay nada que simular.")
+
     base_lt = base2[base2["Liga_Temporada"] == lt][
         ["Participante", "Victorias", "Juegos", "Derrotas", "pokes_sobrevivientes", "poke_vencidos"]
     ].reset_index(drop=True)
 
-    df_pend = df_raw[(df_raw.get("Walkover") == -1)].copy() if "Walkover" in df_raw.columns else df_raw.iloc[0:0]
-    if "league" in df_pend.columns and not df_pend.empty:
-        df_pend = df_pend[df_pend["league"] == "LIGA"].copy()
-        df_pend["Liga_Temporada"] = df_pend["round"].apply(_liga_temporada)
-        pend_lt = df_pend[df_pend["Liga_Temporada"] == lt]
-    else:
-        pend_lt = df_pend.iloc[0:0]
+    pend_lt = df_pend_all[df_pend_all["Liga_Temporada"] == lt] if not df_pend_all.empty else df_pend_all
 
     st.markdown("---")
 

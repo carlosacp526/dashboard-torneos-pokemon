@@ -29,6 +29,21 @@ def _prep(df_raw):
     return df
 
 
+def _tiers_vigentes(df_raw):
+    """Tiers con al menos un cruce pendiente (Walkover == -1) ahora mismo, separado
+    por LIGA y TORNEO — esos tiers ya tienen una temporada/torneo EN CURSO, así que
+    no tiene sentido recomendarlos para una jornada o torneo nuevo hasta que cierren."""
+    df = normalize_columns(df_raw.copy())
+    df = ensure_fields(df)
+    if "Walkover" not in df.columns or "Tier" not in df.columns or "league" not in df.columns:
+        return set(), set()
+    pend = df[(df["Walkover"] == -1) & df["Tier"].notna()]
+    tier_str = pend["Tier"].astype(str).str.strip()
+    liga_vigentes = set(tier_str[pend["league"] == "LIGA"])
+    torneo_vigentes = set(tier_str[pend["league"] == "TORNEO"])
+    return liga_vigentes, torneo_vigentes
+
+
 def _norm(s):
     lo, hi = s.min(), s.max()
     if pd.isna(lo) or pd.isna(hi) or (hi - lo) < 1e-9:
@@ -127,6 +142,7 @@ def show():
     df_raw = load_data()
     with st.spinner("Calculando..."):
         tabla, mes_ref = build_tier_recomendaciones(df_raw)
+        liga_vigentes, torneo_vigentes = _tiers_vigentes(df_raw)
 
     if tabla.empty:
         st.info("No hay suficientes datos con columna Tier para calcular recomendaciones.")
@@ -138,8 +154,23 @@ def show():
     col_score = "Score Jornada de Liga" if contexto == "📅 Jornada de Liga" else "Score Torneo Próximo"
     col_recencia = "meses_desde_liga" if contexto == "📅 Jornada de Liga" else "meses_desde_torneo"
     label_recencia = "Meses sin usarse en Liga" if contexto == "📅 Jornada de Liga" else "Meses sin usarse en Torneo"
+    vigentes = liga_vigentes if contexto == "📅 Jornada de Liga" else torneo_vigentes
 
-    ranked = tabla.sort_values(col_score, ascending=False).reset_index(drop=True)
+    disponibles = tabla[~tabla["Tier"].isin(vigentes)]
+    en_curso = tabla[tabla["Tier"].isin(vigentes)]
+
+    if not en_curso.empty:
+        st.warning(
+            f"⏳ Excluidos por tener una {('liga' if contexto.startswith('📅') else 'temporada de torneo')} "
+            f"**en curso ahora mismo** (tienen cruces pendientes, Walkover = -1): "
+            f"{', '.join(sorted(en_curso['Tier'].tolist()))}."
+        )
+
+    if disponibles.empty:
+        st.info("Todos los tiers con datos están en curso ahora mismo — no queda ninguno libre para recomendar en este contexto.")
+        return
+
+    ranked = disponibles.sort_values(col_score, ascending=False).reset_index(drop=True)
     top10 = ranked.head(10)
 
     st.markdown("---")
@@ -185,6 +216,10 @@ Cuatro señales, normalizadas 0-1 entre todos los tiers y combinadas con distint
 **Pesos:**
 - Jornada de Liga: 30% participación + 25% balance + 30% variedad + 15% base histórica.
 - Torneo Próximo: 30% participación + 15% balance + 25% tendencia + 15% variedad + 15% base histórica.
+
+**Exclusión de tiers en curso:** un tier con cruces pendientes (`Walkover == -1`) en el contexto elegido
+(Liga o Torneo) todavía tiene una temporada corriendo — no se recomienda de nuevo hasta que cierre, aunque
+su score haya sido el más alto.
 
 **Límite conocido:** el balance necesita historial reciente real — un tier nuevo o con muy poca actividad
 en los últimos 12 meses no tiene forma confiable de medirse y cae al valor neutro más bajo observado, lo
