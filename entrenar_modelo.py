@@ -445,13 +445,19 @@ def train_models(X, y, X_val, y_val):
             acc_val  = accuracy_score(y_val, pred_val)
             auc_val  = roc_auc_score(y_val, prob_val)
             cv_acc   = cross_val_score(model, X, y, cv=5, scoring="accuracy").mean()
+            # cv_auc (no solo cv_accuracy): AUC es el criterio que decide el
+            # ganador mas abajo (ver 'best' en main()), asi que la validacion
+            # cruzada tambien se reporta en esa misma metrica para que ambas
+            # sean comparables entre si.
+            cv_auc   = cross_val_score(model, X, y, cv=5, scoring="roc_auc").mean()
             results[name] = {"val_accuracy": round(acc_val,4),
                              "val_auc":      round(auc_val,4),
-                             "cv_accuracy":  round(cv_acc,4)}
+                             "cv_accuracy":  round(cv_acc,4),
+                             "cv_auc":       round(cv_auc,4)}
             trained[name] = model
         except Exception as e:
             results[name] = {"val_accuracy":0.0,"val_auc":0.0,
-                             "cv_accuracy":0.0,"error":str(e)}
+                             "cv_accuracy":0.0,"cv_auc":0.0,"error":str(e)}
     return trained, results
 
 
@@ -579,6 +585,8 @@ def main():
     best = max((k for k in results if "error" not in results[k]),
                key=lambda k: results[k].get("val_auc",0))
     print(f"\n  Mejor modelo: {best}  (Val AUC: {results[best]['val_auc']:.4f})")
+    print(f"  (CV AUC de {best}: {results[best]['cv_auc']:.4f}, CV Accuracy: {results[best]['cv_accuracy']:.4f} "
+          "- reportadas como verificacion adicional, no deciden el ganador)")
 
     print("\n  Preparando predicciones pendientes...")
     pred_features = build_pred_features(df_pend, cos, top_feat) \
@@ -592,7 +600,7 @@ def main():
     latest_stats = cos.sort_values("ym").groupby("jugador").last().reset_index()
 
     cache = dict(
-        trained=trained, results=results,
+        trained=trained, results=results, best=best,
         top_feat=top_feat, all_feat=all_feat,
         tiers=tiers,
         latest_stats=latest_stats,      # cosecha más reciente por jugador (~liviano)

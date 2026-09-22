@@ -373,8 +373,15 @@ def show():
 
     valid     = {k:v for k,v in results.items() if "error" not in v}
     res_df    = pd.DataFrame(valid).T.reset_index().rename(columns={"index":"Modelo"})
-    res_df    = res_df.sort_values("cv_accuracy", ascending=False).reset_index(drop=True)
-    best_name = res_df.loc[res_df["cv_accuracy"].idxmax(), "Modelo"]
+    res_df    = res_df.sort_values("val_auc", ascending=False).reset_index(drop=True)
+    # 'best' viene persistido desde entrenar_modelo.py (mismo criterio: mayor
+    # val_auc) — se usa directo si el .pkl ya lo trae; fallback a val_auc local
+    # por si se carga un .pkl viejo entrenado antes de este cambio. Antes esto
+    # ordenaba por cv_accuracy, un criterio DISTINTO al que entrenar_modelo.py
+    # usa para elegir el "modelo ganador" — en la corrida de referencia esa
+    # inconsistencia hacia que el selector por defecto mostrara "Random Forest
+    # (deep)" en vez de "Random Forest", el ganador real documentado.
+    best_name = cache.get("best") or res_df.loc[res_df["val_auc"].idxmax(), "Modelo"]
 
     try:
         all_players = sorted(latest_stats["Jugador"].unique().tolist())

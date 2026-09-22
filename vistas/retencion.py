@@ -362,6 +362,7 @@ def compute_vintage(grid, max_offset=24, min_jugadores=5):
 def train_churn_model(_grid, data_hash):
     import xgboost as xgb
     from sklearn.metrics import roc_auc_score, accuracy_score
+    from sklearn.model_selection import cross_val_score
 
     train_df = _grid[(_grid['activo'] == 1) & _grid['label_churn'].notna()].copy()
     if train_df.empty or train_df['label_churn'].nunique() < 2:
@@ -395,6 +396,21 @@ def train_churn_model(_grid, data_hash):
     else:
         metrics['auc'] = None
         metrics['accuracy'] = None
+
+    # Validacion cruzada (5-fold, AUC) sobre el set de entrenamiento — antes
+    # este modelo se evaluaba solo con el holdout temporal unico de arriba, a
+    # diferencia del modelo de combates (que ya reporta CV desde entrenar_modelo.py).
+    # Es informativa (no reemplaza el holdout temporal como criterio de
+    # desempeno principal, que es el metodologicamente correcto para datos con
+    # orden temporal), pero da una segunda senal de estabilidad del modelo.
+    if y_tr.nunique() > 1 and len(X_tr) >= 5:
+        try:
+            metrics['cv_auc'] = round(float(cross_val_score(
+                model, X_tr, y_tr, cv=5, scoring='roc_auc').mean()), 3)
+        except Exception:
+            metrics['cv_auc'] = None
+    else:
+        metrics['cv_auc'] = None
 
     importancias = pd.Series(model.feature_importances_, index=FEATURE_COLS).sort_values(ascending=False)
     return model, metrics, importancias
@@ -678,15 +694,19 @@ def show():
     if model is None:
         st.warning(metrics.get('error', 'No se pudo entrenar el modelo.'))
     else:
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         c1.metric("🎯 AUC (validación)", f"{metrics['auc']:.3f}" if metrics['auc'] is not None else "N/D")
-        c2.metric("✅ Accuracy (validación)", f"{metrics['accuracy']*100:.1f}%" if metrics['accuracy'] is not None else "N/D")
-        c3.metric("📚 Filas de entrenamiento", f"{metrics['n_train']:,}")
-        c4.metric("🧪 Filas de validación", f"{metrics['n_test']:,}")
+        c2.metric("🔁 AUC (CV 5-fold)", f"{metrics['cv_auc']:.3f}" if metrics.get('cv_auc') is not None else "N/D")
+        c3.metric("✅ Accuracy (validación)", f"{metrics['accuracy']*100:.1f}%" if metrics['accuracy'] is not None else "N/D")
+        c4.metric("📚 Filas de entrenamiento", f"{metrics['n_train']:,}")
+        c5.metric("🧪 Filas de validación", f"{metrics['n_test']:,}")
         st.caption(
             f"Tasa de fuga real en entrenamiento: {metrics['churn_rate_train']}% · "
             f"en validación: {metrics['churn_rate_test']}% · "
-            f"({metrics['meses_train']} meses de entrenamiento, {metrics['meses_test']} de validación)."
+            f"({metrics['meses_train']} meses de entrenamiento, {metrics['meses_test']} de validación). "
+            "AUC (CV 5-fold) es una verificación adicional sobre el set de entrenamiento; el holdout "
+            "temporal de arriba sigue siendo la métrica principal, por ser la que respeta el orden "
+            "cronológico de los datos."
         )
 
         tab1, tab2 = st.tabs(["⚠️ Jugadores en riesgo", "🔍 Importancia de features"])
