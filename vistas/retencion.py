@@ -212,9 +212,9 @@ def compute_monthly_activity(panel):
 
 
 def _ym_siguiente(ym):
-    """Mes calendario inmediatamente posterior a ym (formato AAAAMM)."""
-    anio, mes = divmod(int(ym), 100)
-    return (anio + 1) * 100 + 1 if mes == 12 else anio * 100 + mes + 1
+    """Mes calendario inmediatamente posterior a ym (Period mensual de pandas,
+    ver build_monthly_panel — la aritmética +1 ya maneja el cambio de año)."""
+    return ym + 1
 
 
 # ── Paso 4: ratio de fuga mes a mes (regla simple: activo hoy, ausente el mes siguiente) ──
