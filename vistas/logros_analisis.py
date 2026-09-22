@@ -434,40 +434,94 @@ def show():
                     incluir_detalles=True,
                 )
 
-            obtenidos = [lid for lid in logros_df.index if r_det.get(lid, False)]
+            obtenidos  = [lid for lid in logros_df.index if r_det.get(lid, False)]
+            pendientes = [lid for lid in logros_df.index if not r_det.get(lid, False)]
+
+            # Logros donde el umbral es un MÁXIMO (menos es mejor) — el resto de la
+            # tabla asume que más valor = más cerca, estos tres van al revés
+            # (SP11/12/13: "no pierdas más de N partidas en liga en una temporada").
+            UMBRAL_ES_MAXIMO = {"SP11", "SP12", "SP13"}
+
+            def _como_lo_consiguio(lid, d):
+                valor, umbral, texto = d.get("valor"), d.get("umbral"), d.get("texto")
+                if valor is not None and umbral is not None:
+                    como = f"{valor} / {umbral} requerido(s)"
+                    if texto:
+                        como += f" — {texto}"
+                    return como
+                if texto:
+                    return texto
+                if valor is not None:
+                    return str(valor)
+                return "Cumplido"
+
+            def _que_le_falta(lid, d, desc):
+                valor, umbral, texto = d.get("valor"), d.get("umbral"), d.get("texto")
+                if lid in UMBRAL_ES_MAXIMO and valor is not None and umbral is not None:
+                    if valor >= 999:  # centinela de _max_derrotas_liga(): sin temporada de liga completa todavía
+                        return "Todavía no completó una temporada de liga (necesita jugar una)"
+                    faltan = max(0, valor - umbral)
+                    return f"Su mínimo actual es {valor} derrotas en una temporada (necesita ≤{umbral}) — le sobran {faltan}"
+                if valor is not None and umbral is not None:
+                    try:
+                        faltan = umbral - valor
+                    except TypeError:
+                        faltan = None
+                    if faltan is not None and faltan > 0:
+                        return f"{valor} / {umbral} — le faltan {faltan}"
+                    if faltan is not None:
+                        # el número ya alcanza pero el logro sigue bloqueado (condición extra, ej. PA08)
+                        return f"{valor} / {umbral} — ya llega al número pero falta otra condición del logro"
+                if texto:
+                    return f"No cumplido — {texto}"
+                return f"Falta: {desc}"
+
+            st.success(f"**{jugador_sel}** desbloqueó **{len(obtenidos)}** de los {total_logros} logros "
+                       f"({len(pendientes)} pendientes).")
+
+            cat_filtro = st.multiselect("Filtrar por categoría (aplica a ambas tablas)", CATEGORIAS_ORDEN,
+                                         default=[], key="logros_detalle_cat")
+
+            st.markdown("#### ✅ Logros conseguidos — cómo los consiguió")
             if not obtenidos:
-                st.info(f"**{jugador_sel}** todavía no desbloqueó ningún logro.")
+                st.info("Todavía no desbloqueó ningún logro.")
             else:
-                st.success(f"**{jugador_sel}** desbloqueó **{len(obtenidos)}** de los {total_logros} logros.")
-                filas_det = []
+                filas_ok = []
                 for lid in obtenidos:
                     row = logros_df.loc[lid]
-                    d = detalles.get(lid, {})
-                    valor, umbral, texto = d.get("valor"), d.get("umbral"), d.get("texto")
-                    if valor is not None and umbral is not None:
-                        como = f"{valor} / {umbral} requerido(s)"
-                        if texto:
-                            como += f" — {texto}"
-                    elif texto:
-                        como = texto
-                    elif valor is not None:
-                        como = str(valor)
-                    else:
-                        como = "Cumplido"
-                    filas_det.append({
+                    filas_ok.append({
                         "Categoría": row["cat"], "Rareza": row["rareza"],
                         "Logro": f"{row['icon']} {row['name']}", "Descripción": row["desc"],
-                        "Cómo lo consiguió": como, "XP": int(row["xp"]),
+                        "Cómo lo consiguió": _como_lo_consiguio(lid, detalles.get(lid, {})),
+                        "XP": int(row["xp"]),
                     })
-                det_df = pd.DataFrame(filas_det).sort_values(["Categoría", "Rareza"]).reset_index(drop=True)
-
-                cat_filtro = st.multiselect("Filtrar por categoría", CATEGORIAS_ORDEN, default=[],
-                                             key="logros_detalle_cat")
-                det_disp = det_df[det_df["Categoría"].isin(cat_filtro)] if cat_filtro else det_df
-
-                st.dataframe(det_disp, use_container_width=True, hide_index=True, height=520)
+                ok_df = pd.DataFrame(filas_ok).sort_values(["Categoría", "Rareza"]).reset_index(drop=True)
+                ok_disp = ok_df[ok_df["Categoría"].isin(cat_filtro)] if cat_filtro else ok_df
+                st.dataframe(ok_disp, use_container_width=True, hide_index=True, height=420)
                 st.download_button(
-                    f"📥 Descargar detalle de {jugador_sel} (CSV)",
-                    det_disp.to_csv(index=False).encode("utf-8"),
-                    f"logros_detalle_{jugador_sel}.csv", "text/csv",
+                    f"📥 Descargar conseguidos de {jugador_sel} (CSV)",
+                    ok_disp.to_csv(index=False).encode("utf-8"),
+                    f"logros_conseguidos_{jugador_sel}.csv", "text/csv",
+                )
+
+            st.markdown("#### 🔒 Logros pendientes — qué le falta")
+            if not pendientes:
+                st.success("¡Los tiene todos! No le falta ningún logro.")
+            else:
+                filas_falta = []
+                for lid in pendientes:
+                    row = logros_df.loc[lid]
+                    filas_falta.append({
+                        "Categoría": row["cat"], "Rareza": row["rareza"],
+                        "Logro": f"{row['icon']} {row['name']}", "Descripción": row["desc"],
+                        "Qué le falta": _que_le_falta(lid, detalles.get(lid, {}), row["desc"]),
+                        "XP": int(row["xp"]),
+                    })
+                falta_df = pd.DataFrame(filas_falta).sort_values(["Categoría", "Rareza"]).reset_index(drop=True)
+                falta_disp = falta_df[falta_df["Categoría"].isin(cat_filtro)] if cat_filtro else falta_df
+                st.dataframe(falta_disp, use_container_width=True, hide_index=True, height=420)
+                st.download_button(
+                    f"📥 Descargar pendientes de {jugador_sel} (CSV)",
+                    falta_disp.to_csv(index=False).encode("utf-8"),
+                    f"logros_pendientes_{jugador_sel}.csv", "text/csv",
                 )
