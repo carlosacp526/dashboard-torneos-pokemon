@@ -168,12 +168,65 @@ def show():
     st.markdown("---")
 
     tabs = st.tabs([
-        "🗂️ Por Categoría", "🎖️ Por Rareza", "🔥 Dificultad", "🚫 Nunca obtenidos",
-        "🏆 Ranking de Jugadores", "📐 Distribución",
+        "📋 Catálogo Completo", "🗂️ Por Categoría", "🎖️ Por Rareza", "🔥 Dificultad",
+        "🚫 Nunca obtenidos", "🏆 Ranking de Jugadores", "📐 Distribución",
     ])
 
-    # ═══════════════════════ Por categoría ═══════════════════════
+    # ═══════════════════════ Catálogo completo ═══════════════════════
     with tabs[0]:
+        st.markdown("### Los 122 logros, con cuántos jugadores tiene cada uno")
+        st.caption("Tabla completa del catálogo — buscá un logro puntual o filtrá por categoría/"
+                   "rareza para ver exactamente cuántos (y qué %) de los 272 jugadores lo tienen.")
+
+        tabla_todos = logros_df.copy()
+        tabla_todos["Jugadores"] = unlock_counts
+        tabla_todos["% desbloqueo"] = unlock_pct
+        tabla_todos = tabla_todos.reset_index().rename(columns={"index": "id"})
+
+        fc1, fc2, fc3, fc4 = st.columns([2.2, 1.3, 1.3, 1.6])
+        with fc1:
+            busqueda = st.text_input("🔍 Buscar logro", "", key="catalogo_busqueda",
+                                      placeholder="Nombre o descripción...")
+        with fc2:
+            f_cat = st.multiselect("Categoría", CATEGORIAS_ORDEN, key="catalogo_cat")
+        with fc3:
+            f_rar = st.multiselect("Rareza", RAREZA_ORDEN, key="catalogo_rar")
+        with fc4:
+            orden = st.selectbox("Ordenar por", [
+                "Más difíciles primero", "Más comunes primero", "Número (#)", "Más XP primero",
+            ], key="catalogo_orden")
+
+        filtrada = tabla_todos.copy()
+        if busqueda:
+            b = busqueda.lower()
+            filtrada = filtrada[
+                filtrada["name"].str.lower().str.contains(b, na=False)
+                | filtrada["desc"].str.lower().str.contains(b, na=False)
+            ]
+        if f_cat:
+            filtrada = filtrada[filtrada["cat"].isin(f_cat)]
+        if f_rar:
+            filtrada = filtrada[filtrada["rareza"].isin(f_rar)]
+
+        if orden == "Más difíciles primero":
+            filtrada = filtrada.sort_values("% desbloqueo", ascending=True)
+        elif orden == "Más comunes primero":
+            filtrada = filtrada.sort_values("% desbloqueo", ascending=False)
+        elif orden == "Número (#)":
+            filtrada = filtrada.sort_values("num", ascending=True)
+        else:
+            filtrada = filtrada.sort_values("xp", ascending=False)
+
+        st.caption(f"Mostrando **{len(filtrada)}** de **{len(tabla_todos)}** logros.")
+        st.dataframe(
+            filtrada[["num", "name", "cat", "rareza", "xp", "Jugadores", "% desbloqueo", "desc"]]
+            .rename(columns={"num": "#", "name": "Logro", "cat": "Categoría", "rareza": "Rareza",
+                              "xp": "XP", "desc": "Descripción"}),
+            use_container_width=True, hide_index=True, height=560,
+        )
+
+    # ═══════════════════════ Por categoría ═══════════════════════
+    with tabs[1]:
         st.markdown("### Cobertura por categoría")
         st.caption("Por cada categoría: % de jugadores que llegaron a distintos niveles de "
                    "completitud DENTRO de esa categoría — al menos 1, la mitad, 3/4, o el 100%.")
@@ -212,7 +265,7 @@ def show():
         st.dataframe(cat_df, use_container_width=True, hide_index=True)
 
     # ═══════════════════════ Por rareza ═══════════════════════
-    with tabs[1]:
+    with tabs[2]:
         st.markdown("### Cobertura por rareza")
         st.caption("Cuántos jugadores llegaron a cada nivel de completitud DENTRO de cada rareza "
                    "— al menos 1, la mitad, 3/4, o el 100% de esa rareza. El achicamiento entre "
@@ -252,7 +305,7 @@ def show():
         st.dataframe(rar_df, use_container_width=True, hide_index=True)
 
     # ═══════════════════════ Dificultad (más raros / más comunes) ═══════════════════════
-    with tabs[2]:
+    with tabs[3]:
         tabla_logros = logros_df.copy()
         tabla_logros["Jugadores"] = unlock_counts
         tabla_logros["% desbloqueo"] = unlock_pct
@@ -287,7 +340,7 @@ def show():
         st.plotly_chart(fig_sc, use_container_width=True)
 
     # ═══════════════════════ Nunca obtenidos ═══════════════════════
-    with tabs[3]:
+    with tabs[4]:
         nunca = logros_df.copy()
         nunca["Jugadores"] = unlock_counts
         nunca = nunca[nunca["Jugadores"] == 0].reset_index().rename(columns={"index": "id"})
@@ -304,7 +357,7 @@ def show():
             st.caption("Por rareza: " + " · ".join(f"{RAREZA_ICON[r]} {r}: {int(por_rareza_nunca[r])}" for r in RAREZA_ORDEN))
 
     # ═══════════════════════ Ranking de jugadores ═══════════════════════
-    with tabs[4]:
+    with tabs[5]:
         rank_df = pd.DataFrame({
             "Jugador": matriz.index, "Logros": logros_por_jugador.values, "XP": xp_por_jugador.values,
         })
@@ -325,7 +378,7 @@ def show():
             st.dataframe(top_xp[["Jugador", "XP", "Logros"]], use_container_width=True)
 
     # ═══════════════════════ Distribución ═══════════════════════
-    with tabs[5]:
+    with tabs[6]:
         st.markdown("### ¿Cómo se reparte la cantidad de logros entre los jugadores?")
         fig_h = px.histogram(logros_por_jugador, nbins=30,
                               labels={"value": "Logros desbloqueados"},
