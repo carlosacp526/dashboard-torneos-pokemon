@@ -169,7 +169,7 @@ def show():
 
     tabs = st.tabs([
         "📋 Catálogo Completo", "🗂️ Por Categoría", "🎖️ Por Rareza", "🔥 Dificultad",
-        "🚫 Nunca obtenidos", "🏆 Ranking de Jugadores", "📐 Distribución",
+        "🚫 Nunca obtenidos", "🏆 Ranking de Jugadores", "📐 Distribución", "🔎 Detalle por Jugador",
     ])
 
     # ═══════════════════════ Catálogo completo ═══════════════════════
@@ -391,3 +391,83 @@ def show():
         c2.metric("Mediana", f"{logros_por_jugador.median():.0f}")
         c3.metric("Promedio", f"{logros_por_jugador.mean():.1f}")
         c4.metric("Máximo", int(logros_por_jugador.max()))
+
+    # ═══════════════════════ Detalle por jugador ═══════════════════════
+    with tabs[7]:
+        st.markdown("### Cómo consiguió cada logro un jugador puntual")
+        st.caption(
+            "Para cada logro que ya desbloqueó, el número o dato concreto que lo cumplió (ej. \"52 / 50 "
+            "victorias\"). No se calcula nada hasta que elijas un jugador — esta pestaña no corre con el "
+            "resto de la página."
+        )
+        jugadores_disp = sorted(matriz.index.tolist())
+        jugador_sel = st.selectbox(
+            "Jugador", [""] + jugadores_disp, index=0, key="logros_detalle_jugador",
+            format_func=lambda x: "— Elegí un jugador —" if x == "" else x,
+        )
+
+        if not jugador_sel:
+            st.info("Elegí un jugador arriba para calcular su detalle.")
+        else:
+            with st.spinner(f"Calculando el detalle de {jugador_sel}..."):
+                df_pl = normalize_columns(df_raw.copy())
+                df_pl = ensure_fields(df_pl)
+                data_elo_pl, data_filas_pl, _ = calcular_elo(df_raw)
+                base2_pl, _ = build_base_liga(df_raw)
+                base_torneo_pl, _ = build_base_torneo(df_raw)
+                camp_liga_pl, camp_torneo_pl = _precalcular_campeones(df_raw, base2_pl, base_torneo_pl)
+
+                pq = jugador_sel.lower()
+                mask = (
+                    (df_pl['player1'].str.lower() == pq) |
+                    (df_pl['player2'].str.lower() == pq) |
+                    (df_pl['winner'].str.lower() == pq)
+                )
+                player_matches = df_pl[mask].copy()
+                if 'Walkover' in player_matches.columns:
+                    player_matches = player_matches[player_matches['Walkover'] != -1].copy()
+
+                r_det, detalles = evaluar_logros(
+                    jugador_sel, player_matches, df_raw, data_elo_pl, base2_pl, base_torneo_pl,
+                    camp_liga_pl.get(pq, []), camp_torneo_pl.get(pq, []),
+                    generar_tabla_temporada, generar_tabla_torneo, data_filas=data_filas_pl,
+                    incluir_detalles=True,
+                )
+
+            obtenidos = [lid for lid in logros_df.index if r_det.get(lid, False)]
+            if not obtenidos:
+                st.info(f"**{jugador_sel}** todavía no desbloqueó ningún logro.")
+            else:
+                st.success(f"**{jugador_sel}** desbloqueó **{len(obtenidos)}** de los {total_logros} logros.")
+                filas_det = []
+                for lid in obtenidos:
+                    row = logros_df.loc[lid]
+                    d = detalles.get(lid, {})
+                    valor, umbral, texto = d.get("valor"), d.get("umbral"), d.get("texto")
+                    if valor is not None and umbral is not None:
+                        como = f"{valor} / {umbral} requerido(s)"
+                        if texto:
+                            como += f" — {texto}"
+                    elif texto:
+                        como = texto
+                    elif valor is not None:
+                        como = str(valor)
+                    else:
+                        como = "Cumplido"
+                    filas_det.append({
+                        "Categoría": row["cat"], "Rareza": row["rareza"],
+                        "Logro": f"{row['icon']} {row['name']}", "Descripción": row["desc"],
+                        "Cómo lo consiguió": como, "XP": int(row["xp"]),
+                    })
+                det_df = pd.DataFrame(filas_det).sort_values(["Categoría", "Rareza"]).reset_index(drop=True)
+
+                cat_filtro = st.multiselect("Filtrar por categoría", CATEGORIAS_ORDEN, default=[],
+                                             key="logros_detalle_cat")
+                det_disp = det_df[det_df["Categoría"].isin(cat_filtro)] if cat_filtro else det_df
+
+                st.dataframe(det_disp, use_container_width=True, hide_index=True, height=520)
+                st.download_button(
+                    f"📥 Descargar detalle de {jugador_sel} (CSV)",
+                    det_disp.to_csv(index=False).encode("utf-8"),
+                    f"logros_detalle_{jugador_sel}.csv", "text/csv",
+                )

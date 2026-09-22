@@ -250,7 +250,15 @@ def evaluar_logros(
     generar_tabla_temporada,
     generar_tabla_torneo,
     data_filas: pd.DataFrame = None,
-) -> dict:
+    incluir_detalles: bool = False,
+):
+    """
+    Por defecto devuelve solo `r` (dict {id: bool}), igual que siempre —
+    ningún llamador existente cambia. Con incluir_detalles=True devuelve
+    (r, detalles), donde detalles[id] = {"valor", "umbral", "texto"} con el
+    número/dato concreto que explica cómo se cumplió (o no) cada logro, para
+    la pestaña de detalle por jugador de logros_analisis.py.
+    """
     pq = player_query.lower().strip()
     pm = player_matches.copy()
 
@@ -588,7 +596,7 @@ def evaluar_logros(
         "Hydreigon_chelas" ,"Porygon Z"
         # agregar más aquí
     ]
-    def _verdugo_elite():
+    def _verdugo_elite_set():
         rivales_campeon_derrotados = set()
         for _, row in pm.iterrows():
             p1 = str(row.get('player1','')).strip().lower()
@@ -599,15 +607,16 @@ def evaluar_logros(
             for camp in CAMPEONES_TORNEO:
                 if camp.lower() == rival:
                     rivales_campeon_derrotados.add(rival)
-        return len(rivales_campeon_derrotados) >= 5
-    r["VI14"] = _verdugo_elite()
+        return rivales_campeon_derrotados
+    _campeones_derrotados = _verdugo_elite_set()
+    r["VI14"] = len(_campeones_derrotados) >= 5
 
     # VI15: Asesino de Gigantes — derrotar a 3 campeones de la PMS
     CAMPEONES_PMS = [
         "Luigillanos", "Joscake","Angello77","Lautaro","Darmanethan"
         # agregar más aquí
     ]
-    def _asesino_gigantes():
+    def _asesino_gigantes_set():
         derrotados = set()
         for _, row in pm.iterrows():
             p1 = str(row.get('player1','')).strip().lower()
@@ -618,8 +627,9 @@ def evaluar_logros(
             for camp in CAMPEONES_PMS:
                 if camp.lower() == rival:
                     derrotados.add(rival)
-        return len(derrotados) >= 3
-    r["VI15"] = _asesino_gigantes()
+        return derrotados
+    _pms_derrotados = _asesino_gigantes_set()
+    r["VI15"] = len(_pms_derrotados) >= 3
     r["VI16"] = _gano_con_sob(6)   # Sin Compasión: ganó con 6 pokémon sobrevivientes
     r["VI17"] = _gano_con_sob(1)   # Remontada Épica: ganó con 1 pokémon sobreviviente
     r["VI18"] = _gano_con_sob(0)   # Clutch: ganó con 0 pokémon vivos
@@ -728,16 +738,19 @@ def evaluar_logros(
     if any('PMS' in str(l).upper() for l in ligas_jugadas):
                 r["SO01"] = True
                 r["SO02"] = True
-    def _meses_sin_wo(n):
-        if 'date' not in df_raw.columns: return False
-        if 'Walkover' not in df_raw.columns: return True
+    def _meses_limpios_racha():
+        """Cuántos meses distintos el jugador no dio ningún Walkover (no cuenta si el
+        WO fue en contra, o sea si ganó por WO). float('inf')/0 son casos borde donde
+        no hay datos suficientes para medir, para que >=n se comporte igual que antes."""
+        if 'date' not in df_raw.columns: return 0
+        if 'Walkover' not in df_raw.columns: return float('inf')
         df2 = df_raw[
             df_raw['player1'].str.lower().str.contains(pq, na=False) |
             df_raw['player2'].str.lower().str.contains(pq, na=False)
         ].copy()
         df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
         df2 = df2.dropna(subset=['date'])
-        if df2.empty: return False
+        if df2.empty: return 0
         df2['_mes'] = df2['date'].dt.to_period('M')
         meses_limpios = 0
         for _mes in df2['_mes'].unique():
@@ -747,12 +760,13 @@ def evaluar_logros(
             wo_dado = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
             if wo_dado.empty:
                 meses_limpios += 1
-        return meses_limpios >= n
+        return meses_limpios
 
-    r["SO04"] = _meses_sin_wo(5)
-    r["SO05"] = _meses_sin_wo(6)
-    r["SO06"] = _meses_sin_wo(1)
-    r["SO07"] = _meses_sin_wo(3)
+    _meses_limpios = _meses_limpios_racha()
+    r["SO04"] = _meses_limpios >= 5
+    r["SO05"] = _meses_limpios >= 6
+    r["SO06"] = _meses_limpios >= 1
+    r["SO07"] = _meses_limpios >= 3
 
     # SO08 — al menos 1 año calendario sin ningún WO dado (jugador es perdedor)
     _so08 = False
@@ -961,7 +975,131 @@ def evaluar_logros(
     r["PR08"] = xp_total >= 15000
     r["PR09"] = xp_total >= 20000
 
-    return r
+    if not incluir_detalles:
+        return r
+
+    # ── Detalle numérico de cómo se cumplió (o no) cada logro ─────────────────
+    # Reutiliza las mismas variables ya calculadas arriba — no vuelve a tocar
+    # ningún dato. "umbral" es lo que pedía el logro, "valor" lo que tiene el
+    # jugador; cuando el logro es puramente categórico (participó en X sí/no)
+    # no hay un número natural, así que solo se llena "texto".
+    detalles = {}
+
+    def _d(id_, valor=None, umbral=None, texto=None):
+        detalles[id_] = {"valor": valor, "umbral": umbral, "texto": texto}
+
+    # PARTICIPACIÓN
+    for _id, _u in [("PA01", 1), ("PA02", 5), ("PA03", 25), ("PA04", 15), ("PA05", 30), ("PA06", 50), ("PA07", 100)]:
+        _d(_id, torneos_part_final, _u, f"{torneos_part_final} torneo(s) finalizado(s) jugado(s)")
+    _d("PA08", victorias, 1, f"{victorias} victoria(s) totales / {n_camp_torneo} torneo(s) ganado(s)")
+    _tipos_pa09 = tipos_evento & {'LIGA', 'CYPHER', 'ASCENSO'}
+    _d("PA09", len(_tipos_pa09), 1, "Participó en: " + (", ".join(sorted(_tipos_pa09)) or "—"))
+    _d("PA10", len(formatos_jugados), 3, f"{len(formatos_jugados)} formato(s) distintos jugados")
+
+    # VICTORIAS
+    _d("VI01", victorias, 1, f"{victorias} victoria(s) totales, participó en Liga")
+    _d("VI02", texto="Lista manual (Hat Trick Singles/Dobles/VGC)")
+    _d("VI03", racha_max, 3, f"Racha máxima: {racha_max} victoria(s) seguida(s)")
+    _d("VI04", racha_max, 5, f"Racha máxima: {racha_max} victoria(s) seguida(s)")
+    for _id, _u in [("VI05", 1), ("VI06", 2), ("VI07", 3), ("VI08", 5), ("VI09", 10)]:
+        _d(_id, n_camp_torneo, _u, f"{n_camp_torneo} torneo(s) ganado(s)")
+    _d("VI10", n_camp_torneo, 11, f"{n_camp_torneo} torneo(s) ganado(s)")
+    _d("VI11", victorias, 50, f"{victorias} victoria(s) totales")
+    _d("VI12", victorias, 100, f"{victorias} victoria(s) totales")
+    _d("VI13", texto="Ganó un torneo finalizado sin perder ninguna partida" if r["VI13"] else None)
+    _d("VI14", len(_campeones_derrotados), 5, f"{len(_campeones_derrotados)} campeón(es) de torneo derrotado(s)")
+    _d("VI15", len(_pms_derrotados), 3, f"{len(_pms_derrotados)} campeón(es) de la PMS derrotado(s)")
+    _d("VI16", texto="Ganó una partida con 6 pokémon sobrevivientes" if r["VI16"] else None)
+    _d("VI17", texto="Ganó una partida con 1 pokémon sobreviviente" if r["VI17"] else None)
+    _d("VI18", texto="Ganó una partida con 0 pokémon vivos" if r["VI18"] else None)
+
+    # RANKING
+    _d("RK01", texto="Subió su winrate mensual 1+ punto de un mes a otro" if r["RK01"] else None)
+    _d("RK02", texto="Subió su winrate mensual 20+ puntos de un mes a otro" if r["RK02"] else None)
+    for _id, _u in [("RK03", 10), ("RK04", 20), ("RK05", 30), ("RK06", 50)]:
+        _d(_id, round(score_max, 1), _u, f"Score máximo: {score_max:.1f} pts")
+    for _id, _u in [("RK07", 1000), ("RK08", 1200), ("RK09", 1300), ("RK10", 1500)]:
+        _d(_id, elo_maximo, _u, f"Elo máximo histórico: {elo_maximo}")
+
+    # ESTRATEGIA
+    _d("ES01", texto="Jugó Nat Dex Monotype" if r["ES01"] else None)
+    _d("ES02", texto="Jugó Random Singles" if r["ES02"] else None)
+    _d("ES03", umbral=30, texto="≥30% WR en algún formato con 5+ partidas en un mes" if r["ES03"] else None)
+    _d("ES04", umbral=40, texto="≥40% WR en algún formato con 5+ partidas en un mes" if r["ES04"] else None)
+    _d("ES05", umbral=50, texto="≥50% WR en algún formato con 5+ partidas en un mes" if r["ES05"] else None)
+    _d("ES06", umbral=60, texto="≥60% WR en algún formato con 5+ partidas en un mes" if r["ES06"] else None)
+    _d("ES07", len(formatos_jugados_esp), 10, f"{len(formatos_jugados_esp)} formato(s) especiales distintos jugados")
+    _d("ES08", texto="Jugó Singles" if r["ES08"] else None)
+    _d("ES09", texto="Jugó OU" if r["ES09"] else None)
+    _d("ES10", texto="Jugó DOU" if r["ES10"] else None)
+    _d("ES11", texto="Jugó VGC" if r["ES11"] else None)
+    _d("ES12", texto="Jugó LC" if r["ES12"] else None)
+    _d("ES13", texto="Jugó Ubers" if r["ES13"] else None)
+    _d("ES14", texto="Jugó OU y DOU" if r["ES14"] else None)
+    _d("ES15", texto="Jugó Nat Dex" if r["ES15"] else None)
+
+    # TORNEO / TIPOS
+    _d("TO01", texto="Jugó un formato de battle aleatoria/caos" if r["TO01"] else None)
+    for kid, nums in TORNEOS_GEN.items():
+        _inter = sorted(torneos_num & nums)
+        _d(kid, len(_inter), 1, f"Torneo(s): {_inter}" if _inter else None)
+    _d("TO11", texto="Lista manual (ganadores de Mundial)" if r["TO11"] else None)
+    for kid, nums in TORNEOS_TIPOS.items():
+        _inter = sorted(torneos_num & nums)
+        _d(kid, len(_inter), 1, f"Torneo(s): {_inter}" if _inter else None)
+
+    # LIGAS
+    _ligas_std_jugadas = {liga for liga in ["PJS", "PES", "PSS", "PMS", "PLS"]
+                           if any(liga in str(l).upper() for l in ligas_jugadas)}
+    _d("LI01", len(_ligas_std_jugadas), 2, "Ligas: " + (", ".join(sorted(_ligas_std_jugadas)) or "—"))
+
+    # SOCIAL
+    _d("SO01", texto="Participó en Liga Junior (PJS/PES/PSS)" if r["SO01"] else None)
+    _d("SO02", texto="Participó en Liga Senior (PSS/PMS)" if r["SO02"] else None)
+    _d("SO03", texto="Participó en Liga Master (PMS/PLS)" if r["SO03"] else None)
+    _d("SO04", _meses_limpios, 5, f"{_meses_limpios} mes(es) sin dar Walkover")
+    _d("SO05", _meses_limpios, 6, f"{_meses_limpios} mes(es) sin dar Walkover")
+    _d("SO06", _meses_limpios, 1, f"{_meses_limpios} mes(es) sin dar Walkover")
+    _d("SO07", _meses_limpios, 3, f"{_meses_limpios} mes(es) sin dar Walkover")
+    _d("SO08", texto="Al menos un año calendario sin dar ningún Walkover" if r["SO08"] else None)
+    _es_leyenda = player_query.strip().lower() in LEYENDA_COMUNIDAD
+    _d("SO09", total, 300, f"{total} partida(s) jugadas en total" + (" (o está en la lista de leyendas)" if _es_leyenda else ""))
+    _d("SO10", n_paises_derrotados, 3, f"{n_paises_derrotados} país(es) distinto(s) derrotado(s)")
+    _d("SO11", n_paises_derrotados, 5, f"{n_paises_derrotados} país(es) distinto(s) derrotado(s)")
+    _d("SO12", n_paises_derrotados, 10, f"{n_paises_derrotados} país(es) distinto(s) derrotado(s)")
+    _d("SO13", n_paises_derrotados, 15, f"{n_paises_derrotados} país(es) distinto(s) derrotado(s)")
+
+    # ESPECIAL
+    _d("SP01", victorias, 10, f"{victorias} victoria(s) totales")
+    _d("SP02", texto="Ganó dos torneos con 1+ año de diferencia entre ellos" if r["SP02"] else None)
+    _d("SP03", max_wins_rival, 5, f"Máximo de victorias vs. un mismo rival: {max_wins_rival}")
+    _d("SP04", max_wins_rival, 10, f"Máximo de victorias vs. un mismo rival: {max_wins_rival}")
+    _d("SP05", max_wins_rival, 20, f"Máximo de victorias vs. un mismo rival: {max_wins_rival}")
+    _d("SP06", texto="Ganó a un jugador de la lista de leyendas" if r["SP06"] else None)
+    _d("SP07", texto="Terminó un mes con 10+ partidas de torneo sin perder ninguna" if r["SP07"] else None)
+    _d("SP08", texto="Ganó 2+ torneos en el mismo año" if r["SP08"] else None)
+    _d("SP09", umbral=50, texto="Ganó 50+ partidas en un mismo año" if r["SP09"] else None)
+    _d("SP10", umbral=3, texto="Jugó 3+ temporadas de la misma liga" if r["SP10"] else None)
+    _d("SP11", _min_derr, 10, f"Mínimo de derrotas en una temporada de liga: {_min_derr}")
+    _d("SP12", _min_derr, 15, f"Mínimo de derrotas en una temporada de liga: {_min_derr}")
+    _d("SP13", _min_derr, 20, f"Mínimo de derrotas en una temporada de liga: {_min_derr}")
+    _d("SP14", texto="Lista manual (ganadores de liga)" if r["SP14"] else None)
+    _d("SP15", texto="Jugó Nat Dex Dobles" if r["SP15"] else None)
+    _d("SP16", derrotas, 1, f"{derrotas} derrota(s) totales")
+    _d("SP17", texto="Participó en la Liga Legends (PLS)" if r["SP17"] else None)
+
+    # PROGRESIÓN
+    _d("PR01", desbloq_bronce, 10, f"{desbloq_bronce} logro(s) Bronce desbloqueado(s)")
+    _d("PR02", desbloq_plata, 10, f"{desbloq_plata} logro(s) Plata desbloqueado(s)")
+    _d("PR03", desbloq_oro, 10, f"{desbloq_oro} logro(s) Oro desbloqueado(s)")
+    _d("PR04", desbloq_total, 50, f"{desbloq_total} logro(s) desbloqueado(s) en total")
+    _d("PR05", desbloq_total, 80, f"{desbloq_total} logro(s) desbloqueado(s) en total")
+    _d("PR06", xp_total, 1000, f"{xp_total} XP acumulado")
+    _d("PR07", xp_total, 10000, f"{xp_total} XP acumulado")
+    _d("PR08", xp_total, 15000, f"{xp_total} XP acumulado")
+    _d("PR09", xp_total, 20000, f"{xp_total} XP acumulado")
+
+    return r, detalles
 
 
 # ══════════════════════════════════════════════════════════════════════════════
