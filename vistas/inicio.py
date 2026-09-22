@@ -50,6 +50,8 @@ GRUPOS = [
              ["🏟️ Tablas de torneos", "🥇 Campeonatos", "📊 Podio y estadísticas"]),
             ("roleplay", "🎭", "Roleplay",
              ["🎭 Torneo de draft por tiers", "📋 Equipos y Pokémon", "🏆 Formato VGC"]),
+            ("seeding", "🌱", "Seeding de Torneo",
+             ["🏅 Ranking de entrada por Elo", "🌱 Bracket con seeding estándar", "🥊 Probabilidad de cruces"]),
         ],
     },
     {
@@ -74,6 +76,10 @@ GRUPOS = [
              ["⏳ Batallas sin jugar", "📱 Recordatorio por WhatsApp", "📥 Descarga de pendientes"]),
             ("retencion", "🔁", "Participación y Retención",
              ["🕓 Recencia y Roll Rate", "📈 Vintage / Cosechas", "🚨 Watchlist de alertas de fuga"]),
+            ("playoff_odds", "🎲", "Playoff Odds",
+             ["🎲 Simulación Monte Carlo de la temporada", "📊 Probabilidad por zona (Líder/Ascenso/Descenso)", "🔮 Basado en el modelo de Predicción"]),
+            ("tier_recomendador", "🎯", "Recomendador de Tier",
+             ["🎯 Qué Tier usar en la próxima jornada", "🏆 Qué Tier usar en el próximo torneo", "📊 Participación, balance y variedad"]),
         ],
     },
 ]

@@ -28,6 +28,43 @@ def load_model(df_raw):
 
 
 
+def _pertenece(nombre_col, jugador):
+    return nombre_col.astype(str).str.strip().str.lower() == str(jugador).strip().lower()
+
+
+def h2h_record(df_raw, jugador_a, jugador_b):
+    """Historial directo entre dos jugadores puntuales (mismo criterio que vistas/headtohead.py:
+    excluye walkovers y partidas sin ganador). Devuelve (victorias_a, victorias_b)."""
+    df = normalize_columns(df_raw.copy())
+    df = ensure_fields(df)
+    mask_directo = (
+        (_pertenece(df['player1'], jugador_a) & _pertenece(df['player2'], jugador_b)) |
+        (_pertenece(df['player1'], jugador_b) & _pertenece(df['player2'], jugador_a))
+    )
+    directos = df[mask_directo].copy()
+    if 'Walkover' in directos.columns:
+        directos = directos[directos['Walkover'] != -1]
+    directos = directos[directos['winner'].notna()].copy()
+    victorias_a = int(_pertenece(directos['winner'], jugador_a).sum())
+    victorias_b = int(_pertenece(directos['winner'], jugador_b).sum())
+    return victorias_a, victorias_b
+
+
+def blend_h2h(model_prob_a, victorias_a, victorias_b, prior_weight=6):
+    """Combina la probabilidad del modelo con el récord directo real entre los dos
+    jugadores, con shrinkage bayesiano: cuantos más cruces directos haya, más pesa
+    el historial real sobre la opinión general del modelo (que no ve la matchup
+    puntual, solo stats agregadas). prior_weight = cuántos cruces directos hacen
+    falta para que el historial h2h pese tanto como el modelo — con pocos cruces,
+    el modelo sigue dominando; con muchos, el récord directo se impone.
+    Devuelve None si nunca se enfrentaron (no hay nada que mezclar)."""
+    n = victorias_a + victorias_b
+    if n == 0:
+        return None
+    h2h_wr_a = victorias_a / n
+    return (h2h_wr_a * n + model_prob_a * prior_weight) / (n + prior_weight)
+
+
 def make_pred_row(j1, j2, latest_stats, feature_cols):
     """Construye vector de features para predicción manual usando cosechas."""
     def gs(jug):
@@ -452,6 +489,44 @@ def show():
 Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier **{tier_p}** en **{lcat_p}**.
 {"El modelo tiene ventaja estadística clara." if conf > 0.7 else "Stats parejas — cualquier resultado es posible."}
             """)
+
+            # ── Ajuste Head-to-Head ──────────────────────────────────────────
+            st.markdown("---")
+            st.markdown("## 🥊 Ajuste Head-to-Head")
+            st.caption(
+                "El modelo predice con stats agregadas de cada jugador, sin ver el historial puntual entre "
+                "ellos dos — hay estilos que se contra-pickean más allá del nivel general. Esta sección mezcla "
+                "la probabilidad del modelo con el récord directo real entre estos dos jugadores."
+            )
+            v_a, v_b = h2h_record(df_raw, p1, p2)
+            n_h2h = v_a + v_b
+            if n_h2h == 0:
+                st.info(f"**{p1}** y **{p2}** todavía no se enfrentaron entre sí — no hay historial directo que mezclar, se mantiene la probabilidad del modelo.")
+            else:
+                peso_h2h = st.slider(
+                    "Peso del modelo (en cruces directos equivalentes)", 1, 20, 6, key="h2h_prior_weight",
+                    help="Cuántos cruces directos 'valen' la opinión del modelo. Más alto = hace falta más "
+                         "historial h2h real para mover la probabilidad; más bajo = el récord directo pesa más rápido."
+                )
+                prob_j1_h2h = blend_h2h(prob_j1, v_a, v_b, prior_weight=peso_h2h)
+                prob_j2_h2h = 1 - prob_j1_h2h
+
+                hc1, hc2, hc3 = st.columns(3)
+                hc1.metric("Enfrentamientos directos", n_h2h)
+                hc2.metric(f"Récord directo", f"{v_a}-{v_b}", help=f"{p1} — {p2}")
+                delta_pct = (prob_j1_h2h - prob_j1) * 100
+                hc3.metric(f"Prob. ajustada {p1}", f"{prob_j1_h2h*100:.1f}%", f"{delta_pct:+.1f} pts vs. modelo")
+
+                st.markdown(f"""
+                <div style="background:#e74c3c;border-radius:8px;height:22px;position:relative;overflow:hidden;margin-top:6px">
+                    <div style="background:#9b59b6;width:{prob_j1_h2h*100:.1f}%;height:100%"></div>
+                    <div style="position:absolute;top:3px;left:10px;color:white;font-weight:bold;font-size:11px">{p1} {prob_j1_h2h*100:.1f}%</div>
+                    <div style="position:absolute;top:3px;right:10px;color:white;font-weight:bold;font-size:11px">{prob_j2_h2h*100:.1f}% {p2}</div>
+                </div>""", unsafe_allow_html=True)
+                st.caption(
+                    f"Morado = probabilidad ajustada con head-to-head (peso del modelo = {peso_h2h} cruces "
+                    f"equivalentes). El modelo solo decía {p1} {prob_j1*100:.1f}% / {p2} {prob_j2*100:.1f}%."
+                )
 
             # ── SHAP ──────────────────────────────────────────────────────
             st.markdown("---")

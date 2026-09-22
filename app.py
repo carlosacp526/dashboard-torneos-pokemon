@@ -20,6 +20,9 @@ from vistas import tiermaker
 from vistas import headtohead
 from vistas import retencion
 from vistas import logros_analisis
+from vistas import playoff_odds
+from vistas import seeding
+from vistas import tier_recomendador
 p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
 p_retencion  = st.Page(retencion.show,    title="🔁 Participación y Retención", url_path="retencion")
 p_social     = st.Page(social.show,       title="🕸️ Analítica Social",       url_path="social")
@@ -40,6 +43,9 @@ p_pendientes = st.Page(pendientes.show, title="⏳ Pendientes", url_path="pendie
 p_tiermaker  = st.Page(tiermaker.show,  title="🏆 Tier Maker", url_path="tiermaker")
 p_headtohead = st.Page(headtohead.show, title="⚔️ Head-to-Head", url_path="headtohead")
 p_logros_analisis = st.Page(logros_analisis.show, title="🧭 Análisis de Logros", url_path="logros-analisis")
+p_playoff_odds = st.Page(playoff_odds.show, title="🎲 Playoff Odds", url_path="playoff-odds")
+p_seeding = st.Page(seeding.show, title="🌱 Seeding de Torneo", url_path="seeding")
+p_tier_recomendador = st.Page(tier_recomendador.show, title="🎯 Recomendador de Tier", url_path="tier-recomendador")
 st.session_state["_pages"] = {
     "inicio":     p_inicio,
     "analisis":   p_analisis,
@@ -61,7 +67,10 @@ st.session_state["_pages"] = {
    "pendientes": p_pendientes,
    "tiermaker": p_tiermaker,
    "headtohead": p_headtohead,
-   "logros_analisis": p_logros_analisis
+   "logros_analisis": p_logros_analisis,
+   "playoff_odds": p_playoff_odds,
+   "seeding": p_seeding,
+   "tier_recomendador": p_tier_recomendador,
 }
 
 # Mismas 5 categorías que usa la grilla de tarjetas de Inicio (vistas/inicio.py
@@ -71,9 +80,9 @@ pg = st.navigation({
     "🏠 Lobby": [p_inicio],
     "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis],
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
-    "🏆 Competencia": [p_rankings, p_ligas, p_torneos, p_roleplay],
+    "🏆 Competencia": [p_rankings, p_ligas, p_torneos, p_roleplay, p_seeding],
     "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker],
-    "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion],
+    "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador],
 })
 
 pg.run()
