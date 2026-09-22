@@ -18,10 +18,19 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import os, sys
+from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, build_base_liga, build_base_torneo, score_final, asignar_zona
 from vistas.prediccion import load_model, make_pred_row
+from vistas.elo import get_round_order
+
+# Ronda de eliminación directa más temprana que reconocemos como parte del
+# bracket (ver ROUND_ORDER en vistas/elo.py): todo lo que esté POR DEBAJO de
+# este valor es fase de grupos/suiza — ahí "Pendiente" no significa "esperando
+# al ganador de la rama anterior" de la misma forma, así que no se arma árbol
+# de bracket con esas rondas, solo con las de eliminación directa en adelante.
+RONDA_MIN_BRACKET = 30
 
 LIGAS_TEMPORADAS = ['PJST1','PJST2','PJST3','PJST4','PJST5','PJST6',
                      'PEST1','PEST2','PEST3','PSST1','PSST2','PSST3','PSST4','PSST5','PSST6',
@@ -97,6 +106,171 @@ def _avg_pokes(jugador, latest_stats):
         if pd.notna(sob) and pd.notna(venc):
             return float(sob), float(venc)
     return 3.0, 3.0
+
+
+def _parse_bracket(df_torneo):
+    """
+    Reconstruye el árbol de eliminación directa de un torneo a partir de TODAS
+    sus filas (jugadas y pendientes). "Pendiente" en un jugador significa que
+    ese cupo todavía depende del ganador de una serie anterior en esa misma
+    rama — no un rival real. Se apoya en dos cosas ya validadas contra los
+    datos: (1) el orden cronológico de rondas de ROUND_ORDER/get_round_order
+    (vistas/elo.py), y (2) que las series aparecen en el mismo orden en que
+    se arma el bracket, de forma que la serie i de una ronda sale siempre de
+    los ganadores de las series (2i) y (2i+1) de la ronda anterior — el mismo
+    emparejamiento estándar de bracket deportivo que ya usa seeding.py.
+
+    Devuelve una lista de rondas en orden cronológico, cada una:
+    {"nombre": str, "series": [{"p1": str|None, "p2": str|None,
+                                 "decidido": bool, "ganador": str|None}, ...]}
+    p1/p2 = None cuando esa celda es "Pendiente" (todavía depende de la ronda anterior).
+    """
+    d = df_torneo.copy()
+    d = d[d["round"].notna()].copy()
+    d["_ro"] = d["round"].apply(get_round_order)
+    d = d[d["_ro"] >= RONDA_MIN_BRACKET].copy()
+    if d.empty:
+        return []
+
+    rondas_nombres = sorted(d["round"].dropna().unique(), key=lambda r: get_round_order(r))
+    rondas = []
+    for rnd in rondas_nombres:
+        sub = d[d["round"] == rnd]
+        # Cada serie es un bloque de filas consecutivas en el orden ORIGINAL de los datos
+        # (una fila por Rep, que reinicia en 1 cada vez que arranca una serie nueva) — no
+        # se puede deduplicar por nombre de jugador porque dos series distintas pueden
+        # tener AMBOS lados "Pendiente" a la vez (ej. las dos semifinales) y serían
+        # indistinguibles entre sí por nombre; el orden de aparición SÍ las distingue y
+        # además es el mismo orden en que se arma el bracket (ver docstring de la función).
+        bloques, bloque_actual = [], []
+        for _, row in sub.iterrows():
+            if bloque_actual and row.get("Rep") == 1:
+                bloques.append(bloque_actual)
+                bloque_actual = []
+            bloque_actual.append(row)
+        if bloque_actual:
+            bloques.append(bloque_actual)
+
+        series = []
+        for filas in bloques:
+            g = pd.DataFrame(filas)
+            decidido = bool((g["Walkover"] >= 0).all()) and g["winner"].notna().any()
+            ganador = None
+            if decidido:
+                conteo = g["winner"].value_counts()
+                if not conteo.empty:
+                    ganador = conteo.idxmax()
+            p1_raw, p2_raw = str(filas[0]["player1"]).strip(), str(filas[0]["player2"]).strip()
+            series.append({
+                "p1": None if p1_raw.lower() in PLACEHOLDER_NOMBRES else p1_raw,
+                "p2": None if p2_raw.lower() in PLACEHOLDER_NOMBRES else p2_raw,
+                "decidido": decidido, "ganador": ganador,
+            })
+        rondas.append({"nombre": rnd, "series": series})
+    return rondas
+
+
+def _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims=1000, seed=42):
+    """
+    Simula el bracket completo n_sims veces: para cada serie sin decidir, usa
+    la probabilidad de victoria del modelo (Bo3 — mejor de 3 juegos simulados)
+    y propaga el ganador a la ronda siguiente según el emparejamiento estándar
+    de bracket (serie i sale de las series 2i y 2i+1 de la ronda anterior). Las
+    series ya jugadas usan su resultado real, no se simulan.
+    Devuelve (odds_df, etapas) — etapas en orden cronológico (para las columnas).
+    """
+    rng = np.random.default_rng(seed)
+    prob_cache = {}
+
+    def prob_p1(a, b):
+        key = (a, b)
+        if key not in prob_cache:
+            X = make_pred_row(a, b, latest_stats, top_feat)
+            prob_cache[key] = float(model.predict_proba(X)[0][0])
+        return prob_cache[key]
+
+    etapas = [r["nombre"] for r in rondas]
+    # Quiénes ya quedaron eliminados en series REALMENTE decididas (no depende de la simulación).
+    ya_eliminados = set()
+    for ronda in rondas:
+        for serie in ronda["series"]:
+            if serie["decidido"] and serie["ganador"] and serie["p1"] and serie["p2"]:
+                perdedor = serie["p2"] if serie["ganador"] == serie["p1"] else serie["p1"]
+                ya_eliminados.add(perdedor)
+
+    jugadores_vivos = set()
+    for ronda in rondas:
+        for serie in ronda["series"]:
+            for p in (serie["p1"], serie["p2"]):
+                if p and p not in ya_eliminados:
+                    jugadores_vivos.add(p)
+
+    etapa_counts = {p: Counter() for p in jugadores_vivos}
+    campeon_counts = Counter()
+
+    for _ in range(n_sims):
+        ganador_de = {}   # (ronda_idx, serie_idx) -> nombre
+        eliminado_en = {}  # nombre -> nombre de ronda en la que salió, EN ESTA simulación
+
+        for ridx, ronda in enumerate(rondas):
+            for sidx, serie in enumerate(ronda["series"]):
+                # Los dos padres de esta serie son las series (2*sidx) y (2*sidx+1) de la
+                # ronda anterior, pero el dato NO garantiza que el padre par siempre caiga
+                # en p1 y el impar en p2 (el lado ya concreto puede venir de cualquiera de
+                # los dos) — así que si un lado ya es concreto, el lado "Pendiente" toma el
+                # padre que sea DISTINTO del nombre ya concreto, no uno fijo por índice.
+                padres = [ganador_de.get((ridx - 1, 2 * sidx)), ganador_de.get((ridx - 1, 2 * sidx + 1))]
+                padres_disp = [x for x in padres if x is not None]
+
+                if serie["p1"] is not None and serie["p2"] is not None:
+                    p1, p2 = serie["p1"], serie["p2"]
+                elif serie["p1"] is not None:
+                    restantes = [x for x in padres_disp if x != serie["p1"]]
+                    p1 = serie["p1"]
+                    p2 = restantes[0] if restantes else (padres_disp[0] if padres_disp else None)
+                elif serie["p2"] is not None:
+                    restantes = [x for x in padres_disp if x != serie["p2"]]
+                    p2 = serie["p2"]
+                    p1 = restantes[0] if restantes else (padres_disp[0] if padres_disp else None)
+                else:
+                    p1 = padres_disp[0] if len(padres_disp) >= 1 else None
+                    p2 = padres_disp[1] if len(padres_disp) >= 2 else None
+
+                if p1 is None or p2 is None:
+                    continue  # todavía no se puede resolver esta serie (falta info de una rama)
+                if serie["decidido"]:
+                    ganador = serie["ganador"]
+                else:
+                    p = prob_p1(p1, p2)
+                    wins1 = sum(1 for _ in range(3) if rng.random() < p)
+                    ganador = p1 if wins1 >= 2 else p2
+                ganador_de[(ridx, sidx)] = ganador
+                perdedor = p2 if ganador == p1 else p1
+                if perdedor in jugadores_vivos:
+                    eliminado_en[perdedor] = ronda["nombre"]
+
+        ultima_ronda_idx = len(rondas) - 1
+        campeon = ganador_de.get((ultima_ronda_idx, 0))
+        if campeon:
+            if campeon in jugadores_vivos:
+                eliminado_en[campeon] = "Campeón"
+            campeon_counts[campeon] += 1
+
+        for jugador, etapa in eliminado_en.items():
+            etapa_counts[jugador][etapa] += 1
+
+    columnas = ["Campeón"] + list(reversed(etapas))
+    filas = []
+    for p in jugadores_vivos:
+        fila = {"Jugador": p}
+        for col in columnas:
+            fila[col] = round(100 * etapa_counts[p].get(col, 0) / n_sims, 1)
+        filas.append(fila)
+    odds_df = pd.DataFrame(filas)
+    if odds_df.empty:
+        return odds_df, columnas
+    odds_df = odds_df.sort_values("Campeón", ascending=False).reset_index(drop=True)
+    return odds_df, columnas
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -418,8 +592,75 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
     prob_df = _predecir_cruces(pend_nt, latest_stats, top_feat, model)
     _mostrar_expander_cruces(prob_df)
 
-    avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
+    df_torneo_full = df_raw[(df_raw["league"] == "TORNEO") & (df_raw["N_Torneo"] == nt)] \
+        if {"league", "N_Torneo"}.issubset(df_raw.columns) else df_raw.iloc[0:0]
+    rondas = _parse_bracket(df_torneo_full)
 
+    if rondas:
+        _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombre_torneo, nt, mod_sel, prob_df, pend_nt)
+    else:
+        _mostrar_torneo_tabla_plana(base_nt, prob_df, nombre_torneo, nt, mod_sel, n_sims, pend_nt, latest_stats)
+
+
+def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombre_torneo, nt, mod_sel, prob_df, pend_nt):
+    """Simula el bracket real de eliminación directa (ver _parse_bracket/_simular_torneo_bracket)."""
+    with st.spinner(f"Simulando {n_sims} torneos..."):
+        odds_df, etapas_cols = _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims)
+
+    if odds_df.empty:
+        st.warning("No se pudo armar el bracket restante (faltan datos de alguna rama) — no hay nada que simular.")
+        return
+
+    st.markdown("---")
+    ganador = odds_df.iloc[0]
+    st.success(f"🏆 Favorito a Campeón: **{ganador['Jugador']}** ({ganador['Campeón']:.1f}% de las simulaciones).")
+
+    colores = {col: c for col, c in zip(etapas_cols, ["#FFD700", "#C0C0C0", "#CD7F32", "#87CEEB", "#5DADE2", "#7F8C8D", "#566573"])}
+    st.markdown("---")
+    st.subheader(f"📊 Probabilidad de podio — {nombre_torneo}")
+    fig = px.bar(odds_df, x="Jugador", y=etapas_cols, color_discrete_map=colores,
+                 title=f"Etapa máxima alcanzada — {n_sims} torneos simulados")
+    fig.update_layout(barmode="stack", xaxis_tickangle=-45, legend_title="Etapa", yaxis_title="Probabilidad %")
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(odds_df, use_container_width=True, hide_index=True, height=420)
+    st.download_button("📥 Descargar odds (CSV)", odds_df.to_csv(index=False).encode("utf-8"),
+                        f"torneo_bracket_odds_{nt}.csv", "text/csv")
+
+    with st.expander("🌳 Ver estructura del bracket detectada"):
+        for ronda in rondas:
+            st.markdown(f"**{ronda['nombre']}**")
+            for s in ronda["series"]:
+                p1 = s["p1"] or "⏳ Pendiente"
+                p2 = s["p2"] or "⏳ Pendiente"
+                estado = f"✅ ganó {s['ganador']}" if s["decidido"] else "⏳ por jugar"
+                st.caption(f"　{p1}  vs  {p2}  —  {estado}")
+
+    with st.expander("📖 Metodología y límites"):
+        st.markdown(f"""
+- Se reconstruyó el **árbol real del bracket** a partir de todas las rondas de eliminación directa del torneo
+  (desde {rondas[0]['nombre']} hasta {rondas[-1]['nombre']}): cuando un jugador aparece como **"Pendiente"**,
+  significa que ese cupo depende del ganador de una serie todavía no jugada en la rama anterior — no un rival
+  real, así que no se predice nada ahí hasta que se resuelva esa rama.
+- Cada serie sin decidir se simula como **mejor de 3** usando la probabilidad de victoria de **{mod_sel}** por
+  juego (misma lógica que la página de Predicción), y el ganador avanza automáticamente al cupo correspondiente
+  de la ronda siguiente — igual que en el torneo real.
+- Se corren **{n_sims} torneos simulados** de punta a punta (desde donde está hoy el bracket hasta la Final),
+  y la probabilidad reportada es en cuántas de esas simulaciones cada jugador llegó como máximo a cada etapa.
+  Las series ya jugadas usan su resultado real, no se simulan de nuevo.
+- Solo se muestran los jugadores **todavía vivos** en el torneo (no fueron eliminados en una serie ya decidida).
+- **Límite conocido (heredado del modelo base):** si un jugador no tiene historial suficiente sus variables
+  quedan en 0 y la predicción de esa serie es casi una moneda al aire.
+        """)
+
+
+def _mostrar_torneo_tabla_plana(base_nt, prob_df, nombre_torneo, nt, mod_sel, n_sims, pend_nt, latest_stats):
+    """Fallback para torneos SIN rondas de eliminación directa reconocibles (ej. formato
+    íntegramente de grupos/suiza) — ahí sí tiene sentido puntuar por tabla de Victorias/Score."""
+    st.info(
+        "Este torneo no tiene rondas de eliminación directa reconocibles (Octavos/Cuartos/Semifinal/Final) — "
+        "se puntúa como tabla de Victorias/Score acumulado, igual que la vista de Torneos."
+    )
+    avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
     with st.spinner(f"Simulando {n_sims} torneos..."):
         odds_df = simulate_bracket_odds(base_nt, prob_df.to_dict("records"), avg_pokes, "torneo", str(nt), n_sims)
 
@@ -437,12 +678,6 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
   probabilidad, y se recalcula la tabla final con las mismas fórmulas que usa la vista de Torneos
   (`score_final`, ranking por Victorias y Score) — el "Campeón" de cada simulación es quien queda 1° en esa
   tabla, igual que `generar_tabla_torneo`.
-- El score de cada partida simulada usa el promedio histórico de pokémon sobrevivientes/vencidos por partida
-  de cada jugador (hasta 36 meses) — el modelo predice quién gana, no el marcador exacto; esto solo afecta el
-  desempate por Score.
-- **Importante:** este torneo se puntúa por tabla de Victorias/Score (igual que `vistas/torneos.py`), no por
-  bracket de eliminación directa — si tu torneo real es de eliminación simple, la probabilidad de "Campeón"
-  acá representa terminar 1° en la tabla acumulada, no ganar una final puntual.
 - **Límite conocido (heredado del modelo base):** si un jugador no tiene historial suficiente sus variables
   quedan en 0 y la predicción de ese cruce es casi una moneda al aire.
         """)

@@ -57,7 +57,11 @@ ROUND_ORDER = {
     'perdedores ronda 4': 13, 'perdedores ronda 5': 14,
     'perdedores ronda 6': 15, 'perdedores ronda 7': 16, 'perdedores ronda 8': 17,
     'fase de grupos': 20, 'playoff': 25,
-    'treintaidosavo de final': 30, 'dieciseisavos de final': 40,
+    # Los datos tienen las dos formas ("treintaidosavo" singular y "treintaidosavos"
+    # plural) según el torneo — se agregan ambas para que ninguna caiga en el
+    # default (50, el mismo que "octavos de final") y quede mal ordenada.
+    'treintaidosavo de final': 30, 'treintaidosavos de final': 30,
+    'dieciseisavos de final': 40,
     'octavos de final': 50, 'cuartos de final': 60, 'semifinal': 70,
     'ascenso bo3 semifinales': 71,
     'ascenso singles semi': 71, 'ascenso doubles semi': 71,
