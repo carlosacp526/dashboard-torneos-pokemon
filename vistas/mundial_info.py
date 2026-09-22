@@ -358,7 +358,7 @@ MONOTYPE1_TIPOS = {
     72: "GRANDE",
     73: "GRANDE",
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO"
-    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL"
+    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -741,6 +741,22 @@ MONOTYPE1_POSICIONES = {
         "Ger":     "Top8",
         "Necroz":     "Top8",
         "JaLax":     "Top8"
+
+
+        }}     ,
+
+        
+                 84: {
+      "DOBLES": {
+        "SasoriVzla7":   "Campeón",
+        "HallacAs": "Subcampeón",
+        "masafesio":     "Top4",
+        "Roy Kasoy":     "Top4",
+
+        "Bloody Cheese":     "Top8",
+        "Gold":     "Top8",
+        "Draco axel":     "Top8",
+        "Chonarthas":     "Top8"
 
 
         }}     
