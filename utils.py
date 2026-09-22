@@ -137,7 +137,10 @@ def score_final(data):
     return d
 
 def asignar_zona(rank, total, lt):
-    if lt in ('PEST1','PEST2','PSST3','PSST4','PSST5'):
+    # PEST3 y PSST6 no estaban listadas — se agregan acá siguiendo el mismo formato
+    # que la temporada anterior de su propia liga (PEST1/PEST2 y PSST3/PSST4/PSST5
+    # respectivamente), a falta de que se haya definido explícitamente otra regla.
+    if lt in ('PEST1','PEST2','PEST3','PSST3','PSST4','PSST5','PSST6'):
         if rank == 1: return "Líder"
         if rank in [2,3]: return "Ascenso"
         if rank > total-3: return "Descenso"
@@ -154,7 +157,9 @@ def asignar_zona(rank, total, lt):
         if rank > total-3: return "Descenso"
         return ""
 
-    if lt in ('PMST4','PMST5','PMST6'):
+    # PMST7 tampoco estaba listada — se agrega siguiendo el mismo formato que
+    # PMST4/PMST5/PMST6 (su temporada inmediata anterior), mismo criterio que arriba.
+    if lt in ('PMST4','PMST5','PMST6','PMST7'):
         if rank == 1: return "Líder"
         if rank > total-3: return "Descenso"
         return ""
