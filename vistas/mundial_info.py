@@ -357,7 +357,7 @@ MONOTYPE1_TIPOS = {
     71: "GRANDE",
     72: "GRANDE",
     73: "GRANDE",
-    74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO"
+    74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
     ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
@@ -706,7 +706,29 @@ MONOTYPE1_POSICIONES = {
         "JaLax":     "Top8",
 
 
-        }}      ,       81: {
+        }}      ,        80: {
+              "DOBLES": {
+                "Chris FPS":   "Campeón",
+                "Bloody Cheese": "Subcampeón",
+                "Porygon Z":     "Top4",
+                "SasoriVzla7":     "Top4",
+        
+                "Jorginho":     "Top8",
+                "CaradeCoso":     "Top8",
+                "Gold":     "Top8",
+                "Nitr0kill3r":     "Top8",
+
+
+                "Joscake":     "Top16",
+                "skll02":     "Top16",
+                "Aikauwu":     "Top16",
+                "Angelowos":     "Top16",
+                "ZapeohDev":     "Top16",
+                "ShinkaHMA":     "Top16",
+                "Dino agente":     "Top16",
+                "Draco axel":     "Top16"
+        
+                }}    ,       81: {
       "SINGLES": {
         "Porygon Z":   "Campeón",
         "Angello77": "Subcampeón",
@@ -760,7 +782,7 @@ MONOTYPE1_POSICIONES = {
 
 
         }}     
-        
+    
         }
 MONOTYPE1_LIGAS = {
     "PJS": {
