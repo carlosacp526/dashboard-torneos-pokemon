@@ -34,11 +34,45 @@ def show():
     # Temporadas por Liga (con los colores oficiales de cada logo/liga),
     # Torneos por tamaño (misma categorización de mundial/PUNTAJES_MUNDIAL3.png:
     # Grande > 24 · Mediano <= 24 · Pequeño < 13) y Torneos por Formato/Tier.
+    # Estilo tipo dashboard de BI: CSS de tarjetas KPI compartido + tema plotly
+    # uniforme, con un panel de KPIs siempre visible arriba de las pestañas.
     st.markdown('<div id="panorama-competencias"></div>', unsafe_allow_html=True)
     st.markdown("---")
     st.subheader("🗂️ Panorama de Competencias")
     st.caption("Cuántas temporadas hemos tenido de cada Liga, y cuántos Torneos según su tamaño, "
                "Formato y Tier — misma categorización oficial de PUNTAJES_MUNDIAL3.png.")
+
+    st.markdown("""
+    <style>
+    .kpi-card{background:linear-gradient(180deg,#ffffff 0%,#f6f8fb 100%);
+        border:1px solid #e8e8ee;border-radius:14px;padding:14px 16px 12px;
+        box-shadow:0 2px 10px rgba(20,20,40,0.07);height:100%;}
+    .kpi-icon{font-size:20px;line-height:1;margin-bottom:6px;}
+    .kpi-value{font-size:26px;font-weight:800;color:#14142b;line-height:1.15;}
+    .kpi-label{font-size:11.5px;color:#6b7280;text-transform:uppercase;
+        letter-spacing:.05em;margin-top:4px;font-weight:600;}
+    .kpi-sub{font-size:12px;color:#9096a6;margin-top:2px;}
+    </style>
+    """, unsafe_allow_html=True)
+
+    def _kpi_card(icon, value, label, sublabel="", accent="#1359A0"):
+        sub_html = f"<div class='kpi-sub'>{sublabel}</div>" if sublabel else ""
+        return (
+            f"<div class='kpi-card' style='border-top:4px solid {accent};'>"
+            f"<div class='kpi-icon'>{icon}</div>"
+            f"<div class='kpi-value'>{value}</div>"
+            f"<div class='kpi-label'>{label}</div>{sub_html}</div>"
+        )
+
+    # Tema plotly compartido: fondo transparente, tipografía y márgenes
+    # consistentes en todos los gráficos de esta sección (look de BI).
+    _PLOTLY_BASE = dict(
+        template='plotly_white',
+        font=dict(family='Segoe UI, Arial', size=13, color='#333'),
+        title_font=dict(size=16, color='#14142b'),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=10, r=20, t=50, b=20),
+    )
 
     LIGA_COLORS = {
         # Colores extraídos EXACTOS del header de cada tabla de liga en
@@ -60,91 +94,144 @@ def show():
         "PMS": "Pokémon Master Series", "PGS": "Pokémon Generations Series",
     }
 
+    # -- Datos compartidos (se calculan una sola vez y se reutilizan tanto
+    # en el panel de KPIs de arriba como dentro de cada pestaña) -----------
+    df_liga_all = df[df['league'] == 'LIGA'].copy()
+    temp_liga = pd.DataFrame(columns=['Liga', 'Temporadas'])
+    if not df_liga_all.empty and 'round' in df_liga_all.columns:
+        def _liga_temp(x):
+            partes = str(x).split(' ')
+            return partes[0] + partes[1] if pd.notna(x) and len(partes) > 1 else ''
+        df_liga_all['Liga_Temporada'] = df_liga_all['round'].apply(_liga_temp)
+        df_liga_all = df_liga_all[df_liga_all['Liga_Temporada'] != '']
+        df_liga_all['Prefijo'] = df_liga_all['Liga_Temporada'].str.extract(r'^([A-Z]+)T\d+$')
+        temp_liga = df_liga_all.groupby('Prefijo')['Liga_Temporada'].nunique().reset_index()
+        temp_liga.columns = ['Liga', 'Temporadas']
+        temp_liga = temp_liga[temp_liga['Liga'].isin(LIGA_COLORS)].copy()
+        if not temp_liga.empty:
+            temp_liga['Liga_nombre'] = temp_liga['Liga'].apply(lambda x: f"{x} — {LIGA_NOMBRES.get(x, '')}")
+            temp_liga = temp_liga.sort_values('Temporadas', ascending=True)
+
+    df_torneo_all = df[df['league'] == 'TORNEO'].copy()
+    participantes_por_torneo = pd.DataFrame(columns=['N_Torneo', 'Participantes', 'Categoría'])
+    orden_cat = ['Pequeño (< 13)', 'Mediano (<= 24)', 'Grande (> 24)',
+                 'Special Event (> 45)', 'Regional (>= 80)']
+    COLORS_TAM = {
+        'Pequeño (< 13)': '#3498DB', 'Mediano (<= 24)': '#2ECC71', 'Grande (> 24)': '#F1C40F',
+        'Special Event (> 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C',
+    }
+    if not df_torneo_all.empty and 'N_Torneo' in df_torneo_all.columns:
+        p1 = df_torneo_all[['N_Torneo', 'player1']].rename(columns={'player1': 'Jugador'})
+        p2 = df_torneo_all[['N_Torneo', 'player2']].rename(columns={'player2': 'Jugador'})
+        jugadores_torneo = pd.concat([p1, p2], ignore_index=True).dropna(subset=['Jugador', 'N_Torneo'])
+        participantes_por_torneo = jugadores_torneo.groupby('N_Torneo')['Jugador'].nunique() \
+            .reset_index(name='Participantes')
+
+        # Escalera completa de 5 categorias oficiales de PUNTAJES_MUNDIAL3.png
+        # (Torneo: Pequeño/Mediano/Grande + Regional/Special Event) - cada
+        # torneo cae en la categoria mas alta cuyo umbral supera, asi que
+        # Regional/Special "absorben" los torneos grandes que tambien
+        # cumplirian el umbral de Grande por separado.
+        def _categoria_torneo(n):
+            if n >= 80: return 'Regional (>= 80)'
+            if n > 45: return 'Special Event (> 45)'
+            if n > 24: return 'Grande (> 24)'
+            if n < 13: return 'Pequeño (< 13)'
+            return 'Mediano (<= 24)'
+        participantes_por_torneo['Categoría'] = participantes_por_torneo['Participantes'].apply(_categoria_torneo)
+
+    fmt_counts = pd.DataFrame(columns=['Formato', 'Torneos'])
+    tier_counts_t = pd.DataFrame(columns=['Tier', 'Torneos'])
+    if not df_torneo_all.empty:
+        if 'Formato' in df_torneo_all.columns:
+            fmt_counts = df_torneo_all.groupby('Formato')['N_Torneo'].nunique().reset_index()
+            fmt_counts.columns = ['Formato', 'Torneos']
+            fmt_counts = fmt_counts.sort_values('Torneos', ascending=False)
+        if 'Tier' in df_torneo_all.columns:
+            tier_counts_t = df_torneo_all.groupby('Tier')['N_Torneo'].nunique().reset_index()
+            tier_counts_t.columns = ['Tier', 'Torneos']
+            tier_counts_t = tier_counts_t.sort_values('Torneos', ascending=True)
+
+    # -- Panel de KPIs (siempre visible, resumen ejecutivo del panorama) ---
+    kpi_cols = st.columns(5)
+    with kpi_cols[0]:
+        st.markdown(_kpi_card("🏆", int(df_torneo_all['N_Torneo'].nunique()) if not df_torneo_all.empty else 0,
+                               "Torneos totales", accent="#1359A0"), unsafe_allow_html=True)
+    with kpi_cols[1]:
+        st.markdown(_kpi_card("📅", int(temp_liga['Temporadas'].sum()) if not temp_liga.empty else 0,
+                               "Temporadas de liga", accent="#E1C233"), unsafe_allow_html=True)
+    with kpi_cols[2]:
+        if not participantes_por_torneo.empty:
+            fila_max = participantes_por_torneo.loc[participantes_por_torneo['Participantes'].idxmax()]
+            st.markdown(_kpi_card("🥇", int(fila_max['Participantes']), "Torneo más grande",
+                                   sublabel=f"#{fila_max['N_Torneo']} · {fila_max['Categoría'].split(' (')[0]}",
+                                   accent="#E74C3C"), unsafe_allow_html=True)
+        else:
+            st.markdown(_kpi_card("🥇", "—", "Torneo más grande", accent="#E74C3C"), unsafe_allow_html=True)
+    with kpi_cols[3]:
+        if not fmt_counts.empty:
+            top_fmt = fmt_counts.iloc[0]
+            st.markdown(_kpi_card("🎮", top_fmt['Formato'], "Formato más usado",
+                                   sublabel=f"{int(top_fmt['Torneos'])} torneos", accent="#2ECC71"),
+                        unsafe_allow_html=True)
+        else:
+            st.markdown(_kpi_card("🎮", "—", "Formato más usado", accent="#2ECC71"), unsafe_allow_html=True)
+    with kpi_cols[4]:
+        if not tier_counts_t.empty:
+            top_tier = tier_counts_t.sort_values('Torneos', ascending=False).iloc[0]
+            st.markdown(_kpi_card("⭐", top_tier['Tier'], "Tier más usado",
+                                   sublabel=f"{int(top_tier['Torneos'])} torneos", accent="#9B59B6"),
+                        unsafe_allow_html=True)
+        else:
+            st.markdown(_kpi_card("⭐", "—", "Tier más usado", accent="#9B59B6"), unsafe_allow_html=True)
+
+    st.write("")
     tab_temp, tab_tam, tab_fmt_tier = st.tabs(
         ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "🎮 Torneos por Formato y Tier"])
 
     # -- Temporadas por Liga --------------------------------------------
     with tab_temp:
-        df_liga_all = df[df['league'] == 'LIGA'].copy()
-        if df_liga_all.empty or 'round' not in df_liga_all.columns:
-            st.info("No hay datos de liga disponibles.")
+        if temp_liga.empty:
+            st.info("No se pudieron identificar temporadas de liga conocidas (PJS/PSS/PES/PLS/PMS).")
         else:
-            def _liga_temp(x):
-                partes = str(x).split(' ')
-                return partes[0] + partes[1] if pd.notna(x) and len(partes) > 1 else ''
-            df_liga_all['Liga_Temporada'] = df_liga_all['round'].apply(_liga_temp)
-            df_liga_all = df_liga_all[df_liga_all['Liga_Temporada'] != '']
-            df_liga_all['Prefijo'] = df_liga_all['Liga_Temporada'].str.extract(r'^([A-Z]+)T\d+$')
-            temp_liga = df_liga_all.groupby('Prefijo')['Liga_Temporada'].nunique().reset_index()
-            temp_liga.columns = ['Liga', 'Temporadas']
-            temp_liga = temp_liga[temp_liga['Liga'].isin(LIGA_COLORS)].copy()
-
-            if temp_liga.empty:
-                st.info("No se pudieron identificar temporadas de liga conocidas (PJS/PSS/PES/PLS/PMS).")
-            else:
-                temp_liga['Liga_nombre'] = temp_liga['Liga'].apply(lambda x: f"{x} — {LIGA_NOMBRES.get(x, '')}")
-                temp_liga = temp_liga.sort_values('Temporadas', ascending=True)
-
-                col_chart, col_cards = st.columns([2, 1])
-                with col_chart:
-                    fig = px.bar(temp_liga, x='Temporadas', y='Liga_nombre', orientation='h',
-                                 color='Liga', color_discrete_map=LIGA_COLORS, text='Temporadas',
-                                 title='Temporadas jugadas por Liga')
-                    fig.update_traces(textposition='outside', marker_line_color='#333333', marker_line_width=1.2)
-                    fig.update_layout(showlegend=False, yaxis_title='', xaxis_title='Temporadas',
-                                       margin=dict(l=10, r=40, t=40, b=20))
-                    st.plotly_chart(fig, use_container_width=True)
-                with col_cards:
-                    st.markdown("##### Resumen")
-                    for _, row in temp_liga.sort_values('Temporadas', ascending=False).iterrows():
-                        texto_color = '#111' if row['Liga'] in LIGA_TEXTO_OSCURO else 'white'
-                        borde = 'border:1.5px solid #999;' if row['Liga'] in LIGA_TEXTO_OSCURO else ''
-                        st.markdown(
-                            f"<div style='background:{LIGA_COLORS.get(row['Liga'], '#888')};{borde}"
-                            "padding:10px 14px;border-radius:10px;margin-bottom:8px;"
-                            f"color:{texto_color};font-weight:700;display:flex;justify-content:space-between;'>"
-                            f"<span>{row['Liga']}</span><span>{int(row['Temporadas'])} temp.</span></div>",
-                            unsafe_allow_html=True)
-                    st.metric("Total de temporadas jugadas", int(temp_liga['Temporadas'].sum()))
+            col_chart, col_cards = st.columns([2, 1])
+            with col_chart:
+                fig = px.bar(temp_liga, x='Temporadas', y='Liga_nombre', orientation='h',
+                             color='Liga', color_discrete_map=LIGA_COLORS, text='Temporadas',
+                             title='Temporadas jugadas por Liga')
+                fig.update_layout(**_PLOTLY_BASE)
+                fig.update_traces(textposition='outside', marker_line_color='#333333', marker_line_width=1.2)
+                fig.update_layout(showlegend=False, yaxis_title='', xaxis_title='Temporadas')
+                st.plotly_chart(fig, use_container_width=True)
+            with col_cards:
+                st.markdown("##### Resumen")
+                for _, row in temp_liga.sort_values('Temporadas', ascending=False).iterrows():
+                    texto_color = '#111' if row['Liga'] in LIGA_TEXTO_OSCURO else 'white'
+                    borde = 'border:1.5px solid #999;' if row['Liga'] in LIGA_TEXTO_OSCURO else ''
+                    st.markdown(
+                        f"<div style='background:{LIGA_COLORS.get(row['Liga'], '#888')};{borde}"
+                        "padding:10px 14px;border-radius:10px;margin-bottom:8px;"
+                        f"color:{texto_color};font-weight:700;display:flex;justify-content:space-between;'>"
+                        f"<span>{row['Liga']}</span><span>{int(row['Temporadas'])} temp.</span></div>",
+                        unsafe_allow_html=True)
+                st.metric("Total de temporadas jugadas", int(temp_liga['Temporadas'].sum()))
 
     # -- Torneos por Tamaño ----------------------------------------------
     with tab_tam:
-        df_torneo_all = df[df['league'] == 'TORNEO'].copy()
-        if df_torneo_all.empty or 'N_Torneo' not in df_torneo_all.columns:
+        if participantes_por_torneo.empty:
             st.info("No hay datos de torneos disponibles.")
         else:
-            p1 = df_torneo_all[['N_Torneo', 'player1']].rename(columns={'player1': 'Jugador'})
-            p2 = df_torneo_all[['N_Torneo', 'player2']].rename(columns={'player2': 'Jugador'})
-            jugadores_torneo = pd.concat([p1, p2], ignore_index=True).dropna(subset=['Jugador', 'N_Torneo'])
-            participantes_por_torneo = jugadores_torneo.groupby('N_Torneo')['Jugador'].nunique() \
-                .reset_index(name='Participantes')
-
-            # Escalera completa de 5 categorias oficiales de PUNTAJES_MUNDIAL3.png
-            # (Torneo: Pequeño/Mediano/Grande + Regional/Special Event) - cada
-            # torneo cae en la categoria mas alta cuyo umbral supera, asi que
-            # Regional/Special "absorben" los torneos grandes que tambien
-            # cumplirian el umbral de Grande por separado.
-            def _categoria_torneo(n):
-                if n >= 80: return 'Regional (>= 80)'
-                if n > 45: return 'Special Event (> 45)'
-                if n > 24: return 'Grande (> 24)'
-                if n < 13: return 'Pequeño (< 13)'
-                return 'Mediano (<= 24)'
-            participantes_por_torneo['Categoría'] = participantes_por_torneo['Participantes'].apply(_categoria_torneo)
-            orden_cat = ['Pequeño (< 13)', 'Mediano (<= 24)', 'Grande (> 24)',
-                         'Special Event (> 45)', 'Regional (>= 80)']
             cat_counts = participantes_por_torneo['Categoría'].value_counts().reindex(orden_cat).fillna(0) \
                 .astype(int).reset_index()
             cat_counts.columns = ['Categoría', 'Torneos']
-            COLORS_TAM = {
-                'Pequeño (< 13)': '#3498DB', 'Mediano (<= 24)': '#2ECC71', 'Grande (> 24)': '#F1C40F',
-                'Special Event (> 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C',
-            }
 
             cols_tam = st.columns(5)
             for c, cat in zip(cols_tam, orden_cat):
                 valor = int(cat_counts.loc[cat_counts['Categoría'] == cat, 'Torneos'].iloc[0])
-                c.metric(cat, valor)
+                with c:
+                    nombre_corto, umbral = cat.split(' (')
+                    st.markdown(_kpi_card("🥊", valor, nombre_corto, sublabel=umbral.rstrip(')'),
+                                           accent=COLORS_TAM[cat]), unsafe_allow_html=True)
 
             # Barplot de la distribucion real de participantes por torneo (1
             # barra = 1 torneo, ordenado de menor a mayor), coloreado por
@@ -156,6 +243,7 @@ def show():
                          color_discrete_map=COLORS_TAM, category_orders={'Categoría': orden_cat},
                          hover_data={'N_Torneo': True, 'Torneo_idx': False},
                          title=f"Distribución de participantes por torneo ({len(dist)} torneos, ordenados de menor a mayor)")
+            fig.update_layout(**_PLOTLY_BASE)
             fig.add_hline(y=13, line_dash='dot', line_color='#3498DB', annotation_text='13')
             fig.add_hline(y=24, line_dash='dot', line_color='#2ECC71', annotation_text='24')
             fig.add_hline(y=45, line_dash='dot', line_color='#F1C40F', annotation_text='45')
@@ -170,11 +258,10 @@ def show():
 
     # -- Torneos por Formato y Tier ---------------------------------------
     with tab_fmt_tier:
-        df_torneo_all2 = df[df['league'] == 'TORNEO'].copy()
-        if df_torneo_all2.empty:
+        if df_torneo_all.empty:
             st.info("No hay datos de torneos disponibles.")
         else:
-            n_torneos_unicos = df_torneo_all2['N_Torneo'].nunique()
+            n_torneos_unicos = df_torneo_all['N_Torneo'].nunique()
             st.caption(
                 f"📌 Hay **{n_torneos_unicos} torneos únicos** en total, pero las barras de abajo pueden sumar más: "
                 "un torneo que usó varios Formatos o Tiers (ej. Singles + Dobles + VGC en el mismo evento) "
@@ -182,26 +269,23 @@ def show():
             )
             col1, col2 = st.columns(2)
             with col1:
-                if 'Formato' in df_torneo_all2.columns:
-                    fmt_counts = df_torneo_all2.groupby('Formato')['N_Torneo'].nunique().reset_index()
-                    fmt_counts.columns = ['Formato', 'Torneos']
-                    fmt_counts = fmt_counts.sort_values('Torneos', ascending=False)
+                if not fmt_counts.empty:
                     fig = px.bar(fmt_counts, x='Formato', y='Torneos', color='Formato', text='Torneos',
-                                 title='Torneos por Formato')
+                                 title='Torneos por Formato',
+                                 color_discrete_sequence=['#1359A0', '#2ECC71', '#F1C40F', '#E67E22'])
+                    fig.update_layout(**_PLOTLY_BASE)
                     fig.update_traces(textposition='outside')
                     fig.update_layout(showlegend=False)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.info("No se encontró la columna 'Formato'.")
             with col2:
-                if 'Tier' in df_torneo_all2.columns:
-                    tier_counts_t = df_torneo_all2.groupby('Tier')['N_Torneo'].nunique().reset_index()
-                    tier_counts_t.columns = ['Tier', 'Torneos']
-                    tier_counts_t = tier_counts_t.sort_values('Torneos', ascending=True)
+                if not tier_counts_t.empty:
                     altura = max(400, len(tier_counts_t) * 26)
                     fig = px.bar(tier_counts_t, x='Torneos', y='Tier', orientation='h',
-                                 color='Torneos', color_continuous_scale='viridis',
+                                 color='Torneos', color_continuous_scale=['#cfe3f7', '#1359A0'],
                                  title='Torneos por Tier')
+                    fig.update_layout(**_PLOTLY_BASE)
                     fig.update_layout(height=altura, yaxis_title='')
                     st.plotly_chart(fig, use_container_width=True)
                 else:
