@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, build_base_liga, build_base_torneo, score_final, asignar_zona
 from vistas.prediccion import load_model, make_pred_row
 from vistas.elo import get_round_order
+from vistas.seeding import _standard_seed_order
 
 # Ronda de eliminación directa más temprana que reconocemos como parte del
 # bracket (ver ROUND_ORDER en vistas/elo.py): todo lo que esté POR DEBAJO de
@@ -271,6 +272,143 @@ def _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims=1000, 
         return odds_df, columnas
     odds_df = odds_df.sort_values("Campeón", ascending=False).reset_index(drop=True)
     return odds_df, columnas
+
+
+def _simular_torneo_hibrido(base_nt, prob_df, avg_pokes, rondas, model, latest_stats, top_feat,
+                             n_sims=1000, seed=42):
+    """
+    Caso que _simular_torneo_bracket no puede resolver: la fase de grupos/ronda
+    suiza todavia tiene cruces pendientes, asi que TODAS las series de la
+    primera ronda de eliminacion directa siguen marcadas "Pendiente" contra
+    "Pendiente" (el organizador ya precargo el esqueleto del bracket, pero
+    todavia no se sabe quien clasifica) — no hay ningun jugador real anclado
+    en ninguna rama, asi que no hay nada de donde propagar un ganador.
+
+    En vez de rendirse, esta funcion simula el TORNEO COMPLETO de punta a
+    punta, n_sims veces:
+      1. Termina de simular los cruces pendientes de la fase de grupos/suiza
+         (misma logica de duelo que simulate_bracket_odds).
+      2. Calcula la tabla final de esa fase simulada (score_final, igual que
+         el resto de la app) y toma los primeros N como clasificados, donde
+         N = 2 x cantidad de series de la primera ronda de eliminacion
+         detectada en los datos (ej. 8 series de Octavos = 16 clasificados) -
+         el tamano real del bracket, no un numero fijo.
+      3. Siembra esos N clasificados en el bracket con el mismo seeding
+         deportivo estandar que ya usa vistas/seeding.py
+         (_standard_seed_order: seed 1 contra el peor seed disponible, los
+         favoritos no se cruzan antes de semifinal/final).
+      4. Simula el bracket de eliminacion directa completo desde esa primera
+         ronda recien sembrada hasta la final.
+
+    Como se repite de punta a punta en cada una de las n_sims corridas, la
+    incertidumbre de QUIEN clasifica de la fase de grupos tambien queda
+    reflejada en las probabilidades finales de podio, no solo la incertidumbre
+    del bracket en si.
+    """
+    rng = np.random.default_rng(seed)
+
+    participantes = base_nt["Participante"].tolist()
+    idx = {p: i for i, p in enumerate(participantes)}
+    victorias0 = base_nt["Victorias"].to_numpy(dtype=float)
+    juegos0 = base_nt["Juegos"].to_numpy(dtype=float)
+    sob0 = base_nt["pokes_sobrevivientes"].to_numpy(dtype=float)
+    venc0 = base_nt["poke_vencidos"].to_numpy(dtype=float)
+
+    duelos = []
+    for m in (prob_df.to_dict("records") if isinstance(prob_df, pd.DataFrame) else prob_df):
+        i1, i2 = idx.get(m["player1"]), idx.get(m["player2"])
+        if i1 is None or i2 is None:
+            continue
+        for _ in range(m["n"]):
+            duelos.append((i1, i2, m["prob_p1"]))
+
+    n_series_r1 = len(rondas[0]["series"]) if rondas else 0
+    n_clasificados = n_series_r1 * 2
+    if n_series_r1 == 0 or n_clasificados > len(participantes):
+        return pd.DataFrame(), []
+
+    prob_cache = {}
+
+    def prob_p1_series(a, b):
+        key = (a, b)
+        if key not in prob_cache:
+            X = make_pred_row(a, b, latest_stats, top_feat)
+            prob_cache[key] = float(model.predict_proba(X)[0][0])
+        return prob_cache[key]
+
+    etapas = [r["nombre"] for r in rondas]
+    etapa_counts = {p: Counter() for p in participantes}
+    clasificado_counts = Counter()
+    seed_order = _standard_seed_order(n_clasificados)
+
+    for _ in range(n_sims):
+        # 1) terminar de simular la fase de grupos/suiza pendiente
+        victorias = victorias0.copy(); juegos = juegos0.copy()
+        sob = sob0.copy(); venc = venc0.copy()
+        draws = rng.random(len(duelos))
+        for (i1, i2, p1), d in zip(duelos, draws):
+            wi, li = (i1, i2) if d < p1 else (i2, i1)
+            victorias[wi] += 1; juegos[wi] += 1; juegos[li] += 1
+            sw, vw = avg_pokes.get(participantes[wi], (3.0, 3.0))
+            sl, vl = avg_pokes.get(participantes[li], (3.0, 3.0))
+            sob[wi] += sw; venc[wi] += vw
+            sob[li] += sl; venc[li] += vl
+
+        sim = pd.DataFrame({
+            "Participante": participantes, "Victorias": victorias, "Juegos": juegos,
+            "Derrotas": juegos - victorias, "pokes_sobrevivientes": sob, "poke_vencidos": venc,
+        })
+        scored = score_final(sim).sort_values(
+            ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
+
+        # 2) clasificados = primeros N de esa tabla de grupos simulada
+        clasificados = scored["Participante"].head(n_clasificados).tolist()
+        for p in clasificados:
+            clasificado_counts[p] += 1
+
+        # 3) sembrar el bracket con seeding deportivo estandar (1 vs peor, etc.)
+        jugador_por_seed = {i + 1: clasificados[i] for i in range(n_clasificados)}
+        primera_ronda = [(jugador_por_seed[seed_order[i]], jugador_por_seed[seed_order[i + 1]])
+                          for i in range(0, n_clasificados, 2)]
+
+        # 4) simular el bracket completo desde la primera ronda recien sembrada
+        ganador_de = {}
+        for sidx, (p1, p2) in enumerate(primera_ronda):
+            p = prob_p1_series(p1, p2)
+            wins1 = sum(1 for _ in range(3) if rng.random() < p)
+            ganador = p1 if wins1 >= 2 else p2
+            ganador_de[(0, sidx)] = ganador
+            perdedor = p2 if ganador == p1 else p1
+            etapa_counts[perdedor][etapas[0]] += 1
+
+        for ridx in range(1, len(rondas)):
+            n_series_ronda = len(rondas[ridx]["series"])
+            for sidx in range(n_series_ronda):
+                p1 = ganador_de.get((ridx - 1, 2 * sidx))
+                p2 = ganador_de.get((ridx - 1, 2 * sidx + 1))
+                if p1 is None or p2 is None:
+                    continue
+                p = prob_p1_series(p1, p2)
+                wins1 = sum(1 for _ in range(3) if rng.random() < p)
+                ganador = p1 if wins1 >= 2 else p2
+                ganador_de[(ridx, sidx)] = ganador
+                perdedor = p2 if ganador == p1 else p1
+                etapa_counts[perdedor][etapas[ridx]] += 1
+
+        campeon = ganador_de.get((len(rondas) - 1, 0))
+        if campeon:
+            etapa_counts[campeon]["Campeón"] += 1
+
+    columnas = ["Campeón"] + list(reversed(etapas))
+    filas = []
+    for p in participantes:
+        fila = {"Jugador": p, "Clasifica a eliminatoria": round(100 * clasificado_counts[p] / n_sims, 1)}
+        for col in columnas:
+            fila[col] = round(100 * etapa_counts[p].get(col, 0) / n_sims, 1)
+        fila["No clasifica"] = round(100 * (n_sims - clasificado_counts[p]) / n_sims, 1)
+        filas.append(fila)
+    odds_df = pd.DataFrame(filas).sort_values("Campeón", ascending=False).reset_index(drop=True)
+    return odds_df, columnas + ["No clasifica"]
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -596,7 +734,20 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
         if {"league", "N_Torneo"}.issubset(df_raw.columns) else df_raw.iloc[0:0]
     rondas = _parse_bracket(df_torneo_full)
 
-    if rondas:
+    # El bracket "no arranco todavia" cuando NINGUNA serie de su primera ronda
+    # tiene un jugador real anclado (las dos posiciones son "Pendiente") — pasa
+    # cuando la fase de grupos/ronda suiza anterior todavia no termino, asi que
+    # nadie clasifico aun. Ahi _simular_torneo_bracket no tiene de donde
+    # arrancar a propagar ganadores; hace falta primero simular quien clasifica
+    # (ver _simular_torneo_hibrido).
+    bracket_sin_arrancar = bool(rondas) and all(
+        s["p1"] is None and s["p2"] is None for s in rondas[0]["series"]
+    )
+
+    if bracket_sin_arrancar:
+        _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_feat,
+                                 n_sims, nombre_torneo, nt, mod_sel, pend_nt)
+    elif rondas:
         _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombre_torneo, nt, mod_sel, prob_df, pend_nt)
     else:
         _mostrar_torneo_tabla_plana(base_nt, prob_df, nombre_torneo, nt, mod_sel, n_sims, pend_nt, latest_stats)
@@ -650,6 +801,96 @@ def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombr
 - Solo se muestran los jugadores **todavía vivos** en el torneo (no fueron eliminados en una serie ya decidida).
 - **Límite conocido (heredado del modelo base):** si un jugador no tiene historial suficiente sus variables
   quedan en 0 y la predicción de esa serie es casi una moneda al aire.
+        """)
+
+
+def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_feat,
+                             n_sims, nombre_torneo, nt, mod_sel, pend_nt):
+    """Fase de grupos/suiza todavia en curso: TODO el bracket sigue marcado
+    'Pendiente' (ver bracket_sin_arrancar en _show_torneo). En vez de rendirse,
+    se simula el torneo completo de punta a punta con _simular_torneo_hibrido:
+    primero quien clasifica de la fase de grupos, despues el bracket sembrado
+    con esos clasificados."""
+    n_series_r1 = len(rondas[0]["series"])
+    n_clasificados = n_series_r1 * 2
+    st.info(
+        f"La fase de grupos/ronda suiza de este torneo todavia no termino, asi que el bracket de "
+        f"eliminacion directa ({rondas[0]['nombre']} en adelante) todavia esta completo 'Pendiente' - "
+        f"nadie clasifico aun. Para estimar campeon/podio de todas formas, esta simulacion primero "
+        f"termina de simular la fase de grupos, clasifica a los **{n_clasificados} mejores** (el tamano "
+        f"real del bracket detectado en los datos: {n_series_r1} series en {rondas[0]['nombre']}), los "
+        f"siembra con el mismo seeding deportivo estandar que usa la pagina de Seeding (1° contra el "
+        f"peor clasificado, y asi para que los favoritos no se crucen antes de semifinal/final), y recien "
+        f"ahi simula el bracket completo hasta la Final — todo esto de punta a punta en cada una de las "
+        f"simulaciones."
+    )
+
+    avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
+    with st.spinner(f"Simulando {n_sims} torneos completos (fase de grupos + bracket)..."):
+        odds_df, etapas_cols = _simular_torneo_hibrido(
+            base_nt, prob_df, avg_pokes, rondas, model, latest_stats, top_feat, n_sims)
+
+    if odds_df.empty:
+        st.warning(
+            "No se pudo estimar el tamaño del bracket o hay más cupos de eliminatoria que participantes "
+            "con datos — no hay nada que simular todavía."
+        )
+        return
+
+    st.markdown("---")
+    ganador = odds_df.iloc[0]
+    st.success(f"🏆 Favorito a Campeón: **{ganador['Jugador']}** ({ganador['Campeón']:.1f}% de las simulaciones).")
+
+    st.subheader(f"📊 Probabilidad de clasificar a eliminatoria — {nombre_torneo}")
+    clasif_df = odds_df[["Jugador", "Clasifica a eliminatoria"]].sort_values(
+        "Clasifica a eliminatoria", ascending=False)
+    fig_clasif = px.bar(clasif_df, x="Jugador", y="Clasifica a eliminatoria",
+                         title=f"Probabilidad de clasificar a {rondas[0]['nombre']} — {n_sims} simulaciones")
+    fig_clasif.update_layout(xaxis_tickangle=-45, yaxis_title="Probabilidad %")
+    st.plotly_chart(fig_clasif, use_container_width=True)
+
+    st.markdown("---")
+    st.subheader(f"📊 Probabilidad de podio — {nombre_torneo}")
+    colores_base = ["#FFD700", "#C0C0C0", "#CD7F32", "#87CEEB", "#5DADE2", "#7F8C8D", "#566573"]
+    colores = {col: colores_base[i % len(colores_base)] for i, col in enumerate(etapas_cols[:-1])}
+    colores["No clasifica"] = "#3B3B3B"
+    fig = px.bar(odds_df, x="Jugador", y=etapas_cols, color_discrete_map=colores,
+                 title=f"Resultado final (incluye 'No clasifica') — {n_sims} torneos simulados")
+    fig.update_layout(barmode="stack", xaxis_tickangle=-45, legend_title="Resultado", yaxis_title="Probabilidad %")
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(odds_df, use_container_width=True, hide_index=True, height=420)
+    st.download_button("📥 Descargar odds (CSV)", odds_df.to_csv(index=False).encode("utf-8"),
+                        f"torneo_hibrido_odds_{nt}.csv", "text/csv")
+
+    with st.expander("🌳 Ver estructura del bracket detectada (todavia sin clasificados reales)"):
+        for ronda in rondas:
+            st.markdown(f"**{ronda['nombre']}** ({len(ronda['series'])} series)")
+        st.caption("Todas las series arrancan en 'Pendiente' porque la fase de grupos/suiza sigue en curso.")
+
+    with st.expander("📖 Metodología y límites"):
+        st.markdown(f"""
+- El bracket de este torneo ({rondas[0]['nombre']} hasta {rondas[-1]['nombre']}) está cargado en los datos
+  pero **completo "Pendiente"** — significa que la fase de grupos/ronda suiza previa todavía no cerró, así que
+  todavía no se sabe quién clasifica. En vez de no simular nada, esta vista simula el torneo **de punta a
+  punta**, {n_sims} veces:
+  1. Termina de simular los **{len(prob_df)} cruces pendientes** de la fase de grupos/suiza con **{mod_sel}**
+     (misma probabilidad que en Predicción), y calcula la tabla final de esa fase con `score_final`.
+  2. Toma los **{n_clasificados} primeros** de esa tabla simulada como clasificados — el tamaño real del
+     bracket, inferido de los datos ({n_series_r1} series en {rondas[0]['nombre']} = {n_clasificados} cupos),
+     no un número fijo.
+  3. Siembra esos clasificados con el **seeding deportivo estándar** (`_standard_seed_order`, la misma
+     función que usa la página de Seeding): el 1° se enfrenta al último clasificado, el 2° al anteúltimo, y
+     así — los favoritos no pueden cruzarse antes de semifinal/final.
+  4. Simula el bracket de eliminación directa completo (mejor de 3 por serie) desde esa primera ronda recién
+     sembrada hasta la Final.
+- Como los 4 pasos se repiten juntos en cada simulación, la incertidumbre de **quién clasifica** de la fase de
+  grupos queda reflejada en las probabilidades finales, no solo la del bracket en sí.
+- **Supuesto importante (no verificado contra el reglamento real del torneo):** se asume que clasifican los
+  {n_clasificados} mejores de la tabla GENERAL combinada (Victorias/Score), y que el organizador siembra con
+  el criterio deportivo estándar. Si el torneo real clasifica por grupo (ej. "top 2 de cada llave") o siembra
+  por sorteo en vez de por tabla, el resultado real puede variar del estimado acá.
+- **Límite conocido (heredado del modelo base):** si un jugador no tiene historial suficiente sus variables
+  quedan en 0 y la predicción de ese cruce es casi una moneda al aire.
         """)
 
 
