@@ -115,10 +115,10 @@ def show():
     df_torneo_all = df[df['league'] == 'TORNEO'].copy()
     participantes_por_torneo = pd.DataFrame(columns=['N_Torneo', 'Participantes', 'Categoría'])
     orden_cat = ['Pequeño (< 13)', 'Mediano (<= 24)', 'Grande (> 24)',
-                 'Special Event (> 45)', 'Regional (>= 80)']
+                 'Special Event (>= 45)', 'Regional (>= 80)']
     COLORS_TAM = {
         'Pequeño (< 13)': '#3498DB', 'Mediano (<= 24)': '#2ECC71', 'Grande (> 24)': '#F1C40F',
-        'Special Event (> 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C',
+        'Special Event (>= 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C',
     }
     if not df_torneo_all.empty and 'N_Torneo' in df_torneo_all.columns:
         p1 = df_torneo_all[['N_Torneo', 'player1']].rename(columns={'player1': 'Jugador'})
@@ -134,7 +134,7 @@ def show():
         # cumplirian el umbral de Grande por separado.
         def _categoria_torneo(n):
             if n >= 80: return 'Regional (>= 80)'
-            if n > 45: return 'Special Event (> 45)'
+            if n >= 45: return 'Special Event (>= 45)'
             if n > 24: return 'Grande (> 24)'
             if n < 13: return 'Pequeño (< 13)'
             return 'Mediano (<= 24)'
@@ -252,7 +252,7 @@ def show():
                                yaxis_title='Participantes', legend_title='Categoría')
             st.plotly_chart(fig, use_container_width=True)
             st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png (por participantes): "
-                       "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event > 45 · Regional >= 80. "
+                       "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event >= 45 · Regional >= 80. "
                        "Cada torneo cae en la categoría más alta que supera (un torneo de 90 participantes "
                        "cuenta como Regional, no como Grande).")
 
