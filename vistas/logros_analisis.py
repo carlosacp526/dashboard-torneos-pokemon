@@ -20,7 +20,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, normalize_columns, ensure_fields, build_base_liga,
                     build_base_torneo, generar_tabla_temporada, generar_tabla_torneo)
-from vistas.elo import calcular_elo
+from vistas.elo import calcular_elo, PSElo, get_round_order
 from vistas.logros import LOGROS, evaluar_logros, CATEGORIAS_ORDEN, CAT_COLORS, RAREZA_COLORS
 
 RAREZA_ORDEN = ["Bronce", "Plata", "Oro", "Legendario"]
@@ -73,7 +73,94 @@ def _precalcular_campeones(_df_raw, _base2, _base_torneo_final):
     return campeones_liga, campeones_torneo
 
 
-@st.cache_data(ttl=3600, show_spinner="Calculando logros de todos los jugadores (puede tardar ~1 min la primera vez)...")
+@st.cache_data(ttl=3600, show_spinner=False)
+def _precalcular_numero_uno(_df_raw):
+    """Devuelve el set de jugadores que en algún momento de la historia tuvieron
+    el Elo más alto de toda la comunidad (para el logro RK12 "Number One").
+    Replica el mismo bucle de actualización que calcular_elo() en vistas/elo.py,
+    pero en cada paso registra si el ganador acaba de igualar/superar el máximo
+    histórico visto hasta ese instante — si lo hace, en ESE momento nadie más
+    puede tener más Elo que él (por definición de "máximo visto hasta ahora"),
+    o sea que fue #1 en ese instante. No modifica calcular_elo(), es un cálculo
+    aparte para no tocar una función de la que dependen muchas otras vistas."""
+    df = normalize_columns(_df_raw.copy())
+    df = ensure_fields(df)
+    elo_df = df[df['winner'].notna()].copy()
+    if 'Walkover' in df.columns:
+        elo_df = elo_df[elo_df['Walkover'] != -1]
+    if elo_df.empty:
+        return set()
+    elo_df = elo_df.rename(columns={'winner': 'Ganador'})
+    elo_df['Perdedor'] = elo_df.apply(
+        lambda r: r['player2'] if str(r['Ganador']).strip() == str(r['player1']).strip() else r['player1'], axis=1)
+    elo_df['_ro'] = elo_df['round'].apply(get_round_order) if 'round' in elo_df.columns else 50
+    elo_df['_nt'] = elo_df['N_Torneo'].fillna(0) if 'N_Torneo' in elo_df.columns else 0
+    elo_df = elo_df[['Ganador', 'Perdedor', 'date', '_ro', '_nt']].dropna(subset=['Ganador', 'Perdedor', 'date']).copy()
+    elo_df = elo_df[elo_df['Ganador'] != elo_df['Perdedor']]
+    elo_df = elo_df.sort_values(['date', '_nt', '_ro'], ascending=True).reset_index(drop=True)
+    if elo_df.empty:
+        return set()
+
+    todos = pd.concat([elo_df['Ganador'], elo_df['Perdedor']]).unique()
+    ratings = {p: 1000 for p in todos}
+    lideres = set()
+    max_actual = 1000
+    for _, row in elo_df.iterrows():
+        g, p = row['Ganador'], row['Perdedor']
+        ra, rb = ratings[g], ratings[p]
+        jugador_elo = PSElo(ra)
+        k = jugador_elo.get_k_factor(ra, 1)
+        exp_a = jugador_elo.calculate_expected_score(ra, rb)
+        exp_b = 1 - exp_a
+        nueva_a = max(1000, round(ra + k * (1 - exp_a)))
+        nueva_b = max(1000, round(rb + k * (0 - exp_b)))
+        ratings[g], ratings[p] = nueva_a, nueva_b
+        if nueva_a >= max_actual:
+            max_actual = nueva_a
+            lideres.add(str(g).strip().lower())
+    return lideres
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _precalcular_mas_buscado(_df_raw):
+    """Devuelve el set de jugadores que en algún mes fueron el más enfrentado de
+    la comunidad (más rivales DISTINTOS jugados ese mes) — para SO14 "El Más
+    Buscado". Cada partida conecta simétricamente a dos jugadores, así que
+    "cuántos rivales distintos enfrentó X" y "cuánta gente distinta jugó contra
+    X" son la misma cuenta."""
+    df = normalize_columns(_df_raw.copy())
+    df = ensure_fields(df)
+    d = df[df['winner'].notna()].copy()
+    if 'Walkover' in d.columns:
+        d = d[d['Walkover'] != -1]
+    d['date'] = pd.to_datetime(d['date'], errors='coerce')
+    d = d.dropna(subset=['date'])
+    if d.empty:
+        return set()
+    d['_mes'] = d['date'].dt.to_period('M')
+
+    ganadores = set()
+    for _, grp in d.groupby('_mes'):
+        contactos = {}
+        for _, row in grp.iterrows():
+            p1 = str(row['player1']).strip()
+            p2 = str(row['player2']).strip()
+            if not p1 or not p2 or p1.lower() == 'nan' or p2.lower() == 'nan':
+                continue
+            contactos.setdefault(p1, set()).add(p2)
+            contactos.setdefault(p2, set()).add(p1)
+        if not contactos:
+            continue
+        max_n = max(len(v) for v in contactos.values())
+        if max_n <= 0:
+            continue
+        for jugador, rivs in contactos.items():
+            if len(rivs) == max_n:
+                ganadores.add(jugador.strip().lower())
+    return ganadores
+
+
+@st.cache_data(ttl=3600, show_spinner="Calculando logros de todos los jugadores (puede tardar 1-2 min la primera vez)...")
 def calcular_logros_comunidad(_df_raw):
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
@@ -82,6 +169,8 @@ def calcular_logros_comunidad(_df_raw):
     base2, _df_liga = build_base_liga(_df_raw)
     base_torneo_final, _ = build_base_torneo(_df_raw)
     campeones_liga, campeones_torneo = _precalcular_campeones(_df_raw, base2, base_torneo_final)
+    lideres_elo = _precalcular_numero_uno(_df_raw)
+    mas_buscados = _precalcular_mas_buscado(_df_raw)
 
     todos = pd.concat([df['player1'], df['player2']]).dropna().astype(str).str.strip()
     todos = sorted({p for p in todos if p and p.lower() != 'nan'})
@@ -99,6 +188,7 @@ def calcular_logros_comunidad(_df_raw):
             jugador, player_matches, _df_raw, data_elo, base2, base_torneo_final,
             campeones_liga.get(pq, []), campeones_torneo.get(pq, []),
             generar_tabla_temporada, generar_tabla_torneo, data_filas=data_filas,
+            lideres_elo=lideres_elo, jugadores_mas_buscados=mas_buscados,
         )
         fila = {"Jugador": jugador}
         fila.update({lid: bool(r.get(lid, False)) for lid in [l["id"] for l in LOGROS]})
@@ -416,6 +506,8 @@ def show():
                 base2_pl, _ = build_base_liga(df_raw)
                 base_torneo_pl, _ = build_base_torneo(df_raw)
                 camp_liga_pl, camp_torneo_pl = _precalcular_campeones(df_raw, base2_pl, base_torneo_pl)
+                lideres_elo_pl = _precalcular_numero_uno(df_raw)
+                mas_buscados_pl = _precalcular_mas_buscado(df_raw)
 
                 pq = jugador_sel.lower()
                 mask = (
@@ -431,6 +523,7 @@ def show():
                     jugador_sel, player_matches, df_raw, data_elo_pl, base2_pl, base_torneo_pl,
                     camp_liga_pl.get(pq, []), camp_torneo_pl.get(pq, []),
                     generar_tabla_temporada, generar_tabla_torneo, data_filas=data_filas_pl,
+                    lideres_elo=lideres_elo_pl, jugadores_mas_buscados=mas_buscados_pl,
                     incluir_detalles=True,
                 )
 

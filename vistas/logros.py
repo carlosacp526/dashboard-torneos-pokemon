@@ -185,8 +185,31 @@ LOGROS = [
 {"id":"TI15","num":115,"cat":"Torneo","rareza":"Bronce","icon":"🌑","xp":200,"name":"Maestro Siniestro","desc":"Participa en torneo Monotype Siniestro (T??)"},
 {"id":"TI16","num":116,"cat":"Torneo","rareza":"Bronce","icon":"⚙️","xp":200,"name":"Maestro Acero",    "desc":"Participa en torneo Monotype Acero (T??)"},
 {"id":"TI17","num":117,"cat":"Torneo","rareza":"Bronce","icon":"✨","xp":200,"name":"Maestro Hada",     "desc":"Participa en torneo Monotype Hada (T??)"},
-{"id":"TI18","num":118,"cat":"Torneo","rareza":"Bronce","icon":"⚪","xp":200,"name":"Maestro Normal",   "desc":"Participa en torneo Monotype Normal (T??)"}
+{"id":"TI18","num":118,"cat":"Torneo","rareza":"Bronce","icon":"⚪","xp":200,"name":"Maestro Normal",   "desc":"Participa en torneo Monotype Normal (T??)"},
 
+# ── NUEVOS (22) — seleccionados por el usuario, ver auditoría de inmutabilidad ──
+{"id":"VI19","num":123,"cat":"Victorias", "rareza":"Oro",       "icon":"🎢","xp":700,  "name":"Doble Racha",         "desc":"Encadena 5 derrotas seguidas y luego 5 victorias seguidas"},
+{"id":"VI20","num":124,"cat":"Victorias", "rareza":"Plata",     "icon":"✂️","xp":350,  "name":"Rompe-Invictos",      "desc":"Corta una racha activa de 5+ victorias de un rival"},
+{"id":"VI21","num":125,"cat":"Victorias", "rareza":"Plata",     "icon":"🗡️","xp":400,  "name":"Caza-Gigantes",       "desc":"Vence a un rival con 200+ Elo de ventaja"},
+{"id":"VI22","num":126,"cat":"Victorias", "rareza":"Bronce",    "icon":"🐴","xp":100,  "name":"Caballo Negro",       "desc":"Gana teniendo menos Elo que su rival"},
+{"id":"VI23","num":127,"cat":"Victorias", "rareza":"Plata",     "icon":"🧹","xp":300,  "name":"Barrida",             "desc":"Gana una serie 3-0 sin ceder un juego"},
+{"id":"VI24","num":128,"cat":"Victorias", "rareza":"Bronce",    "icon":"🔁","xp":100,  "name":"Remontada de Serie",  "desc":"Pierde el juego 1 pero gana la serie"},
+{"id":"RK11","num":129,"cat":"Ranking",   "rareza":"Oro",       "icon":"📈","xp":700,  "name":"Comeback de Elo",     "desc":"Sube 200+ Elo en 3 meses o menos"},
+{"id":"RK12","num":130,"cat":"Ranking",   "rareza":"Legendario","icon":"👑","xp":3000, "name":"Number One",          "desc":"Llega a ser el Elo más alto de toda la comunidad en algún momento"},
+{"id":"RK13","num":131,"cat":"Ranking",   "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Elo de Acero",        "desc":"Mantiene 1300+ Elo durante 6 meses seguidos"},
+{"id":"ES16","num":132,"cat":"Estrategia","rareza":"Plata",     "icon":"🧭","xp":300,  "name":"Explorador del Año",  "desc":"Juega 5+ tiers distintos en un mismo año"},
+{"id":"ES17","num":133,"cat":"Estrategia","rareza":"Oro",       "icon":"🎭","xp":700,  "name":"Triple Amenaza",      "desc":"Gana en Singles, Dobles y VGC en el mismo mes"},
+{"id":"ES18","num":134,"cat":"Estrategia","rareza":"Oro",       "icon":"🎯","xp":900,  "name":"Especialista",        "desc":"80%+ WR en un tier con 10+ partidas en un mismo mes"},
+{"id":"ES19","num":135,"cat":"Estrategia","rareza":"Plata",     "icon":"🎲","xp":350,  "name":"Rey del Caos",        "desc":"60%+ WR en formatos random con 10+ partidas en un mismo mes"},
+{"id":"TO12","num":136,"cat":"Torneo",    "rareza":"Oro",       "icon":"🥉","xp":800,  "name":"Racha de Podios",     "desc":"Top 4 en 3 torneos consecutivos"},
+{"id":"TO13","num":137,"cat":"Torneo",    "rareza":"Plata",     "icon":"🏟️","xp":300,  "name":"Final Jugada",        "desc":"Disputa la final de un torneo"},
+{"id":"TO14","num":138,"cat":"Torneo",    "rareza":"Oro",       "icon":"🎪","xp":800,  "name":"Doble Finalista",     "desc":"Llega a 2 finales de torneo en el mismo año"},
+{"id":"TO15","num":139,"cat":"Torneo",    "rareza":"Plata",     "icon":"⚖️","xp":350,  "name":"Todo o Nada",         "desc":"Gana o pierde una final por el margen mínimo"},
+{"id":"SO14","num":140,"cat":"Social",    "rareza":"Legendario","icon":"🔍","xp":1600, "name":"El Más Buscado",      "desc":"Fue el rival más enfrentado de la comunidad en algún mes"},
+{"id":"SO15","num":141,"cat":"Social",    "rareza":"Plata",     "icon":"👥","xp":300,  "name":"Cara Conocida",       "desc":"Se enfrentó a 30+ rivales distintos"},
+{"id":"SP18","num":142,"cat":"Especial",  "rareza":"Plata",     "icon":"🔄","xp":300,  "name":"Revancha Servida",    "desc":"Gana tras perder 3 veces seguidas contra el mismo rival"},
+{"id":"SP19","num":143,"cat":"Especial",  "rareza":"Bronce",    "icon":"🔥","xp":100,  "name":"Fénix",               "desc":"Vuelve a jugar tras 6+ meses de inactividad"},
+{"id":"SP20","num":144,"cat":"Especial",  "rareza":"Oro",       "icon":"📜","xp":700,  "name":"Rivalidad Histórica", "desc":"15+ cruces totales contra un mismo rival"},
 
 ]
 
@@ -251,6 +274,8 @@ def evaluar_logros(
     generar_tabla_torneo,
     data_filas: pd.DataFrame = None,
     incluir_detalles: bool = False,
+    lideres_elo: set = None,
+    jugadores_mas_buscados: set = None,
 ):
     """
     Por defecto devuelve solo `r` (dict {id: bool}), igual que siempre —
@@ -258,9 +283,18 @@ def evaluar_logros(
     (r, detalles), donde detalles[id] = {"valor", "umbral", "texto"} con el
     número/dato concreto que explica cómo se cumplió (o no) cada logro, para
     la pestaña de detalle por jugador de logros_analisis.py.
+
+    lideres_elo / jugadores_mas_buscados: sets precalculados UNA vez para toda
+    la comunidad (ver _precalcular_numero_uno / _precalcular_mas_buscado en
+    logros_analisis.py) — RK12 y SO14 los necesitan porque dependen de
+    comparar contra TODOS los demás jugadores, no solo del historial propio.
+    Si no se pasan (llamadores viejos), esos dos logros simplemente no se
+    desbloquean — no rompe nada existente.
     """
     pq = player_query.lower().strip()
     pm = player_matches.copy()
+    lideres_elo = lideres_elo or set()
+    jugadores_mas_buscados = jugadores_mas_buscados or set()
 
     # ── métricas base ──────────────────────────────────────────────────────
     total = len(pm)
@@ -385,6 +419,11 @@ def evaluar_logros(
                 racha_max = max(racha_max, racha)
             else:
                 racha = 0
+
+    # pm_crono: mismo orden cronológico que ya arma pm_s arriba para racha_max,
+    # expuesto con nombre estable para que los logros nuevos lo reutilicen sin
+    # depender de que el bloque de racha_max se haya ejecutado.
+    pm_crono = pm_s if 'pm_s' in locals() else pd.DataFrame()
 
     # winrate por mes (para logros de WR mensual)
     def _wr_mensual_max():
@@ -958,6 +997,318 @@ def evaluar_logros(
                 r["SO02"] = True
                 r["SO03"] = True
 
+    # ════════════════════════════════════════════════════════════════════════
+    # LOGROS NUEVOS (22) — todos diseñados para ser INMUTABLES: se preguntan
+    # "¿existió esto alguna vez en el historial completo?" (un hecho puntual
+    # del pasado, una racha máxima histórica, o una ventana ya cerrada como un
+    # mes/año), nunca "¿es cierto esto ahora mirando todo hasta hoy?" — eso es
+    # lo que se puede romper con la próxima partida.
+    # ════════════════════════════════════════════════════════════════════════
+
+    # ── VI19: Doble Racha ──────────────────────────────────────────────────
+    def _doble_racha():
+        if pm_crono.empty: return False
+        buena = 0; vio_mala = False; peor = 0
+        for _, row in pm_crono.iterrows():
+            winner = str(row.get('winner', '')).strip().lower()
+            gano = (winner == pq) or (pq in winner and len(pq) > 4)
+            if gano:
+                buena += 1; peor = 0
+                if vio_mala and buena >= 5:
+                    return True
+            else:
+                peor += 1; buena = 0
+                if peor >= 5:
+                    vio_mala = True
+        return False
+    r["VI19"] = _doble_racha()
+
+    # ── VI20: Rompe-Invictos ────────────────────────────────────────────────
+    def _rompe_invictos():
+        if pm_crono.empty or 'player1' not in pm_crono.columns: return False
+        victorias_rival = []
+        for _, row in pm_crono.iterrows():
+            winner = str(row.get('winner', '')).strip().lower()
+            if not ((winner == pq) or (pq in winner and len(pq) > 4)):
+                continue
+            p1 = str(row.get('player1', '')).strip().lower()
+            p2 = str(row.get('player2', '')).strip().lower()
+            rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+            fecha = row.get('date')
+            if rival and pd.notna(fecha):
+                victorias_rival.append((rival, fecha))
+        if not victorias_rival: return False
+        for rival in {r_ for r_, _ in victorias_rival}:
+            mask_rival = (
+                df_raw['player1'].astype(str).str.strip().str.lower().eq(rival) |
+                df_raw['player2'].astype(str).str.strip().str.lower().eq(rival)
+            )
+            hist = df_raw[mask_rival].copy()
+            if 'Walkover' in hist.columns:
+                hist = hist[hist['Walkover'] != -1]
+            hist['date'] = pd.to_datetime(hist['date'], errors='coerce')
+            hist = hist.dropna(subset=['date']).sort_values('date')
+            if hist.empty: continue
+            racha_antes = []
+            racha = 0
+            for _, r2 in hist.iterrows():
+                racha_antes.append((r2['date'], racha))
+                w2 = str(r2.get('winner', '')).strip().lower()
+                racha = racha + 1 if w2 == rival else 0
+            fechas_victoria = [f for r_, f in victorias_rival if r_ == rival]
+            for fv in fechas_victoria:
+                anteriores = [rc for fecha_r, rc in racha_antes if fecha_r < fv]
+                if anteriores and anteriores[-1] >= 5:
+                    return True
+        return False
+    r["VI20"] = _rompe_invictos()
+
+    # ── VI21/VI22: Caza-Gigantes / Caballo Negro (usan data_filas: rating ANTES
+    # de cada partida, ya calculado por calcular_elo()) ────────────────────────
+    def _pares_elo_en_victorias():
+        if data_filas is None or data_filas.empty or 'Jugador_A' not in data_filas.columns:
+            return []
+        dfj = data_filas
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
+        return list(zip(dfj.loc[es_a, 'Rating_A'], dfj.loc[es_a, 'Rating_B']))
+    _pares_elo_victorias = _pares_elo_en_victorias()
+    r["VI21"] = any((rb - ra) >= 200 for ra, rb in _pares_elo_victorias)
+    r["VI22"] = any(rb > ra for ra, rb in _pares_elo_victorias)
+
+    # ── VI23/VI24: Barrida / Remontada de Serie (agrupa por serie usando Rep,
+    # mismo criterio que usa Playoff Odds para reconstruir brackets) ───────────
+    def _series_del_jugador():
+        if pm.empty or 'Rep' not in pm.columns: return []
+        s = pm.copy()
+        if 'Walkover' in s.columns:
+            s = s[s['Walkover'] != -1]
+        if 'date' in s.columns:
+            s['date'] = pd.to_datetime(s['date'], errors='coerce')
+            s = s.sort_values('date')
+        bloques, actual = [], []
+        for _, row in s.iterrows():
+            if actual and row.get('Rep') == 1:
+                bloques.append(actual); actual = []
+            actual.append(row)
+        if actual: bloques.append(actual)
+        return bloques
+    _series_jug = _series_del_jugador()
+
+    def _barrida():
+        for bloque in _series_jug:
+            if len(bloque) != 3: continue
+            ganadas = sum(1 for row in bloque if pq in str(row.get('winner', '')).strip().lower())
+            if ganadas == 3:
+                return True
+        return False
+    r["VI23"] = _barrida()
+
+    def _remontada_serie():
+        for bloque in _series_jug:
+            if len(bloque) < 2: continue
+            gano_primero = pq in str(bloque[0].get('winner', '')).strip().lower()
+            if gano_primero: continue
+            ganadas = sum(1 for row in bloque if pq in str(row.get('winner', '')).strip().lower())
+            if ganadas > len(bloque) - ganadas:
+                return True
+        return False
+    r["VI24"] = _remontada_serie()
+
+    # ── RK11: Comeback de Elo ───────────────────────────────────────────────
+    def _comeback_elo(dias_max=90, salto_min=200):
+        if data_filas is None or data_filas.empty: return False
+        dfj = data_filas
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
+        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False)
+        puntos = list(zip(dfj.loc[es_a, 'Fecha'], dfj.loc[es_a, 'Rating_A_NEW'])) + \
+                 list(zip(dfj.loc[es_b, 'Fecha'], dfj.loc[es_b, 'Rating_B_NEW']))
+        if len(puntos) < 2: return False
+        puntos = [(pd.to_datetime(f, errors='coerce'), e) for f, e in puntos]
+        puntos = sorted((p for p in puntos if pd.notna(p[0])), key=lambda x: x[0])
+        n = len(puntos)
+        for i in range(n):
+            for j in range(i + 1, n):
+                dias = (puntos[j][0] - puntos[i][0]).days
+                if dias > dias_max:
+                    break
+                if puntos[j][1] - puntos[i][1] >= salto_min:
+                    return True
+        return False
+    r["RK11"] = _comeback_elo()
+
+    # ── RK12: Number One — necesita el precálculo comunitario `lideres_elo`
+    # (ver _precalcular_numero_uno en logros_analisis.py); sin él, no se desbloquea.
+    r["RK12"] = pq in lideres_elo
+
+    # ── RK13: Elo de Acero ──────────────────────────────────────────────────
+    def _elo_acero(meses_seguidos=6, umbral=1300):
+        if data_filas is None or data_filas.empty: return False
+        dfj = data_filas
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
+        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False)
+        puntos = list(zip(dfj.loc[es_a, 'Fecha'], dfj.loc[es_a, 'Rating_A_NEW'])) + \
+                 list(zip(dfj.loc[es_b, 'Fecha'], dfj.loc[es_b, 'Rating_B_NEW']))
+        if not puntos: return False
+        dfp = pd.DataFrame(puntos, columns=['fecha', 'elo'])
+        dfp['fecha'] = pd.to_datetime(dfp['fecha'], errors='coerce')
+        dfp = dfp.dropna(subset=['fecha']).sort_values('fecha')
+        if dfp.empty: return False
+        dfp['mes'] = dfp['fecha'].dt.to_period('M')
+        cierre = dfp.groupby('mes')['elo'].last()
+        meses_ordenados = sorted(cierre.index)
+        racha = 0; anterior = None
+        for m in meses_ordenados:
+            if anterior is not None and m != anterior + 1:
+                racha = 0
+            if cierre[m] >= umbral:
+                racha += 1
+                if racha >= meses_seguidos:
+                    return True
+            else:
+                racha = 0
+            anterior = m
+        return False
+    r["RK13"] = _elo_acero()
+
+    # ── ES16: Explorador del Año ────────────────────────────────────────────
+    if 'Tier' in pm.columns and 'date' in pm.columns:
+        _d_anio = pm.dropna(subset=['date'])
+        r["ES16"] = bool((_d_anio.groupby(_d_anio['date'].dt.year)['Tier'].nunique() >= 5).any()) if not _d_anio.empty else False
+    else:
+        r["ES16"] = False
+
+    # ── ES17: Triple Amenaza ────────────────────────────────────────────────
+    def _triple_amenaza():
+        if 'Formato' not in pm.columns or 'date' not in pm.columns: return False
+        d = pm.dropna(subset=['date']).copy()
+        if d.empty: return False
+        d['_mes'] = d['date'].dt.to_period('M')
+        d_gan = d[d['winner'].str.lower().str.contains(pq, na=False)]
+        for _, grp in d_gan.groupby('_mes'):
+            fmts = {str(f).upper() for f in grp['Formato'].dropna().unique()}
+            if {'SINGLES', 'DOBLES', 'VGC'}.issubset(fmts):
+                return True
+        return False
+    r["ES17"] = _triple_amenaza()
+
+    # ── ES18/ES19: Especialista / Rey del Caos (ventana MENSUAL cerrada, mismo
+    # patrón que ES03-06 — no WR acumulado de toda la vida, que se puede diluir) ──
+    def _wr_tier_mensual(min_pct, solo_random=False, min_partidas=10):
+        if 'Tier' not in pm.columns or 'date' not in pm.columns: return False
+        d = pm.dropna(subset=['date']).copy()
+        if d.empty: return False
+        d['_mes'] = d['date'].dt.to_period('M')
+        for (mes, tier), grp in d.groupby(['_mes', 'Tier']):
+            if solo_random and not any(k in str(tier).upper() for k in ('RANDOM', 'RANDBATS')):
+                continue
+            if len(grp) < min_partidas: continue
+            w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            if w / len(grp) * 100 >= min_pct:
+                return True
+        return False
+    r["ES18"] = _wr_tier_mensual(80, solo_random=False, min_partidas=10)
+    r["ES19"] = _wr_tier_mensual(60, solo_random=True, min_partidas=10)
+
+    # ── TO12: Racha de Podios ───────────────────────────────────────────────
+    def _racha_de_podios(min_consec=3, top=4):
+        if base_torneo_final.empty or 'N_Torneo' not in pm.columns or 'league' not in pm.columns:
+            return False
+        torneos_pm = pm[pm['league'] == 'TORNEO']
+        torneos_jugados = torneos_pm['N_Torneo'].dropna().unique()
+        if len(torneos_jugados) < min_consec: return False
+        fechas_t = torneos_pm.groupby('N_Torneo')['date'].min()
+        orden = sorted(torneos_jugados, key=lambda nt: fechas_t.get(nt, pd.Timestamp.max))
+        racha = 0
+        for nt in orden:
+            tabla = generar_tabla_torneo(base_torneo_final, nt)
+            rank_j = None
+            if tabla is not None and not tabla.empty:
+                fila = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
+                if not fila.empty:
+                    rank_j = int(fila['RANK'].iloc[0])
+            if rank_j is not None and rank_j <= top:
+                racha += 1
+                if racha >= min_consec:
+                    return True
+            else:
+                racha = 0
+        return False
+    r["TO12"] = _racha_de_podios()
+
+    # ── TO13/TO14: Final Jugada / Doble Finalista ───────────────────────────
+    def _finales_jugadas():
+        if pm.empty or 'round' not in pm.columns or 'league' not in pm.columns: return []
+        d = pm[(pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('final', na=False)]
+        out = []
+        for nt, grp in d.groupby('N_Torneo'):
+            fecha = grp['date'].min() if 'date' in grp.columns else pd.NaT
+            out.append((nt, fecha.year if pd.notna(fecha) else None))
+        return out
+    _finales = _finales_jugadas()
+    r["TO13"] = len(_finales) >= 1
+    from collections import Counter as _Counter_finales
+    _finales_por_anio = _Counter_finales(a for _, a in _finales if a is not None)
+    r["TO14"] = any(c >= 2 for c in _finales_por_anio.values())
+
+    # ── TO15: Todo o Nada ───────────────────────────────────────────────────
+    def _todo_o_nada():
+        if pm.empty or 'round' not in pm.columns or 'league' not in pm.columns: return False
+        finales = pm[(pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('final', na=False)]
+        for nt, grp in finales.groupby('N_Torneo'):
+            n_juegos = len(grp)
+            if n_juegos < 3: continue
+            ganadas = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            if abs(ganadas - (n_juegos - ganadas)) == 1:
+                return True
+        return False
+    r["TO15"] = _todo_o_nada()
+
+    # ── SO14: El Más Buscado — necesita el precálculo comunitario
+    # `jugadores_mas_buscados` (ver _precalcular_mas_buscado); sin él, no se desbloquea.
+    r["SO14"] = pq in jugadores_mas_buscados
+
+    # ── SO15: Cara Conocida ─────────────────────────────────────────────────
+    r["SO15"] = len(rivales) >= 30
+
+    # ── SP18: Revancha Servida ──────────────────────────────────────────────
+    def _revancha_servida():
+        if pm_crono.empty or 'player1' not in pm_crono.columns: return False
+        racha_perdida = {}
+        for _, row in pm_crono.iterrows():
+            p1 = str(row.get('player1', '')).strip().lower()
+            p2 = str(row.get('player2', '')).strip().lower()
+            winner = str(row.get('winner', '')).strip().lower()
+            rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+            if not rival: continue
+            gano = (winner == pq) or (pq in winner and len(pq) > 4)
+            if gano:
+                if racha_perdida.get(rival, 0) >= 3:
+                    return True
+                racha_perdida[rival] = 0
+            else:
+                racha_perdida[rival] = racha_perdida.get(rival, 0) + 1
+        return False
+    r["SP18"] = _revancha_servida()
+
+    # ── SP19: Fénix ──────────────────────────────────────────────────────────
+    def _fenix(dias_gap=180):
+        if pm_crono.empty: return False
+        fechas = pm_crono['date'].dropna().tolist()
+        if len(fechas) < 2: return False
+        return any((fechas[i] - fechas[i - 1]).days >= dias_gap for i in range(1, len(fechas)))
+    r["SP19"] = _fenix()
+
+    # ── SP20: Rivalidad Histórica ───────────────────────────────────────────
+    _cruces_por_rival = {}
+    if not pm.empty and 'player1' in pm.columns:
+        for _, row in pm.iterrows():
+            p1 = str(row.get('player1', '')).strip().lower()
+            p2 = str(row.get('player2', '')).strip().lower()
+            rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+            if rival:
+                _cruces_por_rival[rival] = _cruces_por_rival.get(rival, 0) + 1
+    r["SP20"] = bool(_cruces_por_rival) and max(_cruces_por_rival.values()) >= 15
+
     # PROGRESIÓN — depende del conteo anterior
     xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
     desbloq_bronce = sum(1 for l in LOGROS if l['rareza']=='Bronce' and r.get(l['id'],False))
@@ -1098,6 +1449,32 @@ def evaluar_logros(
     _d("PR07", xp_total, 10000, f"{xp_total} XP acumulado")
     _d("PR08", xp_total, 15000, f"{xp_total} XP acumulado")
     _d("PR09", xp_total, 20000, f"{xp_total} XP acumulado")
+
+    # LOGROS NUEVOS
+    _d("VI19", texto="Encadenó 5 derrotas y luego 5 victorias, ambas seguidas" if r["VI19"] else None)
+    _d("VI20", texto="Le cortó una racha de 5+ victorias activa a un rival" if r["VI20"] else None)
+    _mejor_ventaja = max((rb - ra for ra, rb in _pares_elo_victorias), default=None)
+    _d("VI21", umbral=200, texto=f"Mayor ventaja de Elo del rival en una victoria: {_mejor_ventaja:.0f}" if _mejor_ventaja is not None and r["VI21"] else None)
+    _d("VI22", texto="Ganó teniendo menos Elo que su rival" if r["VI22"] else None)
+    _d("VI23", texto="Ganó una serie 3-0" if r["VI23"] else None)
+    _d("VI24", texto="Perdió el juego 1 y ganó la serie" if r["VI24"] else None)
+    _d("RK11", umbral=200, texto="Subió 200+ Elo en 3 meses o menos" if r["RK11"] else None)
+    _d("RK12", texto="Fue el Elo más alto de toda la comunidad en algún momento" if r["RK12"] else None)
+    _d("RK13", umbral=6, texto="Mantuvo 1300+ Elo durante 6 meses seguidos" if r["RK13"] else None)
+    _d("ES16", umbral=5, texto="Jugó 5+ tiers distintos en un mismo año" if r["ES16"] else None)
+    _d("ES17", texto="Ganó en Singles, Dobles y VGC el mismo mes" if r["ES17"] else None)
+    _d("ES18", umbral=80, texto="80%+ WR en un tier con 10+ partidas en un mes" if r["ES18"] else None)
+    _d("ES19", umbral=60, texto="60%+ WR en formatos random con 10+ partidas en un mes" if r["ES19"] else None)
+    _d("TO12", umbral=3, texto="Top 4 en 3 torneos consecutivos" if r["TO12"] else None)
+    _d("TO13", len(_finales), 1, f"Disputó {len(_finales)} final(es) de torneo")
+    _d("TO14", umbral=2, texto="Llegó a 2+ finales de torneo en un mismo año" if r["TO14"] else None)
+    _d("TO15", texto="Final decidida por el margen mínimo" if r["TO15"] else None)
+    _d("SO14", texto="Fue el rival más enfrentado de la comunidad en algún mes" if r["SO14"] else None)
+    _d("SO15", len(rivales), 30, f"{len(rivales)} rival(es) distinto(s) enfrentado(s)")
+    _d("SP18", texto="Ganó tras perder 3 veces seguidas contra el mismo rival" if r["SP18"] else None)
+    _d("SP19", texto="Volvió a jugar tras 6+ meses de inactividad" if r["SP19"] else None)
+    _max_cruces = max(_cruces_por_rival.values()) if _cruces_por_rival else 0
+    _d("SP20", _max_cruces, 15, f"Máximo de cruces contra un mismo rival: {_max_cruces}")
 
     return r, detalles
 
