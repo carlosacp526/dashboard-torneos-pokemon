@@ -1,5 +1,5 @@
 """
-logros.py — Sistema de 100 logros Poketubi (nueva versión)
+logros.py — Sistema de 144 logros Poketubi (nueva versión)
 Fuente: logros_pokemon.xlsx
 """
 

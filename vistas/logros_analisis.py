@@ -2,7 +2,7 @@
 vistas/logros_analisis.py
 --------------------------
 Análisis de Logros — vista agregada a nivel COMUNIDAD (no de un jugador
-puntual): evalúa los 122 logros de vistas/logros.py contra todos los
+puntual): evalúa los 144 logros de vistas/logros.py contra todos los
 jugadores del historico y responde preguntas como cuántos jugadores tienen
 logros, qué tan repartido está por categoría/rareza, cuáles son los logros
 más raros/más comunes, y quiénes lideran el ranking de logros y XP.
@@ -264,7 +264,7 @@ def show():
 
     # ═══════════════════════ Catálogo completo ═══════════════════════
     with tabs[0]:
-        st.markdown("### Los 122 logros, con cuántos jugadores tiene cada uno")
+        st.markdown("### Los 144 logros, con cuántos jugadores tiene cada uno")
         st.caption("Tabla completa del catálogo — buscá un logro puntual o filtrá por categoría/"
                    "rareza para ver exactamente cuántos (y qué %) de los 272 jugadores lo tienen.")
 
