@@ -146,11 +146,22 @@ def show():
                 valor = int(cat_counts.loc[cat_counts['Categoría'] == cat, 'Torneos'].iloc[0])
                 c.metric(cat, valor)
 
-            fig = px.pie(cat_counts, names='Categoría', values='Torneos', color='Categoría',
-                         color_discrete_map=COLORS_TAM, hole=0.45,
-                         category_orders={'Categoría': orden_cat},
-                         title=f"Torneos por tamaño ({int(cat_counts['Torneos'].sum())} torneos totales)")
-            fig.update_traces(textinfo='label+value')
+            # Barplot de la distribucion real de participantes por torneo (1
+            # barra = 1 torneo, ordenado de menor a mayor), coloreado por
+            # categoria - muestra la forma real de la distribucion, no solo
+            # el conteo agregado por categoria.
+            dist = participantes_por_torneo.sort_values('Participantes').reset_index(drop=True)
+            dist['Torneo_idx'] = range(1, len(dist) + 1)
+            fig = px.bar(dist, x='Torneo_idx', y='Participantes', color='Categoría',
+                         color_discrete_map=COLORS_TAM, category_orders={'Categoría': orden_cat},
+                         hover_data={'N_Torneo': True, 'Torneo_idx': False},
+                         title=f"Distribución de participantes por torneo ({len(dist)} torneos, ordenados de menor a mayor)")
+            fig.add_hline(y=13, line_dash='dot', line_color='#3498DB', annotation_text='13')
+            fig.add_hline(y=24, line_dash='dot', line_color='#2ECC71', annotation_text='24')
+            fig.add_hline(y=45, line_dash='dot', line_color='#F1C40F', annotation_text='45')
+            fig.add_hline(y=80, line_dash='dot', line_color='#E67E22', annotation_text='80')
+            fig.update_layout(xaxis_title='Torneos (ordenados por cantidad de participantes)',
+                               yaxis_title='Participantes', legend_title='Categoría')
             st.plotly_chart(fig, use_container_width=True)
             st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png (por participantes): "
                        "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event > 45 · Regional >= 80. "
