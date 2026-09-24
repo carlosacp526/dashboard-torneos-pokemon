@@ -49,8 +49,8 @@ def show():
     }
     LIGA_NOMBRES = {
         "PJS": "Pokémon Junior Series", "PSS": "Pokémon Senior Series",
-        "PES": "Pokémon Elite Series", "PLS": "Pokémon League Series",
-        "PMS": "Pokémon Master Series",
+        "PES": "Pokémon Evolution Series", "PLS": "Pokémon Legends Series",
+        "PMS": "Pokémon Master Series", "PGS": "Pokémon Generations Series",
     }
 
     tab_temp, tab_tam, tab_fmt_tier = st.tabs(
@@ -110,29 +110,43 @@ def show():
             participantes_por_torneo = jugadores_torneo.groupby('N_Torneo')['Jugador'].nunique() \
                 .reset_index(name='Participantes')
 
+            # Escalera completa de 5 categorias oficiales de PUNTAJES_MUNDIAL3.png
+            # (Torneo: Pequeño/Mediano/Grande + Regional/Special Event) - cada
+            # torneo cae en la categoria mas alta cuyo umbral supera, asi que
+            # Regional/Special "absorben" los torneos grandes que tambien
+            # cumplirian el umbral de Grande por separado.
             def _categoria_torneo(n):
+                if n >= 80: return 'Regional (>= 80)'
+                if n > 45: return 'Special Event (> 45)'
                 if n > 24: return 'Grande (> 24)'
                 if n < 13: return 'Pequeño (< 13)'
                 return 'Mediano (<= 24)'
             participantes_por_torneo['Categoría'] = participantes_por_torneo['Participantes'].apply(_categoria_torneo)
-            orden_cat = ['Grande (> 24)', 'Mediano (<= 24)', 'Pequeño (< 13)']
+            orden_cat = ['Pequeño (< 13)', 'Mediano (<= 24)', 'Grande (> 24)',
+                         'Special Event (> 45)', 'Regional (>= 80)']
             cat_counts = participantes_por_torneo['Categoría'].value_counts().reindex(orden_cat).fillna(0) \
                 .astype(int).reset_index()
             cat_counts.columns = ['Categoría', 'Torneos']
-            COLORS_TAM = {'Grande (> 24)': '#E74C3C', 'Mediano (<= 24)': '#F1C40F', 'Pequeño (< 13)': '#3498DB'}
+            COLORS_TAM = {
+                'Pequeño (< 13)': '#3498DB', 'Mediano (<= 24)': '#2ECC71', 'Grande (> 24)': '#F1C40F',
+                'Special Event (> 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C',
+            }
 
-            c1, c2, c3 = st.columns(3)
-            for c, cat in zip((c1, c2, c3), orden_cat):
+            cols_tam = st.columns(5)
+            for c, cat in zip(cols_tam, orden_cat):
                 valor = int(cat_counts.loc[cat_counts['Categoría'] == cat, 'Torneos'].iloc[0])
                 c.metric(cat, valor)
 
             fig = px.pie(cat_counts, names='Categoría', values='Torneos', color='Categoría',
                          color_discrete_map=COLORS_TAM, hole=0.45,
+                         category_orders={'Categoría': orden_cat},
                          title=f"Torneos por tamaño ({int(cat_counts['Torneos'].sum())} torneos totales)")
             fig.update_traces(textinfo='label+value')
             st.plotly_chart(fig, use_container_width=True)
-            st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png: Grande > 24 participantes, "
-                       "Mediano <= 24, Pequeño < 13.")
+            st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png (por participantes): "
+                       "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event > 45 · Regional >= 80. "
+                       "Cada torneo cae en la categoría más alta que supera (un torneo de 90 participantes "
+                       "cuenta como Regional, no como Grande).")
 
     # -- Torneos por Formato y Tier ---------------------------------------
     with tab_fmt_tier:
