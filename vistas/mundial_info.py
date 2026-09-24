@@ -867,8 +867,20 @@ def show():
         st.header("🔵 Mundial Pokémon — Monotype_1  (Actual)")
         st.info("Mundial vigente con **3 rankings paralelos** (SINGLES · DOBLES · VGC). "
                 "El formato de cada torneo se detecta automáticamente desde el CSV.")
-        _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
-                                    MONOTYPE1_LIGAS, df_raw, key_prefix="tab1", penalidades=MONOTYPE1_PENALIDADES)
+
+        sub_rank_mono, sub_pts_mono = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
+
+        with sub_pts_mono:
+            img_pts_mono = "mundial/PUNTAJES_MUNDIAL3.png"
+            if os.path.exists(img_pts_mono):
+                st.image(img_pts_mono, width=900)
+            else:
+                st.info(f"Coloca '{img_pts_mono}' en la carpeta del proyecto")
+            st.caption("Puntajes para clasificación al mundial")
+
+        with sub_rank_mono:
+            _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
+                                        MONOTYPE1_LIGAS, df_raw, key_prefix="tab1", penalidades=MONOTYPE1_PENALIDADES)
 
     # ══════════════════════════════════════════════════════════════
     # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
