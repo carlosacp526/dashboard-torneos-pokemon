@@ -491,6 +491,181 @@ def simulate_bracket_odds(base_df, matches, avg_pokes, modo, codigo, n_sims=1000
     return pd.DataFrame(filas).sort_values("Rank promedio").reset_index(drop=True)
 
 
+# ════════════════════ LIGA SUIZA: jornadas todavia sin emparejar ═══════════
+# Algunas ligas se juegan a rondas suizas (ej. PMST7 a 5 jornadas): las
+# primeras jornadas tienen cruces fijos, pero las ultimas dependen de como
+# termine la tabla en ese punto, asi que quedan precargadas como "Pendiente"
+# vs "Pendiente" hasta que se resuelvan las anteriores — mismo principio que
+# el bracket de Torneo sin arrancar, pero el emparejamiento en si tambien hay
+# que simularlo (no alcanza con propagar un ganador a un cupo fijo).
+
+def _parse_jornadas_liga(df_liga_raw, lt):
+    """
+    Reconstruye las jornadas de una liga (temporada `lt`) en orden cronologico
+    (numero de jornada via get_round_order, ej. 'PMS T7 J4' -> 4) a partir de
+    TODAS sus filas (jugadas y pendientes, con o sin rival ya definido).
+    Devuelve lista de dicts en orden: {"nombre", "numero", "sin_emparejar", "filas"}.
+    sin_emparejar=True cuando TODAS las filas de esa jornada tienen los dos
+    lados como placeholder ("Pendiente") — el emparejamiento suizo de esa
+    jornada todavia no esta definido.
+    """
+    if df_liga_raw.empty or "round" not in df_liga_raw.columns:
+        return []
+    d = df_liga_raw[df_liga_raw["round"].apply(_liga_temporada) == lt].copy()
+    d = d[d["round"].notna()]
+    if d.empty:
+        return []
+    jornadas_nombres = sorted(d["round"].dropna().unique(), key=lambda r: get_round_order(r))
+    out = []
+    for rnd in jornadas_nombres:
+        sub = d[d["round"] == rnd]
+        p1 = sub["player1"].astype(str).str.strip().str.lower()
+        p2 = sub["player2"].astype(str).str.strip().str.lower()
+        sin_emparejar = bool((p1.isin(PLACEHOLDER_NOMBRES) & p2.isin(PLACEHOLDER_NOMBRES)).all())
+        out.append({"nombre": rnd, "numero": get_round_order(rnd),
+                     "sin_emparejar": sin_emparejar, "filas": sub})
+    return out
+
+
+def _historial_pares_liga(df_liga_raw, lt):
+    """Set de frozenset({p1,p2}) de todos los cruces YA DEFINIDOS (jugados o
+    pendientes con rival real) de esa temporada, para que el emparejamiento
+    suizo de una jornada sin emparejar evite revanchas ya conocidas."""
+    d = df_liga_raw[df_liga_raw["round"].apply(_liga_temporada) == lt] if not df_liga_raw.empty else df_liga_raw
+    pares = set()
+    if d.empty:
+        return pares
+    for _, r in d.iterrows():
+        p1, p2 = str(r.get("player1", "")).strip(), str(r.get("player2", "")).strip()
+        if p1.lower() in PLACEHOLDER_NOMBRES or p2.lower() in PLACEHOLDER_NOMBRES:
+            continue
+        if p1 and p2:
+            pares.add(frozenset((p1, p2)))
+    return pares
+
+
+def _emparejar_suizo(orden_jugadores, pares_jugados):
+    """Empareja jugadores ya ordenados por posicion actual (mejor primero),
+    de a dos top-down, evitando revanchas ya registradas en `pares_jugados`
+    (si el mejor disponible ya jugo contra todos los que le siguen, se fuerza
+    una revancha con el primero, en vez de dejarlo sin rival). Si sobra 1
+    jugador (numero impar de participantes), no juega esa jornada (bye)."""
+    disponibles = list(orden_jugadores)
+    parejas = []
+    while len(disponibles) >= 2:
+        a = disponibles.pop(0)
+        idx_rival = next((i for i, b in enumerate(disponibles)
+                           if frozenset((a, b)) not in pares_jugados), None)
+        if idx_rival is None:
+            idx_rival = 0
+        b = disponibles.pop(idx_rival)
+        parejas.append((a, b))
+    return parejas
+
+
+def _simular_liga_suiza_hibrida(base_lt, prob_df_conocido, jornadas_sin_emparejar, avg_pokes,
+                                 lt, model, latest_stats, top_feat, pares_ya_jugados,
+                                 n_sims=1000, seed=42):
+    """
+    Simula la temporada completa de punta a punta cuando quedan jornadas
+    suizas todavia sin emparejar al final (ver _parse_jornadas_liga), n_sims
+    veces:
+      1. Resuelve los cruces pendientes CON RIVAL YA CONOCIDO (misma logica
+         que simulate_bracket_odds).
+      2. Para cada jornada sin emparejar, en orden: reordena por la tabla
+         actual (score_final) y arma las parejas con el mismo criterio suizo
+         estandar (_emparejar_suizo: mejor contra el mejor disponible sin
+         revancha), simula esa jornada, actualiza la tabla, pasa a la
+         siguiente jornada sin emparejar.
+    Devuelve el mismo formato que simulate_bracket_odds (Jugador, Rank
+    promedio, y % por zona de liga).
+    """
+    rng = np.random.default_rng(seed)
+    participantes = base_lt["Participante"].tolist()
+    idx = {p: i for i, p in enumerate(participantes)}
+    n = len(participantes)
+    zonas = ZONAS_LIGA
+    zona_fn = lambda rank, total: asignar_zona(rank, total, lt) or "Sin zona"
+
+    victorias0 = base_lt["Victorias"].to_numpy(dtype=float)
+    juegos0 = base_lt["Juegos"].to_numpy(dtype=float)
+    sob0 = base_lt["pokes_sobrevivientes"].to_numpy(dtype=float)
+    venc0 = base_lt["poke_vencidos"].to_numpy(dtype=float)
+
+    duelos_conocidos = []
+    for m in (prob_df_conocido.to_dict("records") if isinstance(prob_df_conocido, pd.DataFrame) else prob_df_conocido):
+        i1, i2 = idx.get(m["player1"]), idx.get(m["player2"])
+        if i1 is None or i2 is None:
+            continue
+        for _ in range(m["n"]):
+            duelos_conocidos.append((i1, i2, m["prob_p1"]))
+
+    prob_cache = {}
+    def prob_p1_series(a, b):
+        key = (a, b)
+        if key not in prob_cache:
+            X = make_pred_row(a, b, latest_stats, top_feat)
+            prob_cache[key] = float(model.predict_proba(X)[0][0])
+        return prob_cache[key]
+
+    zona_counts = {p: {z: 0 for z in zonas} for p in participantes}
+    rank_sum = np.zeros(n)
+
+    for _ in range(n_sims):
+        victorias = victorias0.copy(); juegos = juegos0.copy()
+        sob = sob0.copy(); venc = venc0.copy()
+
+        draws = rng.random(len(duelos_conocidos))
+        for (i1, i2, p1), d in zip(duelos_conocidos, draws):
+            wi, li = (i1, i2) if d < p1 else (i2, i1)
+            victorias[wi] += 1; juegos[wi] += 1; juegos[li] += 1
+            sw, vw = avg_pokes.get(participantes[wi], (3.0, 3.0))
+            sl, vl = avg_pokes.get(participantes[li], (3.0, 3.0))
+            sob[wi] += sw; venc[wi] += vw
+            sob[li] += sl; venc[li] += vl
+
+        pares_simulacion = set(pares_ya_jugados)
+
+        for _jornada in jornadas_sin_emparejar:
+            sim = pd.DataFrame({
+                "Participante": participantes, "Victorias": victorias, "Juegos": juegos,
+                "Derrotas": juegos - victorias, "pokes_sobrevivientes": sob, "poke_vencidos": venc,
+            })
+            scored = score_final(sim).sort_values(
+                ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
+            orden = scored["Participante"].tolist()
+            for a, b in _emparejar_suizo(orden, pares_simulacion):
+                ia, ib = idx[a], idx[b]
+                p = prob_p1_series(a, b)
+                wi, li = (ia, ib) if rng.random() < p else (ib, ia)
+                victorias[wi] += 1; juegos[wi] += 1; juegos[li] += 1
+                sw, vw = avg_pokes.get(participantes[wi], (3.0, 3.0))
+                sl, vl = avg_pokes.get(participantes[li], (3.0, 3.0))
+                sob[wi] += sw; venc[wi] += vw
+                sob[li] += sl; venc[li] += vl
+                pares_simulacion.add(frozenset((a, b)))
+
+        sim = pd.DataFrame({
+            "Participante": participantes, "Victorias": victorias, "Juegos": juegos,
+            "Derrotas": juegos - victorias, "pokes_sobrevivientes": sob, "poke_vencidos": venc,
+        })
+        scored = score_final(sim).sort_values(
+            ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
+        total = len(scored)
+        for pos, row in enumerate(scored.itertuples(), start=1):
+            zona = zona_fn(pos, total)
+            zona_counts[row.Participante][zona] += 1
+            rank_sum[idx[row.Participante]] += pos
+
+    filas = []
+    for p in participantes:
+        fila = {"Jugador": p, "Rank promedio": round(rank_sum[idx[p]] / n_sims, 2)}
+        for z in zonas:
+            fila[z] = round(100 * zona_counts[p][z] / n_sims, 1)
+        filas.append(fila)
+    return pd.DataFrame(filas).sort_values("Rank promedio").reset_index(drop=True)
+
+
 def _cargar_modelo(df_raw):
     with st.spinner("Cargando modelo..."):
         cache, status = load_model(df_raw)
@@ -583,10 +758,8 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
         st.info("No hay temporadas de liga con datos.")
         return
 
-    # Todos los cruces de LIGA pendientes, de una — para saber de entrada qué
-    # temporadas siguen en curso y arrancar ahí por default (si no, el selector
-    # cae en la última temporada de la lista aunque ya esté cerrada, y la página
-    # "no genera nada" a simple vista porque no hay nada que simular).
+    # Todos los cruces de LIGA pendientes CON RIVAL YA CONOCIDO — para saber de
+    # entrada qué temporadas siguen en curso y arrancar ahí por default.
     df_pend_all = df_raw[df_raw.get("Walkover") == -1].copy() if "Walkover" in df_raw.columns else df_raw.iloc[0:0]
     if "league" in df_pend_all.columns and not df_pend_all.empty:
         df_pend_all = df_pend_all[df_pend_all["league"] == "LIGA"].copy()
@@ -596,7 +769,24 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
         df_pend_all = df_pend_all.iloc[0:0]
     temporadas_con_pendientes = set(df_pend_all["Liga_Temporada"].unique()) if not df_pend_all.empty else set()
 
-    temporadas_en_curso = [lt for lt in temporadas_disp if lt in temporadas_con_pendientes]
+    # TODAS las filas de LIGA (jugadas + pendientes, con o sin rival ya
+    # definido) — necesarias para reconstruir jornadas suizas sin emparejar
+    # (ver _parse_jornadas_liga) y para que esas ligas tambien cuenten como
+    # "en curso" aunque _sin_placeholders ya les haya vaciado df_pend_all
+    # (ej. una liga donde SOLO quedan jornadas 100% "Pendiente" vs "Pendiente").
+    df_liga_raw_todas = df_raw[df_raw.get("league") == "LIGA"].copy() if "league" in df_raw.columns else df_raw.iloc[0:0]
+    ligas_con_jornada_sin_emparejar = set()
+    if not df_liga_raw_todas.empty and "round" in df_liga_raw_todas.columns:
+        d_tmp = df_liga_raw_todas.copy()
+        d_tmp["Liga_Temporada"] = d_tmp["round"].apply(_liga_temporada)
+        for lt_tmp in d_tmp["Liga_Temporada"].unique():
+            if not lt_tmp: continue
+            jr = _parse_jornadas_liga(df_liga_raw_todas, lt_tmp)
+            if any(j["sin_emparejar"] for j in jr):
+                ligas_con_jornada_sin_emparejar.add(lt_tmp)
+
+    temporadas_en_curso = [lt for lt in temporadas_disp
+                            if lt in temporadas_con_pendientes or lt in ligas_con_jornada_sin_emparejar]
     if not temporadas_en_curso:
         st.info("Ninguna temporada de liga tiene cruces pendientes ahora mismo — todas las tablas ya están cerradas, no hay nada que simular.")
         return
@@ -617,9 +807,12 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
 
     pend_lt = df_pend_all[df_pend_all["Liga_Temporada"] == lt] if not df_pend_all.empty else df_pend_all
 
+    jornadas_lt = _parse_jornadas_liga(df_liga_raw_todas, lt)
+    jornadas_sin_emparejar = [j["nombre"] for j in jornadas_lt if j["sin_emparejar"]]
+
     st.markdown("---")
 
-    if pend_lt.empty:
+    if pend_lt.empty and not jornadas_sin_emparejar:
         st.success(f"✅ La temporada **{lt}** no tiene cruces pendientes — la tabla ya es definitiva, no hace falta simular.")
         tabla_actual = score_final(base_lt.copy()).sort_values(
             ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
@@ -630,32 +823,64 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
                      use_container_width=True, hide_index=True)
         return
 
-    st.metric("🎯 Cruces pendientes en esta temporada", len(pend_lt))
+    st.metric("🎯 Cruces pendientes con rival conocido", len(pend_lt))
+    if jornadas_sin_emparejar:
+        st.metric("🔀 Jornadas suizas todavía sin emparejar", len(jornadas_sin_emparejar))
 
     model = trained[mod_sel]
-    prob_df = _predecir_cruces(pend_lt, latest_stats, top_feat, model)
-    _mostrar_expander_cruces(prob_df)
+    prob_df = _predecir_cruces(pend_lt, latest_stats, top_feat, model) if not pend_lt.empty else pd.DataFrame(
+        columns=["player1", "player2", "prob_p1", "n"])
+    if not pend_lt.empty:
+        _mostrar_expander_cruces(prob_df)
 
     avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_lt["Participante"]}
 
-    with st.spinner(f"Simulando {n_sims} temporadas..."):
-        odds_df = simulate_bracket_odds(base_lt, prob_df.to_dict("records"), avg_pokes, "liga", lt, n_sims)
+    if jornadas_sin_emparejar:
+        st.info(
+            f"La temporada **{lt}** se juega a rondas suizas: las jornadas "
+            f"**{', '.join(jornadas_sin_emparejar)}** todavía están completas 'Pendiente' porque su "
+            f"emparejamiento depende de cómo termine la tabla en ese punto (mejor contra mejor, "
+            f"evitando revanchas). Esta simulación primero resuelve los cruces con rival ya conocido, "
+            f"y después arma y simula el emparejamiento suizo de cada jornada pendiente, una por una, "
+            f"todo de punta a punta en cada una de las simulaciones."
+        )
+        pares_ya_jugados = _historial_pares_liga(df_liga_raw_todas, lt)
+        with st.spinner(f"Simulando {n_sims} temporadas completas (cruces conocidos + emparejamiento suizo)..."):
+            odds_df = _simular_liga_suiza_hibrida(base_lt, prob_df.to_dict("records"), jornadas_sin_emparejar,
+                                                    avg_pokes, lt, model, latest_stats, top_feat,
+                                                    pares_ya_jugados, n_sims)
+    else:
+        with st.spinner(f"Simulando {n_sims} temporadas..."):
+            odds_df = simulate_bracket_odds(base_lt, prob_df.to_dict("records"), avg_pokes, "liga", lt, n_sims)
 
     _mostrar_resultado(odds_df, ZONAS_LIGA, COLORS_LIGA, f"Probabilidad por zona — {lt}", n_sims, f"playoff_odds_{lt}.csv")
 
     with st.expander("📖 Metodología y límites"):
+        extra_suiza = ""
+        if jornadas_sin_emparejar:
+            extra_suiza = f"""
+- **Jornadas suizas sin emparejar** ({', '.join(jornadas_sin_emparejar)}): en cada simulación, después de
+  resolver los cruces con rival conocido, se reordena la tabla y se arma el emparejamiento de la siguiente
+  jornada pendiente con el criterio suizo estándar (mejor posición contra la mejor disponible, evitando
+  revanchas ya jugadas en esa misma simulación; si sobra un jugador, no juega esa jornada). Se simula esa
+  jornada, se actualiza la tabla, y se repite para la jornada siguiente — así la incertidumbre de **con
+  quién** se cruza cada jugador en las jornadas futuras también queda reflejada en las probabilidades, no
+  solo quién gana cada cruce.
+- **Supuesto importante (no verificado contra el reglamento real):** el emparejamiento suizo real puede usar
+  reglas más finas (grupos de puntaje, desempates específicos, byes con puntos) que esta simulación no
+  conoce — se aproxima con el criterio estándar descrito arriba."""
         st.markdown(f"""
-- Para cada emparejamiento pendiente distinto ({len(prob_df)} de los {len(pend_lt)} cruces totales) se calcula
-  la probabilidad de victoria del jugador 1 con **{mod_sel}**, igual que en la página de Predicción
-  (`make_pred_row` sobre las últimas stats de cada jugador).
-- Se corren **{n_sims} temporadas simuladas**: en cada una, cada cruce pendiente se resuelve al azar según esa
+- Para cada emparejamiento pendiente distinto con rival ya conocido ({len(prob_df)} de los {len(pend_lt)}
+  cruces) se calcula la probabilidad de victoria del jugador 1 con **{mod_sel}**, igual que en la página de
+  Predicción (`make_pred_row` sobre las últimas stats de cada jugador).
+- Se corren **{n_sims} temporadas simuladas**: en cada una, cada cruce se resuelve al azar según esa
   probabilidad — no es siempre el mismo resultado, por eso hace falta simular muchas veces en vez de una sola.
 - El score de cada partida simulada usa el promedio histórico de pokémon sobrevivientes/vencidos por partida de
   cada jugador (ventana de hasta 36 meses) en vez de un marcador simulado pokémon por pokémon, porque el modelo
   predice quién gana, no el resultado exacto. Esto solo afecta el desempate por Score, no quién gana cada cruce.
 - La tabla final de cada simulación se calcula con las mismas fórmulas que ya usa la vista de Ligas
   (`score_final` + `asignar_zona`), y la probabilidad reportada es simplemente en cuántas de las {n_sims}
-  temporadas simuladas cada jugador terminó en cada zona.
+  temporadas simuladas cada jugador terminó en cada zona.{extra_suiza}
 - **Límite conocido (heredado del modelo base):** si un jugador no tiene historial suficiente sus variables
   quedan en 0 y la predicción de ese cruce es casi una moneda al aire — no es un límite de esta simulación en
   particular.
@@ -683,7 +908,13 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
         df_pend_all = df_pend_all.iloc[0:0]
     torneos_con_pendientes = set(df_pend_all["N_Torneo"].unique()) if not df_pend_all.empty else set()
 
-    torneos_en_curso = [t for t in torneos_disp if t in torneos_con_pendientes]
+    # "En curso" = tiene cruces pendientes, sin importar si ya tiene o no
+    # partidas jugadas — un torneo recien cargado (bracket completo armado
+    # pero ni una sola partida jugada todavia) NO aparece en torneos_disp
+    # (build_base_torneo solo agrega partidas ya jugadas, Walkover >= 0), pero
+    # sigue siendo un torneo real que se puede simular de punta a punta con
+    # _simular_torneo_hibrido (ver mas abajo, base_nt se arma en cero si hace falta).
+    torneos_en_curso = sorted(torneos_con_pendientes)
     if not torneos_en_curso:
         st.info("Ningún torneo tiene cruces pendientes ahora mismo — todos ya están cerrados, no hay nada que simular.")
         return
@@ -709,6 +940,20 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
     ].reset_index(drop=True)
 
     pend_nt = df_pend_all[df_pend_all["N_Torneo"] == nt] if not df_pend_all.empty else df_pend_all
+
+    # Torneo recien cargado (bracket armado pero CERO partidas jugadas todavia,
+    # ver comentario en torneos_en_curso más arriba) — build_base_torneo no le
+    # arma fila a nadie porque solo mira partidas con Walkover >= 0. Se arma la
+    # tabla en 0-0 a partir de los jugadores reales de la fase de grupos/suiza
+    # pendiente, para que la simulacion tenga de donde arrancar.
+    if base_nt.empty and not pend_nt.empty:
+        jugadores_iniciales = pd.unique(pend_nt[["player1", "player2"]].values.ravel("K"))
+        jugadores_iniciales = [j for j in jugadores_iniciales if pd.notna(j) and str(j).strip() != ""]
+        base_nt = pd.DataFrame({
+            "Participante": jugadores_iniciales,
+            "Victorias": 0, "Juegos": 0, "Derrotas": 0,
+            "pokes_sobrevivientes": 0, "poke_vencidos": 0,
+        })
 
     st.markdown("---")
 
