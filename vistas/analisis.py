@@ -174,6 +174,12 @@ def show():
         if df_torneo_all2.empty:
             st.info("No hay datos de torneos disponibles.")
         else:
+            n_torneos_unicos = df_torneo_all2['N_Torneo'].nunique()
+            st.caption(
+                f"📌 Hay **{n_torneos_unicos} torneos únicos** en total, pero las barras de abajo pueden sumar más: "
+                "un torneo que usó varios Formatos o Tiers (ej. Singles + Dobles + VGC en el mismo evento) "
+                "se cuenta una vez en cada barra que le corresponde, no se duplica el torneo."
+            )
             col1, col2 = st.columns(2)
             with col1:
                 if 'Formato' in df_torneo_all2.columns:
