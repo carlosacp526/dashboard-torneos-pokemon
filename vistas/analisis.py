@@ -41,12 +41,19 @@ def show():
                "Formato y Tier — misma categorización oficial de PUNTAJES_MUNDIAL3.png.")
 
     LIGA_COLORS = {
-        "PJS": "#0E01A6",  # azul/índigo — extraído del logo oficial (logos_ligas/logo_pjs.PNG)
-        "PSS": "#F7D300",  # amarillo/dorado — extraído del logo oficial
-        "PES": "#00B7AF",  # verde azulado — extraído del logo oficial
-        "PLS": "#CE582B",  # rojo-naranja — extraído del borde del escudo oficial
-        "PMS": "#8E44AD",  # violeta — el logo oficial es blanco y negro, sin color propio
+        # Colores extraídos EXACTOS del header de cada tabla de liga en
+        # mundial/PUNTAJES_MUNDIAL3.png (muestreo de píxel real, no aproximado).
+        "PJS": "#1359A0",  # azul — header real de PUNTAJES_MUNDIAL3.png
+        "PSS": "#E1C233",  # amarillo — header real de PUNTAJES_MUNDIAL3.png
+        "PES": "#95C2EC",  # celeste — header real de PUNTAJES_MUNDIAL3.png
+        "PGS": "#C60210",  # rojo — header real de PUNTAJES_MUNDIAL3.png (sin datos en el CSV todavía)
+        # PLS y PMS NO tienen color de marca en esa imagen (headers literalmente
+        # blanco y gris-casi-negro, sin fill de color) — se usa tal cual, con
+        # ajustes de contraste (borde/texto) para que sigan siendo legibles.
+        "PLS": "#FFFFFF",  # blanco — header real de PUNTAJES_MUNDIAL3.png
+        "PMS": "#333333",  # gris muy oscuro — header real de PUNTAJES_MUNDIAL3.png
     }
+    LIGA_TEXTO_OSCURO = {"PLS"}  # fondo claro -> texto oscuro para que se lea
     LIGA_NOMBRES = {
         "PJS": "Pokémon Junior Series", "PSS": "Pokémon Senior Series",
         "PES": "Pokémon Evolution Series", "PLS": "Pokémon Legends Series",
@@ -83,17 +90,19 @@ def show():
                     fig = px.bar(temp_liga, x='Temporadas', y='Liga_nombre', orientation='h',
                                  color='Liga', color_discrete_map=LIGA_COLORS, text='Temporadas',
                                  title='Temporadas jugadas por Liga')
-                    fig.update_traces(textposition='outside')
+                    fig.update_traces(textposition='outside', marker_line_color='#333333', marker_line_width=1.2)
                     fig.update_layout(showlegend=False, yaxis_title='', xaxis_title='Temporadas',
                                        margin=dict(l=10, r=40, t=40, b=20))
                     st.plotly_chart(fig, use_container_width=True)
                 with col_cards:
                     st.markdown("##### Resumen")
                     for _, row in temp_liga.sort_values('Temporadas', ascending=False).iterrows():
+                        texto_color = '#111' if row['Liga'] in LIGA_TEXTO_OSCURO else 'white'
+                        borde = 'border:1.5px solid #999;' if row['Liga'] in LIGA_TEXTO_OSCURO else ''
                         st.markdown(
-                            f"<div style='background:{LIGA_COLORS.get(row['Liga'], '#888')};"
+                            f"<div style='background:{LIGA_COLORS.get(row['Liga'], '#888')};{borde}"
                             "padding:10px 14px;border-radius:10px;margin-bottom:8px;"
-                            "color:white;font-weight:700;display:flex;justify-content:space-between;'>"
+                            f"color:{texto_color};font-weight:700;display:flex;justify-content:space-between;'>"
                             f"<span>{row['Liga']}</span><span>{int(row['Temporadas'])} temp.</span></div>",
                             unsafe_allow_html=True)
                     st.metric("Total de temporadas jugadas", int(temp_liga['Temporadas'].sum()))
