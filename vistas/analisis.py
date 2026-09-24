@@ -30,6 +30,143 @@ def show():
     c7.metric("Eventos ASCENSO", df[df.league=="ASCENSO"]["N_Torneo"].nunique())
     c8.metric("Eventos CYPHER",  df[df.league=="CYPHER"]["N_Torneo"].nunique())
 
+    # ── Panorama de Competencias ──────────────────────────────────────
+    # Temporadas por Liga (con los colores oficiales de cada logo/liga),
+    # Torneos por tamaño (misma categorización de mundial/PUNTAJES_MUNDIAL3.png:
+    # Grande > 24 · Mediano <= 24 · Pequeño < 13) y Torneos por Formato/Tier.
+    st.markdown('<div id="panorama-competencias"></div>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.subheader("🗂️ Panorama de Competencias")
+    st.caption("Cuántas temporadas hemos tenido de cada Liga, y cuántos Torneos según su tamaño, "
+               "Formato y Tier — misma categorización oficial de PUNTAJES_MUNDIAL3.png.")
+
+    LIGA_COLORS = {
+        "PJS": "#0E01A6",  # azul/índigo — extraído del logo oficial (logos_ligas/logo_pjs.PNG)
+        "PSS": "#F7D300",  # amarillo/dorado — extraído del logo oficial
+        "PES": "#00B7AF",  # verde azulado — extraído del logo oficial
+        "PLS": "#CE582B",  # rojo-naranja — extraído del borde del escudo oficial
+        "PMS": "#8E44AD",  # violeta — el logo oficial es blanco y negro, sin color propio
+    }
+    LIGA_NOMBRES = {
+        "PJS": "Pokémon Junior Series", "PSS": "Pokémon Senior Series",
+        "PES": "Pokémon Elite Series", "PLS": "Pokémon League Series",
+        "PMS": "Pokémon Master Series",
+    }
+
+    tab_temp, tab_tam, tab_fmt_tier = st.tabs(
+        ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "🎮 Torneos por Formato y Tier"])
+
+    # -- Temporadas por Liga --------------------------------------------
+    with tab_temp:
+        df_liga_all = df[df['league'] == 'LIGA'].copy()
+        if df_liga_all.empty or 'round' not in df_liga_all.columns:
+            st.info("No hay datos de liga disponibles.")
+        else:
+            def _liga_temp(x):
+                partes = str(x).split(' ')
+                return partes[0] + partes[1] if pd.notna(x) and len(partes) > 1 else ''
+            df_liga_all['Liga_Temporada'] = df_liga_all['round'].apply(_liga_temp)
+            df_liga_all = df_liga_all[df_liga_all['Liga_Temporada'] != '']
+            df_liga_all['Prefijo'] = df_liga_all['Liga_Temporada'].str.extract(r'^([A-Z]+)T\d+$')
+            temp_liga = df_liga_all.groupby('Prefijo')['Liga_Temporada'].nunique().reset_index()
+            temp_liga.columns = ['Liga', 'Temporadas']
+            temp_liga = temp_liga[temp_liga['Liga'].isin(LIGA_COLORS)].copy()
+
+            if temp_liga.empty:
+                st.info("No se pudieron identificar temporadas de liga conocidas (PJS/PSS/PES/PLS/PMS).")
+            else:
+                temp_liga['Liga_nombre'] = temp_liga['Liga'].apply(lambda x: f"{x} — {LIGA_NOMBRES.get(x, '')}")
+                temp_liga = temp_liga.sort_values('Temporadas', ascending=True)
+
+                col_chart, col_cards = st.columns([2, 1])
+                with col_chart:
+                    fig = px.bar(temp_liga, x='Temporadas', y='Liga_nombre', orientation='h',
+                                 color='Liga', color_discrete_map=LIGA_COLORS, text='Temporadas',
+                                 title='Temporadas jugadas por Liga')
+                    fig.update_traces(textposition='outside')
+                    fig.update_layout(showlegend=False, yaxis_title='', xaxis_title='Temporadas',
+                                       margin=dict(l=10, r=40, t=40, b=20))
+                    st.plotly_chart(fig, use_container_width=True)
+                with col_cards:
+                    st.markdown("##### Resumen")
+                    for _, row in temp_liga.sort_values('Temporadas', ascending=False).iterrows():
+                        st.markdown(
+                            f"<div style='background:{LIGA_COLORS.get(row['Liga'], '#888')};"
+                            "padding:10px 14px;border-radius:10px;margin-bottom:8px;"
+                            "color:white;font-weight:700;display:flex;justify-content:space-between;'>"
+                            f"<span>{row['Liga']}</span><span>{int(row['Temporadas'])} temp.</span></div>",
+                            unsafe_allow_html=True)
+                    st.metric("Total de temporadas jugadas", int(temp_liga['Temporadas'].sum()))
+
+    # -- Torneos por Tamaño ----------------------------------------------
+    with tab_tam:
+        df_torneo_all = df[df['league'] == 'TORNEO'].copy()
+        if df_torneo_all.empty or 'N_Torneo' not in df_torneo_all.columns:
+            st.info("No hay datos de torneos disponibles.")
+        else:
+            p1 = df_torneo_all[['N_Torneo', 'player1']].rename(columns={'player1': 'Jugador'})
+            p2 = df_torneo_all[['N_Torneo', 'player2']].rename(columns={'player2': 'Jugador'})
+            jugadores_torneo = pd.concat([p1, p2], ignore_index=True).dropna(subset=['Jugador', 'N_Torneo'])
+            participantes_por_torneo = jugadores_torneo.groupby('N_Torneo')['Jugador'].nunique() \
+                .reset_index(name='Participantes')
+
+            def _categoria_torneo(n):
+                if n > 24: return 'Grande (> 24)'
+                if n < 13: return 'Pequeño (< 13)'
+                return 'Mediano (<= 24)'
+            participantes_por_torneo['Categoría'] = participantes_por_torneo['Participantes'].apply(_categoria_torneo)
+            orden_cat = ['Grande (> 24)', 'Mediano (<= 24)', 'Pequeño (< 13)']
+            cat_counts = participantes_por_torneo['Categoría'].value_counts().reindex(orden_cat).fillna(0) \
+                .astype(int).reset_index()
+            cat_counts.columns = ['Categoría', 'Torneos']
+            COLORS_TAM = {'Grande (> 24)': '#E74C3C', 'Mediano (<= 24)': '#F1C40F', 'Pequeño (< 13)': '#3498DB'}
+
+            c1, c2, c3 = st.columns(3)
+            for c, cat in zip((c1, c2, c3), orden_cat):
+                valor = int(cat_counts.loc[cat_counts['Categoría'] == cat, 'Torneos'].iloc[0])
+                c.metric(cat, valor)
+
+            fig = px.pie(cat_counts, names='Categoría', values='Torneos', color='Categoría',
+                         color_discrete_map=COLORS_TAM, hole=0.45,
+                         title=f"Torneos por tamaño ({int(cat_counts['Torneos'].sum())} torneos totales)")
+            fig.update_traces(textinfo='label+value')
+            st.plotly_chart(fig, use_container_width=True)
+            st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png: Grande > 24 participantes, "
+                       "Mediano <= 24, Pequeño < 13.")
+
+    # -- Torneos por Formato y Tier ---------------------------------------
+    with tab_fmt_tier:
+        df_torneo_all2 = df[df['league'] == 'TORNEO'].copy()
+        if df_torneo_all2.empty:
+            st.info("No hay datos de torneos disponibles.")
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                if 'Formato' in df_torneo_all2.columns:
+                    fmt_counts = df_torneo_all2.groupby('Formato')['N_Torneo'].nunique().reset_index()
+                    fmt_counts.columns = ['Formato', 'Torneos']
+                    fmt_counts = fmt_counts.sort_values('Torneos', ascending=False)
+                    fig = px.bar(fmt_counts, x='Formato', y='Torneos', color='Formato', text='Torneos',
+                                 title='Torneos por Formato')
+                    fig.update_traces(textposition='outside')
+                    fig.update_layout(showlegend=False)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No se encontró la columna 'Formato'.")
+            with col2:
+                if 'Tier' in df_torneo_all2.columns:
+                    tier_counts_t = df_torneo_all2.groupby('Tier')['N_Torneo'].nunique().reset_index()
+                    tier_counts_t.columns = ['Tier', 'Torneos']
+                    tier_counts_t = tier_counts_t.sort_values('Torneos', ascending=True)
+                    altura = max(400, len(tier_counts_t) * 26)
+                    fig = px.bar(tier_counts_t, x='Torneos', y='Tier', orientation='h',
+                                 color='Torneos', color_continuous_scale='viridis',
+                                 title='Torneos por Tier')
+                    fig.update_layout(height=altura, yaxis_title='')
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No se encontró la columna 'Tier'.")
+
     # ── Winrate General por Jugador ──────────────────────────────────
     # Filtro global de partidas mínimas: se define UNA sola vez acá y se reutiliza
     # más abajo en "Clasificación por Evento" y "Clasificación por Tiers", en vez
