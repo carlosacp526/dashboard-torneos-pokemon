@@ -5,7 +5,11 @@ import plotly.graph_objects as go
 import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats, obtener_logo_liga
-from vistas.logros import TORNEOS_GEN, GENERACIONES_NOMBRES
+
+GEN_REGION_NOMBRE = {
+    1: "Kanto", 2: "Johto", 3: "Hoenn", 4: "Sinnoh", 5: "Unova",
+    6: "Kalos", 7: "Alola", 8: "Galar", 9: "Paldea",
+}
 
 def _img_b64_local(path):
     """Lee un archivo de imagen local y lo devuelve como data-URI base64, o
@@ -179,21 +183,28 @@ def show():
             tier_counts_t.columns = ['Tier', 'Torneos']
             tier_counts_t = tier_counts_t.sort_values('Torneos', ascending=True)
 
-    # Torneos por Generación — MISMA categorización oficial (TORNEOS_GEN) que
-    # usan los logros TO02-TO10 en vistas/logros.py: un torneo puede caer en
-    # más de una generación (ej. T68 es un cruce que cuenta para casi todas),
-    # así que la suma de las barras puede superar el total de torneos únicos.
-    orden_gen = [f"TO{n:02d}" for n in range(2, 11)]
-    gen_counts = pd.DataFrame(columns=['Generación', 'Torneos', 'gen_id'])
-    if not df_torneo_all.empty and 'N_Torneo' in df_torneo_all.columns:
-        torneos_num_all = set(df_torneo_all['N_Torneo'].dropna().astype(int).unique())
+    # Torneos por Generación — usa la columna real `Generaciones` del CSV
+    # (1 valor numérico por batalla, ya cargado tal cual en el dataset) en vez
+    # de una lista fija a mano: cubre los 88 torneos con dato real, no solo un
+    # puñado curado manualmente. Casi todos los torneos tienen una única
+    # Generación consistente en todas sus batallas — solo el Torneo 68 mezcla
+    # 2 (evento cruce), así que ESE cuenta para ambas barras y la suma de las
+    # barras puede superar el total de torneos únicos por ese único caso.
+    gen_counts = pd.DataFrame(columns=['Generación', 'Torneos', 'N_Torneos', 'gen_num'])
+    if not df_torneo_all.empty and 'Generaciones' in df_torneo_all.columns and 'N_Torneo' in df_torneo_all.columns:
+        gt = df_torneo_all.dropna(subset=['Generaciones', 'N_Torneo']).copy()
+        gt['Generaciones'] = pd.to_numeric(gt['Generaciones'], errors='coerce')
+        gt = gt.dropna(subset=['Generaciones'])
+        gt['Generaciones'] = gt['Generaciones'].astype(int)
+        gt['N_Torneo'] = gt['N_Torneo'].astype(int)
+        por_gen = gt.groupby('Generaciones')['N_Torneo'].unique().apply(lambda a: sorted(set(a)))
         filas_gen = []
-        for gid in orden_gen:
-            nums = TORNEOS_GEN.get(gid, set())
-            interseccion = torneos_num_all & nums
+        for gnum in range(1, 10):
+            nts = por_gen.get(gnum, [])
+            nombre_region = GEN_REGION_NOMBRE.get(gnum, '')
             filas_gen.append({
-                'gen_id': gid, 'Generación': GENERACIONES_NOMBRES.get(gid, gid),
-                'Torneos': len(interseccion), 'N_Torneos': sorted(interseccion),
+                'gen_num': gnum, 'Generación': f"Gen {gnum} · {nombre_region}" if nombre_region else f"Gen {gnum}",
+                'Torneos': len(nts), 'N_Torneos': nts,
             })
         gen_counts = pd.DataFrame(filas_gen)
 
@@ -367,7 +378,7 @@ def show():
     # -- Torneos por Generación --------------------------------------------
     with tab_gen:
         if gen_counts.empty or gen_counts['Torneos'].sum() == 0:
-            st.info("No se pudieron identificar torneos por generación (misma lista que usan los logros TO02-TO10).")
+            st.info("No se encontró la columna 'Generaciones' en los datos, o no hay torneos con ese dato cargado.")
         else:
             fig = px.bar(gen_counts, x='Generación', y='Torneos', color='Generación',
                          text='Torneos', title='Torneos por Generación de Pokémon',
@@ -382,10 +393,10 @@ def show():
             tabla_gen['N_Torneos'] = tabla_gen['N_Torneos'].apply(lambda l: ', '.join(f'T{n}' for n in l) or '—')
             st.dataframe(tabla_gen, use_container_width=True, hide_index=True)
             st.caption(
-                "Misma categorización oficial que usan los logros TO02-TO10 en `vistas/logros.py` (por número de "
-                "torneo, no por Tier/Formato). Un torneo puede pertenecer a más de una generación a la vez — hay "
-                "algunos torneos 'cruce' que cuentan para casi todas — así que la suma de las barras puede superar "
-                "el total de torneos únicos."
+                "Basado en la columna `Generaciones` real del dataset (no en una lista fija a mano) — cubre "
+                "todos los torneos con ese dato cargado. Casi todos tienen una única generación consistente en "
+                "todas sus batallas; el Torneo 68 es el único que mezcla 2 (evento cruce), así que cuenta para "
+                "ambas barras y la suma puede superar el total de torneos únicos por ese caso puntual."
             )
 
     # -- Torneos por Formato y Tier ---------------------------------------
