@@ -2,7 +2,125 @@ import streamlit as st
 import pandas as pd
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields
+from utils import load_data, normalize_columns, ensure_fields, build_base_liga, build_base_torneo
+from vistas.elo import calcular_elo, get_round_order
+from vistas.logros_analisis import _precalcular_campeones
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _racha_ganadora_max_historica(df_raw):
+    """Racha ganadora consecutiva más larga de CADA jugador en toda su historia
+    (a diferencia de vistas/rachas.py, que mide la racha ACTUAL vigente)."""
+    df = normalize_columns(df_raw.copy())
+    df = ensure_fields(df)
+    m = df[df['winner'].notna()].copy()
+    if 'Walkover' in df.columns:
+        m = m[m['Walkover'] >= 0]
+    if m.empty:
+        return pd.DataFrame()
+    m['_ro'] = m['round'].apply(get_round_order) if 'round' in m.columns else 50
+    m['_nt'] = m['N_Torneo'].fillna(0) if 'N_Torneo' in m.columns else 0
+    m = m.dropna(subset=['player1', 'player2', 'winner', 'date'])
+    m = m.sort_values(['date', '_nt', '_ro'], ascending=True)
+
+    p1 = m.rename(columns={'player1': 'Jugador'})
+    p1['Resultado'] = (p1['winner'].str.strip() == p1['Jugador'].str.strip())
+    p2 = m.rename(columns={'player2': 'Jugador'})
+    p2['Resultado'] = (p2['winner'].str.strip() == p2['Jugador'].str.strip())
+    largo = pd.concat([p1[['Jugador', 'Resultado', 'date', '_nt', '_ro']],
+                        p2[['Jugador', 'Resultado', 'date', '_nt', '_ro']]], ignore_index=True)
+    largo = largo.sort_values(['Jugador', 'date', '_nt', '_ro'])
+
+    filas = []
+    for jugador, g in largo.groupby('Jugador', sort=False):
+        if not jugador or str(jugador).strip() == '':
+            continue
+        mejor = actual = 0
+        for gano in g['Resultado']:
+            actual = actual + 1 if gano else 0
+            mejor = max(mejor, actual)
+        filas.append({'Jugador': jugador, 'Racha máxima': mejor})
+    return pd.DataFrame(filas)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _pico_elo_historico(df_raw):
+    """Elo más alto que cada jugador alcanzó en algún momento (no el actual)."""
+    _, data_filas, _ = calcular_elo(df_raw)
+    if data_filas.empty:
+        return pd.DataFrame()
+    a = data_filas[['Jugador_A', 'Rating_A_NEW']].rename(columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+    b = data_filas[['Jugador_B', 'Rating_B_NEW']].rename(columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+    todo = pd.concat([a, b], ignore_index=True)
+    todo = todo[todo['Jugador'].astype(str).str.strip() != '']
+    pico = todo.groupby('Jugador')['Elo'].max().reset_index().rename(columns={'Elo': 'Pico Elo'})
+    return pico
+
+
+def _mostrar_top(df, col_valor, col_jugador='Jugador', n=10, sufijo=''):
+    if df is None or df.empty:
+        st.info("Sin datos suficientes.")
+        return
+    top = df.sort_values(col_valor, ascending=False).head(n).reset_index(drop=True)
+    for i, row in top.iterrows():
+        medalla = ['🥇', '🥈', '🥉'][i] if i < 3 else f"#{i+1}"
+        val = row[col_valor]
+        val_fmt = f"{val:.0f}" if isinstance(val, float) else val
+        st.markdown(f"{medalla} **{row[col_jugador]}** — {val_fmt}{sufijo}")
+
+
+def _grandes_de_la_historia(df_raw):
+    st.markdown('<div id="grandes-historia"></div>', unsafe_allow_html=True)
+    st.subheader("🏛️ Grandes de la Historia")
+    st.caption("Leaderboards calculados en vivo desde los datos — a diferencia del Salón de la Fama de arriba "
+               "(fotos curadas por temporada), esto se recalcula solo con cada partida nueva.")
+
+    df = normalize_columns(df_raw.copy())
+    df = ensure_fields(df)
+
+    with st.spinner("Calculando..."):
+        base2, _ = build_base_liga(df_raw)
+        base_torneo_final, _ = build_base_torneo(df_raw)
+        campeones_liga, campeones_torneo = _precalcular_campeones(df_raw, base2, base_torneo_final)
+        rachas_max = _racha_ganadora_max_historica(df_raw)
+        picos_elo = _pico_elo_historico(df_raw)
+
+    # Títulos totales = suma de campeonatos de liga + torneo por jugador
+    titulos = {}
+    for j, lst in campeones_liga.items():
+        titulos[j] = titulos.get(j, 0) + len(lst)
+    for j, lst in campeones_torneo.items():
+        titulos[j] = titulos.get(j, 0) + len(lst)
+    df_titulos = pd.DataFrame([{'Jugador': j, 'Títulos': n} for j, n in titulos.items()])
+
+    m = df[df['winner'].notna()].copy()
+    if 'Walkover' in df.columns:
+        m = m[m['Walkover'] >= 0]
+    victorias = m['winner'].value_counts()
+    partidas = pd.concat([m['player1'], m['player2']]).value_counts()
+    winrate_df = pd.DataFrame({'Victorias': victorias, 'Partidas': partidas}).fillna(0)
+    winrate_df['Winrate'] = (winrate_df['Victorias'] / winrate_df['Partidas'] * 100).round(1)
+    winrate_df = winrate_df[winrate_df['Partidas'] >= 30].reset_index().rename(columns={'index': 'Jugador'})
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    with c1:
+        st.markdown("##### 🏆 Más Títulos")
+        _mostrar_top(df_titulos, 'Títulos')
+    with c2:
+        st.markdown("##### 📈 Mejor Winrate")
+        st.caption("mín. 30 partidas")
+        _mostrar_top(winrate_df, 'Winrate', sufijo='%')
+    with c3:
+        st.markdown("##### 🔥 Racha Más Larga")
+        _mostrar_top(rachas_max, 'Racha máxima')
+    with c4:
+        st.markdown("##### ⚡ Pico de Elo")
+        _mostrar_top(picos_elo, 'Pico Elo')
+    with c5:
+        st.markdown("##### ⚔️ Más Victorias")
+        df_victorias = pd.DataFrame({'Jugador': victorias.index, 'Victorias': victorias.values})
+        _mostrar_top(df_victorias, 'Victorias')
+
 
 def show():
     df_raw = load_data()
@@ -35,6 +153,10 @@ def show():
                 st.caption(caption)
             else:
                 st.info(f"Coloca '{img}' en la carpeta del proyecto")
+
+    st.markdown("---")
+
+    _grandes_de_la_historia(df_raw)
 
     st.markdown("---")
 

@@ -24,6 +24,10 @@ GRUPOS = [
              ["🎭 Huella de estilo en 5 ejes", "⏰ Ranking de Confiabilidad"]),
             ("logros_analisis", "🧭", "Análisis de Logros",
              ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🏆 Ranking de jugadores"]),
+            ("rachas", "🔥", "Rachas en Vivo",
+             ["🔥 Racha actual (no histórica) de cada jugador", "🧊 Top rachas ganadoras y perdedoras", "📅 Filtro por actividad reciente"]),
+            ("metagame", "🧪", "Metagame",
+             ["📊 Popularidad de formatos", "📈 Tendencia mensual de uso", "⏱️ Duración típica de series"]),
         ],
     },
     {
@@ -64,6 +68,8 @@ GRUPOS = [
              ["📊 Indicadores por temporada", "🌡️ Heatmap de competitividad", "🎯 Ratio élite / cola", "📈 Participación y sobrevivientes"]),
             ("tiermaker", "🏆", "Tier Maker",
              ["🏆 Tier list de jugadores", "🎯 Ranking visual", "📊 Por temporada/formato"]),
+            ("fairplay", "⚖️", "Fair Play",
+             ["📈 Tendencia de Walkovers", "📊 % WO por tipo de evento", "🚫 Ranking de ausencias"]),
         ],
     },
     {

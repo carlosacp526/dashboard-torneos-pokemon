@@ -51,6 +51,36 @@ def show():
     c7.metric("Eventos ASCENSO", df[df.league=="ASCENSO"]["N_Torneo"].nunique())
     c8.metric("Eventos CYPHER",  df[df.league=="CYPHER"]["N_Torneo"].nunique())
 
+    # ── Feed de Actividad Reciente ────────────────────────────────────
+    st.markdown('<div id="feed-actividad"></div>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.subheader("🕐 Feed de Actividad Reciente")
+    st.caption("Últimos resultados registrados en el historial — qué se jugó y cuándo, de un vistazo.")
+
+    recientes = df[completed_mask].dropna(subset=['date']).sort_values('date', ascending=False).copy()
+    if recientes.empty:
+        st.info("No hay partidas completadas registradas todavía.")
+    else:
+        cf1, cf2, cf3 = st.columns(3)
+        hoy = pd.Timestamp.now()
+        cf1.metric("📅 Últimos 7 días", int((recientes['date'] >= hoy - pd.Timedelta(days=7)).sum()))
+        cf2.metric("📅 Últimos 30 días", int((recientes['date'] >= hoy - pd.Timedelta(days=30)).sum()))
+        cf3.metric("🕐 Última partida", recientes['date'].iloc[0].strftime('%d/%m/%Y'))
+
+        n_feed = st.slider("Cuántos resultados mostrar", 5, 50, 15, key="feed_n")
+        feed = recientes.head(n_feed).copy()
+        feed['Evento'] = feed.get('Aka_evento', feed['league']).fillna(feed['league'])
+        for _, row in feed.iterrows():
+            p1, p2, w = row['player1'], row['player2'], row['winner']
+            perdedor = p2 if str(w).strip() == str(p1).strip() else p1
+            wo_tag = " · 🚫 WO" if row.get('Walkover') == 1 else ""
+            st.markdown(
+                f"**{row['date'].strftime('%d/%m/%Y')}** &nbsp;·&nbsp; "
+                f"🏆 **{w}** venció a {perdedor} &nbsp;·&nbsp; "
+                f"_{row['Evento']}_{wo_tag}"
+            )
+        st.caption(f"Mostrando los {len(feed)} resultados más recientes de {len(recientes)} partidas completadas.")
+
     # ── Panorama de Competencias ──────────────────────────────────────
     # Temporadas por Liga (con los colores oficiales de cada logo/liga),
     # Torneos por tamaño (misma categorización de mundial/PUNTAJES_MUNDIAL3.png:
