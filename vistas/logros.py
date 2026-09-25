@@ -216,6 +216,21 @@ LOGROS = [
 # Orden de categorías para mostrar
 CATEGORIAS_ORDEN = ["Participación","Victorias","Ranking","Estrategia","Torneo","Ligas","Social","Especial","Progresión"]
 
+# Mapeo N_Torneo -> generación de Pokémon, a nivel de módulo (no solo dentro de
+# evaluar_logros) para que otras vistas (ej. Panorama de Competencias en
+# analisis.py) lo puedan importar y usar la MISMA categorización oficial en
+# vez de mantener una copia duplicada que se desactualiza sola.
+TORNEOS_GEN = {
+    "TO02": {27,58,68}, "TO03": {29,65,68}, "TO04": {34,70,68},
+    "TO05": {38,68},    "TO06": {44,68,87}, "TO07": {50,68},
+    "TO08": {57,68},    "TO09": {60,68},    "TO10": {66,68}
+}
+GENERACIONES_NOMBRES = {
+    "TO02": "Gen 1 · Kanto",  "TO03": "Gen 2 · Johto",  "TO04": "Gen 3 · Hoenn",
+    "TO05": "Gen 4 · Sinnoh", "TO06": "Gen 5 · Unova",  "TO07": "Gen 6 · Kalos",
+    "TO08": "Gen 7 · Alola",  "TO09": "Gen 8 · Galar",  "TO10": "Gen 9 · Paldea",
+}
+
 RAREZA_COLORS = {
     "Bronce":    {"c1":"#cd7f32","c2":"#a0522d","ring":"#8B5500","shine":"#e8a96a","ribbon":"#cd7f32","text":"#fff"},
     "Plata":     {"c1":"#b0bec5","c2":"#78909c","ring":"#546e7a","shine":"#e0eaf0","ribbon":"#aab8c2","text":"#fff"},
@@ -714,11 +729,8 @@ def evaluar_logros(
     r["ES15"] = any('NAT DEX' in str(f).upper() for f in formatos_jugados_esp)
 
     # TORNEO
-    TORNEOS_GEN = {
-        "TO02": {27,58,68}, "TO03": {29,65,68}, "TO04": {34,70,68},
-        "TO05": {38,68},    "TO06": {44,68,87}, "TO07": {50,68},
-        "TO08": {57,68},    "TO09": {60,68},    "TO10": {66,68}
-    }
+    # TORNEOS_GEN ahora es una constante de módulo (ver arriba de este archivo)
+    # para que analisis.py la pueda reutilizar sin duplicarla.
 
     TORNEOS_TIPOS = {
         "TI01": {76},  # Fuego

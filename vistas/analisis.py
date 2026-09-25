@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats, obtener_logo_liga
+from vistas.logros import TORNEOS_GEN, GENERACIONES_NOMBRES
 
 def _img_b64_local(path):
     """Lee un archivo de imagen local y lo devuelve como data-URI base64, o
@@ -178,6 +179,24 @@ def show():
             tier_counts_t.columns = ['Tier', 'Torneos']
             tier_counts_t = tier_counts_t.sort_values('Torneos', ascending=True)
 
+    # Torneos por Generación — MISMA categorización oficial (TORNEOS_GEN) que
+    # usan los logros TO02-TO10 en vistas/logros.py: un torneo puede caer en
+    # más de una generación (ej. T68 es un cruce que cuenta para casi todas),
+    # así que la suma de las barras puede superar el total de torneos únicos.
+    orden_gen = [f"TO{n:02d}" for n in range(2, 11)]
+    gen_counts = pd.DataFrame(columns=['Generación', 'Torneos', 'gen_id'])
+    if not df_torneo_all.empty and 'N_Torneo' in df_torneo_all.columns:
+        torneos_num_all = set(df_torneo_all['N_Torneo'].dropna().astype(int).unique())
+        filas_gen = []
+        for gid in orden_gen:
+            nums = TORNEOS_GEN.get(gid, set())
+            interseccion = torneos_num_all & nums
+            filas_gen.append({
+                'gen_id': gid, 'Generación': GENERACIONES_NOMBRES.get(gid, gid),
+                'Torneos': len(interseccion), 'N_Torneos': sorted(interseccion),
+            })
+        gen_counts = pd.DataFrame(filas_gen)
+
     # -- Panel de KPIs (siempre visible, resumen ejecutivo del panorama) ---
     kpi_cols = st.columns(5)
     with kpi_cols[0]:
@@ -212,8 +231,9 @@ def show():
             st.markdown(_kpi_card("⭐", "—", "Tier más usado", accent="#9B59B6"), unsafe_allow_html=True)
 
     st.write("")
-    tab_temp, tab_tam, tab_batallas, tab_fmt_tier = st.tabs(
-        ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "⚔️ Batallas por Tamaño", "🎮 Torneos por Formato y Tier"])
+    tab_temp, tab_tam, tab_batallas, tab_gen, tab_fmt_tier = st.tabs(
+        ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "⚔️ Batallas por Tamaño",
+         "🧬 Torneos por Generación", "🎮 Torneos por Formato y Tier"])
 
     # -- Temporadas por Liga --------------------------------------------
     with tab_temp:
@@ -342,6 +362,30 @@ def show():
                 "Batallas = filas de partida (incluye pendientes sin jugar, `Walkover == -1`, igual criterio que "
                 "'Participantes' en la pestaña anterior) dentro de cada torneo, agrupadas por la misma categoría "
                 "de tamaño oficial de PUNTAJES_MUNDIAL3.png."
+            )
+
+    # -- Torneos por Generación --------------------------------------------
+    with tab_gen:
+        if gen_counts.empty or gen_counts['Torneos'].sum() == 0:
+            st.info("No se pudieron identificar torneos por generación (misma lista que usan los logros TO02-TO10).")
+        else:
+            fig = px.bar(gen_counts, x='Generación', y='Torneos', color='Generación',
+                         text='Torneos', title='Torneos por Generación de Pokémon',
+                         color_discrete_sequence=px.colors.qualitative.Set2,
+                         hover_data={'N_Torneos': True, 'Generación': False})
+            fig.update_layout(**_PLOTLY_BASE)
+            fig.update_traces(textposition='outside', textfont=dict(color='#e8e8ee', size=13))
+            fig.update_layout(showlegend=False, xaxis_title='', yaxis_title='Torneos')
+            st.plotly_chart(fig, use_container_width=True)
+
+            tabla_gen = gen_counts[['Generación', 'Torneos', 'N_Torneos']].copy()
+            tabla_gen['N_Torneos'] = tabla_gen['N_Torneos'].apply(lambda l: ', '.join(f'T{n}' for n in l) or '—')
+            st.dataframe(tabla_gen, use_container_width=True, hide_index=True)
+            st.caption(
+                "Misma categorización oficial que usan los logros TO02-TO10 en `vistas/logros.py` (por número de "
+                "torneo, no por Tier/Formato). Un torneo puede pertenecer a más de una generación a la vez — hay "
+                "algunos torneos 'cruce' que cuentan para casi todas — así que la suma de las barras puede superar "
+                "el total de torneos únicos."
             )
 
     # -- Torneos por Formato y Tier ---------------------------------------
@@ -494,19 +538,13 @@ def show():
         pais_counts = df_cel_activos['Pais'].value_counts().reset_index()
         pais_counts.columns = ['País', 'Jugadores']
 
-        BANDERAS = {
-            "Peru": "🇵🇪", "Argentina": "🇦🇷", "Mexico": "🇲🇽",
-            "Venezuela": "🇻🇪", "Colombia": "🇨🇴", "Ecuador": "🇪🇨",
-            "Chile": "🇨🇱", "Bolivia": "🇧🇴", "Paraguay": "🇵🇾",
-            "Uruguay": "🇺🇾", "España": "🇪🇸", "Costa Rica": "🇨🇷",
-            "EEUU": "🇺🇸", "USA": "🇺🇸", "Panama": "🇵🇦",
-            "Guatemala": "🇬🇹", "Honduras": "🇭🇳", "Cuba": "🇨🇺",
-            "Brazil": "🇧🇷", "Portugal": "🇵🇹",    "El Salvador": "🇸🇻",
-          "Nicaragua": "🇳🇮","Republica Dominicana": "🇩🇴"
-        }
-        pais_counts['País_flag'] = pais_counts['País'].apply(
-            lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
-        )
+        # Nota: los emojis de bandera (🇵🇪 etc.) son 2 "regional indicator letters"
+        # combinadas — Plotly los dibuja como texto SVG plano, y sin la fuente de
+        # emoji instalada/priorizada (común en Windows/Chrome) el navegador cae
+        # al fallback de mostrar esas 2 letras sueltas ("PE") en vez de la bandera
+        # real. No hay forma confiable de forzar el ícono ahí, así que se usa
+        # directo el nombre del país sin prefijo en vez de dejar ese texto roto.
+        pais_counts['País_flag'] = pais_counts['País']
         altura = max(400, len(pais_counts) * 38)
         fig_bar = px.bar(
             pais_counts, x='Jugadores', y='País_flag', orientation='h',
@@ -565,9 +603,7 @@ def show():
                 ).reset_index()
                 resumen_pais = resumen_pais[resumen_pais['Partidas'] > 0].copy()
                 resumen_pais['Winrate%'] = (resumen_pais['Victorias'] / resumen_pais['Partidas'] * 100).round(2)
-                resumen_pais['País_flag'] = resumen_pais['Pais'].apply(
-                    lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
-                )
+                resumen_pais['País_flag'] = resumen_pais['Pais']
                 resumen_pais = resumen_pais.sort_values('Winrate%', ascending=False)
 
                 altura_wr = max(400, len(resumen_pais) * 38)
