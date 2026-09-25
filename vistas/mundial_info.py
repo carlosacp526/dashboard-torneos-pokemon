@@ -929,11 +929,12 @@ def show():
                 for jugador in jugadores_t68:
                     if pd.isna(jugador) or str(jugador).strip() == "": continue
                     jq = str(jugador).strip()
+                    jql = jq.lower()
                     partidas_j = df_comp[
-                        df_comp["player1"].str.lower().str.contains(jq.lower(), na=False) |
-                        df_comp["player2"].str.lower().str.contains(jq.lower(), na=False)
+                        (df_comp["player1"].str.lower().str.strip() == jql) |
+                        (df_comp["player2"].str.lower().str.strip() == jql)
                     ]
-                    wins    = int(partidas_j["winner"].str.lower().str.contains(jq.lower(), na=False).sum())
+                    wins    = int(partidas_j["winner"].str.lower().str.strip().eq(jql).sum())
                     total_j = len(partidas_j)
                     ladder_rows.append({
                         "Jugador": jq,

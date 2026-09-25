@@ -34,7 +34,7 @@ p_analisis   = st.Page(analisis.show,     title="📊 Análisis General",       
 p_jugadores  = st.Page(jugadores.show,    title="👤 Jugadores",              url_path="jugadores")
 p_ligas      = st.Page(ligas.show,        title="🏆 Ligas",                  url_path="ligas")
 p_torneos    = st.Page(torneos.show,      title="🥊 Torneos",                url_path="torneos")
-p_rankings   = st.Page(rankings.show,     title="🏅 Historico",               url_path="rankings")
+p_rankings   = st.Page(rankings.show,     title="🏅 Histórico",               url_path="rankings")
 p_elo        = st.Page(elo.show,          title="⚡ Ranking Elo",            url_path="elo")
 p_prediccion = st.Page(prediccion.show,   title="🤖 Predicción",             url_path="prediccion")
 p_tcg = st.Page(tcg.show,   title="🃏TCG",             url_path="tcg")

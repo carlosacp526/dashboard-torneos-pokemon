@@ -70,6 +70,16 @@ def _precalcular_campeones(_df_raw, _base2, _base_torneo_final):
                     campeones_torneo.setdefault(nombre, []).append({
                         'Torneo': int(nt), 'Score': camp['SCORE'].iloc[0], 'Victorias': camp['Victorias'].iloc[0]
                     })
+                # Caso especial: Torneo 61 se jugó en parejas y "Chris FPS" fue
+                # co-campeón junto al RANK 1 de la tabla, aunque él mismo figure
+                # en otra fila (RANK 2) — misma regla manual que usa la página
+                # de jugador (vistas/jugadores.py) para no perder ese logro ahí.
+                if int(nt) == 61:
+                    j_chris = tabla[tabla['AKA'].str.lower() == 'chris fps']
+                    if not j_chris.empty:
+                        campeones_torneo.setdefault('chris fps', []).append({
+                            'Torneo': 61, 'Score': j_chris['SCORE'].iloc[0], 'Victorias': j_chris['Victorias'].iloc[0]
+                        })
     return campeones_liga, campeones_torneo
 
 

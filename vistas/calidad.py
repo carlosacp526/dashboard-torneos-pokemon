@@ -138,8 +138,15 @@ def build_jornada_df(liga_rows: pd.DataFrame) -> pd.DataFrame:
                 continue
             wins  = int((p_games['winner'] == p).sum())
             games = len(p_games)
+            # Los Pokémon Sob/vencidos se promedian solo sobre partidas SIN
+            # walkover: en un WO (Walkover==1) esos campos son un 6-0 ficticio
+            # (no se jugó de verdad), e inflarían/desinflarían el indicador de
+            # "reñida" o "resistencia en derrota" — misma exclusión que ya
+            # aplica vistas/estilo.py para las mismas columnas.
+            p_games_real = p_games[p_games['Walkover'] != 1] if 'Walkover' in p_games.columns else p_games
+            games_sob = len(p_games_real)
             sob = 0; venc = 0
-            for _, r in p_games.iterrows():
+            for _, r in p_games_real.iterrows():
                 if r['winner'] == p:
                     sob  += float(r['pokemons Sob'])       if pd.notna(r['pokemons Sob'])       else 0
                     venc += float(r['pokemon vencidos'])    if pd.notna(r['pokemon vencidos'])   else 0
@@ -152,8 +159,8 @@ def build_jornada_df(liga_rows: pd.DataFrame) -> pd.DataFrame:
                 'wins':      wins,
                 'games':     games,
                 'winrate':   wins / games if games > 0 else 0,  # normalizado 0-1
-                'pokes_sob': sob  / games if games > 0 else 0,  # por partida
-                'poke_venc': venc / games if games > 0 else 0,  # por partida
+                'pokes_sob': sob  / games_sob if games_sob > 0 else 0,  # por partida
+                'poke_venc': venc / games_sob if games_sob > 0 else 0,  # por partida
             })
     return pd.DataFrame(rows)
 

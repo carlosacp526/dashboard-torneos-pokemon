@@ -589,7 +589,7 @@ def evaluar_logros(
     r["PA08"] = n_camp_torneo >= 1 or victorias >= 1
     r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
     r["PA10"] = len(formatos_jugados) >= 3
-    HAT_TRICK_PLAYERS={"Yabadaba","Angello","Haseo","Akaru"}
+    HAT_TRICK_PLAYERS={"Yabadaba","Angello77","Haseo","Akaru"}
     # VICTORIAS
     r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
     ##r["VI02"] = _gano_torneo_formato('singles') and _gano_torneo_formato('dobles') and _gano_torneo_formato('vgc')
@@ -647,7 +647,9 @@ def evaluar_logros(
         "Yabadaba", "MaskWolf","Chino","The.Ultracheese","Luigillanos","Renzo","Alechiii","Aikauwu","D'Allfather","Haseo","Joscake","A25","Angello77","Nigga Chan",
         "Davarv","haise_owo","David Wong","Valentino Parra","Fur4nko","Moirix","LABIAMG","Skll02","Darmanethan","RIIZExyz","Hydreigon_chelas","Saperoko10","2DpkmN",
         "Mr.Shadowdusk","Chris FPS","Adpg","SasoriVzla7","skll02","EmperorGambit","ShinkaHMA","Rainer","huevo_pipipi","HaoSigismondi" ,"Bloody Cheese","Chonarthas",
-        "Hydreigon_chelas" ,"Porygon Z"
+        "Hydreigon_chelas" ,"Porygon Z",
+        # agregados: campeones de torneo (RANK 1 en Final) que faltaban en la lista
+        "Pandu","Ricomam","Elin beacil","Akaru","Peruano Tactico","MafiaPolar6242",
         # agregar más aquí
     ]
     def _verdugo_elite_set():

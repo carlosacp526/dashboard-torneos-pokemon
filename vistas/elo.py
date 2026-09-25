@@ -73,6 +73,9 @@ ROUND_ORDER = {
 }
 
 
+import re as _re
+_RONDA_NUM_RE = _re.compile(r'^(?:ronda suiza|ganadores ronda|perdedores ronda) (\d+)$')
+
 def get_round_order(r):
     if pd.isna(r): return 50
     r_low = str(r).strip().lower()
@@ -82,7 +85,17 @@ def get_round_order(r):
     if r_low.startswith('cypher fecha') or r_low.startswith('ascenso fecha'):
         try: return int(r_low.split()[-1])
         except: pass
-    return ROUND_ORDER.get(r_low, 50)
+    if r_low in ROUND_ORDER:
+        return ROUND_ORDER[r_low]
+    # Fallback por si el torneo llega a una ronda de suiza/ganadores/perdedores
+    # más alta que las precargadas explícitamente arriba (mismo fórmula: 9+N,
+    # verificada contra todas las entradas ya mapeadas) — evita que una ronda
+    # sin mapear caiga en el default 50 (mismo bucket que "octavos de final")
+    # y desordene el bracket, como pasó con "perdedores ronda 9".
+    m = _RONDA_NUM_RE.match(r_low)
+    if m:
+        return 9 + int(m.group(1))
+    return 50
 
 @st.cache_data(ttl=3600)
 def calcular_elo(df_raw):

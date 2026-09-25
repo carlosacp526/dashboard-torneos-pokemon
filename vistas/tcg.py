@@ -227,13 +227,16 @@ def calcular_stats(df, jugador, fecha_corte=None):
     jl = jugador.lower().strip()
 
     pm = df[
-        (df["player1"].str.lower().str.contains(jl, na=False)) |
-        (df["player2"].str.lower().str.contains(jl, na=False))
+        (df["player1"].str.lower().str.strip() == jl) |
+        (df["player2"].str.lower().str.strip() == jl)
     ].copy()
-    pm_ok = pm[pm["Walkover"] == 0] if "Walkover" in pm.columns else pm
+    # Walkover>=0 (incluye WO=1) para que el total de partidas/winrate coincida
+    # con el SCORE de abajo, que también cuenta victorias por Walkover — un WO
+    # sigue siendo un resultado real, solo sus stats de Pokémon son ficticias.
+    pm_ok = pm[pm["Walkover"] >= 0] if "Walkover" in pm.columns else pm
 
     total     = len(pm_ok)
-    victorias = int(pm_ok["winner"].str.lower().str.contains(jl, na=False).sum())
+    victorias = int(pm_ok["winner"].str.lower().str.strip().eq(jl).sum())
     derrotas  = total - victorias
     winrate   = round(victorias / total * 100, 1) if total > 0 else 0.0
 
@@ -241,7 +244,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
     def fmt_stats(fmt):
         sub = pm_ok[pm_ok["Formato"].str.upper() == fmt.upper()] if "Formato" in pm_ok.columns else pd.DataFrame()
         n   = len(sub)
-        w   = int(sub["winner"].str.lower().str.contains(jl, na=False).sum()) if n > 0 else 0
+        w   = int(sub["winner"].str.lower().str.strip().eq(jl).sum()) if n > 0 else 0
         wr  = round(w/n*100,1) if n > 0 else 0.0
         return n, wr
 
@@ -323,7 +326,8 @@ def calcular_stats(df, jugador, fecha_corte=None):
             for lt in base2["Liga_Temporada"].unique():
                 tabla = generar_tabla_temporada(base2, lt)
                 if tabla is not None and not tabla.empty:
-                    j = tabla[tabla["AKA"].str.lower().str.contains(jl, na=False)]
+                    aka_l = tabla["AKA"].str.lower()
+                    j = tabla[(aka_l == jl) | aka_l.str.contains(jl, na=False)]
                     if not j.empty and j["RANK"].iloc[0] == 1:
                         campeonatos_liga.append(lt)
 
@@ -352,7 +356,8 @@ def calcular_stats(df, jugador, fecha_corte=None):
                     continue  # ya manejado arriba
                 tabla = generar_tabla_torneo(base_torneo_final, nt)
                 if tabla is not None and not tabla.empty:
-                    j = tabla[tabla["AKA"].str.lower().str.contains(jl, na=False)]
+                    aka_l = tabla["AKA"].str.lower()
+                    j = tabla[(aka_l == jl) | aka_l.str.contains(jl, na=False)]
                     if not j.empty and j["RANK"].iloc[0] == 1:
                         campeonatos_torneo.append(int(nt))
     except Exception as e:

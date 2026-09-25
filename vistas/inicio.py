@@ -4,7 +4,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields
 
-# Mismo contenido que antes (mismas 18 secciones, mismas métricas) — solo reorganizado
+# Mismo contenido que antes (mismas secciones, mismas métricas) — solo reorganizado
 # en bloques por intención y con un poco más de calidez visual que la grilla plana de
 # tarjetas blancas idénticas que había.
 GRUPOS = [
