@@ -538,13 +538,24 @@ def show():
         pais_counts = df_cel_activos['Pais'].value_counts().reset_index()
         pais_counts.columns = ['País', 'Jugadores']
 
-        # Nota: los emojis de bandera (🇵🇪 etc.) son 2 "regional indicator letters"
-        # combinadas — Plotly los dibuja como texto SVG plano, y sin la fuente de
-        # emoji instalada/priorizada (común en Windows/Chrome) el navegador cae
-        # al fallback de mostrar esas 2 letras sueltas ("PE") en vez de la bandera
-        # real. No hay forma confiable de forzar el ícono ahí, así que se usa
-        # directo el nombre del país sin prefijo en vez de dejar ese texto roto.
-        pais_counts['País_flag'] = pais_counts['País']
+        # Los emojis de bandera (🇵🇪 etc.) son 2 "regional indicator letters"
+        # combinadas — en Windows/Chrome de escritorio sin la fuente de emoji
+        # priorizada a veces el navegador cae al fallback de mostrar esas 2
+        # letras sueltas ("PE") en vez de la bandera real, pero en mobile
+        # (iOS/Android) sí renderizan bien — se mantiene el emoji.
+        BANDERAS = {
+            "Peru": "🇵🇪", "Argentina": "🇦🇷", "Mexico": "🇲🇽",
+            "Venezuela": "🇻🇪", "Colombia": "🇨🇴", "Ecuador": "🇪🇨",
+            "Chile": "🇨🇱", "Bolivia": "🇧🇴", "Paraguay": "🇵🇾",
+            "Uruguay": "🇺🇾", "España": "🇪🇸", "Costa Rica": "🇨🇷",
+            "EEUU": "🇺🇸", "USA": "🇺🇸", "Panama": "🇵🇦",
+            "Guatemala": "🇬🇹", "Honduras": "🇭🇳", "Cuba": "🇨🇺",
+            "Brazil": "🇧🇷", "Portugal": "🇵🇹", "El Salvador": "🇸🇻",
+            "Nicaragua": "🇳🇮", "Republica Dominicana": "🇩🇴"
+        }
+        pais_counts['País_flag'] = pais_counts['País'].apply(
+            lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
+        )
         altura = max(400, len(pais_counts) * 38)
         fig_bar = px.bar(
             pais_counts, x='Jugadores', y='País_flag', orientation='h',
@@ -603,7 +614,9 @@ def show():
                 ).reset_index()
                 resumen_pais = resumen_pais[resumen_pais['Partidas'] > 0].copy()
                 resumen_pais['Winrate%'] = (resumen_pais['Victorias'] / resumen_pais['Partidas'] * 100).round(2)
-                resumen_pais['País_flag'] = resumen_pais['Pais']
+                resumen_pais['País_flag'] = resumen_pais['Pais'].apply(
+                    lambda p: f"{BANDERAS.get(p, '🏳️')} {p}"
+                )
                 resumen_pais = resumen_pais.sort_values('Winrate%', ascending=False)
 
                 altura_wr = max(400, len(resumen_pais) * 38)
