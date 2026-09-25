@@ -7,3 +7,6 @@ evolution-api/.env
 # Python
 __pycache__/
 *.pyc
+
+# Artefactos regenerables de los informes ML (JSON/PNG de cada corrida)
+informes_ml/_build/
