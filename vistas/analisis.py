@@ -1,9 +1,25 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os, sys
+import plotly.graph_objects as go
+import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats
+from utils import load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats, obtener_logo_liga
+
+def _img_b64_local(path):
+    """Lee un archivo de imagen local y lo devuelve como data-URI base64, o
+    None si no existe — para poder embeber logos dentro de un st.markdown con
+    HTML (st.image no se puede mezclar inline dentro de una card de texto)."""
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        with open(path, 'rb') as f:
+            data = base64.b64encode(f.read()).decode()
+        ext = os.path.splitext(path)[1].lstrip('.').lower() or 'png'
+        mime = 'jpeg' if ext in ('jpg', 'jpeg') else ext
+        return f"data:image/{mime};base64,{data}"
+    except Exception:
+        return None
 
 def show():
     df_raw = load_data()
@@ -140,6 +156,16 @@ def show():
             return 'Mediano (<= 24)'
         participantes_por_torneo['Categoría'] = participantes_por_torneo['Participantes'].apply(_categoria_torneo)
 
+    # Batallas (filas = partidas) por torneo, con la MISMA categoría de tamaño
+    # que ya se calculó arriba por cantidad de participantes — así "tamaño" es
+    # una sola definición consistente en toda la sección, y esto solo agrega
+    # una métrica más (batallas) sobre esa misma categorización.
+    battles_cat = pd.DataFrame(columns=['N_Torneo', 'Batallas', 'Categoría'])
+    if not df_torneo_all.empty and 'N_Torneo' in df_torneo_all.columns and not participantes_por_torneo.empty:
+        battles_por_torneo = df_torneo_all.groupby('N_Torneo').size().reset_index(name='Batallas')
+        battles_cat = battles_por_torneo.merge(
+            participantes_por_torneo[['N_Torneo', 'Categoría']], on='N_Torneo', how='left')
+
     fmt_counts = pd.DataFrame(columns=['Formato', 'Torneos'])
     tier_counts_t = pd.DataFrame(columns=['Tier', 'Torneos'])
     if not df_torneo_all.empty:
@@ -186,8 +212,8 @@ def show():
             st.markdown(_kpi_card("⭐", "—", "Tier más usado", accent="#9B59B6"), unsafe_allow_html=True)
 
     st.write("")
-    tab_temp, tab_tam, tab_fmt_tier = st.tabs(
-        ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "🎮 Torneos por Formato y Tier"])
+    tab_temp, tab_tam, tab_batallas, tab_fmt_tier = st.tabs(
+        ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "⚔️ Batallas por Tamaño", "🎮 Torneos por Formato y Tier"])
 
     # -- Temporadas por Liga --------------------------------------------
     with tab_temp:
@@ -208,11 +234,19 @@ def show():
                 for _, row in temp_liga.sort_values('Temporadas', ascending=False).iterrows():
                     texto_color = '#111' if row['Liga'] in LIGA_TEXTO_OSCURO else 'white'
                     borde = 'border:1.5px solid #999;' if row['Liga'] in LIGA_TEXTO_OSCURO else ''
+                    logo_uri = _img_b64_local(obtener_logo_liga(row['Liga']))
+                    logo_html = (
+                        f"<img src='{logo_uri}' style='height:26px;width:26px;object-fit:contain;"
+                        "border-radius:6px;background:white;padding:2px;margin-right:9px;flex-shrink:0;'>"
+                        if logo_uri else ""
+                    )
                     st.markdown(
                         f"<div style='background:{LIGA_COLORS.get(row['Liga'], '#888')};{borde}"
-                        "padding:10px 14px;border-radius:10px;margin-bottom:8px;"
-                        f"color:{texto_color};font-weight:700;display:flex;justify-content:space-between;'>"
-                        f"<span>{row['Liga']}</span><span>{int(row['Temporadas'])} temp.</span></div>",
+                        "padding:8px 14px;border-radius:10px;margin-bottom:8px;"
+                        f"color:{texto_color};font-weight:700;display:flex;align-items:center;"
+                        "justify-content:space-between;'>"
+                        f"<div style='display:flex;align-items:center;'>{logo_html}<span>{row['Liga']}</span></div>"
+                        f"<span>{int(row['Temporadas'])} temp.</span></div>",
                         unsafe_allow_html=True)
                 st.metric("Total de temporadas jugadas", int(temp_liga['Temporadas'].sum()))
 
@@ -255,6 +289,59 @@ def show():
                        "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event >= 45 · Regional >= 80. "
                        "Cada torneo cae en la categoría más alta que supera (un torneo de 90 participantes "
                        "cuenta como Regional, no como Grande).")
+
+    # -- Batallas por Tamaño ------------------------------------------------
+    with tab_batallas:
+        if battles_cat.empty:
+            st.info("No hay datos de torneos disponibles.")
+        else:
+            resumen_batallas = battles_cat.groupby('Categoría')['Batallas'].agg(
+                Torneos='count', Promedio='mean', Mínimo='min', Máximo='max', Total='sum'
+            ).reindex(orden_cat).dropna(how='all')
+            resumen_batallas['Promedio'] = resumen_batallas['Promedio'].round(1)
+
+            cols_b = st.columns(len(resumen_batallas)) if not resumen_batallas.empty else []
+            for c, (cat, row) in zip(cols_b, resumen_batallas.iterrows()):
+                nombre_corto, umbral = cat.split(' (')
+                with c:
+                    st.markdown(_kpi_card(
+                        "⚔️", row['Promedio'], f"{nombre_corto} · promedio",
+                        sublabel=f"mín {int(row['Mínimo'])} · máx {int(row['Máximo'])} · {int(row['Torneos'])} torneos",
+                        accent=COLORS_TAM[cat],
+                    ), unsafe_allow_html=True)
+
+            st.write("")
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=resumen_batallas.index, y=resumen_batallas['Mínimo'], name='Mínimo',
+                marker_color='#95a5a6',
+            ))
+            fig.add_trace(go.Bar(
+                x=resumen_batallas.index, y=resumen_batallas['Promedio'], name='Promedio',
+                marker_color=[COLORS_TAM.get(c, '#888') for c in resumen_batallas.index],
+                text=resumen_batallas['Promedio'], texttemplate='%{text}', textposition='outside',
+            ))
+            fig.add_trace(go.Bar(
+                x=resumen_batallas.index, y=resumen_batallas['Máximo'], name='Máximo',
+                marker_color='#2c3e50',
+            ))
+            fig.update_layout(**_PLOTLY_BASE)
+            fig.update_layout(
+                barmode='group', title='Batallas por torneo — mínimo / promedio / máximo por categoría de tamaño',
+                xaxis_title='Categoría de tamaño', yaxis_title='Batallas por torneo', legend_title='',
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("##### Detalle por categoría")
+            tabla_batallas = resumen_batallas.reset_index()[
+                ['Categoría', 'Torneos', 'Mínimo', 'Promedio', 'Máximo', 'Total']]
+            tabla_batallas[['Mínimo', 'Máximo', 'Total']] = tabla_batallas[['Mínimo', 'Máximo', 'Total']].astype(int)
+            st.dataframe(tabla_batallas, use_container_width=True, hide_index=True)
+            st.caption(
+                "Batallas = filas de partida (incluye pendientes sin jugar, `Walkover == -1`, igual criterio que "
+                "'Participantes' en la pestaña anterior) dentro de cada torneo, agrupadas por la misma categoría "
+                "de tamaño oficial de PUNTAJES_MUNDIAL3.png."
+            )
 
     # -- Torneos por Formato y Tier ---------------------------------------
     with tab_fmt_tier:
