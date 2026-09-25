@@ -4,7 +4,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats, obtener_logo_liga
+from utils import (load_data, normalize_columns, ensure_fields, compute_player_score, compute_player_stats,
+                    obtener_logo_liga, build_base_liga, build_base_torneo)
+from vistas.logros_analisis import _precalcular_campeones
+from vistas.rachas import _calcular_rachas_actuales
 
 GEN_REGION_NOMBRE = {
     1: "Kanto", 2: "Johto", 3: "Hoenn", 4: "Sinnoh", 5: "Unova",
@@ -58,6 +61,54 @@ def show():
     st.caption("Últimos resultados registrados en el historial — qué se jugó y cuándo, de un vistazo.")
 
     recientes = df[completed_mask].dropna(subset=['date']).sort_values('date', ascending=False).copy()
+
+    # ── Banner de últimos acontecimientos importantes ───────────────
+    # Combina finales jugadas recientemente (round == 'Final') con rachas
+    # ganadoras activas largas (racha_actuales, mismo cálculo que 🔥 Rachas
+    # en Vivo) en un ticker horizontal continuo, tipo noticiero deportivo.
+    _MESES_TICKER = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',
+                     7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
+    eventos_importantes = []
+    if not recientes.empty and 'round' in recientes.columns:
+        finales = recientes[recientes['round'].astype(str).str.strip().str.lower() == 'final'].head(8)
+        for _, r in finales.iterrows():
+            ev = r.get('Aka_evento') or r.get('league', '')
+            fmes = f"{_MESES_TICKER[r['date'].month]} {r['date'].year}"
+            eventos_importantes.append(f"🏆 {r['winner']} es campeón de {ev} ({fmes})")
+
+    rachas_ticker = _calcular_rachas_actuales(df_raw)
+    if not rachas_ticker.empty:
+        top_rachas = rachas_ticker[(rachas_ticker['Tipo'] == 'V') & (rachas_ticker['Racha'] >= 5)] \
+            .sort_values('Racha', ascending=False).head(8)
+        for _, r in top_rachas.iterrows():
+            eventos_importantes.append(f"🔥 {r['Jugador']} lleva {r['Racha']} victorias seguidas")
+
+    if eventos_importantes:
+        duracion = max(20, len(eventos_importantes) * 4)
+        items_html = "".join(f'<span class="poketubi-ticker-item">{e}</span>' for e in eventos_importantes)
+        st.markdown(f"""
+<style>
+.poketubi-ticker-wrap {{
+    width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box;
+    background: linear-gradient(90deg, rgba(155,89,182,0.18), rgba(233,30,99,0.18));
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+    padding: 10px 0; margin-bottom: 14px;
+}}
+.poketubi-ticker-move {{
+    display: inline-block; padding-left: 100%;
+    animation: poketubi-ticker-scroll {duracion}s linear infinite;
+}}
+.poketubi-ticker-wrap:hover .poketubi-ticker-move {{ animation-play-state: paused; }}
+.poketubi-ticker-item {{
+    display: inline-block; padding: 0 36px; font-weight: 600; font-size: 14px;
+}}
+@keyframes poketubi-ticker-scroll {{
+    0%   {{ transform: translate(0, 0); }}
+    100% {{ transform: translate(-100%, 0); }}
+}}
+</style>
+<div class="poketubi-ticker-wrap"><div class="poketubi-ticker-move">{items_html}</div></div>
+""", unsafe_allow_html=True)
     if recientes.empty:
         st.info("No hay partidas completadas registradas todavía.")
     else:
@@ -681,6 +732,83 @@ def show():
                 st.caption(f"Basado en **{int(resumen_pais['Partidas'].sum())}** partidas de "
                            f"**{stats_pais['Jugador_norm'].nunique()}** jugadores con país registrado"
                            + (f", tier **{tier_sel}**." if tier_sel != "Todos" else "."))
+
+        # ── Torneo de Países ──────────────────────────────────────────
+        # "Selección nacional" ficticia: suma el desempeño de todos los
+        # jugadores de cada país (victorias, winrate y títulos de liga/torneo)
+        # como si compitieran en equipo — usa el historial completo (todos
+        # los tiers), a diferencia del Winrate por País de arriba que sí se
+        # puede filtrar por tier.
+        st.markdown("---")
+        st.markdown('<div id="torneo-paises"></div>', unsafe_allow_html=True)
+        st.subheader("🌍🏆 Torneo de Países")
+        st.caption("Suma el desempeño de todos los jugadores de cada país, como si compitieran en equipo "
+                   "por una 'selección nacional'. Ranking principal por victorias totales.")
+
+        stats_all = compute_player_stats(df)
+        if stats_all.empty:
+            st.info("No hay datos suficientes para el Torneo de Países.")
+        else:
+            stats_all = stats_all.copy()
+            stats_all['Jugador_norm'] = stats_all['Jugador'].str.strip().str.lower()
+            stats_pais_all = stats_all.merge(
+                df_cel.rename(columns={'Jugador': 'Jugador_key'}),
+                left_on='Jugador_norm', right_on='Jugador_key', how='inner'
+            )
+
+            if stats_pais_all.empty:
+                st.info("Ningún jugador con país registrado tiene partidas.")
+            else:
+                # Títulos (liga + torneo) por jugador, vía el mismo cálculo
+                # que usa Histórico > Grandes de la Historia
+                base2_p, _ = build_base_liga(df_raw)
+                base_torneo_p, _ = build_base_torneo(df_raw)
+                campeones_liga, campeones_torneo = _precalcular_campeones(df_raw, base2_p, base_torneo_p)
+                titulos_jugador = {}
+                for j, lst in campeones_liga.items():
+                    titulos_jugador[j] = titulos_jugador.get(j, 0) + len(lst)
+                for j, lst in campeones_torneo.items():
+                    titulos_jugador[j] = titulos_jugador.get(j, 0) + len(lst)
+                stats_pais_all['Títulos'] = stats_pais_all['Jugador_norm'].map(titulos_jugador).fillna(0).astype(int)
+
+                seleccion = stats_pais_all.groupby('Pais').agg(
+                    Jugadores=('Jugador_norm', 'nunique'),
+                    Partidas=('Partidas', 'sum'),
+                    Victorias=('Victorias', 'sum'),
+                    Títulos=('Títulos', 'sum'),
+                ).reset_index()
+                seleccion = seleccion[seleccion['Partidas'] > 0].copy()
+                seleccion['Winrate%'] = (seleccion['Victorias'] / seleccion['Partidas'] * 100).round(1)
+                seleccion['País_flag'] = seleccion['Pais'].apply(lambda p: f"{BANDERAS.get(p, '🏳️')} {p}")
+                seleccion = seleccion.sort_values('Victorias', ascending=False).reset_index(drop=True)
+
+                podio = seleccion.head(3).reset_index(drop=True)
+                medallas = ['🥇', '🥈', '🥉']
+                cols_podio = st.columns(len(podio)) if len(podio) > 0 else []
+                for i, col in enumerate(cols_podio):
+                    row = podio.iloc[i]
+                    with col:
+                        st.markdown(f"### {medallas[i]} {row['País_flag']}")
+                        st.metric("Victorias", int(row['Victorias']), f"{row['Winrate%']:.1f}% winrate")
+                        st.caption(f"{int(row['Jugadores'])} jugadores · {int(row['Títulos'])} títulos")
+
+                st.markdown("")
+                altura_pt = max(350, len(seleccion) * 36)
+                fig_pt = px.bar(
+                    seleccion, x='Victorias', y='País_flag', orientation='h',
+                    color='Winrate%', color_continuous_scale='RdYlGn', range_color=[0, 100],
+                    text='Victorias', title='Ranking del Torneo de Países'
+                )
+                fig_pt.update_traces(textposition='outside')
+                fig_pt.update_layout(
+                    yaxis={'categoryorder': 'total ascending', 'title': ''},
+                    height=altura_pt, margin=dict(l=10, r=40, t=40, b=20)
+                )
+                st.plotly_chart(fig_pt, use_container_width=True)
+
+                tabla_pt = seleccion[['País_flag', 'Jugadores', 'Partidas', 'Victorias', 'Winrate%', 'Títulos']]
+                tabla_pt = tabla_pt.rename(columns={'País_flag': 'País'})
+                st.dataframe(tabla_pt, use_container_width=True, hide_index=True)
     else:
         st.info("Subí **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
 
