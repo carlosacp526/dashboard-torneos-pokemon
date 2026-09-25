@@ -26,8 +26,6 @@ GRUPOS = [
              ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🏆 Ranking de jugadores"]),
             ("rachas", "🔥", "Rachas en Vivo",
              ["🔥 Racha actual (no histórica) de cada jugador", "🧊 Top rachas ganadoras y perdedoras", "📅 Filtro por actividad reciente"]),
-            ("metagame", "🧪", "Metagame",
-             ["📊 Popularidad de formatos", "📈 Tendencia mensual de uso", "⏱️ Duración típica de series"]),
         ],
     },
     {
