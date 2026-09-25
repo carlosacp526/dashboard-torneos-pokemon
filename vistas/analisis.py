@@ -67,15 +67,18 @@ def show():
         cf2.metric("📅 Últimos 30 días", int((recientes['date'] >= hoy - pd.Timedelta(days=30)).sum()))
         cf3.metric("🕐 Última partida", recientes['date'].iloc[0].strftime('%d/%m/%Y'))
 
-        n_feed = st.slider("Cuántos resultados mostrar", 5, 50, 15, key="feed_n")
+        MESES_FEED = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
+                      7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}
+        n_feed = st.slider("Cuántos resultados mostrar", 5, 50, 10, key="feed_n")
         feed = recientes.head(n_feed).copy()
         feed['Evento'] = feed.get('Aka_evento', feed['league']).fillna(feed['league'])
         for _, row in feed.iterrows():
             p1, p2, w = row['player1'], row['player2'], row['winner']
             perdedor = p2 if str(w).strip() == str(p1).strip() else p1
             wo_tag = " · 🚫 WO" if row.get('Walkover') == 1 else ""
+            fecha_mes = f"{MESES_FEED[row['date'].month]} {row['date'].year}"
             st.markdown(
-                f"**{row['date'].strftime('%d/%m/%Y')}** &nbsp;·&nbsp; "
+                f"**{fecha_mes}** &nbsp;·&nbsp; "
                 f"🏆 **{w}** venció a {perdedor} &nbsp;·&nbsp; "
                 f"_{row['Evento']}_{wo_tag}"
             )
