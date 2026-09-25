@@ -84,6 +84,8 @@ GRUPOS = [
              ["🎲 Simulación Monte Carlo de la temporada", "📊 Probabilidad por zona (Líder/Ascenso/Descenso)", "🔮 Basado en el modelo de Predicción"]),
             ("tier_recomendador", "🎯", "Recomendador de Tier",
              ["🎯 Qué Tier usar en la próxima jornada", "🏆 Qué Tier usar en el próximo torneo", "📊 Participación, balance y variedad"]),
+            ("scouting", "📝", "Reporte de Scouting",
+             ["📝 Resumen redactado por jugador activo", "🎭 Estilo, títulos y racha", "⚔️ Némesis y presa favorita"]),
         ],
     },
 ]

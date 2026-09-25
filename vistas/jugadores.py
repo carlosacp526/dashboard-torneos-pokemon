@@ -1325,6 +1325,19 @@ def show():
             aka = aka_por_torneo.get(int(nt))
             return f"T{int(nt)} — {aka}" if aka else f"Torneo {int(nt)}"
 
+        # Tier de cada torneo (para mostrarlo junto al winrate en Campeonatos
+        # de Torneo) — mismo patrón que aka_por_torneo: moda por N_Torneo, ya
+        # que en la práctica un torneo se juega en un único Tier.
+        tier_por_torneo = {}
+        if 'Tier' in df_raw.columns and 'N_Torneo' in df_raw.columns:
+            _dtt = df_raw[df_raw['N_Torneo'].notna() & df_raw['Tier'].notna()]
+            if not _dtt.empty:
+                _dtt = _dtt.copy()
+                _dtt['N_Torneo'] = _dtt['N_Torneo'].astype(int)
+                tier_por_torneo = _dtt.groupby('N_Torneo')['Tier'].agg(
+                    lambda s: s.mode().iat[0] if not s.mode().empty else s.iloc[0]
+                ).to_dict()
+
         with col_torneos:
             st.markdown("#### 🎯 Torneos")
             torneos_jugador = player_matches[player_matches['league']=='TORNEO']['N_Torneo'].dropna().unique()
@@ -1534,9 +1547,10 @@ def show():
                             j_m = tabla_m[mask_m]
                             score_m = float(j_m['SCORE'].iloc[0]) if not j_m.empty else 0
                             vict_m  = int(j_m['Victorias'].iloc[0]) if not j_m.empty else 0
+                            part_m  = int(j_m['PARTIDAS'].iloc[0]) if not j_m.empty else 0
                         else:
-                            score_m, vict_m = 0, 0
-                        campeonatos_torneo.append({'Torneo': nt_manual, 'Score': score_m, 'Victorias': vict_m})
+                            score_m, vict_m, part_m = 0, 0, 0
+                        campeonatos_torneo.append({'Torneo': nt_manual, 'Score': score_m, 'Victorias': vict_m, 'Partidas': part_m})
                 # Caso especial ANTES del loop: Torneo 62 en parejas, Chris FPS también es campeón
                 #if es_chris_fps and 62 in [int(x) for x in base_torneo_final['Torneo_Temp'].unique()]:
                 if es_chris_fps:
@@ -1548,9 +1562,10 @@ def show():
                         j_62 = tabla_62[mask_62]
                         score_62 = j_62['SCORE'].iloc[0] if not j_62.empty else 0
                         vict_62  = j_62['Victorias'].iloc[0] if not j_62.empty else 0
+                        part_62  = j_62['PARTIDAS'].iloc[0] if not j_62.empty else 0
                     else:
-                        score_62, vict_62 = 0, 0
-                    campeonatos_torneo.append({'Torneo':61,'Score':score_62,'Victorias':vict_62})
+                        score_62, vict_62, part_62 = 0, 0, 0
+                    campeonatos_torneo.append({'Torneo':61,'Score':score_62,'Victorias':vict_62,'Partidas':part_62})
                 for nt in base_torneo_final[base_torneo_final['Torneo_Temp'].isin(torneos_con_final)]['Torneo_Temp'].unique():
                     if int(nt) in CAMPEON_MANUAL:
                         continue  # ya fue manejado manualmente arriba
@@ -1563,15 +1578,20 @@ def show():
                                   tabla['AKA'].str.contains(player_query,case=False,na=False))
                         j = tabla[mask_c]
                         if not j.empty and (j['RANK'].iloc[0] == 1 or (int(nt) == 61 and es_chris_fps)):
-                            campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
+                            campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0],'Partidas':j['PARTIDAS'].iloc[0]})
                                 
                 if campeonatos_torneo:
                     st.success(f"🏆 **{len(campeonatos_torneo)} Campeonato(s) de Torneo**")
                     for camp in campeonatos_torneo:
                         with st.expander(f"🥇 {_label_torneo(camp['Torneo'])}"):
-                            c1,c2 = st.columns(2)
+                            partidas_camp = int(camp.get('Partidas') or 0)
+                            winrate_camp = (int(camp['Victorias']) / partidas_camp * 100) if partidas_camp > 0 else 0.0
+                            tier_camp = tier_por_torneo.get(int(camp['Torneo']), '—')
+                            c1,c2,c3,c4 = st.columns(4)
                             c1.metric("Victorias", int(camp['Victorias']))
                             c2.metric("Score", f"{camp['Score']:.2f}")
+                            c3.metric("Winrate", f"{winrate_camp:.1f}%")
+                            c4.metric("Tier", tier_camp)
                             b = obtener_banner_torneo(camp['Torneo'])
                             if b: st.image(b, width=300)
                 else:

@@ -25,6 +25,7 @@ from vistas import seeding
 from vistas import tier_recomendador
 from vistas import rachas
 from vistas import fairplay
+from vistas import scouting
 p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
 p_retencion  = st.Page(retencion.show,    title="🔁 Participación y Retención", url_path="retencion")
 p_social     = st.Page(social.show,       title="🕸️ Analítica Social",       url_path="social")
@@ -50,6 +51,7 @@ p_seeding = st.Page(seeding.show, title="🌱 Seeding de Torneo", url_path="seed
 p_tier_recomendador = st.Page(tier_recomendador.show, title="🎯 Recomendador de Tier", url_path="tier-recomendador")
 p_rachas = st.Page(rachas.show, title="🔥 Rachas en Vivo", url_path="rachas")
 p_fairplay = st.Page(fairplay.show, title="⚖️ Fair Play", url_path="fairplay")
+p_scouting = st.Page(scouting.show, title="📝 Reporte de Scouting", url_path="scouting")
 st.session_state["_pages"] = {
     "inicio":     p_inicio,
     "analisis":   p_analisis,
@@ -77,6 +79,7 @@ st.session_state["_pages"] = {
    "tier_recomendador": p_tier_recomendador,
    "rachas": p_rachas,
    "fairplay": p_fairplay,
+   "scouting": p_scouting,
 }
 
 # Mismas 5 categorías que usa la grilla de tarjetas de Inicio (vistas/inicio.py
@@ -88,7 +91,7 @@ pg = st.navigation({
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
     "🏆 Competencia": [p_rankings, p_ligas, p_torneos, p_roleplay, p_seeding],
     "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
-    "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador],
+    "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting],
 })
 
 # Sombreado por sección del menú lateral (un color de marca fijo por grupo,
