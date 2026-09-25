@@ -1307,6 +1307,24 @@ def show():
             else:
                 st.info("No ha participado en ligas")
 
+        # Nombre real del evento (Aka_evento) por N_Torneo — "Torneo 11" solo
+        # no alcanza para distinguir uno de otro a simple vista. Se calcula acá
+        # afuera (no solo dentro del "if" de la columna Torneos) porque también
+        # lo usa el bloque de Campeonatos de Torneo más abajo.
+        aka_por_torneo = {}
+        if 'Aka_evento' in df_raw.columns and 'N_Torneo' in df_raw.columns:
+            _dt = df_raw[df_raw['N_Torneo'].notna() & df_raw['Aka_evento'].notna()]
+            if not _dt.empty:
+                _dt = _dt.copy()
+                _dt['N_Torneo'] = _dt['N_Torneo'].astype(int)
+                aka_por_torneo = _dt.groupby('N_Torneo')['Aka_evento'].agg(
+                    lambda s: s.mode().iat[0] if not s.mode().empty else s.iloc[0]
+                ).to_dict()
+
+        def _label_torneo(nt):
+            aka = aka_por_torneo.get(int(nt))
+            return f"T{int(nt)} — {aka}" if aka else f"Torneo {int(nt)}"
+
         with col_torneos:
             st.markdown("#### 🎯 Torneos")
             torneos_jugador = player_matches[player_matches['league']=='TORNEO']['N_Torneo'].dropna().unique()
@@ -1317,10 +1335,10 @@ def show():
                 for idx, nt in enumerate(muestra):
                     with cols_t[idx]:
                         bp = obtener_banner_torneo(int(nt))
-                        if bp: st.image(bp, width=150); st.caption(f"Torneo {int(nt)}")
-                        else: st.write(f"🎯 Torneo {int(nt)}")
+                        if bp: st.image(bp, width=150); st.caption(_label_torneo(nt))
+                        else: st.write(f"🎯 {_label_torneo(nt)}")
                 with st.expander("Ver todos los torneos"):
-                    st.write(", ".join([f"Torneo {int(t)}" for t in sorted(torneos_jugador)]))
+                    st.write(", ".join([_label_torneo(t) for t in sorted(torneos_jugador)]))
             else:
                 st.info("No ha participado en torneos")
 
@@ -1550,7 +1568,7 @@ def show():
                 if campeonatos_torneo:
                     st.success(f"🏆 **{len(campeonatos_torneo)} Campeonato(s) de Torneo**")
                     for camp in campeonatos_torneo:
-                        with st.expander(f"🥇 Torneo {camp['Torneo']}"):
+                        with st.expander(f"🥇 {_label_torneo(camp['Torneo'])}"):
                             c1,c2 = st.columns(2)
                             c1.metric("Victorias", int(camp['Victorias']))
                             c2.metric("Score", f"{camp['Score']:.2f}")

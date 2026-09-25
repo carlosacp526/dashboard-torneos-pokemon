@@ -1563,12 +1563,15 @@ def mostrar_logros(
     pla_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Plata"      and desbloqueados.get(l["id"]))
     oro_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Oro"        and desbloqueados.get(l["id"]))
     leg_xp = sum(l["xp"] for l in LOGROS if l["rareza"]=="Legendario" and desbloqueados.get(l["id"]))
+    bro_tot = sum(1 for l in LOGROS if l["rareza"]=="Bronce")
+    pla_tot = sum(1 for l in LOGROS if l["rareza"]=="Plata")
+    oro_tot = sum(1 for l in LOGROS if l["rareza"]=="Oro")
+    leg_tot = sum(1 for l in LOGROS if l["rareza"]=="Legendario")
     c1,c2,c3,c4 = st.columns(4)
-    #c1.metric("🥉 Bronce",     f"{bro_ok}/36", f"{bro_xp:,} XP")
-    c1.metric("🥉 Bronce", f"{bro_ok}/54", f"{bro_xp:,} XP")
-    c2.metric("🥈 Plata",      f"{pla_ok}/23", f"{pla_xp:,} XP")
-    c3.metric("🥇 Oro",        f"{oro_ok}/27", f"{oro_xp:,} XP")
-    c4.metric("⚡ Legendario", f"{leg_ok}/14", f"{leg_xp:,} XP")
+    c1.metric("🥉 Bronce", f"{bro_ok}/{bro_tot}", f"{bro_xp:,} XP")
+    c2.metric("🥈 Plata",      f"{pla_ok}/{pla_tot}", f"{pla_xp:,} XP")
+    c3.metric("🥇 Oro",        f"{oro_ok}/{oro_tot}", f"{oro_xp:,} XP")
+    c4.metric("⚡ Legendario", f"{leg_ok}/{leg_tot}", f"{leg_xp:,} XP")
 
     st.markdown("""<style>
 .lg-name{font-size:11px;font-weight:700;text-align:center;margin:0;
