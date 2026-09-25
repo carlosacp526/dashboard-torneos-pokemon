@@ -49,7 +49,7 @@ def _img_b64(path: str) -> str:
     return f"data:{mime};base64,{data}"
 
 # ══════════════════════════════════════════════════════════════════════════════
-# DEFINICIÓN DE LOS 100 LOGROS
+# DEFINICIÓN DE LOS 144 LOGROS
 # ══════════════════════════════════════════════════════════════════════════════
 
 LOGROS = [
@@ -732,25 +732,31 @@ def evaluar_logros(
     # TORNEOS_GEN ahora es una constante de módulo (ver arriba de este archivo)
     # para que analisis.py la pueda reutilizar sin duplicarla.
 
+    # Nota: los torneos "Monotype <tipo>" que aún no se han jugado usan set()
+    # en vez de un número placeholder compartido — usar un número falso como
+    # 100 causaba que TODOS esos logros se desbloquearan a la vez apenas
+    # existiera un Torneo #100 real (de cualquier formato). Cuando se juegue
+    # el respectivo torneo Monotype de cada tipo, reemplazar set() por su
+    # N_Torneo real, como ya se hizo con TI01/TI02/TI03.
     TORNEOS_TIPOS = {
         "TI01": {76},  # Fuego
         "TI02": {69},  # Agua
         "TI03": {83},  # Planta
-        "TI04": {100},  # Eléctrico
-        "TI05": {100},  # Hielo
-        "TI06": {100},  # Lucha
-        "TI07": {100},  # Veneno
-        "TI08": {100},  # Tierra
-        "TI09": {100},  # Volador
-        "TI10": {100},  # Psíquico
-        "TI11": {100},  # Bicho
-        "TI12": {100},  # Roca
+        "TI04": set(),  # Eléctrico — aún no jugado
+        "TI05": set(),  # Hielo — aún no jugado
+        "TI06": set(),  # Lucha — aún no jugado
+        "TI07": set(),  # Veneno — aún no jugado
+        "TI08": set(),  # Tierra — aún no jugado
+        "TI09": set(),  # Volador — aún no jugado
+        "TI10": set(),  # Psíquico — aún no jugado
+        "TI11": set(),  # Bicho — aún no jugado
+        "TI12": set(),  # Roca — aún no jugado
         "TI13": {9, 15, 23},  # Fantasma
-        "TI14": {100},  # Dragón
-        "TI15": {100},  # Siniestro
-        "TI16": {100},  # Acero
-        "TI17": {100},  # Hada
-        "TI18": {100},  # Normal
+        "TI14": set(),  # Dragón — aún no jugado
+        "TI15": set(),  # Siniestro — aún no jugado
+        "TI16": set(),  # Acero — aún no jugado
+        "TI17": set(),  # Hada — aún no jugado
+        "TI18": set(),  # Normal — aún no jugado
     }
     for kid, nums in TORNEOS_TIPOS.items():
         r[kid] = bool(torneos_num & nums)
