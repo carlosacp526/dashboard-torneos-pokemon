@@ -160,7 +160,8 @@ from PIL import Image as PILImage, ImageDraw as PILImageDraw
 
 pdp_data = {}
 for feat in ret.FEATURE_COLS:
-    pd_result = partial_dependence(model, X_tr, features=[feat], kind="average", grid_resolution=20)
+    pd_result = partial_dependence(model, X_tr.astype({feat: "float64"}), features=[feat],
+                                    kind="average", grid_resolution=20)
     grid_vals = pd_result["grid_values"][0].tolist()
     avg_proba = pd_result["average"][0].tolist()
     pdp_data[feat] = {"grid": grid_vals, "avg_proba": avg_proba}
