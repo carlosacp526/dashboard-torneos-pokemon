@@ -7,6 +7,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, obtener_banner, obtener_banner_torneo
+from vistas.elo import get_round_order
 
 # ── Zonas horarias por país ────────────────────────────────────────────────────
 PAIS_TIMEZONE = {
@@ -539,7 +540,13 @@ def show():
                               league=('league', lambda s: s.mode().iloc[0] if not s.mode().empty else ''),
                               N_Torneo=('N_Torneo', 'first') if 'N_Torneo' in fp_cal.columns else ('_tier', 'first'),
                               Ligas_categoria=('Ligas_categoria', 'first') if 'Ligas_categoria' in fp_cal.columns else ('_tier', 'first'),
-                              Fase_completo=('Fase_completo', lambda s: s.dropna().mode().iloc[0] if not s.dropna().empty else '') if 'Fase_completo' in fp_cal.columns else ('_tier', lambda s: ''),
+                              # Todas las fases distintas que caen en esa fecha+evento (ej. Cuartos,
+                              # Semifinal Y Final el mismo día) — antes solo se guardaba la más
+                              # frecuente (mode()) y las demás se perdían.
+                              Fases=('Fase_completo', lambda s: sorted(
+                                  {str(x).strip() for x in s.dropna() if str(x).strip()},
+                                  key=get_round_order,
+                              )) if 'Fase_completo' in fp_cal.columns else ('_tier', lambda s: []),
                           )
                           .reset_index()
                           .sort_values('_fecha')
@@ -594,15 +601,17 @@ def show():
                             f"{icon}"
                         )
 
-                    _fase_raw = str(r.get('Fase_completo', '')) if 'Fase_completo' in r.index else ''
-                    fase_html = ''
-                    if _fase_raw and _fase_raw not in ('nan', 'None', ''):
-                        fase_html = (f"<div style='display:inline-block;background:{tc}11;"
-                                     f"border:1px solid {tc}55;color:{tc}cc;font-size:0.78em;"
-                                     f"border-radius:6px;padding:3px 8px;margin-top:5px;"
-                                     f"font-weight:600;max-width:100%;overflow:hidden;"
-                                     f"text-overflow:ellipsis;white-space:nowrap'>"
-                                     f"{_fase_raw[:22]}</div>")
+                    _fases = r.get('Fases', []) if 'Fases' in r.index else []
+                    _fases = [f for f in _fases if f and str(f) not in ('nan', 'None')]
+                    fase_html = "".join(
+                        f"<div style='display:inline-block;background:{tc}11;"
+                        f"border:1px solid {tc}55;color:{tc}cc;font-size:0.72em;"
+                        f"border-radius:6px;padding:3px 8px;margin:5px 4px 0 0;"
+                        f"font-weight:600;max-width:100%;overflow:hidden;"
+                        f"text-overflow:ellipsis;white-space:nowrap'>"
+                        f"{str(f)[:22]}</div>"
+                        for f in _fases
+                    )
 
                     tier_badges_html = "".join(
                         f"<div class='tierbadge' style='background:{TIER_COLORS_CAL.get(t, '#7F8C8D')}'>{t}</div>"

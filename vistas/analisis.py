@@ -320,6 +320,7 @@ def show():
                 x=resumen_batallas.index, y=resumen_batallas['Promedio'], name='Promedio',
                 marker_color=[COLORS_TAM.get(c, '#888') for c in resumen_batallas.index],
                 text=resumen_batallas['Promedio'], texttemplate='%{text}', textposition='outside',
+                textfont=dict(color='#e8e8ee', size=13, family='Segoe UI, Arial'),
             ))
             fig.add_trace(go.Bar(
                 x=resumen_batallas.index, y=resumen_batallas['Máximo'], name='Máximo',
