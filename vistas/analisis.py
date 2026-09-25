@@ -91,8 +91,8 @@ def show():
 .poketubi-ticker-wrap {{
     width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box;
     background: linear-gradient(90deg, rgba(155,89,182,0.18), rgba(233,30,99,0.18));
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
-    padding: 10px 0; margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+    padding: 20px 0; margin-bottom: 16px;
 }}
 .poketubi-ticker-move {{
     display: inline-block; padding-left: 100%;
@@ -100,7 +100,7 @@ def show():
 }}
 .poketubi-ticker-wrap:hover .poketubi-ticker-move {{ animation-play-state: paused; }}
 .poketubi-ticker-item {{
-    display: inline-block; padding: 0 36px; font-weight: 600; font-size: 14px;
+    display: inline-block; padding: 0 48px; font-weight: 700; font-size: 22px;
 }}
 @keyframes poketubi-ticker-scroll {{
     0%   {{ transform: translate(0, 0); }}
