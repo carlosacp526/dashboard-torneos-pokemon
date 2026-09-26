@@ -8,8 +8,39 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, score_final, score_promedio_por_jugador
 import pickle
 from datetime import datetime
+from entrenar_modelo import (
+    _prep, build_typical_max_rep, add_match_context,
+    build_historial, build_cosechas_actual, build_derived, build_pred_features,
+)
 
 MODEL_CACHE_PATH = "modelo_prediccion.pkl"
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _build_live_stats(_df_raw, tiers_modelo, ventanas_modelo, top_feat):
+    """Recalcula latest_stats / pred_features / df_pend EN VIVO desde los
+    datos actuales, sin reentrenar el modelo — solo las stats de jugadores
+    (cosechas) y la lista de batallas pendientes se refrescan (cacheadas 1h);
+    el modelo (pesos entrenados) sigue viniendo del .pkl, sin tocar, hasta el
+    próximo `python entrenar_modelo.py` manual (pensado para cada ~3 meses).
+
+    tiers_modelo / ventanas_modelo: deben ser los mismos que usó el último
+    entrenamiento (persistidos en el .pkl) para que las columnas de cosecha
+    calculadas ahora coincidan con las que espera `top_feat` — si usáramos
+    tiers/ventanas recalculados de los datos actuales, un tier nuevo o
+    desaparecido correría todas las columnas y rompería el alineamiento.
+    """
+    df, df_pend_raw = _prep(_df_raw)
+    typical_max_rep = build_typical_max_rep(df[df["Walkover"] == 0])
+    df = add_match_context(df, typical_max_rep)
+    df_pend = add_match_context(df_pend_raw.copy(), typical_max_rep)
+
+    hist, _ = build_historial(df, tiers=tiers_modelo)
+    cos = build_cosechas_actual(hist, tiers_modelo, ventanas=ventanas_modelo)
+    cos = build_derived(cos)
+
+    latest_stats = cos.copy()   # ya es 1 fila por jugador (el mes "actual")
+    pred_features = build_pred_features(df_pend, cos, top_feat) if not df_pend.empty else pd.DataFrame()
+    return latest_stats, pred_features, df_pend
 
 def load_model(df_raw):
     """
@@ -354,17 +385,36 @@ def show():
     top_feat      = cache["top_feat"]
     feature_cols  = top_feat
     tiers         = cache.get("tiers", [])
-    pred_features = cache.get("pred_features", pd.DataFrame())
-    df_pend       = cache.get("df_pend", pd.DataFrame())
+    ventanas      = cache.get("ventanas")
     X             = pd.DataFrame()
     y             = pd.Series(dtype=int)
     X_test        = pd.DataFrame()
     y_test        = pd.Series(dtype=int)
 
-    # latest_stats: última cosecha por jugador
-    latest_stats = cache.get("latest_stats", pd.DataFrame())
+    # latest_stats / pred_features / df_pend: recalculadas EN VIVO (cada hora)
+    # desde los datos actuales — no las que había al momento de entrenar, que
+    # quedarían congeladas hasta el próximo reentrenamiento manual (~3 meses).
+    # Si el .pkl es viejo y no trae tiers/ventanas, caemos al snapshot
+    # congelado del entrenamiento en vez de romper la página.
+    if tiers and ventanas:
+        with st.spinner("Actualizando stats de jugadores y batallas pendientes..."):
+            latest_stats, pred_features, df_pend = _build_live_stats(df_raw, tiers, ventanas, top_feat)
+        stats_en_vivo = True
+    else:
+        latest_stats  = cache.get("latest_stats", pd.DataFrame())
+        pred_features = cache.get("pred_features", pd.DataFrame())
+        df_pend       = cache.get("df_pend", pd.DataFrame())
+        stats_en_vivo = False
+
     if not latest_stats.empty and "jugador" in latest_stats.columns:
         latest_stats = latest_stats.rename(columns={"jugador": "Jugador"})
+
+    if stats_en_vivo:
+        st.caption("📊 Stats de jugadores y batallas pendientes recalculadas en vivo (se refrescan solas cada hora) — "
+                    "el modelo ML en sí solo cambia cuando alguien corre `entrenar_modelo.py` de nuevo.")
+    else:
+        st.warning("⚠️ Este .pkl no trae `tiers`/`ventanas` — mostrando stats congeladas del último entrenamiento. "
+                    "Reentrená con `python entrenar_modelo.py` para habilitar el refresco en vivo.")
 
     # df_fecha: no disponible en pkl liviano
     df_fecha = pd.DataFrame()

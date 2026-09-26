@@ -155,9 +155,17 @@ def add_match_context(df, typical_max_rep):
 # 2. HISTORIAL POR JUGADOR
 # ════════════════════════════════════════════════════════════════
 
-def build_historial(df):
+def build_historial(df, tiers=None):
+    """tiers: lista explícita de tiers a usar para las columnas wr_tier_*.
+    Si no se pasa, se deriva de los datos (comportamiento original, usado en
+    entrenamiento). Al recalcular stats en vivo para predicciones (ver
+    vistas/prediccion.py) hay que pasar la MISMA lista de tiers que usó el
+    modelo ya entrenado, para que las columnas generadas coincidan con las
+    que espera top_feat — si no, tiers nuevos/desaparecidos desde el último
+    entrenamiento romperían el alineamiento de columnas."""
     df_ok = df[df["Walkover"] == 0].copy()
-    tiers = sorted(df_ok["Tier"].dropna().unique().tolist())
+    if tiers is None:
+        tiers = sorted(df_ok["Tier"].dropna().unique().tolist())
 
     rows = []
     rep_counter = {}   # (par_jugadores, instancia, formato) -> cuántas veces se han cruzado
@@ -227,8 +235,8 @@ def build_historial(df):
 # 3. COSECHAS
 # ════════════════════════════════════════════════════════════════
 
-def build_cosechas(hist, tiers):
-    base_cols = [
+def _cosecha_base_cols(tiers):
+    return [
         "gano","fmt_singles","fmt_dobles","fmt_vgc",
         "cat_liga","cat_torneo","cat_ascenso","cat_cypher",
         "fase_elim","fase_grupos","fase_jornadas","fase_rondas",
@@ -237,6 +245,56 @@ def build_cosechas(hist, tiers):
       + [f"wr_tier_{t}" for t in tiers] \
       + [f"wr_rep_{b}" for b in REP_BUCKETS]
 
+
+def _cosecha_ventanas(h_j, ym, ventanas, base_cols):
+    """Calcula las features de cosecha (todas las ventanas) de UN jugador en
+    UN mes de referencia `ym`, mirando su historial `h_j` (ya filtrado a ese
+    jugador). Extraído para que build_cosechas (grilla completa, usada en
+    entrenamiento) y build_cosechas_actual (un solo mes, usada para refrescar
+    predicciones en vivo sin reentrenar) calculen la feature EXACTAMENTE
+    igual — evita que ambos caminos terminen calculando lo mismo de formas
+    sutilmente distintas (train/serve skew)."""
+    row_cos = {}
+    ym_dt = pd.Timestamp(year=ym // 100, month=ym % 100, day=1)
+
+    for n in ventanas:
+        ini_dt = ym_dt - pd.DateOffset(months=n)
+        ini_ym = ini_dt.year * 100 + ini_dt.month
+        fin_ym = ym - 1
+
+        ventana = h_j[(h_j["ym"] >= ini_ym) & (h_j["ym"] <= fin_ym)]
+
+        if ventana.empty:
+            row_cos[f"n_batallas_m{n}"]  = 0
+            row_cos[f"winrate_m{n}"]      = np.nan
+            row_cos[f"meses_activo_m{n}"] = 0
+            for col in base_cols:
+                if col == "gano": continue
+                if col.startswith("wr_"):
+                    row_cos[f"{col}_m{n}"] = np.nan
+                else:
+                    row_cos[f"{col}_sum_m{n}"]  = 0
+                    row_cos[f"{col}_mean_m{n}"] = np.nan
+        else:
+            n_bat  = len(ventana)
+            n_wins = ventana["gano"].sum()
+            row_cos[f"n_batallas_m{n}"]  = n_bat
+            row_cos[f"winrate_m{n}"]      = n_wins / n_bat if n_bat > 0 else np.nan
+            row_cos[f"meses_activo_m{n}"] = ventana["ym"].nunique()
+            for col in base_cols:
+                if col == "gano": continue
+                if col.startswith("wr_"):
+                    sub = ventana[col].dropna()
+                    row_cos[f"{col}_m{n}"] = sub.mean() if len(sub) > 0 else np.nan
+                else:
+                    row_cos[f"{col}_sum_m{n}"]  = ventana[col].fillna(0).sum()
+                    row_cos[f"{col}_mean_m{n}"] = ventana[col].fillna(0).mean()
+
+    return row_cos
+
+
+def build_cosechas(hist, tiers):
+    base_cols = _cosecha_base_cols(tiers)
     all_ym    = sorted(hist["ym"].unique())
     jugadores = hist["jugador"].unique()
     cosecha_rows = []
@@ -245,44 +303,36 @@ def build_cosechas(hist, tiers):
         h_j = hist[hist["jugador"] == jugador].copy()
         for ym in all_ym:
             row_cos = {"jugador": jugador, "ym": ym}
-            ym_dt = pd.Timestamp(year=ym // 100, month=ym % 100, day=1)
-
-            for n in VENTANAS:
-                ini_dt = ym_dt - pd.DateOffset(months=n)
-                ini_ym = ini_dt.year * 100 + ini_dt.month
-                fin_ym = ym - 1
-
-                ventana = h_j[(h_j["ym"] >= ini_ym) & (h_j["ym"] <= fin_ym)]
-
-                if ventana.empty:
-                    row_cos[f"n_batallas_m{n}"]  = 0
-                    row_cos[f"winrate_m{n}"]      = np.nan
-                    row_cos[f"meses_activo_m{n}"] = 0
-                    for col in base_cols:
-                        if col == "gano": continue
-                        if col.startswith("wr_"):
-                            row_cos[f"{col}_m{n}"] = np.nan
-                        else:
-                            row_cos[f"{col}_sum_m{n}"]  = 0
-                            row_cos[f"{col}_mean_m{n}"] = np.nan
-                else:
-                    n_bat  = len(ventana)
-                    n_wins = ventana["gano"].sum()
-                    row_cos[f"n_batallas_m{n}"]  = n_bat
-                    row_cos[f"winrate_m{n}"]      = n_wins / n_bat if n_bat > 0 else np.nan
-                    row_cos[f"meses_activo_m{n}"] = ventana["ym"].nunique()
-                    for col in base_cols:
-                        if col == "gano": continue
-                        if col.startswith("wr_"):
-                            sub = ventana[col].dropna()
-                            row_cos[f"{col}_m{n}"] = sub.mean() if len(sub) > 0 else np.nan
-                        else:
-                            row_cos[f"{col}_sum_m{n}"]  = ventana[col].fillna(0).sum()
-                            row_cos[f"{col}_mean_m{n}"] = ventana[col].fillna(0).mean()
-
+            row_cos.update(_cosecha_ventanas(h_j, ym, VENTANAS, base_cols))
             cosecha_rows.append(row_cos)
 
     return pd.DataFrame(cosecha_rows)
+
+
+def build_cosechas_actual(hist, tiers, ventanas=VENTANAS, ym_ref=None):
+    """Como build_cosechas, pero calcula UN SOLO mes de referencia (el
+    'actual', o el que se pase) para cada jugador, en vez de la grilla
+    completa jugador×mes — eso es lo que hace que build_cosechas tarde
+    varios minutos, y no hace falta para predicciones en vivo, que solo
+    necesitan la ÚLTIMA cosecha de cada jugador (igual a lo que
+    entrenar_modelo.py ya extraía como `latest_stats`).
+
+    Pensada para refrescar las predicciones de batallas pendientes sin pagar
+    el costo de un reentrenamiento completo (ver vistas/prediccion.py)."""
+    base_cols = _cosecha_base_cols(tiers)
+    if ym_ref is None:
+        max_ym = int(hist["ym"].max())
+        dt = pd.Timestamp(year=max_ym // 100, month=max_ym % 100, day=1) + pd.DateOffset(months=1)
+        ym_ref = dt.year * 100 + dt.month
+
+    rows = []
+    for jugador in hist["jugador"].unique():
+        h_j = hist[hist["jugador"] == jugador]
+        row_cos = {"jugador": jugador, "ym": ym_ref}
+        row_cos.update(_cosecha_ventanas(h_j, ym_ref, ventanas, base_cols))
+        rows.append(row_cos)
+
+    return pd.DataFrame(rows)
 
 
 # ════════════════════════════════════════════════════════════════
