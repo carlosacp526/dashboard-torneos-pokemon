@@ -227,7 +227,7 @@ def _redactar_reporte(jugador, d):
     if len(leg) >= 3:
         highlights.append(f"desbloqueó {len(leg)} logros Legendarios, incluyendo \"{leg[0]}\"")
     elif total_logros >= 50:
-        highlights.append(f"lleva {total_logros}/144 logros desbloqueados")
+        highlights.append(f"lleva {total_logros}/{len(LOGROS)} logros desbloqueados")
 
     if highlights:
         conectores = ["Además, ", "En su haber, ", "Para completar el cuadro, "]
@@ -290,7 +290,7 @@ def show():
         st.metric("⚡ Elo actual", d["elo_actual"], f"Rank #{d['rank_actual']}")
         st.metric("🎯 Winrate", f"{d['winrate']}%", f"{d['victorias']}/{d['partidas']} partidas")
         st.metric("🏆 Títulos", d["titulos"])
-        st.metric("🏅 Logros", f"{d['logros']['total']}/144", f"{d['logros']['xp']:,} XP")
+        st.metric("🏅 Logros", f"{d['logros']['total']}/{len(LOGROS)}", f"{d['logros']['xp']:,} XP")
 
     st.markdown("---")
     with st.expander("📋 Ver reportes de todos los jugadores activos"):

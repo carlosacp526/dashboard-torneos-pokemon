@@ -718,3 +718,45 @@ def show():
             mime="image/png",
             use_container_width=True,
         )
+
+    # ── Leyenda: fechas de Torneos y Ligas (por Jornada) ────────────
+    st.markdown("---")
+    with st.expander("🗓️ Leyenda — Fechas de Torneos y Ligas (por Jornada)"):
+        col_t, col_l = st.columns(2)
+
+        with col_t:
+            st.markdown("**🏆 Torneos**")
+            tor = df[df["league"] == "TORNEO"].dropna(subset=["N_Torneo", "date"])
+            if not tor.empty:
+                leyenda_t = (
+                    tor.groupby("N_Torneo")["date"].agg(["min", "max"])
+                    .reset_index().sort_values("N_Torneo")
+                )
+                leyenda_t.columns = ["Torneo", "Desde", "Hasta"]
+                leyenda_t["Torneo"] = "T" + leyenda_t["Torneo"].astype(int).astype(str)
+                leyenda_t["Desde"] = leyenda_t["Desde"].dt.strftime("%Y-%m-%d")
+                leyenda_t["Hasta"] = leyenda_t["Hasta"].dt.strftime("%Y-%m-%d")
+                st.dataframe(leyenda_t, use_container_width=True, hide_index=True, height=300)
+            else:
+                st.caption("Sin fechas de torneos disponibles.")
+
+        with col_l:
+            st.markdown("**📅 Ligas por Jornada**")
+            liga_ley = df[df["league"] == "LIGA"].copy()
+            liga_ley["Liga_Temporada"] = liga_ley["round"].apply(
+                lambda x: str(x).split(" ")[0] + str(x).split(" ")[1]
+                if pd.notna(x) and len(str(x).split(" ")) > 1 else ""
+            )
+            liga_ley = liga_ley[liga_ley["Liga_Temporada"] != ""].dropna(subset=["N_Torneo", "date"])
+            if not liga_ley.empty:
+                leyenda_l = (
+                    liga_ley.groupby(["Liga_Temporada", "N_Torneo"])["date"].agg(["min", "max"])
+                    .reset_index().sort_values(["Liga_Temporada", "N_Torneo"])
+                )
+                leyenda_l.columns = ["Liga/Temporada", "Jornada", "Desde", "Hasta"]
+                leyenda_l["Jornada"] = "J" + leyenda_l["Jornada"].astype(int).astype(str)
+                leyenda_l["Desde"] = leyenda_l["Desde"].dt.strftime("%Y-%m-%d")
+                leyenda_l["Hasta"] = leyenda_l["Hasta"].dt.strftime("%Y-%m-%d")
+                st.dataframe(leyenda_l, use_container_width=True, hide_index=True, height=300)
+            else:
+                st.caption("Sin fechas de ligas disponibles.")

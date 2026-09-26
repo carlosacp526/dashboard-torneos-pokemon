@@ -70,10 +70,10 @@ def show():
                             if row['RANK']==4: return ['background-color:#87CEEB;font-weight:bold;color:#000']*len(row)
                             return ['background-color:#34495E;color:white']*len(row)
 
-                        cols_tabla = ['RANK','AKA','PUNTOS','SCORE','PARTIDAS'] if torneo_incompleto \
-                            else ['RANK','AKA','PUNTOS','SCORE','POSICIÓN','PARTIDAS']
+                        cols_tabla = ['RANK','AKA','PUNTOS','SCORE','PARTIDAS','Winrate%'] if torneo_incompleto \
+                            else ['RANK','AKA','PUNTOS','SCORE','POSICIÓN','PARTIDAS','Winrate%']
                         td = tabla[cols_tabla].copy()
-                        st.dataframe(td.style.apply(hl_torneo,axis=1),
+                        st.dataframe(td.style.apply(hl_torneo,axis=1).format({'Winrate%':'{:.2f}%'}),
                                      use_container_width=True, hide_index=True,
                                      height=min(600,len(tabla)*40+100))
                         st.markdown("---")

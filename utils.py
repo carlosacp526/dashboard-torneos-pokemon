@@ -227,7 +227,8 @@ def generar_tabla_torneo(df_base, torneo_num):
         if r == 4: return "4to Lugar"
         return ""
     tabla['POSICIÓN'] = tabla['RANK'].apply(pos)
-    return tabla[['RANK','AKA','PUNTOS','SCORE','POSICIÓN','PARTIDAS','Victorias']].copy()
+    tabla['Winrate%'] = (tabla['Victorias'] / tabla['PARTIDAS'] * 100).round(2)
+    return tabla[['RANK','AKA','PUNTOS','SCORE','POSICIÓN','PARTIDAS','Victorias','Winrate%']].copy()
 
 def generar_tabla_jornada(df_base_jornada, lt, num_jornada):
     if 'Liga_Temporada' not in df_base_jornada.columns or 'N_Jornada' not in df_base_jornada.columns:

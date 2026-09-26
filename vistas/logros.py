@@ -1,5 +1,5 @@
 """
-logros.py — Sistema de 144 logros Poketubi (nueva versión)
+logros.py — Sistema de 147 logros Poketubi (nueva versión)
 Fuente: logros_pokemon.xlsx
 """
 
@@ -210,6 +210,11 @@ LOGROS = [
 {"id":"SP18","num":142,"cat":"Especial",  "rareza":"Plata",     "icon":"🔄","xp":300,  "name":"Revancha Servida",    "desc":"Gana tras perder 3 veces seguidas contra el mismo rival"},
 {"id":"SP19","num":143,"cat":"Especial",  "rareza":"Bronce",    "icon":"🔥","xp":100,  "name":"Fénix",               "desc":"Vuelve a jugar tras 6+ meses de inactividad"},
 {"id":"SP20","num":144,"cat":"Especial",  "rareza":"Oro",       "icon":"📜","xp":700,  "name":"Rivalidad Histórica", "desc":"15+ cruces totales contra un mismo rival"},
+
+# ── MÁS NUEVOS (3) ──────────────────────────────────────────────────────────
+{"id":"TO16","num":145,"cat":"Torneo",    "rareza":"Plata",     "icon":"🧗","xp":400,  "name":"Semifinalista Recurrente", "desc":"Llega a semifinal en 3 torneos distintos"},
+{"id":"TO17","num":146,"cat":"Torneo",    "rareza":"Oro",       "icon":"🪜","xp":700,  "name":"Remontada de Bracket",      "desc":"Pierde una partida en fase de grupos/ronda suiza pero termina en el Top 4 del torneo"},
+{"id":"SO16","num":147,"cat":"Social",    "rareza":"Oro",       "icon":"🔗","xp":900,  "name":"Círculo Cerrado",           "desc":"Se enfrenta 10+ veces cada uno contra al menos 5 rivales distintos"},
 
 ]
 
@@ -1283,6 +1288,38 @@ def evaluar_logros(
         return False
     r["TO15"] = _todo_o_nada()
 
+    # ── TO16: Semifinalista Recurrente ──────────────────────────────────────
+    def _semifinalista_recurrente(min_torneos=3):
+        if pm.empty or 'round' not in pm.columns or 'league' not in pm.columns or 'N_Torneo' not in pm.columns:
+            return False
+        d = pm[(pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('semifinal', na=False)]
+        return d['N_Torneo'].dropna().nunique() >= min_torneos
+    r["TO16"] = _semifinalista_recurrente()
+
+    # ── TO17: Remontada de Bracket — pierde una partida en fase de grupos/
+    # ronda suiza pero igual termina en el Top 4 de ese mismo torneo ─────────
+    def _remontada_de_bracket(top=4):
+        if pm.empty or 'round' not in pm.columns or 'league' not in pm.columns or 'N_Torneo' not in pm.columns:
+            return False
+        torneos_pm = pm[pm['league'] == 'TORNEO'].copy()
+        if 'Walkover' in torneos_pm.columns:
+            torneos_pm = torneos_pm[torneos_pm['Walkover'] != -1]
+        for nt, grp in torneos_pm.groupby('N_Torneo'):
+            fase_inicial = grp[grp['round'].str.lower().str.contains('ronda suiza|fase de grupos', na=False, regex=True)]
+            if fase_inicial.empty:
+                continue
+            perdio_fase_inicial = (~fase_inicial['winner'].str.lower().str.contains(pq, na=False)).any()
+            if not perdio_fase_inicial:
+                continue
+            tabla = generar_tabla_torneo(base_torneo_final, nt)
+            if tabla is None or tabla.empty:
+                continue
+            fila = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
+            if not fila.empty and int(fila['RANK'].iloc[0]) <= top:
+                return True
+        return False
+    r["TO17"] = _remontada_de_bracket()
+
     # ── SO14: El Más Buscado — necesita el precálculo comunitario
     # `jugadores_mas_buscados` (ver _precalcular_mas_buscado); sin él, no se desbloquea.
     r["SO14"] = pq in jugadores_mas_buscados
@@ -1328,6 +1365,9 @@ def evaluar_logros(
             if rival:
                 _cruces_por_rival[rival] = _cruces_por_rival.get(rival, 0) + 1
     r["SP20"] = bool(_cruces_por_rival) and max(_cruces_por_rival.values()) >= 15
+
+    # ── SO16: Círculo Cerrado — 5+ rivales distintos con 10+ cruces cada uno ──
+    r["SO16"] = sum(1 for c in _cruces_por_rival.values() if c >= 10) >= 5
 
     # PROGRESIÓN — depende del conteo anterior
     xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
@@ -1495,6 +1535,10 @@ def evaluar_logros(
     _d("SP19", texto="Volvió a jugar tras 6+ meses de inactividad" if r["SP19"] else None)
     _max_cruces = max(_cruces_por_rival.values()) if _cruces_por_rival else 0
     _d("SP20", _max_cruces, 15, f"Máximo de cruces contra un mismo rival: {_max_cruces}")
+    _d("TO16", texto="Llegó a semifinal en 3+ torneos distintos" if r["TO16"] else None)
+    _d("TO17", texto="Perdió en fase de grupos/ronda suiza pero terminó Top 4 del torneo" if r["TO17"] else None)
+    _n_rivales_10 = sum(1 for c in _cruces_por_rival.values() if c >= 10)
+    _d("SO16", _n_rivales_10, 5, f"{_n_rivales_10} rival(es) con 10+ cruces cada uno")
 
     return r, detalles
 
