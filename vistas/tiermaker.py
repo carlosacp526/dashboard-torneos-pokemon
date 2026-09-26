@@ -571,6 +571,21 @@ def show():
     with st.spinner("Cargando jugadores y estadísticas..."):
         tabla = _construir_tabla_jugadores()
 
+    with st.expander("🔧 Diagnóstico de fotos (temporal)"):
+        st.code(f"cwd: {os.getcwd()}\nJUGADORES_DIR absoluto: {os.path.abspath(JUGADORES_DIR)}")
+        nombre_diag = st.text_input("Ver diagnóstico de un jugador puntual", value="NanDitto")
+        if nombre_diag:
+            p = _buscar_imagen(nombre_diag)
+            fila_diag = tabla[tabla['Jugador'].str.lower() == nombre_diag.strip().lower()]
+            st.write({
+                "nombre_buscado": nombre_diag,
+                "_buscar_imagen()": p,
+                "existe_en_disco": os.path.exists(p) if p else False,
+                "en_tabla_como": fila_diag['Jugador'].iloc[0] if not fila_diag.empty else "NO ENCONTRADO EN TABLA",
+                "tiene_imagen_tabla": bool(fila_diag['tiene_imagen'].iloc[0]) if not fila_diag.empty else None,
+                "_img_path_tabla": fila_diag['_img_path'].iloc[0] if not fila_diag.empty else None,
+            })
+
     if tabla.empty:
         st.warning("No se encontraron jugadores con partidas registradas.")
         return
