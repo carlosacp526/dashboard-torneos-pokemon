@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields
+from utils import load_data, normalize_columns, ensure_fields, buscar_imagen_jugador
 
 # ── Rutas de recursos ─────────────────────────────────────────────
 ROOT        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,14 +58,10 @@ def _load_img(path, size=None, fallback_color=(100,100,100)):
 
 
 def _find_jugador_img(nombre):
-    """Misma lógica EXACTA que vistas/jugadores.py: `jugadores/{nombre.replace(' ','_')}.{ext}`,
-    sin pasar a minúsculas, probando extensiones en este orden: png, jpeg, jpg, JPG, JPEG, PNG."""
-    if not nombre: return None
-    clean = nombre.replace(" ", "_")
-    for ext in ['png', 'jpeg', 'jpg', 'JPG', 'JPEG', 'PNG']:
-        p = os.path.join(JUGADORES_DIR, f"{clean}.{ext}")
-        if os.path.exists(p): return p
-    return None
+    """Busca la foto de un jugador (case-insensitive, ver utils.buscar_imagen_jugador
+    — necesario porque Streamlit Cloud corre sobre Linux y ahí sí importan
+    mayúsculas/minúsculas, a diferencia de Windows donde se desarrolla)."""
+    return buscar_imagen_jugador(nombre, JUGADORES_DIR)
 
 
 def _find_pokemon_img(nombre):

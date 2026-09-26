@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields
+from utils import load_data, normalize_columns, ensure_fields, buscar_imagen_jugador
 
 # ── Clase PSElo (exacta del notebook) ──────────────────────────────
 class PSElo:
@@ -372,13 +372,9 @@ def show():
                 <div style="font-size:0.8rem;color:#aaa">ELO</div>
             </div>""", unsafe_allow_html=True)
             # imagen del jugador
-            for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-                path = f"jugadores/{jugador.replace(' ','_')}.{ext}"
-                if not os.path.exists(path):
-                    path = f"jugadores/{jugador}.{ext}"
-                if os.path.exists(path):
-                    st.image(path, width=100)
-                    break
+            path = buscar_imagen_jugador(jugador)
+            if path:
+                st.image(path, width=100)
 
     st.markdown("---")
 
@@ -637,10 +633,9 @@ border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:cente
 <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
 <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
 <div style="font-size:0.8rem;color:#aaa">ELO {formato}</div></div>""", unsafe_allow_html=True)
-                        for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-                            path = f"jugadores/{jugador.replace(' ','_')}.{ext}"
-                            if not os.path.exists(path): path = f"jugadores/{jugador}.{ext}"
-                            if os.path.exists(path): st.image(path, width=100); break
+                        path = buscar_imagen_jugador(jugador)
+                        if path:
+                            st.image(path, width=100)
                 st.markdown("<br>", unsafe_allow_html=True)
                 if len(top10_fmt) > 0:
                     fig_f = px.bar(top10_fmt, x='Participantes', y='Elo',
@@ -707,10 +702,9 @@ border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:cente
 <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
 <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
 <div style="font-size:0.8rem;color:#aaa">ELO {tier}</div></div>""", unsafe_allow_html=True)
-                        for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-                            path = f"jugadores/{jugador.replace(' ','_')}.{ext}"
-                            if not os.path.exists(path): path = f"jugadores/{jugador}.{ext}"
-                            if os.path.exists(path): st.image(path, width=100); break
+                        path = buscar_imagen_jugador(jugador)
+                        if path:
+                            st.image(path, width=100)
                 st.markdown("<br>", unsafe_allow_html=True)
                 if len(top10_tier) > 0:
                     fig_t = px.bar(top10_tier, x='Participantes', y='Elo',
@@ -782,13 +776,9 @@ border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:cente
             # Header jugador
             col_img, col_info = st.columns([1,3])
             with col_img:
-                for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-                    path = f"jugadores/{pq.replace(' ','_')}.{ext}"
-                    if not os.path.exists(path):
-                        path = f"jugadores/{pq}.{ext}"
-                    if os.path.exists(path):
-                        st.image(path, width=180)
-                        break
+                path = buscar_imagen_jugador(pq)
+                if path:
+                    st.image(path, width=180)
                 else:
                     st.info("📷 Sin imagen")
 

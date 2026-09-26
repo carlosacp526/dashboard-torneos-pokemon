@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields
+from utils import load_data, normalize_columns, ensure_fields, buscar_imagen_jugador
 
 # ── Configuración ─────────────────────────────────────────────────────────────
 TORNEO_NUM    = 80
@@ -44,12 +44,7 @@ def tier_badge(tier):
     return f'<span style="background:{bg};color:{fg};padding:2px 10px;border-radius:4px;font-weight:bold;font-size:0.85em">{tier}</span>'
 
 def find_player_img(nombre):
-    for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-        for name_variant in [nombre, nombre.replace(' ','_'), nombre.lower(), nombre.lower().replace(' ','_')]:
-            p = os.path.join(JUGADORES_DIR, f"{name_variant}.{ext}")
-            if os.path.exists(p):
-                return p
-    return None
+    return buscar_imagen_jugador(nombre, JUGADORES_DIR)
 
 def find_sprite(pokemon_name):
     """Busca el sprite del pokémon en SPRITES_DIR."""

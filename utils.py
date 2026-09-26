@@ -15,6 +15,41 @@ LOGOS_LIGAS = {
 def load_data():
     return pd.read_csv("archivo_preuba1.csv", sep=";")
 
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _listado_imagenes(carpeta: str) -> dict:
+    """{nombre_sin_extension.lower(): ruta_completa} de todas las imágenes de
+    una carpeta, para poder buscarlas de forma case-insensitive."""
+    resultado = {}
+    if not os.path.isdir(carpeta):
+        return resultado
+    for f in os.listdir(carpeta):
+        base, ext = os.path.splitext(f)
+        if ext.lower() in ('.png', '.jpg', '.jpeg'):
+            resultado[base.strip().lower()] = os.path.join(carpeta, f)
+    return resultado
+
+
+def buscar_imagen_jugador(nombre: str, carpeta: str = "jugadores"):
+    """Busca la foto de un jugador de forma case-insensitive.
+
+    Necesario porque en Windows (donde se desarrolla) el sistema de archivos
+    no distingue mayúsculas/minúsculas, así que un archivo commiteado como
+    "nanditto.png" en git parece encontrar a "NanDitto" localmente sin
+    problema — pero el despliegue real corre en Streamlit Community Cloud
+    sobre Linux, que sí distingue mayúsculas, y ahí esa misma búsqueda falla
+    en silencio (la foto cae al placeholder aunque el archivo exista).
+    """
+    if not nombre:
+        return None
+    listado = _listado_imagenes(carpeta)
+    variantes = {nombre, nombre.replace(' ', '_'), nombre.replace('_', ' ')}
+    for vn in variantes:
+        p = listado.get(vn.strip().lower())
+        if p:
+            return p
+    return None
+
 def normalize_columns(df):
     col_map = {}
     for c in df.columns:

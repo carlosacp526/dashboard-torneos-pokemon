@@ -38,7 +38,7 @@ from io import BytesIO
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     load_data, normalize_columns, ensure_fields, compute_player_stats,
-    build_base_liga, build_base_torneo,
+    build_base_liga, build_base_torneo, buscar_imagen_jugador,
 )
 from vistas.elo import cargar_paises, _pais_de
 
@@ -49,9 +49,9 @@ except ImportError:
     _PIL_OK = False
 
 JUGADORES_DIR = "jugadores"
-IMG_DESCONOCIDO = os.path.join(JUGADORES_DIR, "Desconocido.png")
 THUMB_SIZE = 90          # tamaño del avatar (px) que se embebe como base64
 JPEG_QUALITY = 82
+IMG_DESCONOCIDO = buscar_imagen_jugador("Desconocido", JUGADORES_DIR)
 
 
 # ────────────────────────────────────────────────────────────────────────
@@ -59,19 +59,10 @@ JPEG_QUALITY = 82
 # ────────────────────────────────────────────────────────────────────────
 
 def _buscar_imagen(nombre: str):
-    """Busca el archivo de imagen de un jugador probando variantes de
-    nombre (espacios / guion bajo) y extensiones, igual que en
-    vistas/jugadores.py."""
-    if not nombre:
-        return None
-    variantes = {nombre, nombre.replace(' ', '_'), nombre.replace('_', ' ')}
-    extensiones = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG']
-    for vn in variantes:
-        for ext in extensiones:
-            p = os.path.join(JUGADORES_DIR, f"{vn}.{ext}")
-            if os.path.exists(p):
-                return p
-    return None
+    """Busca el archivo de imagen de un jugador (case-insensitive, ver
+    utils.buscar_imagen_jugador — necesario porque Streamlit Cloud corre
+    sobre Linux y ahí sí importan mayúsculas/minúsculas)."""
+    return buscar_imagen_jugador(nombre, JUGADORES_DIR)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

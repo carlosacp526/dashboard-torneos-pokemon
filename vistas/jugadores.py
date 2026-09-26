@@ -5,7 +5,7 @@ import re, os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, normalize_columns, ensure_fields, compute_player_stats, generar_tabla_temporada, generar_tabla_torneo,
                    obtener_banner, obtener_logo_liga, obtener_banner_torneo,
-                   build_base_liga, build_base_torneo, build_base_jornada)
+                   build_base_liga, build_base_torneo, build_base_jornada, buscar_imagen_jugador)
 from vistas.logros import (LOGROS, evaluar_logros, RAREZA_COLORS, CAT_COLORS,
                             CATEGORIAS_ORDEN, BW_COLORS, medal_svg, _get_img_bytes)
 from vistas.elo import calcular_elo, cargar_paises, _pais_de, _pais_con_bandera
@@ -150,16 +150,15 @@ def generar_pdf_jugador(
     # COL A FOTO
     rrect(cv, xA, BY, CA_W, BH, r=8, fill_col=C_PANEL)
     foto_ok = False
-    for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-        p = f"jugadores/{player_query.replace(' ','_')}.{ext}"
-        if os.path.exists(p):
-            try:
-                fh = min(CA_W*1.15, BH-22)
-                cv.drawImage(ImageReader(p), xA+4, BY+BH-fh-6,
-                             width=CA_W-8, height=fh,
-                             preserveAspectRatio=True, mask='auto')
-                foto_ok = True; break
-            except Exception: pass
+    p = buscar_imagen_jugador(player_query)
+    if p:
+        try:
+            fh = min(CA_W*1.15, BH-22)
+            cv.drawImage(ImageReader(p), xA+4, BY+BH-fh-6,
+                         width=CA_W-8, height=fh,
+                         preserveAspectRatio=True, mask='auto')
+            foto_ok = True
+        except Exception: pass
     if not foto_ok:
         rrect(cv, xA+10, BY+BH-95, CA_W-20, 85, r=6, fill_col=C_PANEL2)
         txt(cv, "SIN FOTO", xA+CA_W/2, BY+BH-58, size=7, col=C_SUBTEXT, font="Helvetica", anchor="center")
@@ -1232,14 +1231,10 @@ def show():
         # Header con imagen
         col_img, col_info = st.columns([1,3])
         with col_img:
-            img_found = False
-            for ext in ['png','jpeg','jpg','JPG','JPEG','PNG']:
-                path = f"jugadores/{player_query.replace(' ','_')}.{ext}"
-                if os.path.exists(path):
-                    st.image(path, width=200, caption=player_query)
-                    img_found = True
-                    break
-            if not img_found:
+            path = buscar_imagen_jugador(player_query)
+            if path:
+                st.image(path, width=200, caption=player_query)
+            else:
                 st.info("📷 Imagen no disponible")
         with col_info:
             st.write(f"### {player_query}")
