@@ -38,7 +38,7 @@ from io import BytesIO
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     load_data, normalize_columns, ensure_fields, compute_player_stats,
-    build_base_liga, build_base_torneo, buscar_imagen_jugador,
+    buscar_imagen_jugador, score_promedio_por_jugador,
 )
 from vistas.elo import cargar_paises, _pais_de
 
@@ -94,29 +94,7 @@ def _imagen_base64(path: str):
 # Estadísticas por jugador
 # ────────────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=1800, show_spinner=False)
-def _score_por_jugador(df: pd.DataFrame) -> dict:
-    """{jugador_en_minuscula: score_promedio} combinando ligas y torneos."""
-    try:
-        base_liga, _ = build_base_liga(df)
-    except Exception:
-        base_liga = pd.DataFrame()
-    try:
-        base_torneo, _ = build_base_torneo(df)
-    except Exception:
-        base_torneo = pd.DataFrame()
-
-    partes = []
-    for base in (base_liga, base_torneo):
-        if isinstance(base, pd.DataFrame) and not base.empty and 'score_completo' in base.columns:
-            partes.append(base[['Participante', 'score_completo']])
-
-    if not partes:
-        return {}
-
-    todo = pd.concat(partes, ignore_index=True)
-    todo['_key'] = todo['Participante'].astype(str).str.lower()
-    return todo.groupby('_key')['score_completo'].mean().round(2).to_dict()
+_score_por_jugador = score_promedio_por_jugador
 
 
 LIGAS_CATEGORIAS = ['PJS', 'PES', 'PSS', 'PMS', 'PLS']

@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, score_final
+from utils import load_data, normalize_columns, ensure_fields, score_final, score_promedio_por_jugador
 import pickle
 from datetime import datetime
 
@@ -142,13 +142,14 @@ def _calc_winrates_detallados(jug, df_j):
     return wr_by("Formato"), wr_by("Fase"), wr_by("Tier")
 
 
-def _get_player_stats(jug, latest_stats, df_fecha):
+def _get_player_stats(jug, latest_stats, df_fecha, scores=None):
     """Devuelve un dict con todas las stats relevantes de un jugador."""
     r = latest_stats[latest_stats["Jugador"] == jug]
     if r.empty:
         return None
 
     rv = r.iloc[0]
+    scores = scores or {}
 
     # df_fecha puede estar vacío en el pkl liviano
     hist = pd.DataFrame()
@@ -193,7 +194,7 @@ def _get_player_stats(jug, latest_stats, df_fecha):
 
     return {
         "winrate_ac":   winrate_ac,
-        "score_prom":   float(rv.get("Score_Prom_Ac", 0)),
+        "score_prom":   float(scores.get(str(jug).strip().lower(), 0) or 0),
         "total_juegos": total_juegos,
         "victorias":    total_victorias,
         "derrotas":     total_derrotas,
@@ -412,8 +413,9 @@ def show():
         # ── Perfiles de los jugadores ──────────────────────────────────────
         st.markdown("---")
         st.markdown("## 📊 Perfiles de los Jugadores")
-        stats1 = _get_player_stats(p1, latest_stats, df_fecha)
-        stats2 = _get_player_stats(p2, latest_stats, df_fecha)
+        scores = score_promedio_por_jugador(df_raw)
+        stats1 = _get_player_stats(p1, latest_stats, df_fecha, scores)
+        stats2 = _get_player_stats(p2, latest_stats, df_fecha, scores)
 
         card1, card2 = st.columns(2)
         with card1:

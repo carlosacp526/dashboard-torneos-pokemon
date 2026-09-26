@@ -394,6 +394,34 @@ def build_base_torneo(df):
     base = base.drop(columns=["Partidas_P1","Partidas_P2"])
     return score_final(base), df_t
 
+
+@st.cache_data(ttl=1800)
+def score_promedio_por_jugador(df) -> dict:
+    """{jugador_en_minuscula: score_promedio} combinando 'score_completo' de
+    todas las ligas y torneos en los que participó (promedio simple entre
+    instancias, no ponderado)."""
+    try:
+        base_liga, _ = build_base_liga(df)
+    except Exception:
+        base_liga = pd.DataFrame()
+    try:
+        base_torneo, _ = build_base_torneo(df)
+    except Exception:
+        base_torneo = pd.DataFrame()
+
+    partes = []
+    for base in (base_liga, base_torneo):
+        if isinstance(base, pd.DataFrame) and not base.empty and 'score_completo' in base.columns:
+            partes.append(base[['Participante', 'score_completo']])
+
+    if not partes:
+        return {}
+
+    todo = pd.concat(partes, ignore_index=True)
+    todo['_key'] = todo['Participante'].astype(str).str.lower()
+    return todo.groupby('_key')['score_completo'].mean().round(2).to_dict()
+
+
 @st.cache_data(ttl=3600)
 def build_base_llave(df):
     """
