@@ -126,6 +126,41 @@ def _score_por_jugador(df: pd.DataFrame) -> dict:
     return todo.groupby('_key')['score_completo'].mean().round(2).to_dict()
 
 
+LIGAS_CATEGORIAS = ['PJS', 'PES', 'PSS', 'PMS', 'PLS']
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def _jugadores_liga_vigente(df: pd.DataFrame) -> set:
+    """Jugadores (en minúscula) que participaron en la última temporada
+    (la de fecha más reciente) de CUALQUIERA de las ligas PJS/PES/PSS/PMS/PLS.
+    "Última temporada" se determina por fecha, no por número de T, para no
+    depender de una lista de temporadas hardcodeada que hay que actualizar
+    a mano cada vez que arranca una nueva."""
+    if 'league' not in df.columns or 'round' not in df.columns or 'date' not in df.columns:
+        return set()
+
+    liga = df[df['league'] == 'LIGA'].copy()
+    liga['Liga_Temporada'] = liga['round'].apply(
+        lambda x: str(x).split(' ')[0] + str(x).split(' ')[1]
+        if pd.notna(x) and len(str(x).split(' ')) > 1 else ''
+    )
+    liga = liga[liga['Liga_Temporada'] != '']
+    liga['_cat'] = liga['Liga_Temporada'].str[:3]
+
+    jugadores = set()
+    for cat in LIGAS_CATEGORIAS:
+        sub = liga[liga['_cat'] == cat].dropna(subset=['date'])
+        if sub.empty:
+            continue
+        ultima_temp = sub.groupby('Liga_Temporada')['date'].max().idxmax()
+        vigente = sub[sub['Liga_Temporada'] == ultima_temp]
+        jugadores |= set(vigente['player1'].astype(str).str.strip().str.lower())
+        jugadores |= set(vigente['player2'].astype(str).str.strip().str.lower())
+    jugadores.discard('')
+    jugadores.discard('nan')
+    return jugadores
+
+
 VENTANAS_WINRATE = [
     ('1m',  1,  'Último mes'),
     ('3m',  3,  'Últimos 3 meses'),
@@ -542,9 +577,20 @@ def show():
             min_value=0, max_value=max_partidas, value=min(3, max_partidas),
         )
 
+    solo_liga_vigente = st.checkbox(
+        "Solo jugadores vigentes en Liga (PJS/PES/PSS/PMS/PLS) en su última temporada",
+        value=True,
+        help="Filtra el pool a los jugadores que jugaron la temporada más reciente "
+             "(por fecha) de cualquiera de las 5 ligas.",
+    )
+
     tabla_f = tabla[tabla['Partidas'] >= min_partidas].copy()
     if solo_con_imagen:
         tabla_f = tabla_f[tabla_f['tiene_imagen']]
+    if solo_liga_vigente:
+        df_raw = ensure_fields(normalize_columns(load_data()))
+        vigentes = _jugadores_liga_vigente(df_raw)
+        tabla_f = tabla_f[tabla_f['Jugador'].str.strip().str.lower().isin(vigentes)]
 
     sin_imagen = int((~tabla['tiene_imagen']).sum())
     if sin_imagen:
