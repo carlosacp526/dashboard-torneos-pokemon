@@ -4,7 +4,7 @@ import os, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 
-st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon="⚡")
+st.set_page_config(page_title="Poketubi Dashboard", layout="wide", page_icon=os.path.join(ROOT, "poketubi_icon_1024.png"))
 from vistas import pendientes
 
 from vistas import jugadores
