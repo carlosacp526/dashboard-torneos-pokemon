@@ -399,7 +399,7 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
       `Partidas: ${{p.partidas}}  |  Winrate total: ${{p.winrate}}%\\n` +
       `Últ. mes: ${{wrTxt(p.winrate_1m, p.partidas_1m)}}  |  Últ. 3 meses: ${{wrTxt(p.winrate_3m, p.partidas_3m)}}\\n` +
       `Últ. 6 meses: ${{wrTxt(p.winrate_6m, p.partidas_6m)}}  |  Últ. año: ${{wrTxt(p.winrate_12m, p.partidas_12m)}}\\n` +
-      `Score: ${{scoreTxt}}  |  Formato: ${{p.formato || '-'}}`;
+      `Score: ${{scoreTxt}}  |  Formato: ${{p.formato || '-'}}  |  País: ${{p.pais || '-'}}`;
     if (p.img) {{
       card.innerHTML = `<img src="${{p.img}}"><div class="tm-name">${{p.nombre}}</div>`;
     }} else {{
@@ -479,7 +479,7 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
     const q = searchEl.value.trim().toLowerCase();
     if (q && !p.nombre.toLowerCase().includes(q)) return false;
     if (formatoEl.value && p.formato !== formatoEl.value) return false;
-    if (tierjugEl.value && p.tier_jugado !== tierjugEl.value) return false;
+    if (paisEl.value && p.pais !== paisEl.value) return false;
     if ((p.winrate || 0) < (parseFloat(winrateEl.value) || 0)) return false;
     if ((p.partidas || 0) < (parseInt(partidasEl.value) || 0)) return false;
     return true;
@@ -508,13 +508,13 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
     emptyMsg.style.display = visiblesEnPool === 0 ? 'block' : 'none';
   }}
 
-  [searchEl, formatoEl, tierjugEl, winrateEl, partidasEl].forEach(el => {{
+  [searchEl, formatoEl, paisEl, winrateEl, partidasEl].forEach(el => {{
     el.addEventListener('input', renderAll);
     el.addEventListener('change', renderAll);
   }});
 
   document.getElementById('tm-reset').addEventListener('click', () => {{
-    searchEl.value = ''; formatoEl.value = ''; tierjugEl.value = '';
+    searchEl.value = ''; formatoEl.value = ''; paisEl.value = '';
     winrateEl.value = 0; partidasEl.value = 0;
     renderAll();
   }});
@@ -621,7 +621,7 @@ def show():
             'winrate':     r['Winrate'],
             'score':       (round(float(score), 2) if pd.notna(score) else None),
             'formato':     r['Formato'],
-            'tier_jugado': r['Tier'],
+            'pais':        r['Pais'],
         }
         for sufijo, _, _ in VENTANAS_WINRATE:
             wr = r[f'Winrate_{sufijo}']
@@ -629,10 +629,10 @@ def show():
             payload[f'partidas_{sufijo}'] = int(r[f'Partidas_{sufijo}'])
         jugadores_payload.append(payload)
 
-    formatos      = sorted({j['formato'] for j in jugadores_payload if j['formato']})
-    tiers_jugados = sorted({j['tier_jugado'] for j in jugadores_payload if j['tier_jugado']})
+    formatos = sorted({j['formato'] for j in jugadores_payload if j['formato']})
+    paises   = sorted({j['pais'] for j in jugadores_payload if j['pais']})
 
-    html = _render_tiermaker_html(jugadores_payload, formatos, tiers_jugados)
+    html = _render_tiermaker_html(jugadores_payload, formatos, paises)
     components.html(html, height=880, scrolling=True)
 
 
