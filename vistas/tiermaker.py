@@ -11,7 +11,7 @@ Tier Maker de jugadores para Poketubi.
   + utils.build_base_torneo, promediando 'score_completo' de todas sus
   ligas/torneos).
 - Permite filtrar el "pool" de jugadores sin clasificar por nombre,
-  Formato, Tier jugado, partidas mínimas y winrate mínimo.
+  Formato, País, partidas mínimas y winrate mínimo.
 - El tablero (tiers S/A/B/C/D + pool) se arma con drag & drop nativo
   en un componente HTML embebido (st.components.v1.html).
 - Exporta el tablero final como PNG con html2canvas (CDN, se ejecuta en
@@ -40,6 +40,7 @@ from utils import (
     load_data, normalize_columns, ensure_fields, compute_player_stats,
     build_base_liga, build_base_torneo,
 )
+from vistas.elo import cargar_paises, _pais_de
 
 try:
     from PIL import Image
@@ -48,6 +49,7 @@ except ImportError:
     _PIL_OK = False
 
 JUGADORES_DIR = "jugadores"
+IMG_DESCONOCIDO = os.path.join(JUGADORES_DIR, "Desconocido.png")
 THUMB_SIZE = 90          # tamaño del avatar (px) que se embebe como base64
 JPEG_QUALITY = 82
 
@@ -186,6 +188,8 @@ def _construir_tabla_jugadores() -> pd.DataFrame:
             sub = df[df['date'] >= (fecha_ref - pd.DateOffset(months=meses))]
             stats_ventana[sufijo] = compute_player_stats(sub).set_index('Jugador')
 
+    paises = cargar_paises()
+
     filas = []
     for _, row in stats.iterrows():
         jugador = str(row['Jugador']).strip()
@@ -205,6 +209,9 @@ def _construir_tabla_jugadores() -> pd.DataFrame:
             if 'Tier' in pm.columns and not pm['Tier'].dropna().empty else ''
         )
         img_path = _buscar_imagen(jugador)
+        img_path_efectivo = img_path
+        if img_path_efectivo is None and os.path.exists(IMG_DESCONOCIDO):
+            img_path_efectivo = IMG_DESCONOCIDO
 
         fila = {
             'Jugador':      jugador,
@@ -215,8 +222,9 @@ def _construir_tabla_jugadores() -> pd.DataFrame:
             'Score':        scores.get(jugador.lower()),
             'Formato':      formato_top if formato_top not in ('nan', None) else '',
             'Tier':         tier_top if tier_top not in ('nan', None) else '',
+            'Pais':         _pais_de(paises, jugador),
             'tiene_imagen': img_path is not None,
-            '_img_path':    img_path,
+            '_img_path':    img_path_efectivo,
         }
         for sufijo, _, _ in VENTANAS_WINRATE:
             tabla_v = stats_ventana.get(sufijo)
@@ -244,11 +252,11 @@ TIERS_DEFAULT = [
 ]
 
 
-def _render_tiermaker_html(jugadores: list, formatos: list, tiers_jugados: list) -> str:
+def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str:
     data_json      = json.dumps(jugadores, ensure_ascii=False)
     tiers_json     = json.dumps(TIERS_DEFAULT, ensure_ascii=False)
     formatos_json  = json.dumps(formatos, ensure_ascii=False)
-    tiersj_json    = json.dumps(tiers_jugados, ensure_ascii=False)
+    paises_json    = json.dumps(paises, ensure_ascii=False)
 
     return f"""
 <div id="tm-root">
@@ -339,8 +347,8 @@ def _render_tiermaker_html(jugadores: list, formatos: list, tiers_jugados: list)
     <input type="text" id="tm-search" placeholder="🔍 Buscar jugador...">
     <label>Formato</label>
     <select id="tm-formato"><option value="">Todos</option></select>
-    <label>Tier jugado</label>
-    <select id="tm-tierjugado"><option value="">Todos</option></select>
+    <label>País</label>
+    <select id="tm-pais"><option value="">Todos</option></select>
     <label>Winrate mín. %</label>
     <input type="number" id="tm-winrate" value="0" min="0" max="100" style="width:56px">
     <label>Partidas mín.</label>
@@ -366,7 +374,7 @@ def _render_tiermaker_html(jugadores: list, formatos: list, tiers_jugados: list)
   const PLAYERS   = {data_json};
   let   TIERS     = {tiers_json};
   const FORMATOS  = {formatos_json};
-  const TIERSJUG  = {tiersj_json};
+  const PAISES    = {paises_json};
 
   const board   = document.getElementById('tm-board');
   const pool    = document.getElementById('tm-pool');
@@ -460,12 +468,12 @@ def _render_tiermaker_html(jugadores: list, formatos: list, tiers_jugados: list)
   // ── Filtros (solo afectan qué se ve en el pool) ──────────────────────
   const searchEl   = document.getElementById('tm-search');
   const formatoEl  = document.getElementById('tm-formato');
-  const tierjugEl  = document.getElementById('tm-tierjugado');
+  const paisEl     = document.getElementById('tm-pais');
   const winrateEl  = document.getElementById('tm-winrate');
   const partidasEl = document.getElementById('tm-partidas');
 
   FORMATOS.forEach(f => {{ const o = document.createElement('option'); o.value = f; o.textContent = f; formatoEl.appendChild(o); }});
-  TIERSJUG.forEach(t => {{ const o = document.createElement('option'); o.value = t; o.textContent = t; tierjugEl.appendChild(o); }});
+  PAISES.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; paisEl.appendChild(o); }});
 
   function passesFilter(p) {{
     const q = searchEl.value.trim().toLowerCase();
@@ -602,7 +610,7 @@ def show():
 
     jugadores_payload = []
     for _, r in tabla_f.iterrows():
-        img_b64 = _imagen_base64(r['_img_path']) if r['tiene_imagen'] else None
+        img_b64 = _imagen_base64(r['_img_path']) if r['_img_path'] else None
         score = r['Score']
         payload = {
             'nombre':      r['Jugador'],
