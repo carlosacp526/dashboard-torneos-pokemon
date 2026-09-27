@@ -171,6 +171,55 @@ def _parse_bracket(df_torneo):
     return rondas
 
 
+def _inferir_grupos(df_torneo):
+    """Infiere la composición de los grupos/llaves de la fase de grupos a
+    partir de QUIÉN JUGÓ CONTRA QUIÉN durante esa fase — no hay una columna
+    de "Grupo" explícita en los datos (round/Fase_completo solo dice "FASE DE
+    GRUPOS" para todos, sin distinguir grupo A/B/C/D).
+
+    Arma un grafo de enfrentamientos entre jugadores en rondas anteriores al
+    bracket (jugadas o pendientes, rondas < RONDA_MIN_BRACKET) y toma sus
+    componentes conexas como grupos: si la fase es un round-robin cerrado
+    por grupo (todos contra todos DENTRO del grupo, cero cruces entre
+    grupos — el formato estándar), cada componente conexa es exactamente un
+    grupo. Devuelve una lista de sets de nombres de jugador (vacía si no hay
+    fase de grupos/suiza reconocible)."""
+    d = df_torneo[df_torneo["round"].notna()].copy()
+    if d.empty:
+        return []
+    d["_ro"] = d["round"].apply(get_round_order)
+    d = d[d["_ro"] < RONDA_MIN_BRACKET]
+    d = _sin_placeholders(d)
+    if d.empty:
+        return []
+
+    padre = {}
+
+    def find(x):
+        padre.setdefault(x, x)
+        while padre[x] != x:
+            padre[x] = padre[padre[x]]
+            x = padre[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            padre[ra] = rb
+
+    for _, r in d.iterrows():
+        p1, p2 = str(r["player1"]).strip(), str(r["player2"]).strip()
+        if not p1 or not p2:
+            continue
+        find(p1); find(p2)
+        union(p1, p2)
+
+    grupos = {}
+    for j in padre:
+        grupos.setdefault(find(j), set()).add(j)
+    return list(grupos.values())
+
+
 def _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims=1000, seed=42):
     """
     Simula el bracket completo n_sims veces: para cada serie sin decidir, usa
@@ -380,6 +429,156 @@ def _simular_torneo_hibrido(base_nt, prob_df, avg_pokes, rondas, model, latest_s
             ganador_de[(0, sidx)] = ganador
             perdedor = p2 if ganador == p1 else p1
             etapa_counts[perdedor][etapas[0]] += 1
+
+        for ridx in range(1, len(rondas)):
+            n_series_ronda = len(rondas[ridx]["series"])
+            for sidx in range(n_series_ronda):
+                p1 = ganador_de.get((ridx - 1, 2 * sidx))
+                p2 = ganador_de.get((ridx - 1, 2 * sidx + 1))
+                if p1 is None or p2 is None:
+                    continue
+                p = prob_p1_series(p1, p2)
+                wins1 = sum(1 for _ in range(3) if rng.random() < p)
+                ganador = p1 if wins1 >= 2 else p2
+                ganador_de[(ridx, sidx)] = ganador
+                perdedor = p2 if ganador == p1 else p1
+                etapa_counts[perdedor][etapas[ridx]] += 1
+
+        campeon = ganador_de.get((len(rondas) - 1, 0))
+        if campeon:
+            etapa_counts[campeon]["Campeón"] += 1
+
+    columnas = ["Campeón"] + list(reversed(etapas))
+    filas = []
+    for p in participantes:
+        fila = {"Jugador": p, "Clasifica a eliminatoria": round(100 * clasificado_counts[p] / n_sims, 1)}
+        for col in columnas:
+            fila[col] = round(100 * etapa_counts[p].get(col, 0) / n_sims, 1)
+        fila["No clasifica"] = round(100 * (n_sims - clasificado_counts[p]) / n_sims, 1)
+        filas.append(fila)
+    odds_df = pd.DataFrame(filas).sort_values("Campeón", ascending=False).reset_index(drop=True)
+    return odds_df, columnas + ["No clasifica"]
+
+
+def _simular_torneo_hibrido_grupos(base_nt, prob_df, avg_pokes, rondas, grupos, model, latest_stats, top_feat,
+                                    n_sims=1000, seed=42):
+    """
+    Como _simular_torneo_hibrido, pero para el formato de bracket CON BYES
+    POR GRUPO: el 1° de cada grupo pasa directo a la segunda ronda del
+    bracket (ej. Cuartos), y el 2°/3° de cada grupo juegan la primera ronda
+    (ej. Octavos) entre sí para completar los cupos restantes. Se detecta
+    este formato cuando la primera ronda del bracket tiene la MISMA cantidad
+    de series que la segunda en vez de la mitad (ver _mostrar_torneo_hibrido)
+    — la mitad de los "cupos" de esa primera ronda ya vienen resueltos de
+    antemano (byes), no salen de un cruce real.
+
+    Usa el truco estándar de bracket con byes (el mismo que usan cuadros de
+    16 con menos de 16 anotados — NCAA, Wimbledon, etc.): arma el seed_order
+    de un bracket "completo" (n_full = 4 × series de la 2da ronda) con
+    jugadores fantasma "BYE" en los peores seeds — cualquier cruce real vs
+    BYE avanza automático sin jugarse, y los cruces real-vs-real sí se
+    simulan; el resultado matemático es el mismo bracket con los ganadores
+    de grupo protegidos con bye directo a la 2da ronda.
+    """
+    rng = np.random.default_rng(seed)
+
+    participantes = base_nt["Participante"].tolist()
+    idx = {p: i for i, p in enumerate(participantes)}
+    victorias0 = base_nt["Victorias"].to_numpy(dtype=float)
+    juegos0 = base_nt["Juegos"].to_numpy(dtype=float)
+    sob0 = base_nt["pokes_sobrevivientes"].to_numpy(dtype=float)
+    venc0 = base_nt["poke_vencidos"].to_numpy(dtype=float)
+
+    duelos = []
+    for m in (prob_df.to_dict("records") if isinstance(prob_df, pd.DataFrame) else prob_df):
+        i1, i2 = idx.get(m["player1"]), idx.get(m["player2"])
+        if i1 is None or i2 is None:
+            continue
+        for _ in range(m["n"]):
+            duelos.append((i1, i2, m["prob_p1"]))
+
+    n_series_octavos = len(rondas[0]["series"])
+    n_series_cuartos = len(rondas[1]["series"])
+    n_bye  = n_series_cuartos * 2 - n_series_octavos
+    n_play = n_series_octavos * 2
+    n_clasificados = n_bye + n_play
+    n_full = n_series_cuartos * 4
+
+    if n_bye != len(grupos) or n_bye <= 0 or n_clasificados > len(participantes):
+        return pd.DataFrame(), []
+
+    prob_cache = {}
+
+    def prob_p1_series(a, b):
+        key = (a, b)
+        if key not in prob_cache:
+            X = make_pred_row(a, b, latest_stats, top_feat)
+            prob_cache[key] = float(model.predict_proba(X)[0][0])
+        return prob_cache[key]
+
+    etapas = [r["nombre"] for r in rondas]
+    etapa_counts = {p: Counter() for p in participantes}
+    clasificado_counts = Counter()
+    order_full = _standard_seed_order(n_full)
+    grupos_list = [list(g) for g in grupos]
+
+    for _ in range(n_sims):
+        victorias = victorias0.copy(); juegos = juegos0.copy()
+        sob = sob0.copy(); venc = venc0.copy()
+        draws = rng.random(len(duelos))
+        for (i1, i2, p1), d in zip(duelos, draws):
+            wi, li = (i1, i2) if d < p1 else (i2, i1)
+            victorias[wi] += 1; juegos[wi] += 1; juegos[li] += 1
+            sw, vw = avg_pokes.get(participantes[wi], (3.0, 3.0))
+            sl, vl = avg_pokes.get(participantes[li], (3.0, 3.0))
+            sob[wi] += sw; venc[wi] += vw
+            sob[li] += sl; venc[li] += vl
+
+        sim = pd.DataFrame({
+            "Participante": participantes, "Victorias": victorias, "Juegos": juegos,
+            "Derrotas": juegos - victorias, "pokes_sobrevivientes": sob, "poke_vencidos": venc,
+        })
+        scored = score_final(sim).sort_values(
+            ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
+        rank_de = {p: i for i, p in enumerate(scored["Participante"])}
+
+        # clasificados POR GRUPO: 1° = bye directo, 2°/3° = juegan la 1ra ronda
+        byes, play_in = [], []
+        for g in grupos_list:
+            g_orden = sorted(g, key=lambda p: rank_de.get(p, 10**9))
+            if not g_orden:
+                continue
+            byes.append(g_orden[0])
+            play_in.extend(g_orden[1:3])
+
+        if len(byes) != n_bye or len(play_in) != n_play:
+            continue  # algun grupo quedo con menos de 3 jugadores con datos -- se descarta esta corrida
+
+        # seed cruzado entre grupos: mejor tabla general dentro de cada bloque (byes / play-in)
+        byes    = sorted(byes,    key=lambda p: rank_de.get(p, 10**9))
+        play_in = sorted(play_in, key=lambda p: rank_de.get(p, 10**9))
+        clasificados = byes + play_in
+        for p in clasificados:
+            clasificado_counts[p] += 1
+
+        seed_a_jugador = {i + 1: clasificados[i] for i in range(n_clasificados)}
+
+        # ── "ronda 0" = pares reales de la 1ra ronda + byes automáticos ────
+        ganador_de = {}
+        pos = 0
+        for i in range(0, n_full, 2):
+            sa, sb = order_full[i], order_full[i + 1]
+            ja, jb = seed_a_jugador.get(sa), seed_a_jugador.get(sb)
+            if ja is not None and jb is not None:
+                p = prob_p1_series(ja, jb)
+                wins1 = sum(1 for _ in range(3) if rng.random() < p)
+                ganador = ja if wins1 >= 2 else jb
+                perdedor = jb if ganador == ja else ja
+                etapa_counts[perdedor][etapas[0]] += 1
+            else:
+                ganador = ja if ja is not None else jb   # bye: avanza sin jugar
+            ganador_de[(0, pos)] = ganador
+            pos += 1
 
         for ridx in range(1, len(rondas)):
             n_series_ronda = len(rondas[ridx]["series"])
@@ -991,7 +1190,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
 
     if bracket_sin_arrancar:
         _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_feat,
-                                 n_sims, nombre_torneo, nt, mod_sel, pend_nt)
+                                 n_sims, nombre_torneo, nt, mod_sel, pend_nt, df_torneo_full)
     elif rondas:
         _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombre_torneo, nt, mod_sel, prob_df, pend_nt)
     else:
@@ -1050,30 +1249,68 @@ def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombr
 
 
 def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_feat,
-                             n_sims, nombre_torneo, nt, mod_sel, pend_nt):
+                             n_sims, nombre_torneo, nt, mod_sel, pend_nt, df_torneo_full=None):
     """Fase de grupos/suiza todavia en curso: TODO el bracket sigue marcado
     'Pendiente' (ver bracket_sin_arrancar en _show_torneo). En vez de rendirse,
     se simula el torneo completo de punta a punta con _simular_torneo_hibrido:
     primero quien clasifica de la fase de grupos, despues el bracket sembrado
-    con esos clasificados."""
-    n_series_r1 = len(rondas[0]["series"])
-    n_clasificados = n_series_r1 * 2
-    st.info(
-        f"La fase de grupos/ronda suiza de este torneo todavia no termino, asi que el bracket de "
-        f"eliminacion directa ({rondas[0]['nombre']} en adelante) todavia esta completo 'Pendiente' - "
-        f"nadie clasifico aun. Para estimar campeon/podio de todas formas, esta simulacion primero "
-        f"termina de simular la fase de grupos, clasifica a los **{n_clasificados} mejores** (el tamano "
-        f"real del bracket detectado en los datos: {n_series_r1} series en {rondas[0]['nombre']}), los "
-        f"siembra con el mismo seeding deportivo estandar que usa la pagina de Seeding (1° contra el "
-        f"peor clasificado, y asi para que los favoritos no se crucen antes de semifinal/final), y recien "
-        f"ahi simula el bracket completo hasta la Final — todo esto de punta a punta en cada una de las "
-        f"simulaciones."
-    )
+    con esos clasificados.
 
-    avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
-    with st.spinner(f"Simulando {n_sims} torneos completos (fase de grupos + bracket)..."):
-        odds_df, etapas_cols = _simular_torneo_hibrido(
-            base_nt, prob_df, avg_pokes, rondas, model, latest_stats, top_feat, n_sims)
+    Formato con BYES por grupo: cuando la 1ra ronda del bracket (ej. Octavos)
+    tiene la MISMA cantidad de series que la 2da (ej. Cuartos) en vez de la
+    mitad, es la firma de que el 1° de cada grupo pasa directo a la 2da ronda
+    y solo el 2°/3° de cada grupo juega la 1ra — ahi se usa
+    _simular_torneo_hibrido_grupos en vez del caso "tabla general" default."""
+    n_series_r1 = len(rondas[0]["series"])
+    n_series_r2 = len(rondas[1]["series"]) if len(rondas) > 1 else 0
+    formato_bye = n_series_r1 > 0 and n_series_r2 > 0 and n_series_r2 == n_series_r1
+    grupos = _inferir_grupos(df_torneo_full) if (formato_bye and df_torneo_full is not None) else []
+    usar_grupos = formato_bye and len(grupos) == n_series_r2
+
+    if usar_grupos:
+        n_bye = n_series_r2 * 2 - n_series_r1
+        n_clasificados = n_bye + n_series_r1 * 2
+        st.info(
+            f"La fase de grupos de este torneo todavia no termino. Se detecto un bracket con **byes por "
+            f"grupo**: {rondas[0]['nombre']} tiene {n_series_r1} series pero {rondas[1]['nombre']} tambien "
+            f"tiene {n_series_r2} — no es el doble, asi que la mitad de los cupos de {rondas[0]['nombre']} ya "
+            f"estan resueltos de antemano. Se infirieron **{len(grupos)} grupos** (a partir de quien jugo "
+            f"contra quien en la fase de grupos): el **1° de cada grupo pasa directo a {rondas[1]['nombre']}** "
+            f"({n_bye} bye{'s' if n_bye != 1 else ''}), y el **2°/3° de cada grupo juega {rondas[0]['nombre']}** "
+            f"entre si para completar los {n_series_r1 * 2} cupos restantes — en total **{n_clasificados} "
+            f"clasificados**. Esta simulacion primero termina la fase de grupos, clasifica por grupo (no por "
+            f"tabla general), siembra con seeding deportivo estandar y recien ahi simula el bracket completo "
+            f"hasta la Final — todo de punta a punta en cada una de las simulaciones."
+        )
+        avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
+        with st.spinner(f"Simulando {n_sims} torneos completos (fase de grupos + bracket con byes)..."):
+            odds_df, etapas_cols = _simular_torneo_hibrido_grupos(
+                base_nt, prob_df, avg_pokes, rondas, grupos, model, latest_stats, top_feat, n_sims)
+    else:
+        n_clasificados = n_series_r1 * 2
+        aviso_bye = (
+            f" **Nota:** se detecto la firma de un bracket con byes por grupo ({rondas[0]['nombre']} y "
+            f"{rondas[1]['nombre']} tienen la misma cantidad de series), pero no se pudieron inferir los "
+            f"grupos de forma confiable a partir de los cruces de la fase de grupos — se usa el criterio de "
+            f"tabla general como respaldo, puede no coincidir con el reglamento real del torneo."
+            if formato_bye else ""
+        )
+        st.info(
+            f"La fase de grupos/ronda suiza de este torneo todavia no termino, asi que el bracket de "
+            f"eliminacion directa ({rondas[0]['nombre']} en adelante) todavia esta completo 'Pendiente' - "
+            f"nadie clasifico aun. Para estimar campeon/podio de todas formas, esta simulacion primero "
+            f"termina de simular la fase de grupos, clasifica a los **{n_clasificados} mejores** (el tamano "
+            f"real del bracket detectado en los datos: {n_series_r1} series en {rondas[0]['nombre']}), los "
+            f"siembra con el mismo seeding deportivo estandar que usa la pagina de Seeding (1° contra el "
+            f"peor clasificado, y asi para que los favoritos no se crucen antes de semifinal/final), y recien "
+            f"ahi simula el bracket completo hasta la Final — todo esto de punta a punta en cada una de las "
+            f"simulaciones.{aviso_bye}"
+        )
+
+        avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
+        with st.spinner(f"Simulando {n_sims} torneos completos (fase de grupos + bracket)..."):
+            odds_df, etapas_cols = _simular_torneo_hibrido(
+                base_nt, prob_df, avg_pokes, rondas, model, latest_stats, top_feat, n_sims)
 
     if odds_df.empty:
         st.warning(

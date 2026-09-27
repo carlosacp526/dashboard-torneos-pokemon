@@ -1,5 +1,5 @@
 """
-logros.py — Sistema de 147 logros Poketubi (nueva versión)
+logros.py — Sistema de 151 logros Poketubi (nueva versión)
 Fuente: logros_pokemon.xlsx
 """
 
@@ -215,6 +215,14 @@ LOGROS = [
 {"id":"TO16","num":145,"cat":"Torneo",    "rareza":"Plata",     "icon":"🧗","xp":400,  "name":"Semifinalista Recurrente", "desc":"Llega a semifinal en 3 torneos distintos"},
 {"id":"TO17","num":146,"cat":"Torneo",    "rareza":"Oro",       "icon":"🪜","xp":700,  "name":"Remontada de Bracket",      "desc":"Pierde una partida en fase de grupos/ronda suiza pero termina en el Top 4 del torneo"},
 {"id":"SO16","num":147,"cat":"Social",    "rareza":"Oro",       "icon":"🔗","xp":900,  "name":"Círculo Cerrado",           "desc":"Se enfrenta 10+ veces cada uno contra al menos 5 rivales distintos"},
+
+# ── TAMAÑO DE TORNEO (4) — misma categorización oficial de Análisis General /
+# PUNTAJES_MUNDIAL3.png (por participantes): Pequeño < 13 · Mediano <= 24 ·
+# Grande > 24 · Special Event >= 45 · Regional >= 80 ─────────────────────────
+{"id":"TO18","num":148,"cat":"Torneo",    "rareza":"Bronce",    "icon":"🏠","xp":150,  "name":"Campeón de Bolsillo",       "desc":"Gana un torneo Pequeño (menos de 13 participantes)"},
+{"id":"TO19","num":149,"cat":"Torneo",    "rareza":"Plata",     "icon":"🏢","xp":350,  "name":"Campeón Consolidado",       "desc":"Gana un torneo Mediano (13 a 24 participantes)"},
+{"id":"TO20","num":150,"cat":"Torneo",    "rareza":"Oro",       "icon":"🏛️","xp":800,  "name":"Campeón de Multitudes",     "desc":"Gana un torneo Grande (más de 24 participantes)"},
+{"id":"TO21","num":151,"cat":"Torneo",    "rareza":"Legendario","icon":"🌐","xp":2000, "name":"Campeón Regional",          "desc":"Gana un torneo Regional o Special Event (45+ participantes)"},
 
 ]
 
@@ -1320,6 +1328,41 @@ def evaluar_logros(
         return False
     r["TO17"] = _remontada_de_bracket()
 
+    # ── TO18-TO21: logros por TAMAÑO de torneo GANADO — misma categorización
+    # oficial de Análisis General > Panorama de Competencias (analisis.py
+    # _categoria_torneo, basada en PUNTAJES_MUNDIAL3.png): cada torneo cae en
+    # la categoría más alta cuyo umbral supera, así que un torneo Regional/
+    # Special no cuenta también como "Grande" ──────────────────────────────
+    def _categoria_torneo_tam(n):
+        if n >= 80: return 'Regional'
+        if n >= 45: return 'Special'
+        if n > 24: return 'Grande'
+        if n < 13: return 'Pequeño'
+        return 'Mediano'
+
+    def _participantes_torneo(nt):
+        if df_raw is None or 'N_Torneo' not in df_raw.columns:
+            return 0
+        sub = df_raw[(df_raw['league'] == 'TORNEO') & (df_raw['N_Torneo'] == nt)]
+        jugadores = set(sub['player1'].dropna().astype(str).str.lower()) | \
+                    set(sub['player2'].dropna().astype(str).str.lower())
+        return len(jugadores)
+
+    _categorias_torneos_ganados = set()
+    for camp in campeonatos_torneo_final:
+        try:
+            nt = int(camp.get('Torneo'))
+        except (TypeError, ValueError):
+            continue
+        n_part = _participantes_torneo(nt)
+        if n_part > 0:
+            _categorias_torneos_ganados.add(_categoria_torneo_tam(n_part))
+
+    r["TO18"] = 'Pequeño' in _categorias_torneos_ganados
+    r["TO19"] = 'Mediano' in _categorias_torneos_ganados
+    r["TO20"] = 'Grande' in _categorias_torneos_ganados
+    r["TO21"] = bool(_categorias_torneos_ganados & {'Special', 'Regional'})
+
     # ── SO14: El Más Buscado — necesita el precálculo comunitario
     # `jugadores_mas_buscados` (ver _precalcular_mas_buscado); sin él, no se desbloquea.
     r["SO14"] = pq in jugadores_mas_buscados
@@ -1537,6 +1580,10 @@ def evaluar_logros(
     _d("SP20", _max_cruces, 15, f"Máximo de cruces contra un mismo rival: {_max_cruces}")
     _d("TO16", texto="Llegó a semifinal en 3+ torneos distintos" if r["TO16"] else None)
     _d("TO17", texto="Perdió en fase de grupos/ronda suiza pero terminó Top 4 del torneo" if r["TO17"] else None)
+    _d("TO18", texto="Ganó un torneo Pequeño (< 13 participantes)" if r["TO18"] else None)
+    _d("TO19", texto="Ganó un torneo Mediano (13-24 participantes)" if r["TO19"] else None)
+    _d("TO20", texto="Ganó un torneo Grande (25-44 participantes)" if r["TO20"] else None)
+    _d("TO21", texto="Ganó un torneo Regional o Special Event (45+ participantes)" if r["TO21"] else None)
     _n_rivales_10 = sum(1 for c in _cruces_por_rival.values() if c >= 10)
     _d("SO16", _n_rivales_10, 5, f"{_n_rivales_10} rival(es) con 10+ cruces cada uno")
 
