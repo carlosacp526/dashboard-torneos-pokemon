@@ -1140,19 +1140,25 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
 
     pend_nt = df_pend_all[df_pend_all["N_Torneo"] == nt] if not df_pend_all.empty else df_pend_all
 
-    # Torneo recien cargado (bracket armado pero CERO partidas jugadas todavia,
-    # ver comentario en torneos_en_curso más arriba) — build_base_torneo no le
-    # arma fila a nadie porque solo mira partidas con Walkover >= 0. Se arma la
-    # tabla en 0-0 a partir de los jugadores reales de la fase de grupos/suiza
-    # pendiente, para que la simulacion tenga de donde arrancar.
-    if base_nt.empty and not pend_nt.empty:
-        jugadores_iniciales = pd.unique(pend_nt[["player1", "player2"]].values.ravel("K"))
-        jugadores_iniciales = [j for j in jugadores_iniciales if pd.notna(j) and str(j).strip() != ""]
-        base_nt = pd.DataFrame({
-            "Participante": jugadores_iniciales,
-            "Victorias": 0, "Juegos": 0, "Derrotas": 0,
-            "pokes_sobrevivientes": 0, "poke_vencidos": 0,
-        })
+    # Jugadores con partidas pendientes pero SIN ninguna fila en base_nt: pasa
+    # con un torneo recien cargado (bracket armado, CERO partidas jugadas
+    # todavia — build_base_torneo no le arma fila a nadie porque solo mira
+    # partidas con Walkover >= 0) pero TAMBIEN con un torneo donde algunos
+    # cruces ya se decidieron por Walkover==1 (ausencia, no partida jugada)
+    # y el resto de la fase de grupos sigue pendiente: ahi base_nt queda
+    # PARCIALMENTE poblado (solo con los jugadores de esos walkovers), no
+    # vacio del todo, asi que hace falta agregar en 0-0 a los que todavia no
+    # tienen fila, no solo rellenar cuando base_nt esta completamente vacio.
+    if not pend_nt.empty:
+        jugadores_pend = pd.unique(pend_nt[["player1", "player2"]].values.ravel("K"))
+        jugadores_pend = {j for j in jugadores_pend if pd.notna(j) and str(j).strip() != ""}
+        jugadores_faltantes = sorted(jugadores_pend - set(base_nt["Participante"]))
+        if jugadores_faltantes:
+            base_nt = pd.concat([base_nt, pd.DataFrame({
+                "Participante": jugadores_faltantes,
+                "Victorias": 0, "Juegos": 0, "Derrotas": 0,
+                "pokes_sobrevivientes": 0, "poke_vencidos": 0,
+            })], ignore_index=True)
 
     st.markdown("---")
 
