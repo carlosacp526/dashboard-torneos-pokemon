@@ -33,7 +33,30 @@ def show():
         st.session_state["_resumen_replay_analisis"] = resumen_replay
         st.session_state["_resumen_replay_analisis_de"] = jugador_replay
 
+    # Claves que el resultado SIEMPRE debe traer con la versión actual de
+    # obtener_resumen_jugador(). st.session_state persiste entre reruns (y
+    # entre un deploy y el siguiente en la misma sesión de navegador), así
+    # que si alguien ya había analizado replays ANTES de que se agregara un
+    # campo nuevo, se queda con un dict "viejo" guardado -- sin este chequeo
+    # eso revienta con KeyError en vez de simplemente pedir reanalizar.
+    _CLAVES_ESPERADAS = {
+        "n_replays", "pokemon_top", "nicknames", "duracion_prom_txt",
+        "ko_causados", "ko_propios", "crits_dados", "crits_recibidos",
+        "turnos_prom", "efectividad_pct", "lead_top", "mega_top", "tera_top",
+        "duplas_top", "rivales_top", "nombres_showdown",
+        "se_prom", "resisted_prom", "weather_prom", "boosts_prom",
+        "heals_prom", "transforms_prom", "prepares_prom",
+    }
+
     resumen_replay = st.session_state.get("_resumen_replay_analisis")
+    if resumen_replay is not None and not _CLAVES_ESPERADAS.issubset(resumen_replay.keys()):
+        # Resultado de una versión anterior -> se descarta, no se muestra a
+        # medias ni se revienta; simplemente se pide volver a analizar.
+        resumen_replay = None
+        st.session_state.pop("_resumen_replay_analisis", None)
+        st.session_state.pop("_resumen_replay_analisis_de", None)
+        st.info("Los resultados guardados son de una versión anterior de esta página — volvé a apretar 'Analizar replays' para refrescarlos.")
+
     if resumen_replay is not None and st.session_state.get("_resumen_replay_analisis_de") == jugador_replay:
         if resumen_replay["n_replays"] == 0:
             st.info("No se encontraron replays analizables para este jugador.")
@@ -52,13 +75,6 @@ def show():
 
             st.markdown("#### 🎯 Pokémon más usados")
             st.dataframe(resumen_replay["pokemon_top"], use_container_width=True, hide_index=True)
-
-            st.markdown("#### 🏷️ Apodos (nicknames) usados")
-            if resumen_replay["nicknames"]:
-                for n in resumen_replay["nicknames"]:
-                    st.markdown(f"- {n}")
-            else:
-                st.caption("Sin apodos personalizados detectados (usó el nombre de especie en todos los replays analizados).")
 
             st.markdown("---")
             st.markdown("### 🕹️ Estilo de juego")
@@ -98,5 +114,12 @@ def show():
                 st.dataframe(resumen_replay["rivales_top"], use_container_width=True, hide_index=True)
             else:
                 st.caption("Sin datos de rivales detectados.")
+
+            st.markdown("#### 🏷️ Apodos (nicknames) usados")
+            if resumen_replay["nicknames"]:
+                for n in resumen_replay["nicknames"]:
+                    st.markdown(f"- {n}")
+            else:
+                st.caption("Sin apodos personalizados detectados (usó el nombre de especie en todos los replays analizados).")
     elif resumen_replay is None:
         st.caption("Puede tardar unos segundos la primera vez (se guardan en caché para la próxima).")
