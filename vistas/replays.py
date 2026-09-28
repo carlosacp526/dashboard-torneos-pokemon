@@ -758,7 +758,7 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
         return {}
 
     lookup = (
-        df_raw[["Match_replays", "player1", "player2", "winner"]]
+        df_raw[["Match_replays", "player1", "player2", "winner", "Formato_esp"]]
         .dropna(subset=["Match_replays"])
         .drop_duplicates(subset=["Match_replays"])
         .set_index("Match_replays")
@@ -769,6 +769,12 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
         if url not in lookup.index:
             continue
         fila = lookup.loc[url]
+        # Free For All / Free For All Randoms: se descartan por nombre de
+        # formato (no solo por cantidad de jugadores en el caché) -- son
+        # partidas de 3-4 jugadores donde "ganador/perdedor" no es binario,
+        # así que ni con datos completos se puede saber cuál perdedor es cuál.
+        if str(fila.get("Formato_esp", "")).strip().upper() in FFA_FORMATOS:
+            continue
         csv_p1 = str(fila["player1"]).strip()
         csv_p2 = str(fila["player2"]).strip()
         csv_winner = str(fila["winner"]).strip()
@@ -776,7 +782,9 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
             continue
 
         sub = grp.drop_duplicates(subset=["player_name"])
-        # Free For All (3-4 jugadores): "ganador/perdedor" deja de ser binario
+        # Chequeo redundante por cantidad de jugadores realmente vistos en el
+        # replay (además del chequeo por nombre de formato de arriba, por si
+        # el formato viene mal cargado en el CSV pero el replay sí es FFA).
         # -- hay UN ganador pero VARIOS perdedores, y no hay forma de saber
         # cuál perdedor es cuál solo con esta fila. Ya se ignora FFA para
         # ko_causados por la misma razón (ver _extraer_detalle_replay); acá
