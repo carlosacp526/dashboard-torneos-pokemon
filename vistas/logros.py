@@ -235,6 +235,17 @@ LOGROS = [
 {"id":"TO20","num":150,"cat":"Torneo",    "rareza":"Oro",       "icon":"🏛️","xp":800,  "name":"Campeón de Multitudes",     "desc":"Gana un torneo Grande (más de 24 participantes)"},
 {"id":"TO21","num":151,"cat":"Torneo",    "rareza":"Legendario","icon":"🌐","xp":2000, "name":"Campeón Regional",          "desc":"Gana un torneo Regional o Special Event (45+ participantes)"},
 
+# ── MÁS PLATA (9) — refuerzo de la rareza Plata, la más escasa del sistema ──
+{"id":"TO22","num":162,"cat":"Torneo",     "rareza":"Plata", "icon":"🎯","xp":300, "name":"Cuartofinalista",           "desc":"Llega a cuartos de final en un torneo"},
+{"id":"TO23","num":163,"cat":"Torneo",     "rareza":"Plata", "icon":"📆","xp":350, "name":"Año Cargado",               "desc":"Participa en 3+ torneos distintos en el mismo año"},
+{"id":"TO24","num":164,"cat":"Torneo",     "rareza":"Plata", "icon":"🔀","xp":300, "name":"Doble Formato de Torneo",   "desc":"Participa en torneos de 2 formatos distintos (Singles/Dobles/VGC) en el mismo año"},
+{"id":"TO25","num":165,"cat":"Torneo",     "rareza":"Plata", "icon":"🧨","xp":400, "name":"Sobreviviente de Bracket",  "desc":"Gana una batalla en fase eliminatoria (octavos o cuartos) en 3 torneos distintos"},
+{"id":"RK14","num":166,"cat":"Ranking",    "rareza":"Plata", "icon":"🔢","xp":350, "name":"Consistencia",              "desc":"Mantiene 1100+ Elo durante 3 meses seguidos"},
+{"id":"PR10","num":167,"cat":"Progresión", "rareza":"Plata", "icon":"🏅","xp":300, "name":"A Medio Camino",            "desc":"Desbloquea 25 logros en total"},
+{"id":"SP21","num":168,"cat":"Especial",   "rareza":"Plata", "icon":"😬","xp":300, "name":"Rival Incómodo",            "desc":"Vence al mismo rival en 2 formatos distintos (Singles/Dobles/VGC)"},
+{"id":"SP22","num":169,"cat":"Especial",   "rareza":"Plata", "icon":"📅","xp":250, "name":"Racha de Presencia",        "desc":"Juega en 3 meses consecutivos sin faltar ninguno"},
+{"id":"LI12","num":170,"cat":"Ligas",      "rareza":"Plata", "icon":"📈","xp":400, "name":"Ascenso Confirmado",        "desc":"Jugó primero en una categoría de Liga y más tarde en una superior (subió de división)"},
+
 ]
 
 # Orden de categorías para mostrar
@@ -928,6 +939,29 @@ def evaluar_logros(
                 return True
         return False
     r["LI11"] = _racha_jornadas()
+
+    # ── LI12: Ascenso Confirmado — jugó primero en una categoría de Liga y
+    # más tarde en una superior. Jerarquía calcada de SO01-03/SP17 (donde
+    # jugar PMS ya implica "haber pasado por" Junior/Senior): PJS/PES = 1,
+    # PSS = 2, PMS = 3, PLS = 4.
+    def _ascenso_confirmado():
+        if pm_liga.empty or 'Ligas_categoria' not in pm_liga.columns or 'date' not in pm_liga.columns:
+            return False
+        RANGO = {"PJS": 1, "PES": 1, "PSS": 2, "PMS": 3, "PLS": 4}
+        primera_fecha = {}
+        for _, row in pm_liga.iterrows():
+            cat = str(row.get('Ligas_categoria', '')).upper().strip()
+            f = row.get('date')
+            if cat not in RANGO or pd.isna(f):
+                continue
+            if cat not in primera_fecha or f < primera_fecha[cat]:
+                primera_fecha[cat] = f
+        for cat_baja, fecha_baja in primera_fecha.items():
+            for cat_alta, fecha_alta in primera_fecha.items():
+                if RANGO[cat_alta] > RANGO[cat_baja] and fecha_baja < fecha_alta:
+                    return True
+        return False
+    r["LI12"] = _ascenso_confirmado()
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     if any('PES' in str(l).upper() for l in ligas_jugadas):
@@ -1332,6 +1366,7 @@ def evaluar_logros(
             anterior = m
         return False
     r["RK13"] = _elo_acero()
+    r["RK14"] = _elo_acero(meses_seguidos=3, umbral=1100)
 
     # ── ES16: Explorador del Año ────────────────────────────────────────────
     if 'Tier' in pm.columns and 'date' in pm.columns:
@@ -1493,6 +1528,39 @@ def evaluar_logros(
     r["TO20"] = 'Grande' in _categorias_torneos_ganados
     r["TO21"] = bool(_categorias_torneos_ganados & {'Special', 'Regional'})
 
+    # ── TO22: Cuartofinalista — llegó a cuartos de final en algún torneo ────
+    r["TO22"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('cuartos de final', na=False)).any()
+    )
+
+    # ── TO23/TO24: Año Cargado / Doble Formato de Torneo — ambos miran la
+    # participación en TORNEO agrupada por año calendario ──────────────────
+    _torneos_por_anio = {}
+    _formatos_por_anio = {}
+    if not pm.empty and 'league' in pm.columns and 'date' in pm.columns and 'N_Torneo' in pm.columns:
+        pm_t = pm[pm['league'] == 'TORNEO'].dropna(subset=['date'])
+        for _, fila in pm_t.iterrows():
+            anio = fila['date'].year
+            _torneos_por_anio.setdefault(anio, set()).add(fila.get('N_Torneo'))
+            if pd.notna(fila.get('Formato')):
+                _formatos_por_anio.setdefault(anio, set()).add(str(fila['Formato']).upper())
+    r["TO23"] = any(len(s) >= 3 for s in _torneos_por_anio.values())
+    r["TO24"] = any(len(s) >= 2 for s in _formatos_por_anio.values())
+
+    # ── TO25: Sobreviviente de Bracket — ganó al menos una batalla en fase
+    # eliminatoria (octavos/cuartos) en 3 torneos distintos ─────────────────
+    def _sobreviviente_bracket(min_torneos=3):
+        if pm.empty or 'round' not in pm.columns or 'league' not in pm.columns or 'N_Torneo' not in pm.columns:
+            return False
+        d = pm[
+            (pm['league'] == 'TORNEO') &
+            pm['round'].str.lower().str.contains('octavos de final|cuartos de final', na=False, regex=True) &
+            pm['winner'].str.lower().str.contains(pq, na=False)
+        ]
+        return d['N_Torneo'].dropna().nunique() >= min_torneos
+    r["TO25"] = _sobreviviente_bracket()
+
     # ── SO14: El Más Buscado — necesita el precálculo comunitario
     # `jugadores_mas_buscados` (ver _precalcular_mas_buscado); sin él, no se desbloquea.
     r["SO14"] = pq in jugadores_mas_buscados
@@ -1542,6 +1610,41 @@ def evaluar_logros(
     # ── SO16: Círculo Cerrado — 5+ rivales distintos con 10+ cruces cada uno ──
     r["SO16"] = sum(1 for c in _cruces_por_rival.values() if c >= 10) >= 5
 
+    # ── SP21: Rival Incómodo — vence al mismo rival en 2+ formatos de torneo
+    # distintos (Singles/Dobles/VGC) ─────────────────────────────────────────
+    def _rival_incomodo():
+        if pm.empty or 'league' not in pm.columns or 'Formato' not in pm.columns:
+            return False
+        d = pm[(pm['league'] == 'TORNEO') & pm['winner'].str.lower().str.contains(pq, na=False)]
+        formatos_por_rival = {}
+        for _, row in d.iterrows():
+            p1 = str(row.get('player1', '')).strip().lower()
+            p2 = str(row.get('player2', '')).strip().lower()
+            rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+            if rival and pd.notna(row.get('Formato')):
+                formatos_por_rival.setdefault(rival, set()).add(str(row['Formato']).upper())
+        return any(len(f) >= 2 for f in formatos_por_rival.values())
+    r["SP21"] = _rival_incomodo()
+
+    # ── SP22: Racha de Presencia — 3+ meses calendario consecutivos con al
+    # menos una batalla (cualquier competencia) ─────────────────────────────
+    def _racha_presencia(min_meses=3):
+        if pm_crono.empty:
+            return False
+        meses = sorted(set(pm_crono['date'].dropna().dt.to_period('M')))
+        if not meses:
+            return False
+        racha = 1
+        mejor = 1
+        for i in range(1, len(meses)):
+            if meses[i] == meses[i - 1] + 1:
+                racha += 1
+                mejor = max(mejor, racha)
+            else:
+                racha = 1
+        return mejor >= min_meses
+    r["SP22"] = _racha_presencia()
+
     # PROGRESIÓN — depende del conteo anterior
     xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
     desbloq_bronce = sum(1 for l in LOGROS if l['rareza']=='Bronce' and r.get(l['id'],False))
@@ -1552,6 +1655,7 @@ def evaluar_logros(
     r["PR01"] = desbloq_bronce >= 10
     r["PR02"] = desbloq_plata  >= 10
     r["PR03"] = desbloq_oro    >= 10
+    r["PR10"] = desbloq_total  >= 25
     r["PR04"] = desbloq_total  >= 50
     r["PR05"] = desbloq_total  >= 80
     r["PR06"] = xp_total >= 1000
@@ -1724,6 +1828,19 @@ def evaluar_logros(
     _d("TO21", texto="Ganó un torneo Regional o Special Event (45+ participantes)" if r["TO21"] else None)
     _n_rivales_10 = sum(1 for c in _cruces_por_rival.values() if c >= 10)
     _d("SO16", _n_rivales_10, 5, f"{_n_rivales_10} rival(es) con 10+ cruces cada uno")
+
+    # MÁS PLATA
+    _d("TO22", texto="Llegó a cuartos de final en un torneo" if r["TO22"] else None)
+    _max_torneos_anio = max((len(s) for s in _torneos_por_anio.values()), default=0)
+    _d("TO23", _max_torneos_anio, 3, f"Máximo de torneos distintos en un mismo año: {_max_torneos_anio}")
+    _max_formatos_anio = max((len(s) for s in _formatos_por_anio.values()), default=0)
+    _d("TO24", _max_formatos_anio, 2, f"Máximo de formatos de torneo distintos en un mismo año: {_max_formatos_anio}")
+    _d("TO25", texto="Ganó en fase eliminatoria (octavos/cuartos) en 3+ torneos distintos" if r["TO25"] else None)
+    _d("RK14", umbral=3, texto="Mantuvo 1100+ Elo durante 3 meses seguidos" if r["RK14"] else None)
+    _d("PR10", desbloq_total, 25, f"{desbloq_total} logro(s) desbloqueado(s) en total")
+    _d("SP21", texto="Venció al mismo rival en 2+ formatos de torneo distintos" if r["SP21"] else None)
+    _d("SP22", umbral=3, texto="3+ meses consecutivos con al menos una batalla" if r["SP22"] else None)
+    _d("LI12", texto="Jugó primero en una categoría de Liga y luego en una superior" if r["LI12"] else None)
 
     return r, detalles
 
