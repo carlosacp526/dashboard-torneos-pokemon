@@ -66,14 +66,14 @@ def show():
             rd1.metric("Turnos promedio", resumen_replay["turnos_prom"] or "—")
             reff = f"{resumen_replay['efectividad_pct']}%" if resumen_replay["efectividad_pct"] is not None else "—"
             rd2.metric("Efectividad de tipo", reff, help="% de sus golpes notables que fueron súper efectivos (vs. resistidos)")
-            rd3.metric("Veces que boosteó", resumen_replay["boosts_propios"])
-            rd4.metric("Veces que se curó", resumen_replay["heals_propios"])
+            rd3.metric("Boosts por batalla", resumen_replay["boosts_prom"], help=f"{resumen_replay['boosts_propios']} en total / {resumen_replay['n_replays']} replays")
+            rd4.metric("Curas por batalla", resumen_replay["heals_prom"], help=f"{resumen_replay['heals_propios']} en total / {resumen_replay['n_replays']} replays")
 
             re1, re2, re3, re4 = st.columns(4)
-            re1.metric("Clima propio activado", resumen_replay["weather_propio"], help="Veces que activó SU PROPIO clima (Drought/Drizzle/etc.)")
-            re2.metric("Transforms (Ditto, etc.)", resumen_replay["transforms_propios"])
-            re3.metric("Cargas de 2 turnos", resumen_replay["prepares_propios"], help="Solar Beam, Fly, Dig y similares")
-            re4.metric("Golpes SE / resistidos", f"{resumen_replay['supereffective_dados']} / {resumen_replay['resisted_dados']}")
+            re1.metric("Clima propio por batalla", resumen_replay["weather_prom"], help=f"Activaciones de SU PROPIO clima (Drought/Drizzle/etc.) — {resumen_replay['weather_propio']} en total")
+            re2.metric("Transforms por batalla", resumen_replay["transforms_prom"], help=f"{resumen_replay['transforms_propios']} en total")
+            re3.metric("Cargas de 2 turnos/batalla", resumen_replay["prepares_prom"], help=f"Solar Beam, Fly, Dig y similares — {resumen_replay['prepares_propios']} en total")
+            re4.metric("Golpes SE / resistidos por batalla", f"{resumen_replay['se_prom']} / {resumen_replay['resisted_prom']}", help=f"{resumen_replay['supereffective_dados']} / {resumen_replay['resisted_dados']} en total")
 
             rcol_lead, rcol_mt = st.columns(2)
             with rcol_lead:

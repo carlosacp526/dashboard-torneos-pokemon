@@ -856,6 +856,8 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "turnos_prom": None, "supereffective_dados": 0, "resisted_dados": 0,
         "efectividad_pct": None, "weather_propio": 0, "boosts_propios": 0,
         "heals_propios": 0, "transforms_propios": 0, "prepares_propios": 0,
+        "se_prom": 0, "resisted_prom": 0, "weather_prom": 0, "boosts_prom": 0,
+        "heals_prom": 0, "transforms_prom": 0, "prepares_prom": 0,
         "lead_top": pd.DataFrame(columns=["Pokémon", "Veces de lead"]),
         "mega_top": [], "tera_top": [],
         "duplas_top": pd.DataFrame(columns=["Dupla", "Partidas juntos"]),
@@ -915,6 +917,9 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     def _suma(col):
         return int(_num(col).fillna(0).sum())
 
+    def _promedio(col):
+        return round(_num(col).fillna(0).mean(), 2) if n_replays else 0
+
     duraciones = _num("duration_seconds").dropna()
     dur_prom = round(duraciones.mean()) if not duraciones.empty else None
     dur_txt = f"{int(dur_prom // 60)}m {int(dur_prom % 60)}s" if dur_prom is not None else None
@@ -969,6 +974,15 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "heals_propios": _suma("heals_propios"),
         "transforms_propios": _suma("transforms_propios"),
         "prepares_propios": _suma("prepares_propios"),
+        # Promedios por batalla (para poder comparar jugadores con distinta
+        # cantidad de replays, en vez de solo totales acumulados)
+        "se_prom": _promedio("supereffective_dados"),
+        "resisted_prom": _promedio("resisted_dados"),
+        "weather_prom": _promedio("weather_propio"),
+        "boosts_prom": _promedio("boosts_propios"),
+        "heals_prom": _promedio("heals_propios"),
+        "transforms_prom": _promedio("transforms_propios"),
+        "prepares_prom": _promedio("prepares_propios"),
         "lead_top": lead_top,
         "mega_top": mega_top,
         "tera_top": tera_top,
