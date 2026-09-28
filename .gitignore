@@ -10,3 +10,6 @@ __pycache__/
 
 # Artefactos regenerables de los informes ML (JSON/PNG de cada corrida)
 informes_ml/_build/
+
+# Backup local de replays de Showdown (no se pushea, solo respaldo en disco)
+replays_archive/

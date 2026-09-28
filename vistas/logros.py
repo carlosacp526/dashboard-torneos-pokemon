@@ -207,12 +207,12 @@ LOGROS = [
 {"id":"VI24","num":128,"cat":"Victorias", "rareza":"Bronce",    "icon":"🔁","xp":100,  "name":"Remontada de Serie",  "desc":"Pierde el juego 1 pero gana la serie"},
 {"id":"RK11","num":129,"cat":"Ranking",   "rareza":"Oro",       "icon":"📈","xp":700,  "name":"Comeback de Elo",     "desc":"Sube 200+ Elo en 3 meses o menos"},
 {"id":"RK12","num":130,"cat":"Ranking",   "rareza":"Legendario","icon":"👑","xp":3000, "name":"Number One",          "desc":"Llega a ser el Elo más alto de toda la comunidad en algún momento"},
-{"id":"RK13","num":131,"cat":"Ranking",   "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Elo de Acero",        "desc":"Mantiene 1300+ Elo durante 6 meses seguidos"},
+{"id":"RK13","num":131,"cat":"Ranking",   "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Elo de Acero",        "desc":"Mantiene 1300+ Elo durante 6 meses (no necesariamente seguidos)"},
 {"id":"ES16","num":132,"cat":"Estrategia","rareza":"Plata",     "icon":"🧭","xp":300,  "name":"Explorador del Año",  "desc":"Juega 5+ tiers distintos en un mismo año"},
 {"id":"ES17","num":133,"cat":"Estrategia","rareza":"Oro",       "icon":"🎭","xp":700,  "name":"Triple Amenaza",      "desc":"Gana en Singles, Dobles y VGC en el mismo mes"},
-{"id":"ES18","num":134,"cat":"Estrategia","rareza":"Oro",       "icon":"🎯","xp":1100, "name":"Especialista",        "desc":"80%+ WR en un tier con 10+ partidas en un mismo mes"},
+{"id":"ES18","num":134,"cat":"Estrategia","rareza":"Oro",       "icon":"🎯","xp":1100, "name":"Especialista",        "desc":"80%+ WR en un tier con 10+ partidas en un mismo año"},
 {"id":"ES19","num":135,"cat":"Estrategia","rareza":"Plata",     "icon":"🎲","xp":450,  "name":"Rey del Caos",        "desc":"60%+ WR en formatos random con 10+ partidas en un mismo mes"},
-{"id":"TO12","num":136,"cat":"Torneo",    "rareza":"Oro",       "icon":"🥉","xp":800,  "name":"Racha de Podios",     "desc":"Top 4 en 3 torneos consecutivos"},
+{"id":"TO12","num":136,"cat":"Torneo",    "rareza":"Oro",       "icon":"🥉","xp":600,  "name":"Racha de Podios",     "desc":"Top 4 en 3 torneos (no necesariamente seguidos)"},
 {"id":"TO13","num":137,"cat":"Torneo",    "rareza":"Plata",     "icon":"🏟️","xp":300,  "name":"Final Jugada",        "desc":"Disputa la final de un torneo"},
 {"id":"TO14","num":138,"cat":"Torneo",    "rareza":"Oro",       "icon":"🎪","xp":800,  "name":"Doble Finalista",     "desc":"Llega a 2 finales de torneo en el mismo año"},
 {"id":"TO15","num":139,"cat":"Torneo",    "rareza":"Plata",     "icon":"⚖️","xp":350,  "name":"Todo o Nada",         "desc":"Gana o pierde una final por el margen mínimo"},
@@ -1364,7 +1364,7 @@ def evaluar_logros(
     r["RK12"] = pq in lideres_elo
 
     # ── RK13: Elo de Acero ──────────────────────────────────────────────────
-    def _elo_acero(meses_seguidos=6, umbral=1300):
+    def _elo_acero(meses_seguidos=6, umbral=1300, requiere_consecutivo=True):
         if data_filas is None or data_filas.empty: return False
         dfj = data_filas
         es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
@@ -1379,6 +1379,12 @@ def evaluar_logros(
         dfp['mes'] = dfp['fecha'].dt.to_period('M')
         cierre = dfp.groupby('mes')['elo'].last()
         meses_ordenados = sorted(cierre.index)
+
+        if not requiere_consecutivo:
+            # Conteo total de meses que cerraron con el Elo en umbral, sin
+            # importar si hubo meses de por medio que no lo cumplieron.
+            return int((cierre >= umbral).sum()) >= meses_seguidos
+
         racha = 0; anterior = None
         for m in meses_ordenados:
             if anterior is not None and m != anterior + 1:
@@ -1391,7 +1397,7 @@ def evaluar_logros(
                 racha = 0
             anterior = m
         return False
-    r["RK13"] = _elo_acero()
+    r["RK13"] = _elo_acero(requiere_consecutivo=False)
     r["RK14"] = _elo_acero(meses_seguidos=3, umbral=1100)
 
     # ── ES16: Explorador del Año ────────────────────────────────────────────
@@ -1418,14 +1424,15 @@ def evaluar_logros(
         return False
     r["ES17"] = _triple_amenaza()
 
-    # ── ES18/ES19: Especialista / Rey del Caos (ventana MENSUAL cerrada, mismo
-    # patrón que ES03-06 — no WR acumulado de toda la vida, que se puede diluir) ──
-    def _wr_tier_mensual(min_pct, solo_random=False, min_partidas=10):
+    # ── ES18/ES19: Especialista / Rey del Caos (ventana cerrada, mismo patrón
+    # que ES03-06 — no WR acumulado de toda la vida, que se puede diluir).
+    # ES18 usa ventana ANUAL (a pedido); ES19 se queda con la MENSUAL original.
+    def _wr_tier_ventana(min_pct, solo_random=False, min_partidas=10, ventana='M'):
         if 'Tier' not in pm.columns or 'date' not in pm.columns: return False
         d = pm.dropna(subset=['date']).copy()
         if d.empty: return False
-        d['_mes'] = d['date'].dt.to_period('M')
-        for (mes, tier), grp in d.groupby(['_mes', 'Tier']):
+        d['_ventana'] = d['date'].dt.to_period(ventana)
+        for (periodo, tier), grp in d.groupby(['_ventana', 'Tier']):
             if solo_random and not any(k in str(tier).upper() for k in ('RANDOM', 'RANDBATS')):
                 continue
             if len(grp) < min_partidas: continue
@@ -1433,20 +1440,20 @@ def evaluar_logros(
             if w / len(grp) * 100 >= min_pct:
                 return True
         return False
-    r["ES18"] = _wr_tier_mensual(80, solo_random=False, min_partidas=10)
-    r["ES19"] = _wr_tier_mensual(60, solo_random=True, min_partidas=10)
+    r["ES18"] = _wr_tier_ventana(80, solo_random=False, min_partidas=10, ventana='Y')
+    r["ES19"] = _wr_tier_ventana(60, solo_random=True, min_partidas=10, ventana='M')
 
-    # ── TO12: Racha de Podios ───────────────────────────────────────────────
-    def _racha_de_podios(min_consec=3, top=4):
+    # ── TO12: Racha de Podios — Top 4 en 3 torneos, NO necesariamente
+    # seguidos (antes exigía que fueran consecutivos, sin ningún torneo
+    # jugado de por medio fuera del Top 4; ahora es solo el conteo total) ──
+    def _racha_de_podios(min_torneos=3, top=4):
         if base_torneo_final.empty or 'N_Torneo' not in pm.columns or 'league' not in pm.columns:
             return False
         torneos_pm = pm[pm['league'] == 'TORNEO']
         torneos_jugados = torneos_pm['N_Torneo'].dropna().unique()
-        if len(torneos_jugados) < min_consec: return False
-        fechas_t = torneos_pm.groupby('N_Torneo')['date'].min()
-        orden = sorted(torneos_jugados, key=lambda nt: fechas_t.get(nt, pd.Timestamp.max))
-        racha = 0
-        for nt in orden:
+        if len(torneos_jugados) < min_torneos: return False
+        top4_count = 0
+        for nt in torneos_jugados:
             tabla = generar_tabla_torneo(base_torneo_final, nt)
             rank_j = None
             if tabla is not None and not tabla.empty:
@@ -1454,12 +1461,8 @@ def evaluar_logros(
                 if not fila.empty:
                     rank_j = int(fila['RANK'].iloc[0])
             if rank_j is not None and rank_j <= top:
-                racha += 1
-                if racha >= min_consec:
-                    return True
-            else:
-                racha = 0
-        return False
+                top4_count += 1
+        return top4_count >= min_torneos
     r["TO12"] = _racha_de_podios()
 
     # ── TO13/TO14: Final Jugada / Doble Finalista ───────────────────────────
@@ -1835,12 +1838,12 @@ def evaluar_logros(
     _d("VI24", texto="Perdió el juego 1 y ganó la serie" if r["VI24"] else None)
     _d("RK11", umbral=200, texto="Subió 200+ Elo en 3 meses o menos" if r["RK11"] else None)
     _d("RK12", texto="Fue el Elo más alto de toda la comunidad en algún momento" if r["RK12"] else None)
-    _d("RK13", umbral=6, texto="Mantuvo 1300+ Elo durante 6 meses seguidos" if r["RK13"] else None)
+    _d("RK13", umbral=6, texto="Mantuvo 1300+ Elo durante 6 meses (no necesariamente seguidos)" if r["RK13"] else None)
     _d("ES16", umbral=5, texto="Jugó 5+ tiers distintos en un mismo año" if r["ES16"] else None)
     _d("ES17", texto="Ganó en Singles, Dobles y VGC el mismo mes" if r["ES17"] else None)
-    _d("ES18", umbral=80, texto="80%+ WR en un tier con 10+ partidas en un mes" if r["ES18"] else None)
+    _d("ES18", umbral=80, texto="80%+ WR en un tier con 10+ partidas en un año" if r["ES18"] else None)
     _d("ES19", umbral=60, texto="60%+ WR en formatos random con 10+ partidas en un mes" if r["ES19"] else None)
-    _d("TO12", umbral=3, texto="Top 4 en 3 torneos consecutivos" if r["TO12"] else None)
+    _d("TO12", umbral=3, texto="Top 4 en 3 torneos (no necesariamente seguidos)" if r["TO12"] else None)
     _d("TO13", len(_finales), 1, f"Disputó {len(_finales)} final(es) de torneo")
     _d("TO14", umbral=2, texto="Llegó a 2+ finales de torneo en un mismo año" if r["TO14"] else None)
     _d("TO15", texto="Final decidida por el margen mínimo" if r["TO15"] else None)
