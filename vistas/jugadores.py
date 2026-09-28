@@ -1732,8 +1732,6 @@ def show():
                     c1.metric("Replays analizados", resumen["n_replays"])
                     c2.metric("Duración promedio", resumen["duracion_prom_txt"] or "—")
                     c3.metric("KOs causados / propios", f"{resumen['ko_causados']} / {resumen['ko_propios']}")
-                    total_crits = resumen["crits_dados"] + resumen["crits_recibidos"]
-                    tasa_crit = f"{round(resumen['crits_dados']/total_crits*100)}%" if total_crits else "—"
                     c4.metric("Crits dados / recibidos", f"{resumen['crits_dados']} / {resumen['crits_recibidos']}")
 
                     st.markdown("#### 🎯 Pokémon más usados")
@@ -1745,6 +1743,45 @@ def show():
                             st.markdown(f"- {n}")
                     else:
                         st.caption("Sin apodos personalizados detectados (usó el nombre de especie en todos los replays analizados).")
+
+                    st.markdown("---")
+                    st.markdown("### 🕹️ Estilo de juego")
+                    d1, d2, d3, d4 = st.columns(4)
+                    d1.metric("Turnos promedio", resumen["turnos_prom"] or "—")
+                    eff = f"{resumen['efectividad_pct']}%" if resumen["efectividad_pct"] is not None else "—"
+                    d2.metric("Efectividad de tipo", eff, help="% de sus golpes notables que fueron súper efectivos (vs. resistidos)")
+                    d3.metric("Veces que boosteó", resumen["boosts_propios"])
+                    d4.metric("Veces que se curó", resumen["heals_propios"])
+
+                    e1, e2, e3, e4 = st.columns(4)
+                    e1.metric("Clima propio activado", resumen["weather_propio"], help="Veces que activó SU PROPIO clima (Drought/Drizzle/etc.)")
+                    e2.metric("Transforms (Ditto, etc.)", resumen["transforms_propios"])
+                    e3.metric("Cargas de 2 turnos", resumen["prepares_propios"], help="Solar Beam, Fly, Dig y similares")
+                    e4.metric("Golpes SE / resistidos", f"{resumen['supereffective_dados']} / {resumen['resisted_dados']}")
+
+                    col_lead, col_mt = st.columns(2)
+                    with col_lead:
+                        st.markdown("#### 🚀 Lead preferido")
+                        if not resumen["lead_top"].empty:
+                            st.dataframe(resumen["lead_top"], use_container_width=True, hide_index=True)
+                        else:
+                            st.caption("Sin datos de lead detectados.")
+                    with col_mt:
+                        st.markdown("#### 💠 Mega / Tera activados en combate")
+                        st.markdown(f"**Mega:** {', '.join(resumen['mega_top']) or '—'}")
+                        st.markdown(f"**Tera:** {', '.join(resumen['tera_top']) or '—'}")
+
+                    st.markdown("#### 🤝 Duplas de Pokémon más frecuentes")
+                    if not resumen["duplas_top"].empty:
+                        st.dataframe(resumen["duplas_top"], use_container_width=True, hide_index=True)
+                    else:
+                        st.caption("Sin suficientes replays para calcular duplas.")
+
+                    st.markdown("#### ⚔️ Pokémon rivales más enfrentados")
+                    if not resumen["rivales_top"].empty:
+                        st.dataframe(resumen["rivales_top"], use_container_width=True, hide_index=True)
+                    else:
+                        st.caption("Sin datos de rivales detectados.")
             elif resumen is None:
                 st.caption("Puede tardar unos segundos la primera vez (se guardan en caché para la próxima).")
 

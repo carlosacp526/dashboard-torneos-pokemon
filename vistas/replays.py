@@ -27,7 +27,11 @@ SIN_TEAMPREVIEW = {
 CACHE_COLS = ["url", "status", "player_id", "player_name", "pokemon", "moves",
               "abilities", "items", "tera", "win", "formato_esp", "fetched_at",
               "nickname", "duration_seconds", "ko_causados", "ko_propios",
-              "crits_dados", "crits_recibidos"]
+              "crits_dados", "crits_recibidos",
+              # Fase 2
+              "turnos", "supereffective_dados", "resisted_dados", "weather_propio",
+              "boosts_propios", "heals_propios", "transforms_propios", "prepares_propios",
+              "es_lead", "mega_en_combate", "tera_en_combate"]
 
 
 def _get_pokemon_img(nombre: str):
@@ -308,6 +312,19 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
     timestamps = []              # todos los |t:|<unix> del replay
     ultimo_atacante_pid = None   # pid de la fuente del último |move| visto
 
+    # ── Fase 2 "otra data de replays": estilo de juego y equipo ────────
+    total_turnos = 0
+    supereffective_por_pid = {}  # pid -> golpes SUYOS que fueron súper efectivos
+    resisted_por_pid = {}        # pid -> golpes SUYOS que fueron resistidos
+    weather_propio_por_pid = {}  # pid -> veces que activó SU PROPIO clima (por habilidad)
+    boosts_por_pid = {}          # pid -> subidas de stat que se aplicó a sí mismo
+    heals_por_pid = {}           # pid -> veces que se curó (item/drain/movimiento)
+    transforms_por_pid = {}      # pid -> veces que algún Pokémon suyo transformó
+    prepares_por_pid = {}        # pid -> veces que usó un movimiento de carga (Solar Beam, etc.)
+    primer_pokemon_por_pid = {}  # pid -> especie del primer Pokémon que mandó (lead)
+    mega_en_combate = set()      # {(pid, especie)} que mega-evolucionó en batalla
+    tera_en_combate = set()      # {(pid, especie)} que hizo tera EN BATALLA (no solo en el set)
+
     def _reg_vacio():
         return {"moves": {}, "abilities": {}, "items": {}, "tera": None}
 
@@ -329,6 +346,9 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 pos = pos_completo.split(":")[0].strip()
                 especie = parts[3].split(",")[0].strip()
                 activo[pos] = especie
+                pid_switch = pos[:2]
+                if pid_switch not in primer_pokemon_por_pid:
+                    primer_pokemon_por_pid[pid_switch] = especie
                 if sin_tp:
                     pid = pos[:2]
                     equipos.setdefault(pid, [])
@@ -398,9 +418,71 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
         elif line.startswith("|-terastallize|"):
             parts = line.split("|")
             if len(parts) >= 4:
-                reg = _get_reg(parts[2].split(":")[0].strip())
+                pos = parts[2].split(":")[0].strip()
+                reg = _get_reg(pos)
                 if reg:
                     reg["tera"] = parts[3].strip()
+                especie_tera = activo.get(pos)
+                if especie_tera:
+                    tera_en_combate.add((pos[:2], especie_tera))
+
+        elif line.startswith("|turn|"):
+            total_turnos += 1
+
+        elif line.startswith("|-supereffective|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid_objetivo = parts[2].split(":")[0].strip()[:2]
+                if ultimo_atacante_pid and ultimo_atacante_pid != pid_objetivo:
+                    supereffective_por_pid[ultimo_atacante_pid] = supereffective_por_pid.get(ultimo_atacante_pid, 0) + 1
+
+        elif line.startswith("|-resisted|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid_objetivo = parts[2].split(":")[0].strip()[:2]
+                if ultimo_atacante_pid and ultimo_atacante_pid != pid_objetivo:
+                    resisted_por_pid[ultimo_atacante_pid] = resisted_por_pid.get(ultimo_atacante_pid, 0) + 1
+
+        elif line.startswith("|-weather|"):
+            # Solo cuenta la ACTIVACIÓN por habilidad propia (Drought/Drizzle/etc.),
+            # no los "[upkeep]" que se repiten cada turno mientras el clima sigue activo.
+            if "[from] ability:" in line and "[of]" in line:
+                m = re.search(r"\[of\]\s*([a-z0-9]+)", line, re.I)
+                if m:
+                    pid_clima = m.group(1)[:2].lower()
+                    weather_propio_por_pid[pid_clima] = weather_propio_por_pid.get(pid_clima, 0) + 1
+
+        elif line.startswith("|-boost|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid = parts[2].split(":")[0].strip()[:2]
+                boosts_por_pid[pid] = boosts_por_pid.get(pid, 0) + 1
+
+        elif line.startswith("|-heal|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid = parts[2].split(":")[0].strip()[:2]
+                heals_por_pid[pid] = heals_por_pid.get(pid, 0) + 1
+
+        elif line.startswith("|-transform|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid = parts[2].split(":")[0].strip()[:2]
+                transforms_por_pid[pid] = transforms_por_pid.get(pid, 0) + 1
+
+        elif line.startswith("|-prepare|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid = parts[2].split(":")[0].strip()[:2]
+                prepares_por_pid[pid] = prepares_por_pid.get(pid, 0) + 1
+
+        elif line.startswith("|-mega|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pos = parts[2].split(":")[0].strip()
+                especie_mega = activo.get(pos)
+                if especie_mega:
+                    mega_en_combate.add((pos[:2], especie_mega))
 
     # ── Open Team Sheets (si se usó !showteam o el formato lo exige) ──
     # Esto da datos MUCHO más completos: el moveset completo (no solo lo
@@ -511,6 +593,17 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 "ko_propios": faints_por_pid.get(pid, 0),
                 "crits_dados": crits_dados_por_pid.get(pid, 0),
                 "crits_recibidos": crits_recibidos_por_pid.get(pid, 0),
+                "turnos": total_turnos,
+                "supereffective_dados": supereffective_por_pid.get(pid, 0),
+                "resisted_dados": resisted_por_pid.get(pid, 0),
+                "weather_propio": weather_propio_por_pid.get(pid, 0),
+                "boosts_propios": boosts_por_pid.get(pid, 0),
+                "heals_propios": heals_por_pid.get(pid, 0),
+                "transforms_propios": transforms_por_pid.get(pid, 0),
+                "prepares_propios": prepares_por_pid.get(pid, 0),
+                "es_lead": primer_pokemon_por_pid.get(pid) == especie,
+                "mega_en_combate": (pid, especie) in mega_en_combate,
+                "tera_en_combate": (pid, especie) in tera_en_combate,
             })
 
     if not filas:
@@ -639,8 +732,13 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
 def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     """
     Analiza (descargando si hace falta) los replays de un jugador puntual y
-    devuelve un dict con: Pokémon más usados, apodos distintos por especie,
-    duración promedio de partida, KOs causados/propios y tasa de crits.
+    devuelve un dict con dos tandas de métricas:
+
+    Fase 1: Pokémon más usados, apodos distintos, duración promedio, KOs y crits.
+    Fase 2: turnos por partida, efectividad de tipo, clima propio, setup/heal,
+    transforms, cargas de 2 turnos, lead preferido, Mega/Tera activados EN
+    COMBATE (no solo en el set), duplas de Pokémon frecuentes y los Pokémon
+    rivales más enfrentados.
 
     Solo cubre las partidas de ESE jugador que tienen Match_replays con URL
     real -> es un resumen "según los replays disponibles", no del historial
@@ -650,6 +748,13 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "n_replays": 0, "pokemon_top": pd.DataFrame(columns=["Pokémon", "Usos", "% de partidas"]),
         "nicknames": [], "duracion_prom_seg": None, "duracion_prom_txt": None,
         "ko_causados": 0, "ko_propios": 0, "crits_dados": 0, "crits_recibidos": 0,
+        "turnos_prom": None, "supereffective_dados": 0, "resisted_dados": 0,
+        "efectividad_pct": None, "weather_propio": 0, "boosts_propios": 0,
+        "heals_propios": 0, "transforms_propios": 0, "prepares_propios": 0,
+        "lead_top": pd.DataFrame(columns=["Pokémon", "Veces de lead"]),
+        "mega_top": [], "tera_top": [],
+        "duplas_top": pd.DataFrame(columns=["Dupla", "Partidas juntos"]),
+        "rivales_top": pd.DataFrame(columns=["Pokémon rival", "Veces enfrentado"]),
     }
     if df_raw is None or df_raw.empty or "Match_replays" not in df_raw.columns:
         return vacio
@@ -667,7 +772,9 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     if df_detalle.empty or "player_name" not in df_detalle.columns:
         return vacio
 
-    propio = df_detalle[df_detalle["player_name"].astype(str).str.lower().str.contains(pq, na=False)].copy()
+    es_propio = df_detalle["player_name"].astype(str).str.lower().str.contains(pq, na=False)
+    propio = df_detalle[es_propio].copy()
+    rival = df_detalle[~es_propio].copy()
     if propio.empty:
         return vacio
 
@@ -675,27 +782,57 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
 
     # Pokémon más usados (una fila por especie por replay -> ya viene deduplicado)
     conteo = propio["pokemon"].value_counts()
-    pokemon_top = pd.DataFrame({
-        "Pokémon": conteo.index,
-        "Usos": conteo.values,
-    })
+    pokemon_top = pd.DataFrame({"Pokémon": conteo.index, "Usos": conteo.values})
     pokemon_top["% de partidas"] = (pokemon_top["Usos"] / n_replays * 100).round(1) if n_replays else 0
 
     # Apodos distintos usados (especie -> nickname), solo donde hay uno real
     nick_rows = propio[propio["nickname"].astype(str).str.strip() != ""]
-    nicknames = sorted(set(
-        f"{row['pokemon']} → {row['nickname']}" for _, row in nick_rows.iterrows()
-    ))
+    nicknames = sorted(set(f"{row['pokemon']} → {row['nickname']}" for _, row in nick_rows.iterrows()))
 
-    # Métricas por-replay (duración/KOs/crits vienen repetidas por cada fila
-    # de Pokémon del mismo replay -> hay que promediar/sumar por url única)
+    # Métricas por-replay (duración/KOs/crits/turnos/etc vienen repetidas en
+    # cada fila de Pokémon del mismo replay -> hay que sumar/promediar por url única)
     por_replay = propio.drop_duplicates(subset=["url"])
-    duraciones = pd.to_numeric(por_replay["duration_seconds"], errors="coerce").dropna()
+
+    def _num(col):
+        return pd.to_numeric(por_replay[col], errors="coerce")
+
+    def _suma(col):
+        return int(_num(col).fillna(0).sum())
+
+    duraciones = _num("duration_seconds").dropna()
     dur_prom = round(duraciones.mean()) if not duraciones.empty else None
     dur_txt = f"{int(dur_prom // 60)}m {int(dur_prom % 60)}s" if dur_prom is not None else None
 
-    def _suma(col):
-        return int(pd.to_numeric(por_replay[col], errors="coerce").fillna(0).sum())
+    turnos = _num("turnos").dropna()
+    turnos_prom = round(turnos.mean(), 1) if not turnos.empty else None
+
+    se_dados = _suma("supereffective_dados")
+    resist_dados = _suma("resisted_dados")
+    total_golpes_notables = se_dados + resist_dados
+    efectividad_pct = round(se_dados / total_golpes_notables * 100, 1) if total_golpes_notables else None
+
+    # Lead preferido: qué especie salió como "es_lead" más veces
+    leads = propio[propio["es_lead"].astype(str) == "True"]["pokemon"].value_counts()
+    lead_top = pd.DataFrame({"Pokémon": leads.index, "Veces de lead": leads.values})
+
+    mega_top = sorted(propio[propio["mega_en_combate"].astype(str) == "True"]["pokemon"].unique().tolist())
+    tera_top = sorted(propio[propio["tera_en_combate"].astype(str) == "True"]["pokemon"].unique().tolist())
+
+    # Duplas frecuentes: pares de Pokémon dentro del MISMO equipo/replay
+    from itertools import combinations
+    from collections import Counter
+    duplas_contador = Counter()
+    for _, especies in propio.groupby("url")["pokemon"]:
+        for a, b in combinations(sorted(set(especies)), 2):
+            duplas_contador[f"{a} + {b}"] += 1
+    duplas_top = pd.DataFrame(duplas_contador.most_common(15), columns=["Dupla", "Partidas juntos"])
+
+    # Pokémon rivales más enfrentados: el equipo del OTRO jugador en esos mismos replays
+    rivales_top = pd.DataFrame(columns=["Pokémon rival", "Veces enfrentado"])
+    if not rival.empty:
+        rival_en_mis_replays = rival[rival["url"].isin(set(propio["url"]))]
+        conteo_riv = rival_en_mis_replays["pokemon"].value_counts()
+        rivales_top = pd.DataFrame({"Pokémon rival": conteo_riv.index, "Veces enfrentado": conteo_riv.values})
 
     return {
         "n_replays": int(n_replays),
@@ -707,6 +844,20 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "ko_propios": _suma("ko_propios"),
         "crits_dados": _suma("crits_dados"),
         "crits_recibidos": _suma("crits_recibidos"),
+        "turnos_prom": turnos_prom,
+        "supereffective_dados": se_dados,
+        "resisted_dados": resist_dados,
+        "efectividad_pct": efectividad_pct,
+        "weather_propio": _suma("weather_propio"),
+        "boosts_propios": _suma("boosts_propios"),
+        "heals_propios": _suma("heals_propios"),
+        "transforms_propios": _suma("transforms_propios"),
+        "prepares_propios": _suma("prepares_propios"),
+        "lead_top": lead_top,
+        "mega_top": mega_top,
+        "tera_top": tera_top,
+        "duplas_top": duplas_top,
+        "rivales_top": rivales_top.head(15),
     }
 
 
