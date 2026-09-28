@@ -776,6 +776,16 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
             continue
 
         sub = grp.drop_duplicates(subset=["player_name"])
+        # Free For All (3-4 jugadores): "ganador/perdedor" deja de ser binario
+        # -- hay UN ganador pero VARIOS perdedores, y no hay forma de saber
+        # cuál perdedor es cuál solo con esta fila. Ya se ignora FFA para
+        # ko_causados por la misma razón (ver _extraer_detalle_replay); acá
+        # también hay que ignorarlo o se termina asignando un perdedor al
+        # azar (fue exactamente el bug que le puso "roy kasoy" de alias a
+        # alguien que nunca jugó contra roy kasoy en esa partida).
+        if sub["player_name"].nunique() != 2:
+            continue
+
         ganador_sd = perdedor_sd = None
         for _, row in sub.iterrows():
             pname = str(row.get("player_name", "")).strip()
@@ -785,7 +795,7 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
                 ganador_sd = pname
             elif str(row.get("win", "")) == "False":
                 perdedor_sd = pname
-        if not ganador_sd:
+        if not ganador_sd or not perdedor_sd:
             continue
 
         if _toid(csv_winner) == _toid(csv_p1):
@@ -795,9 +805,18 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
         else:
             continue
 
+        # Chequeo de coherencia: si NINGUNO de los dos lados ya calza por
+        # userid normalizado, es señal de que este replay no corresponde
+        # realmente a esta fila del CSV (columna 'winner' mal cargada, o el
+        # link de Match_replays apunta a otra partida) -- se descarta en vez
+        # de inventar un alias con datos contradictorios.
+        gana_calza = _toid(ganador_sd) == _toid(csv_ganador)
+        pierde_calza = _toid(perdedor_sd) == _toid(csv_perdedor)
+        if not gana_calza and not pierde_calza:
+            continue
+
         alias.setdefault(_toid(csv_ganador), set()).add(ganador_sd)
-        if perdedor_sd:
-            alias.setdefault(_toid(csv_perdedor), set()).add(perdedor_sd)
+        alias.setdefault(_toid(csv_perdedor), set()).add(perdedor_sd)
     return alias
 
 
