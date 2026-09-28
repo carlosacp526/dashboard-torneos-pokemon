@@ -27,6 +27,7 @@ from vistas import rachas
 from vistas import fairplay
 from vistas import scouting
 from vistas import reglamento
+from vistas import estadisticas_replay
 p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
 p_retencion  = st.Page(retencion.show,    title="🔁 Participación y Retención", url_path="retencion")
 p_social     = st.Page(social.show,       title="🕸️ Analítica Social",       url_path="social")
@@ -54,6 +55,7 @@ p_rachas = st.Page(rachas.show, title="🔥 Rachas en Vivo", url_path="rachas")
 p_fairplay = st.Page(fairplay.show, title="⚖️ Fair Play", url_path="fairplay")
 p_scouting = st.Page(scouting.show, title="📝 Reporte de Scouting", url_path="scouting")
 p_reglamento = st.Page(reglamento.show, title="📜 Reglamento", url_path="reglamento")
+p_estadisticas_replay = st.Page(estadisticas_replay.show, title="📼 Estadísticas de Replay", url_path="estadisticas-replay")
 st.session_state["_pages"] = {
     "inicio":     p_inicio,
     "analisis":   p_analisis,
@@ -90,7 +92,7 @@ st.session_state["_pages"] = {
 # vez de tener 19 páginas sueltas bajo un único "Secciones".
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas],
+    "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay],
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
     "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_roleplay, p_seeding],
     "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
