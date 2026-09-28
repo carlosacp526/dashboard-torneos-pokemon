@@ -26,7 +26,7 @@ SINGLES = [
     ("Monotype (Nat Dex)",   "NAT DEX MONOTYPE",   "Todos los Pokémon del equipo deben compartir un mismo tipo."),
     ("Monotype Random",      "MONOTYPE RANDOM BATTLE", "Randoms donde todo el equipo comparte un mismo tipo."),
     ("LC (Little Cup)",      "LC",                 "Primera etapa evolutiva, nivel máximo 5."),
-    ("BSS",                  "BSS",                "Formato oficial de Battle Stadium Singles."),
+    ("BSS",                  "BSS",                "Formato oficial de Battle Stadium Singles: llevás 6 Pokémon pero solo juegan 3 por batalla."),
     ("Baby Randoms",         "BABY RANDOM SINGLES","Randoms restringido a Pokémon bebés / sin evolucionar."),
     ("Free For All",         "Free For all",       "Todos contra todos. Batalla masiva, no es 1 vs 1."),
     ("FFA Randoms",          "Free For all Randoms","Free For All con equipos aleatorios."),
@@ -34,8 +34,8 @@ SINGLES = [
     ("Leyendas Z-A OU",      "LEYENDAS Z-A OU",    "OverUsed del nuevo juego Pokémon Z-A."),
     ("Stadium OU Gen 1",     "STADIUM OU GEN 1",   "OU jugado bajo las reglas de la 1ª generación."),
     ("Stadium OU Gen 2",     "STADIUM OU GEN 2",   "OU jugado bajo las reglas de la 2ª generación."),
-    ("Randbats Champions",   "RANDBATS CHAMPIONS", "Modalidad Champions sobre Randoms: se reta al campeón vigente."),
-    ("BSS Champions",        "BSS CHAMPIONS",      "Modalidad Champions sobre BSS: se reta al campeón vigente."),
+    ("Randbats Champions",   "RANDBATS CHAMPIONS", "Modalidad Champions jugada sobre Randoms."),
+    ("BSS Champions",        "BSS CHAMPIONS",      "Modalidad Champions jugada sobre BSS."),
     ("Trademarked",          "TRADEMARKED",        "Reto especial de evento, con reglas propias definidas para esa edición."),
 ]
 
@@ -49,14 +49,14 @@ DOBLES = [
     ("Dobles LC",            "DOBLES LC",          "Little Cup en dobles. Nivel 5, libre de Dobles."),
     ("Metrónomo Battle",     "METRONOMO",          "Ambos lados usan clones con Metrónomo. Cada turno decide el azar."),
     ("Orre Colosseum",       "ORRE COLOSSEUM",     "Batallas 2 vs 2 bajo el estilo Pokémon Colosseum."),
-    ("Random Dobles Champions","RANDOM DOBLES CHAMPIONS","Modalidad Champions sobre Randoms Dobles: se reta al campeón vigente."),
+    ("Random Dobles Champions","RANDOM DOBLES CHAMPIONS","Modalidad Champions jugada sobre Randoms Dobles."),
     ("VGC 2010 (legacy)",    "VGC 2010",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
     ("VGC 2013 (legacy)",    "VGC 2013",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
 ]
 
 VGC = [
     ("VGC",        "VGC",        "Video Game Championships — la regulación vigente, según el REG activo."),
-    ("Champions",  "CHAMPIONS",  "Modalidad Champions sobre VGC: se reta al campeón vigente por su lugar."),
+    ("Champions",  "CHAMPIONS",  "Modalidad Champions jugada sobre VGC."),
 ]
 
 REGULACIONES_VGC = ["REG A","REG B","REG C","REG D","REG E","REG F","REG G","REG H","REG I","REG J"]
