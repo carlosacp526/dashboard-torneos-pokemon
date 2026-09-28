@@ -245,6 +245,9 @@ LOGROS = [
 {"id":"SP21","num":168,"cat":"Especial",   "rareza":"Plata", "icon":"😬","xp":300, "name":"Rival Incómodo",            "desc":"Vence al mismo rival en 2 formatos distintos (Singles/Dobles/VGC)"},
 {"id":"SP22","num":169,"cat":"Especial",   "rareza":"Plata", "icon":"📅","xp":250, "name":"Racha de Presencia",        "desc":"Juega en 3 meses consecutivos sin faltar ninguno"},
 {"id":"LI12","num":170,"cat":"Ligas",      "rareza":"Plata", "icon":"📈","xp":400, "name":"Ascenso Confirmado",        "desc":"Jugó primero en una categoría de Liga y más tarde en una superior (subió de división)"},
+{"id":"PR11","num":171,"cat":"Progresión","rareza":"Plata", "icon":"💠","xp":150, "name":"XP Acumulado 5K",           "desc":"Acumula 5,000 puntos XP"},
+{"id":"PA11","num":172,"cat":"Participación","rareza":"Plata","icon":"🛡️","xp":300, "name":"Sin Excusas",             "desc":"Participa en 10 torneos distintos sin dar ningún Walkover propio"},
+{"id":"ES20","num":173,"cat":"Estrategia","rareza":"Plata", "icon":"⛰️","xp":300, "name":"Todo Terreno",              "desc":"Juega 3+ Tiers distintos en el mismo mes"},
 
 ]
 
@@ -624,6 +627,21 @@ def evaluar_logros(
     r["PA08"] = n_camp_torneo >= 1 or victorias >= 1
     r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
     r["PA10"] = len(formatos_jugados) >= 3
+
+    # ── PA11: Sin Excusas — participa en 10+ torneos distintos sin dar
+    # ningún Walkover propio (mismo criterio "WO dado" que SO04-08: Walkover
+    # == 1 y el jugador NO figura como ganador, es decir, el jugador es quien
+    # faltó) ─────────────────────────────────────────────────────────────────
+    def _sin_excusas(min_torneos=10):
+        if pm.empty or 'league' not in pm.columns or 'N_Torneo' not in pm.columns or 'Walkover' not in pm.columns:
+            return False
+        d = pm[pm['league'] == 'TORNEO']
+        if d['N_Torneo'].dropna().nunique() < min_torneos:
+            return False
+        wo_dado = d[(d['Walkover'] == 1) & (~d['winner'].str.contains(pq, case=False, na=False))]
+        return wo_dado.empty
+    r["PA11"] = _sin_excusas()
+
     HAT_TRICK_PLAYERS={"Yabadaba","Angello77","Haseo","Akaru"}
     # VICTORIAS
     r["VI01"] = 'LIGA' in tipos_evento and victorias >= 1
@@ -1372,8 +1390,11 @@ def evaluar_logros(
     if 'Tier' in pm.columns and 'date' in pm.columns:
         _d_anio = pm.dropna(subset=['date'])
         r["ES16"] = bool((_d_anio.groupby(_d_anio['date'].dt.year)['Tier'].nunique() >= 5).any()) if not _d_anio.empty else False
+        # ── ES20: Todo Terreno — versión mensual de ES16 (3+ Tiers en un mes) ──
+        r["ES20"] = bool((_d_anio.groupby(_d_anio['date'].dt.to_period('M'))['Tier'].nunique() >= 3).any()) if not _d_anio.empty else False
     else:
         r["ES16"] = False
+        r["ES20"] = False
 
     # ── ES17: Triple Amenaza ────────────────────────────────────────────────
     def _triple_amenaza():
@@ -1659,6 +1680,7 @@ def evaluar_logros(
     r["PR04"] = desbloq_total  >= 50
     r["PR05"] = desbloq_total  >= 80
     r["PR06"] = xp_total >= 1000
+    r["PR11"] = xp_total >= 5000
     r["PR07"] = xp_total >= 10000
     r["PR08"] = xp_total >= 15000
     r["PR09"] = xp_total >= 20000
@@ -1841,6 +1863,9 @@ def evaluar_logros(
     _d("SP21", texto="Venció al mismo rival en 2+ formatos de torneo distintos" if r["SP21"] else None)
     _d("SP22", umbral=3, texto="3+ meses consecutivos con al menos una batalla" if r["SP22"] else None)
     _d("LI12", texto="Jugó primero en una categoría de Liga y luego en una superior" if r["LI12"] else None)
+    _d("PR11", xp_total, 5000, f"{xp_total} XP acumulado")
+    _d("PA11", texto="10+ torneos distintos sin dar ningún Walkover propio" if r["PA11"] else None)
+    _d("ES20", umbral=3, texto="3+ tiers distintos en un mismo mes" if r["ES20"] else None)
 
     return r, detalles
 
