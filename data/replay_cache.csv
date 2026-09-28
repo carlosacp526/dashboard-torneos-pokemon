@@ -1,0 +1,37 @@
+url,status,player_id,player_name,pokemon,moves,abilities,items,tera,win,formato_esp,fetched_at,nickname,duration_seconds,ko_causados,ko_propios,crits_dados,crits_recibidos
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p1,Porygon_Anty-Z,Chansey,Seismic Toss; Stealth Rock; Toxic; Wish,,,,True,NAT DEX,2026-09-28T19:43:19,,546,6,1,2,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p1,Porygon_Anty-Z,Zapdos,Heat Wave; Roost; Volt Switch,,,,True,NAT DEX,2026-09-28T19:43:19,,546,6,1,2,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p1,Porygon_Anty-Z,Ditto,,,,,True,NAT DEX,2026-09-28T19:43:19,,546,6,1,2,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p1,Porygon_Anty-Z,Dragonite,Dragon Dance; Extreme Speed,,,,True,NAT DEX,2026-09-28T19:43:19,,546,6,1,2,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p1,Porygon_Anty-Z,Ninetales,Weather Ball,,,,True,NAT DEX,2026-09-28T19:43:19,,546,6,1,2,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p1,Porygon_Anty-Z,Venusaur,Giga Drain; Weather Ball,,,,True,NAT DEX,2026-09-28T19:43:19,,546,6,1,2,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p2,DoctorDarius,Dragonite,Dragon Dance; Extreme Speed; Fly,,,,False,NAT DEX,2026-09-28T19:43:19,,546,1,6,1,2
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p2,DoctorDarius,Vaporeon,Protect; Scald; Substitute; Wish,,,Steel,False,NAT DEX,2026-09-28T19:43:19,,546,1,6,1,2
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p2,DoctorDarius,Tauros,Return,Intimidate,,,False,NAT DEX,2026-09-28T19:43:19,,546,1,6,1,2
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p2,DoctorDarius,Raichu,Fake Out; Nuzzle; Volt Switch,,,,False,NAT DEX,2026-09-28T19:43:19,,546,1,6,1,2
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p2,DoctorDarius,Venusaur,Giga Drain; Leech Seed; Sleep Powder; Sludge Bomb,,,,False,NAT DEX,2026-09-28T19:43:19,,546,1,6,1,2
+https://replay.pokemonshowdown.com/gen9nationaldex-2208309185,ok,p2,DoctorDarius,Charizard,Flamethrower,,,,False,NAT DEX,2026-09-28T19:43:19,,546,1,6,1,2
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p1,Fur4nk0,Gengar,,,,,True,NAT DEX,2026-09-28T19:43:20,,344,5,0,1,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p1,Fur4nk0,Snorlax,Body Slam; Curse; Rest,,,,True,NAT DEX,2026-09-28T19:43:20,bOEEE,344,5,0,1,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p1,Fur4nk0,Clefable,,,,,True,NAT DEX,2026-09-28T19:43:20,Clefoide,344,5,0,1,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p1,Fur4nk0,Gyarados,,,,,True,NAT DEX,2026-09-28T19:43:20,,344,5,0,1,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p1,Fur4nk0,Zapdos,,,,,True,NAT DEX,2026-09-28T19:43:20,,344,5,0,1,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p1,Fur4nk0,Venusaur,,,,,True,NAT DEX,2026-09-28T19:43:20,Pancha,344,5,0,1,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p2,DoctorDarius,Dragonite,Dragon Dance; Extreme Speed; Iron Head,,,,False,NAT DEX,2026-09-28T19:43:20,,344,0,5,0,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p2,DoctorDarius,Tauros,Return,Intimidate,,,False,NAT DEX,2026-09-28T19:43:20,,344,0,5,0,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p2,DoctorDarius,Raichu,Fake Out; Grass Knot; Nuzzle; Volt Switch,,,,False,NAT DEX,2026-09-28T19:43:20,,344,0,5,0,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p2,DoctorDarius,Venusaur,Leech Seed; Sleep Powder,,,,False,NAT DEX,2026-09-28T19:43:20,,344,0,5,0,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p2,DoctorDarius,Charizard,,,,,False,NAT DEX,2026-09-28T19:43:20,,344,0,5,0,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2212918243,ok,p2,DoctorDarius,Nidoking,Sludge Wave,,,,False,NAT DEX,2026-09-28T19:43:20,,344,0,5,0,1
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p1,Eden King,Dragonite,Earthquake,,,,True,NAT DEX,2026-09-28T19:43:21,,425,6,1,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p1,Eden King,Zapdos,,,,,True,NAT DEX,2026-09-28T19:43:21,,425,6,1,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p1,Eden King,Nidoking,Earth Power; Ice Beam,,,,True,NAT DEX,2026-09-28T19:43:21,,425,6,1,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p1,Eden King,Arcanine,Extreme Speed; Flare Blitz; Will-O-Wisp,Intimidate,,,True,NAT DEX,2026-09-28T19:43:21,,425,6,1,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p1,Eden King,Cloyster,,,,,True,NAT DEX,2026-09-28T19:43:21,,425,6,1,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p1,Eden King,Snorlax,Belly Drum; Body Slam; Rest,,Chesto Berry,,True,NAT DEX,2026-09-28T19:43:21,,425,6,1,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p2,DoctorDarius,Dragonite,Dragon Dance; Fly,,,,False,NAT DEX,2026-09-28T19:43:21,,425,1,6,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p2,DoctorDarius,Tauros,High Horsepower,Intimidate,,,False,NAT DEX,2026-09-28T19:43:21,,425,1,6,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p2,DoctorDarius,Raichu,Fake Out; Grass Knot; Nuzzle,,,,False,NAT DEX,2026-09-28T19:43:21,,425,1,6,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p2,DoctorDarius,Venusaur,Leech Seed,,,,False,NAT DEX,2026-09-28T19:43:21,,425,1,6,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p2,DoctorDarius,Charizard,Focus Blast; Solar Beam,,,,False,NAT DEX,2026-09-28T19:43:21,,425,1,6,0,0
+https://replay.pokemonshowdown.com/gen9nationaldex-2217450459,ok,p2,DoctorDarius,Nidoking,Earth Power; Sludge Wave,,,,False,NAT DEX,2026-09-28T19:43:21,,425,1,6,0,0

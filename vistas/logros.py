@@ -628,18 +628,26 @@ def evaluar_logros(
     r["PA09"] = bool({'LIGA','CYPHER','ASCENSO'} & tipos_evento)
     r["PA10"] = len(formatos_jugados) >= 3
 
-    # ── PA11: Sin Excusas — participa en 10+ torneos distintos sin dar
-    # ningún Walkover propio (mismo criterio "WO dado" que SO04-08: Walkover
-    # == 1 y el jugador NO figura como ganador, es decir, el jugador es quien
-    # faltó) ─────────────────────────────────────────────────────────────────
+    # ── PA11: Sin Excusas — participa en 10+ torneos FINALIZADOS distintos
+    # sin dar ningún Walkover propio (mismo criterio "WO dado" que SO04-08:
+    # Walkover == 1 y el jugador NO figura como ganador, es decir, el jugador
+    # es quien faltó). Usa el mismo criterio de "torneo finalizado" que
+    # PA01-PA10 (torneos_finalizados: ningún Walkover==-1 pendiente de nadie
+    # en ese torneo). Los torneos son independientes entre sí y no necesitan
+    # ser consecutivos: un WO dado en un torneo solo descarta ESE torneo del
+    # conteo, no invalida los demás torneos limpios del jugador ────────────
     def _sin_excusas(min_torneos=10):
         if pm.empty or 'league' not in pm.columns or 'N_Torneo' not in pm.columns or 'Walkover' not in pm.columns:
             return False
-        d = pm[pm['league'] == 'TORNEO']
-        if d['N_Torneo'].dropna().nunique() < min_torneos:
+        d = pm[(pm['league'] == 'TORNEO') & (pm['N_Torneo'].dropna().astype(int).isin(torneos_finalizados))].copy()
+        if d.empty:
             return False
-        wo_dado = d[(d['Walkover'] == 1) & (~d['winner'].str.contains(pq, case=False, na=False))]
-        return wo_dado.empty
+        d['N_Torneo'] = d['N_Torneo'].astype(int)
+        torneos_con_wo = set(
+            d[(d['Walkover'] == 1) & (~d['winner'].str.contains(pq, case=False, na=False))]['N_Torneo'].unique()
+        )
+        torneos_limpios = set(d['N_Torneo'].unique()) - torneos_con_wo
+        return len(torneos_limpios) >= min_torneos
     r["PA11"] = _sin_excusas()
 
     HAT_TRICK_PLAYERS={"Yabadaba","Angello77","Haseo","Akaru"}

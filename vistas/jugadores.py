@@ -1505,9 +1505,10 @@ def show():
         st.markdown("---")
 
         # Tabs del jugador
-        tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8,tab9 = st.tabs([
+        tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8,tab9,tab10 = st.tabs([
             "📋 Historial","📊 Generales","🏆 Por Evento","🎯 Por Tier",
-            "🎮 Por Formato","📅 Por Mes","📆 Por Año","⚔️ Por Rival","🏅 Logros"
+            "🎮 Por Formato","📅 Por Mes","📆 Por Año","⚔️ Por Rival","🏅 Logros",
+            "🕹️ Estadísticas de Replay"
         ])
 
         with tab1:
@@ -1708,6 +1709,44 @@ def show():
                 generar_tabla_temporada = generar_tabla_temporada,
                 generar_tabla_torneo    = generar_tabla_torneo,
             )
+
+        with tab10:
+            st.caption(
+                "Calculado a partir de los replays de Showdown disponibles para este "
+                "jugador (no todas las partidas tienen replay guardado, así que esto "
+                "refleja una muestra, no el historial completo)."
+            )
+            if st.button("🔍 Analizar replays de este jugador", key="btn_stats_replay"):
+                with st.spinner("Descargando y analizando replays..."):
+                    from vistas.replays import obtener_resumen_jugador
+                    resumen = obtener_resumen_jugador(player_query, df_raw)
+                st.session_state["_resumen_replay_jugador"] = resumen
+                st.session_state["_resumen_replay_jugador_de"] = player_query
+
+            resumen = st.session_state.get("_resumen_replay_jugador")
+            if resumen is not None and st.session_state.get("_resumen_replay_jugador_de") == player_query:
+                if resumen["n_replays"] == 0:
+                    st.info("No se encontraron replays analizables para este jugador.")
+                else:
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric("Replays analizados", resumen["n_replays"])
+                    c2.metric("Duración promedio", resumen["duracion_prom_txt"] or "—")
+                    c3.metric("KOs causados / propios", f"{resumen['ko_causados']} / {resumen['ko_propios']}")
+                    total_crits = resumen["crits_dados"] + resumen["crits_recibidos"]
+                    tasa_crit = f"{round(resumen['crits_dados']/total_crits*100)}%" if total_crits else "—"
+                    c4.metric("Crits dados / recibidos", f"{resumen['crits_dados']} / {resumen['crits_recibidos']}")
+
+                    st.markdown("#### 🎯 Pokémon más usados")
+                    st.dataframe(resumen["pokemon_top"], use_container_width=True, hide_index=True)
+
+                    st.markdown("#### 🏷️ Apodos (nicknames) usados")
+                    if resumen["nicknames"]:
+                        for n in resumen["nicknames"]:
+                            st.markdown(f"- {n}")
+                    else:
+                        st.caption("Sin apodos personalizados detectados (usó el nombre de especie en todos los replays analizados).")
+            elif resumen is None:
+                st.caption("Puede tardar unos segundos la primera vez (se guardan en caché para la próxima).")
 
         # ── Exportar PDF ────────────────────────────────────────────────────
         st.markdown("---")

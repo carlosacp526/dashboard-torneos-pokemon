@@ -24,8 +24,10 @@ SIN_TEAMPREVIEW = {
     "RANDOM DOBLES CHAMPIONS", "RANDBATS CHAMPIONS", "MULTIRANDOMBATTLE", "METRONOMO",
 }
 
-CACHE_COLS = ["url", "status", "player_id", "pokemon", "moves", "abilities",
-              "items", "tera", "win", "formato_esp", "fetched_at"]
+CACHE_COLS = ["url", "status", "player_id", "player_name", "pokemon", "moves",
+              "abilities", "items", "tera", "win", "formato_esp", "fetched_at",
+              "nickname", "duration_seconds", "ko_causados", "ko_propios",
+              "crits_dados", "crits_recibidos"]
 
 
 def _get_pokemon_img(nombre: str):
@@ -296,6 +298,15 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
     # ── Trackeo de posición activa -> especie, y detalle por pokemon ─
     activo = {}       # "p1a" -> especie actualmente en esa posición
     registros = {}    # (pid, especie) -> {moves, abilities, items, tera}
+    nicknames = {}    # (pid, especie) -> nickname usado (si es distinto de la especie)
+
+    # ── Fase 1 "otra data de replays": KOs, crits y duración ──────────
+    faints_por_pid = {}          # pid -> Pokémon rivales/propios que cayeron
+    ko_causados_por_pid = {}     # pid -> cuántas veces un Pokémon RIVAL cayó
+    crits_dados_por_pid = {}     # pid -> crits que SU Pokémon activo repartió
+    crits_recibidos_por_pid = {} # pid -> crits que SU Pokémon activo sufrió
+    timestamps = []              # todos los |t:|<unix> del replay
+    ultimo_atacante_pid = None   # pid de la fuente del último |move| visto
 
     def _reg_vacio():
         return {"moves": {}, "abilities": {}, "items": {}, "tera": None}
@@ -314,7 +325,8 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
         if line.startswith("|switch|") or line.startswith("|drag|"):
             parts = line.split("|")
             if len(parts) >= 4:
-                pos = parts[2].split(":")[0].strip()
+                pos_completo = parts[2].strip()
+                pos = pos_completo.split(":")[0].strip()
                 especie = parts[3].split(",")[0].strip()
                 activo[pos] = especie
                 if sin_tp:
@@ -322,14 +334,52 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                     equipos.setdefault(pid, [])
                     if especie not in equipos[pid]:
                         equipos[pid].append(especie)
+                # nickname = lo que va después de "p1a: " en la línea; si
+                # coincide con la especie es que no usó apodo custom.
+                if ":" in pos_completo:
+                    nick = pos_completo.split(":", 1)[1].strip()
+                    if nick and nick != especie:
+                        key = (pos[:2], especie)
+                        nicknames.setdefault(key, nick)
                 _get_reg(pos)
 
         elif line.startswith("|move|"):
             parts = line.split("|")
             if len(parts) >= 4:
-                reg = _get_reg(parts[2].split(":")[0].strip())
+                pos_fuente = parts[2].split(":")[0].strip()
+                reg = _get_reg(pos_fuente)
                 if reg:
                     _agregar_valor(reg, "moves", parts[3].strip())
+                ultimo_atacante_pid = pos_fuente[:2]
+
+        elif line.startswith("|-crit|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid_objetivo = parts[2].split(":")[0].strip()[:2]
+                crits_recibidos_por_pid[pid_objetivo] = crits_recibidos_por_pid.get(pid_objetivo, 0) + 1
+                if ultimo_atacante_pid and ultimo_atacante_pid != pid_objetivo:
+                    crits_dados_por_pid[ultimo_atacante_pid] = crits_dados_por_pid.get(ultimo_atacante_pid, 0) + 1
+
+        elif line.startswith("|faint|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                pid_caido = parts[2].split(":")[0].strip()[:2]
+                faints_por_pid[pid_caido] = faints_por_pid.get(pid_caido, 0) + 1
+                # Atribuir el KO al rival solo tiene sentido 1v1 (2 jugadores):
+                # en Free For All (3-4 jugadores) no se puede saber quién dio
+                # el golpe final solo con esta línea, así que no se adivina.
+                if len(player_names) == 2:
+                    for otro_pid in player_names:
+                        if otro_pid != pid_caido:
+                            ko_causados_por_pid[otro_pid] = ko_causados_por_pid.get(otro_pid, 0) + 1
+
+        elif line.startswith("|t:|"):
+            parts = line.split("|")
+            if len(parts) >= 3:
+                try:
+                    timestamps.append(int(parts[2].strip()))
+                except ValueError:
+                    pass
 
         elif line.startswith("|-ability|"):
             parts = line.split("|")
@@ -433,6 +483,9 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                     ganador_pid = pid
             break
 
+    # ── Duración total del replay (mismo valor para ambos jugadores) ──
+    duracion = (max(timestamps) - min(timestamps)) if len(timestamps) >= 2 else None
+
     # ── Armar filas de salida ────────────────────────────────────
     ahora = datetime.datetime.utcnow().isoformat(timespec="seconds")
     filas = []
@@ -443,6 +496,7 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 "url": url,
                 "status": "ok",
                 "player_id": pid,
+                "player_name": player_names.get(pid, ""),
                 "pokemon": especie,
                 "moves": "; ".join(sorted(reg.get("moves", {}).values())),
                 "abilities": "; ".join(sorted(reg.get("abilities", {}).values())),
@@ -451,6 +505,12 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
                 "win": "" if ganador_pid is None else str(pid == ganador_pid),
                 "formato_esp": formato_esp,
                 "fetched_at": ahora,
+                "nickname": nicknames.get((pid, especie), ""),
+                "duration_seconds": "" if duracion is None else duracion,
+                "ko_causados": ko_causados_por_pid.get(pid, 0),
+                "ko_propios": faints_por_pid.get(pid, 0),
+                "crits_dados": crits_dados_por_pid.get(pid, 0),
+                "crits_recibidos": crits_recibidos_por_pid.get(pid, 0),
             })
 
     if not filas:
@@ -568,6 +628,86 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
     info_debug["filas_en_cache_ok_para_estas_urls"] = len(df_detalle)
 
     return df_detalle, total_equipos, n_nuevos, n_fallidos, info_debug
+
+
+# ══════════════════════════════════════════════════════════════════
+# RESUMEN POR JUGADOR — para el tab "Estadísticas de Juego" del perfil
+# (vistas/jugadores.py). Reutiliza el mismo caché/fetch que la página
+# de meta de replays; NO duplica lógica de descarga/parseo.
+# ══════════════════════════════════════════════════════════════════
+
+def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
+    """
+    Analiza (descargando si hace falta) los replays de un jugador puntual y
+    devuelve un dict con: Pokémon más usados, apodos distintos por especie,
+    duración promedio de partida, KOs causados/propios y tasa de crits.
+
+    Solo cubre las partidas de ESE jugador que tienen Match_replays con URL
+    real -> es un resumen "según los replays disponibles", no del historial
+    completo (mismo aviso que ya usa la página de Replays).
+    """
+    vacio = {
+        "n_replays": 0, "pokemon_top": pd.DataFrame(columns=["Pokémon", "Usos", "% de partidas"]),
+        "nicknames": [], "duracion_prom_seg": None, "duracion_prom_txt": None,
+        "ko_causados": 0, "ko_propios": 0, "crits_dados": 0, "crits_recibidos": 0,
+    }
+    if df_raw is None or df_raw.empty or "Match_replays" not in df_raw.columns:
+        return vacio
+
+    pq = player_query.strip().lower()
+    mask = (
+        df_raw["player1"].astype(str).str.lower().str.contains(pq, na=False) |
+        df_raw["player2"].astype(str).str.lower().str.contains(pq, na=False)
+    )
+    df_filtrado = df_raw[mask].copy()
+    if df_filtrado.empty:
+        return vacio
+
+    df_detalle, _, _, _, _ = _cargar_todos_replays_detalle(df_filtrado)
+    if df_detalle.empty or "player_name" not in df_detalle.columns:
+        return vacio
+
+    propio = df_detalle[df_detalle["player_name"].astype(str).str.lower().str.contains(pq, na=False)].copy()
+    if propio.empty:
+        return vacio
+
+    n_replays = propio["url"].nunique()
+
+    # Pokémon más usados (una fila por especie por replay -> ya viene deduplicado)
+    conteo = propio["pokemon"].value_counts()
+    pokemon_top = pd.DataFrame({
+        "Pokémon": conteo.index,
+        "Usos": conteo.values,
+    })
+    pokemon_top["% de partidas"] = (pokemon_top["Usos"] / n_replays * 100).round(1) if n_replays else 0
+
+    # Apodos distintos usados (especie -> nickname), solo donde hay uno real
+    nick_rows = propio[propio["nickname"].astype(str).str.strip() != ""]
+    nicknames = sorted(set(
+        f"{row['pokemon']} → {row['nickname']}" for _, row in nick_rows.iterrows()
+    ))
+
+    # Métricas por-replay (duración/KOs/crits vienen repetidas por cada fila
+    # de Pokémon del mismo replay -> hay que promediar/sumar por url única)
+    por_replay = propio.drop_duplicates(subset=["url"])
+    duraciones = pd.to_numeric(por_replay["duration_seconds"], errors="coerce").dropna()
+    dur_prom = round(duraciones.mean()) if not duraciones.empty else None
+    dur_txt = f"{int(dur_prom // 60)}m {int(dur_prom % 60)}s" if dur_prom is not None else None
+
+    def _suma(col):
+        return int(pd.to_numeric(por_replay[col], errors="coerce").fillna(0).sum())
+
+    return {
+        "n_replays": int(n_replays),
+        "pokemon_top": pokemon_top,
+        "nicknames": nicknames,
+        "duracion_prom_seg": dur_prom,
+        "duracion_prom_txt": dur_txt,
+        "ko_causados": _suma("ko_causados"),
+        "ko_propios": _suma("ko_propios"),
+        "crits_dados": _suma("crits_dados"),
+        "crits_recibidos": _suma("crits_recibidos"),
+    }
 
 
 def _desglose_pokemon(df_detalle: pd.DataFrame, especie: str) -> dict:
