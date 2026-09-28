@@ -685,6 +685,24 @@ def show():
     with tab_wa:
         st.subheader("📱 Enviar recordatorios por WhatsApp")
 
+        with st.expander("📜 Términos y condiciones — Consentimiento de WhatsApp", expanded=False):
+            st.markdown("""
+Al registrar tu número de WhatsApp para participar en Poketubi, aceptás lo siguiente:
+
+1. **Mensajes automatizados.** Vas a recibir recordatorios automáticos por WhatsApp sobre tus
+   batallas pendientes (rival, fecha límite, formato). Este es el medio oficial de aviso de la liga.
+2. **Tu número se comparte con tu rival de turno.** En cada recordatorio se incluye el número de
+   WhatsApp del rival que te toca enfrentar (y al rival se le comparte el tuyo), ya que ambos forman
+   parte del mismo grupo/torneo y WhatsApp es el canal oficial para coordinar día y hora de la batalla.
+   Tu número **no** se comparte con nadie fuera de tus rivales de turno ni se usa con fines distintos
+   a la coordinación de partidas.
+3. **Cómo optar por no participar.** Si preferís no recibir estos mensajes ni compartir tu número,
+   avisá al staff: podés coordinar tus batallas por otro medio, pero no vas a recibir los recordatorios
+   automáticos y sos responsable de estar al tanto de tus fechas límite igual.
+
+Al anotarte con tu número en la planilla de la liga, confirmás que leíste y aceptás estos términos.
+            """)
+
         # ── Acceso protegido por contraseña (se compara por hash, nunca en
         #    texto plano) ────────────────────────────────────────────────
         import hashlib
