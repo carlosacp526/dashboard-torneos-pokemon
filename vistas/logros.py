@@ -124,6 +124,19 @@ LOGROS = [
     {"id":"TO11","num":63,"cat":"Torneo",       "rareza":"Legendario","icon":"🌍","xp":2000, "name":"Gran Maestro",          "desc":"Gana un Mundial (T46 o T68)"},
     # ── LIGAS (1) ────────────────────────────────────────────────────────────
     {"id":"LI01","num":64,"cat":"Ligas",        "rareza":"Legendario","icon":"✈️","xp":1600, "name":"El Viajero",            "desc":"Participa en al menos 2 ligas"},
+    {"id":"LI02","num":152,"cat":"Ligas",       "rareza":"Legendario","icon":"🥂","xp":1800, "name":"Doble Ganador",         "desc":"Gana una Liga y un Torneo en el mismo año"},
+    # ── LIGAS — batallas de Liga (7) ────────────────────────────────────────
+    {"id":"LI03","num":153,"cat":"Ligas",       "rareza":"Bronce",    "icon":"🛡️","xp":150,  "name":"Recluta de Liga",       "desc":"Juega 15 batallas de Liga en total"},
+    {"id":"LI04","num":154,"cat":"Ligas",       "rareza":"Plata",     "icon":"🛡️","xp":400,  "name":"Regular de Liga",       "desc":"Juega 40 batallas de Liga en total"},
+    {"id":"LI05","num":155,"cat":"Ligas",       "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Veterano de Liga",      "desc":"Juega 80 batallas de Liga en total"},
+    {"id":"LI06","num":156,"cat":"Ligas",       "rareza":"Legendario","icon":"🛡️","xp":1800, "name":"Leyenda de Liga",       "desc":"Juega 150 batallas de Liga en total"},
+    {"id":"LI07","num":157,"cat":"Ligas",       "rareza":"Bronce",    "icon":"⚔️","xp":150,  "name":"Cazador de Liga",       "desc":"Gana 10 batallas de Liga en total"},
+    {"id":"LI08","num":158,"cat":"Ligas",       "rareza":"Plata",     "icon":"⚔️","xp":400,  "name":"Verdugo de Liga",       "desc":"Gana 20 batallas de Liga en total"},
+    {"id":"LI09","num":159,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚔️","xp":900,  "name":"Amo de la Liga",        "desc":"Gana 50 batallas de Liga en total"},
+    {"id":"LI10","num":160,"cat":"Ligas",       "rareza":"Oro",       "icon":"🗓️","xp":700,  "name":"Temporada Perfecta",    "desc":"Juega todas las jornadas programadas de una temporada de Liga"},
+    {"id":"LI11","num":161,"cat":"Ligas",       "rareza":"Plata",     "icon":"🔗","xp":500,  "name":"Racha de Jornadas",     "desc":"Juega 6 jornadas consecutivas de Liga sin faltar ninguna"},
+    {"id":"LI12","num":162,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚡","xp":600,  "name":"Mes Intenso",           "desc":"Disputa 10+ batallas de Liga en un mismo mes"},
+    {"id":"LI13","num":163,"cat":"Ligas",       "rareza":"Legendario","icon":"👑","xp":1800, "name":"Rey de la Temporada",   "desc":"Gana el 100% de sus batallas en una temporada completa de Liga (mín. 5)"},
     # ── SOCIAL (9) ───────────────────────────────────────────────────────────
     {"id":"SO01","num":65,"cat":"Social",       "rareza":"Bronce",    "icon":"👋","xp":100,  "name":"Bienvenido",            "desc":"Participa en la Liga Junior"},
     {"id":"SO02","num":66,"cat":"Social",       "rareza":"Plata",     "icon":"🤝","xp":300,  "name":"Mentor",                "desc":"Participa en la Liga Senior"},
@@ -798,6 +811,146 @@ def evaluar_logros(
         liga for liga in ["PJS", "PES", "PSS", "PMS", "PLS"]
         if any(liga in str(l).upper() for l in ligas_jugadas)
      }) >= 2
+
+    # ── LI02: Doble Ganador — gana una Liga Y un Torneo en el mismo año.
+    # Usa campeonatos_liga_final/campeonatos_torneo_final (auto-calculados,
+    # mismo patrón que TO13/TO14) — resuelve el año de cada título a partir
+    # de la fecha mínima de sus partidas.
+    def _anios_campeon_liga():
+        anios = set()
+        if pm.empty or 'round' not in pm.columns or 'league' not in pm.columns or 'date' not in pm.columns:
+            return anios
+        pm_liga = pm[pm['league'] == 'LIGA'].copy()
+        pm_liga['_lt'] = pm_liga['round'].apply(
+            lambda x: str(x).split(' ')[0] + str(x).split(' ')[1]
+            if pd.notna(x) and len(str(x).split(' ')) > 1 else ''
+        )
+        for camp in campeonatos_liga_final:
+            sub = pm_liga[pm_liga['_lt'] == camp.get('Liga', '')]
+            if not sub.empty:
+                fecha = sub['date'].min()
+                if pd.notna(fecha):
+                    anios.add(fecha.year)
+        return anios
+
+    def _anios_campeon_torneo():
+        anios = set()
+        if pm.empty or 'N_Torneo' not in pm.columns or 'league' not in pm.columns or 'date' not in pm.columns:
+            return anios
+        pm_torneo = pm[pm['league'] == 'TORNEO']
+        for camp in campeonatos_torneo_final:
+            try:
+                nt = int(camp.get('Torneo'))
+            except (TypeError, ValueError):
+                continue
+            sub = pm_torneo[pm_torneo['N_Torneo'] == nt]
+            if not sub.empty:
+                fecha = sub['date'].min()
+                if pd.notna(fecha):
+                    anios.add(fecha.year)
+        return anios
+
+    _anios_liga_camp = _anios_campeon_liga()
+    _anios_torneo_camp = _anios_campeon_torneo()
+    r["LI02"] = bool(_anios_liga_camp & _anios_torneo_camp)
+
+    # ── LI03-13: Liga — batallas jugadas/ganadas, asistencia y temporadas ──
+    pm_liga = pm[pm['league'] == 'LIGA'].copy() if 'league' in pm.columns else pd.DataFrame()
+    if not pm_liga.empty and 'Walkover' in pm_liga.columns:
+        pm_liga = pm_liga[pm_liga['Walkover'] != -1]
+
+    n_liga_jugadas = len(pm_liga)
+    for _id, _u in [("LI03", 15), ("LI04", 40), ("LI05", 80), ("LI06", 150)]:
+        r[_id] = n_liga_jugadas >= _u
+
+    n_liga_ganadas = (
+        int(pm_liga['winner'].str.lower().str.contains(pq, na=False).sum())
+        if not pm_liga.empty and 'winner' in pm_liga.columns else 0
+    )
+    for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 50)]:
+        r[_id] = n_liga_ganadas >= _u
+
+    def _split_round_liga(x):
+        partes = str(x).split(' ') if pd.notna(x) else []
+        lt = partes[0] + partes[1] if len(partes) > 1 else ''
+        jornada = partes[2] if len(partes) > 2 else ''
+        return lt, jornada
+
+    # LI10: Temporada Perfecta — jugó TODAS las jornadas que existieron en
+    # una Liga_Temporada donde participó (comparado contra el universo
+    # completo de jornadas de esa temporada en df_raw, no solo lo propio).
+    def _temporada_perfecta():
+        if pm_liga.empty or 'round' not in pm_liga.columns:
+            return False
+        if df_raw is None or 'round' not in df_raw.columns or 'league' not in df_raw.columns:
+            return False
+        df_liga_all = df_raw[df_raw['league'] == 'LIGA'].copy()
+        df_liga_all['_lt'], df_liga_all['_jornada'] = zip(*df_liga_all['round'].map(_split_round_liga))
+        pm_l = pm_liga.copy()
+        pm_l['_lt'], pm_l['_jornada'] = zip(*pm_l['round'].map(_split_round_liga))
+        for lt in pm_l['_lt'].unique():
+            if not lt:
+                continue
+            jornadas_jugador = set(pm_l[pm_l['_lt'] == lt]['_jornada']) - {''}
+            jornadas_totales = set(df_liga_all[df_liga_all['_lt'] == lt]['_jornada']) - {''}
+            if len(jornadas_totales) >= 3 and jornadas_jugador == jornadas_totales:
+                return True
+        return False
+    r["LI10"] = _temporada_perfecta()
+
+    # LI11: Racha de Jornadas — 6+ jornadas consecutivas (numeración Jn)
+    # sin faltar ninguna, dentro de una misma Liga_Temporada.
+    def _racha_jornadas(min_consec=6):
+        if pm_liga.empty or 'round' not in pm_liga.columns:
+            return False
+        pm_l = pm_liga.copy()
+        pm_l['_lt'], pm_l['_jornada'] = zip(*pm_l['round'].map(_split_round_liga))
+        for lt, grp in pm_l.groupby('_lt'):
+            if not lt:
+                continue
+            nums_j = sorted({
+                int(j[1:]) for j in grp['_jornada'] if j.upper().startswith('J') and j[1:].isdigit()
+            })
+            if not nums_j:
+                continue
+            racha = 1
+            mejor = 1
+            for i in range(1, len(nums_j)):
+                if nums_j[i] == nums_j[i-1] + 1:
+                    racha += 1
+                    mejor = max(mejor, racha)
+                else:
+                    racha = 1
+            if mejor >= min_consec:
+                return True
+        return False
+    r["LI11"] = _racha_jornadas()
+
+    # LI12: Mes Intenso — 10+ batallas de Liga jugadas en un mismo mes.
+    def _mes_intenso(min_bat=10):
+        if pm_liga.empty or 'date' not in pm_liga.columns:
+            return False
+        fechas = pd.to_datetime(pm_liga['date'], errors='coerce').dropna()
+        if fechas.empty:
+            return False
+        return fechas.dt.to_period('M').value_counts().max() >= min_bat
+    r["LI12"] = _mes_intenso()
+
+    # LI13: Rey de la Temporada — 100% de victorias en una Liga_Temporada
+    # completa donde jugó, con un mínimo de 5 batallas para evitar temporadas
+    # triviales de una sola partida.
+    def _rey_de_temporada(min_bat=5):
+        if pm_liga.empty or 'round' not in pm_liga.columns or 'winner' not in pm_liga.columns:
+            return False
+        pm_l = pm_liga.copy()
+        pm_l['_lt'], _ = zip(*pm_l['round'].map(_split_round_liga))
+        for lt, grp in pm_l.groupby('_lt'):
+            if not lt or len(grp) < min_bat:
+                continue
+            if grp['winner'].str.lower().str.contains(pq, na=False).all():
+                return True
+        return False
+    r["LI13"] = _rey_de_temporada()
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     if any('PES' in str(l).upper() for l in ligas_jugadas):
@@ -1506,6 +1659,16 @@ def evaluar_logros(
     _ligas_std_jugadas = {liga for liga in ["PJS", "PES", "PSS", "PMS", "PLS"]
                            if any(liga in str(l).upper() for l in ligas_jugadas)}
     _d("LI01", len(_ligas_std_jugadas), 2, "Ligas: " + (", ".join(sorted(_ligas_std_jugadas)) or "—"))
+    _anios_dobles = sorted(_anios_liga_camp & _anios_torneo_camp)
+    _d("LI02", texto=f"Ganó Liga y Torneo en {_anios_dobles[0]}" if r["LI02"] else None)
+    for _id, _u in [("LI03", 15), ("LI04", 40), ("LI05", 80), ("LI06", 150)]:
+        _d(_id, n_liga_jugadas, _u, f"{n_liga_jugadas} batalla(s) de Liga jugada(s)")
+    for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 50)]:
+        _d(_id, n_liga_ganadas, _u, f"{n_liga_ganadas} batalla(s) de Liga ganada(s)")
+    _d("LI10", texto="Jugó todas las jornadas de una temporada de Liga" if r["LI10"] else None)
+    _d("LI11", umbral=6, texto="6+ jornadas consecutivas de Liga sin faltar" if r["LI11"] else None)
+    _d("LI12", texto="10+ batallas de Liga en un mismo mes" if r["LI12"] else None)
+    _d("LI13", texto="100% de victorias en una temporada completa de Liga" if r["LI13"] else None)
 
     # SOCIAL
     _d("SO01", texto="Participó en Liga Junior (PJS/PES/PSS)" if r["SO01"] else None)
