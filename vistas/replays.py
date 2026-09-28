@@ -198,6 +198,16 @@ def _parsear_showteam_packed(packed: str):
     return sets
 
 
+def _toid(nombre: str) -> str:
+    """Normaliza un nombre de usuario al 'userid' que usa Pokémon Showdown
+    internamente: todo en minúsculas y sin nada que no sea a-z/0-9. Showdown
+    trata 'Bloody Cheese', 'bloodycheese' y 'BLOODY-CHEESE' como la MISMA
+    cuenta -> hay que comparar así, no con un simple .str.contains(), o se
+    pierden casi todos los replays de cualquiera cuyo nombre en el CSV lleve
+    espacios/guiones que el username real de Showdown no tiene."""
+    return re.sub(r'[^a-z0-9]', '', str(nombre).lower())
+
+
 def _canon_id(nombre: str) -> str:
     """ID canónico (minúsculas, sin espacios/guiones/apóstrofes) para poder
     reconocer que 'Follow Me' (formato lindo del log en batalla) y 'FollowMe'
@@ -724,6 +734,74 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
 
 
 # ══════════════════════════════════════════════════════════════════
+# ALIAS CSV -> USERNAME REAL DE SHOWDOWN
+#
+# El nombre que usa el CSV (player1/player2/winner) puede no ser el username
+# real de Showdown (espacios, mayúsculas, o directamente un apodo distinto).
+# En vez de adivinar, se cruza el GANADOR según el CSV (columna 'winner',
+# texto conocido y confiable) contra el GANADOR según el replay real (línea
+# |win| de Showdown, ya guardada como 'win'/'player_name' en el caché) para
+# la MISMA partida (mismo Match_replays) -> así se deduce con certeza qué
+# username de Showdown corresponde a cada nombre del CSV, aunque sean
+# completamente distintos. Sirve para CUALQUIER jugador, no solo uno.
+# ══════════════════════════════════════════════════════════════════
+
+def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
+    """Devuelve {toid_del_nombre_csv: {usernames_de_showdown_vistos}},
+    construido cruzando TODO lo que ya haya en el caché de replays (no pide
+    nada nuevo a la red -- es puro cruce de datos ya descargados)."""
+    cache_df = _load_cache()
+    if cache_df.empty or "player_name" not in cache_df.columns:
+        return {}
+    ok = cache_df[cache_df["status"] == "ok"]
+    if ok.empty or df_raw is None or "Match_replays" not in df_raw.columns:
+        return {}
+
+    lookup = (
+        df_raw[["Match_replays", "player1", "player2", "winner"]]
+        .dropna(subset=["Match_replays"])
+        .drop_duplicates(subset=["Match_replays"])
+        .set_index("Match_replays")
+    )
+
+    alias = {}
+    for url, grp in ok.groupby("url"):
+        if url not in lookup.index:
+            continue
+        fila = lookup.loc[url]
+        csv_p1 = str(fila["player1"]).strip()
+        csv_p2 = str(fila["player2"]).strip()
+        csv_winner = str(fila["winner"]).strip()
+        if not csv_p1 or not csv_p2 or not csv_winner:
+            continue
+
+        sub = grp.drop_duplicates(subset=["player_name"])
+        ganador_sd = perdedor_sd = None
+        for _, row in sub.iterrows():
+            pname = str(row.get("player_name", "")).strip()
+            if not pname:
+                continue
+            if str(row.get("win", "")) == "True":
+                ganador_sd = pname
+            elif str(row.get("win", "")) == "False":
+                perdedor_sd = pname
+        if not ganador_sd:
+            continue
+
+        if _toid(csv_winner) == _toid(csv_p1):
+            csv_ganador, csv_perdedor = csv_p1, csv_p2
+        elif _toid(csv_winner) == _toid(csv_p2):
+            csv_ganador, csv_perdedor = csv_p2, csv_p1
+        else:
+            continue
+
+        alias.setdefault(_toid(csv_ganador), set()).add(ganador_sd)
+        if perdedor_sd:
+            alias.setdefault(_toid(csv_perdedor), set()).add(perdedor_sd)
+    return alias
+
+
+# ══════════════════════════════════════════════════════════════════
 # RESUMEN POR JUGADOR — para el tab "Estadísticas de Juego" del perfil
 # (vistas/jugadores.py). Reutiliza el mismo caché/fetch que la página
 # de meta de replays; NO duplica lógica de descarga/parseo.
@@ -755,6 +833,7 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "mega_top": [], "tera_top": [],
         "duplas_top": pd.DataFrame(columns=["Dupla", "Partidas juntos"]),
         "rivales_top": pd.DataFrame(columns=["Pokémon rival", "Veces enfrentado"]),
+        "nombres_showdown": [],
     }
     if df_raw is None or df_raw.empty or "Match_replays" not in df_raw.columns:
         return vacio
@@ -772,7 +851,17 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     if df_detalle.empty or "player_name" not in df_detalle.columns:
         return vacio
 
-    es_propio = df_detalle["player_name"].astype(str).str.lower().str.contains(pq, na=False)
+    # Match por userid normalizado (ver _toid) MÁS la tabla de alias
+    # CSV->Showdown (ver _construir_alias_showdown): cubre tanto diferencias
+    # de espacios/mayúsculas ("Bloody Cheese" -> "bloodycheese") como apodos
+    # de Showdown totalmente distintos, deducidos cruzando quién ganó según
+    # el CSV contra quién ganó según el replay real.
+    pq_id = _toid(player_query)
+    alias_map = _construir_alias_showdown(df_raw)
+    nombres_showdown = sorted(alias_map.get(pq_id, set()))
+    toids_conocidos = {_toid(n) for n in nombres_showdown} | {pq_id}
+
+    es_propio = df_detalle["player_name"].astype(str).map(_toid).isin(toids_conocidos)
     propio = df_detalle[es_propio].copy()
     rival = df_detalle[~es_propio].copy()
     if propio.empty:
@@ -858,6 +947,7 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "tera_top": tera_top,
         "duplas_top": duplas_top,
         "rivales_top": rivales_top.head(15),
+        "nombres_showdown": nombres_showdown,
     }
 
 

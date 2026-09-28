@@ -38,6 +38,12 @@ def show():
         if resumen_replay["n_replays"] == 0:
             st.info("No se encontraron replays analizables para este jugador.")
         else:
+            if resumen_replay["nombres_showdown"]:
+                st.caption(
+                    "🎮 Nombres de Showdown detectados para este jugador: "
+                    + ", ".join(f"`{n}`" for n in resumen_replay["nombres_showdown"])
+                )
+
             rc1, rc2, rc3, rc4 = st.columns(4)
             rc1.metric("Replays analizados", resumen_replay["n_replays"])
             rc2.metric("Duración promedio", resumen_replay["duracion_prom_txt"] or "—")
