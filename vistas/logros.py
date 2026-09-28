@@ -126,17 +126,15 @@ LOGROS = [
     {"id":"LI01","num":64,"cat":"Ligas",        "rareza":"Legendario","icon":"✈️","xp":1600, "name":"El Viajero",            "desc":"Participa en al menos 2 ligas"},
     {"id":"LI02","num":152,"cat":"Ligas",       "rareza":"Legendario","icon":"🥂","xp":1800, "name":"Doble Ganador",         "desc":"Gana una Liga y un Torneo en el mismo año"},
     # ── LIGAS — batallas de Liga (7) ────────────────────────────────────────
-    {"id":"LI03","num":153,"cat":"Ligas",       "rareza":"Bronce",    "icon":"🛡️","xp":150,  "name":"Recluta de Liga",       "desc":"Juega 15 batallas de Liga en total"},
-    {"id":"LI04","num":154,"cat":"Ligas",       "rareza":"Plata",     "icon":"🛡️","xp":400,  "name":"Regular de Liga",       "desc":"Juega 40 batallas de Liga en total"},
-    {"id":"LI05","num":155,"cat":"Ligas",       "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Veterano de Liga",      "desc":"Juega 80 batallas de Liga en total"},
-    {"id":"LI06","num":156,"cat":"Ligas",       "rareza":"Legendario","icon":"🛡️","xp":1800, "name":"Leyenda de Liga",       "desc":"Juega 150 batallas de Liga en total"},
+    {"id":"LI03","num":153,"cat":"Ligas",       "rareza":"Bronce",    "icon":"🛡️","xp":150,  "name":"Recluta de Liga",       "desc":"Juega 10 batallas de Liga en total"},
+    {"id":"LI04","num":154,"cat":"Ligas",       "rareza":"Plata",     "icon":"🛡️","xp":400,  "name":"Regular de Liga",       "desc":"Juega 20 batallas de Liga en total"},
+    {"id":"LI05","num":155,"cat":"Ligas",       "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Veterano de Liga",      "desc":"Juega 35 batallas de Liga en total"},
+    {"id":"LI06","num":156,"cat":"Ligas",       "rareza":"Legendario","icon":"🛡️","xp":1800, "name":"Leyenda de Liga",       "desc":"Juega 50 batallas de Liga en total"},
     {"id":"LI07","num":157,"cat":"Ligas",       "rareza":"Bronce",    "icon":"⚔️","xp":150,  "name":"Cazador de Liga",       "desc":"Gana 10 batallas de Liga en total"},
     {"id":"LI08","num":158,"cat":"Ligas",       "rareza":"Plata",     "icon":"⚔️","xp":400,  "name":"Verdugo de Liga",       "desc":"Gana 20 batallas de Liga en total"},
-    {"id":"LI09","num":159,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚔️","xp":900,  "name":"Amo de la Liga",        "desc":"Gana 50 batallas de Liga en total"},
+    {"id":"LI09","num":159,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚔️","xp":900,  "name":"Amo de la Liga",        "desc":"Gana 30 batallas de Liga en total"},
     {"id":"LI10","num":160,"cat":"Ligas",       "rareza":"Oro",       "icon":"🗓️","xp":700,  "name":"Temporada Perfecta",    "desc":"Juega todas las jornadas programadas de una temporada de Liga"},
     {"id":"LI11","num":161,"cat":"Ligas",       "rareza":"Plata",     "icon":"🔗","xp":500,  "name":"Racha de Jornadas",     "desc":"Juega 6 jornadas consecutivas de Liga sin faltar ninguna"},
-    {"id":"LI12","num":162,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚡","xp":600,  "name":"Mes Intenso",           "desc":"Disputa 10+ batallas de Liga en un mismo mes"},
-    {"id":"LI13","num":163,"cat":"Ligas",       "rareza":"Legendario","icon":"👑","xp":1800, "name":"Rey de la Temporada",   "desc":"Gana el 100% de sus batallas en una temporada completa de Liga (mín. 5)"},
     # ── SOCIAL (9) ───────────────────────────────────────────────────────────
     {"id":"SO01","num":65,"cat":"Social",       "rareza":"Bronce",    "icon":"👋","xp":100,  "name":"Bienvenido",            "desc":"Participa en la Liga Junior"},
     {"id":"SO02","num":66,"cat":"Social",       "rareza":"Plata",     "icon":"🤝","xp":300,  "name":"Mentor",                "desc":"Participa en la Liga Senior"},
@@ -860,14 +858,14 @@ def evaluar_logros(
         pm_liga = pm_liga[pm_liga['Walkover'] != -1]
 
     n_liga_jugadas = len(pm_liga)
-    for _id, _u in [("LI03", 15), ("LI04", 40), ("LI05", 80), ("LI06", 150)]:
+    for _id, _u in [("LI03", 10), ("LI04", 20), ("LI05", 35), ("LI06", 50)]:
         r[_id] = n_liga_jugadas >= _u
 
     n_liga_ganadas = (
         int(pm_liga['winner'].str.lower().str.contains(pq, na=False).sum())
         if not pm_liga.empty and 'winner' in pm_liga.columns else 0
     )
-    for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 50)]:
+    for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 30)]:
         r[_id] = n_liga_ganadas >= _u
 
     def _split_round_liga(x):
@@ -925,32 +923,6 @@ def evaluar_logros(
                 return True
         return False
     r["LI11"] = _racha_jornadas()
-
-    # LI12: Mes Intenso — 10+ batallas de Liga jugadas en un mismo mes.
-    def _mes_intenso(min_bat=10):
-        if pm_liga.empty or 'date' not in pm_liga.columns:
-            return False
-        fechas = pd.to_datetime(pm_liga['date'], errors='coerce').dropna()
-        if fechas.empty:
-            return False
-        return fechas.dt.to_period('M').value_counts().max() >= min_bat
-    r["LI12"] = _mes_intenso()
-
-    # LI13: Rey de la Temporada — 100% de victorias en una Liga_Temporada
-    # completa donde jugó, con un mínimo de 5 batallas para evitar temporadas
-    # triviales de una sola partida.
-    def _rey_de_temporada(min_bat=5):
-        if pm_liga.empty or 'round' not in pm_liga.columns or 'winner' not in pm_liga.columns:
-            return False
-        pm_l = pm_liga.copy()
-        pm_l['_lt'], _ = zip(*pm_l['round'].map(_split_round_liga))
-        for lt, grp in pm_l.groupby('_lt'):
-            if not lt or len(grp) < min_bat:
-                continue
-            if grp['winner'].str.lower().str.contains(pq, na=False).all():
-                return True
-        return False
-    r["LI13"] = _rey_de_temporada()
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     if any('PES' in str(l).upper() for l in ligas_jugadas):
@@ -1661,14 +1633,12 @@ def evaluar_logros(
     _d("LI01", len(_ligas_std_jugadas), 2, "Ligas: " + (", ".join(sorted(_ligas_std_jugadas)) or "—"))
     _anios_dobles = sorted(_anios_liga_camp & _anios_torneo_camp)
     _d("LI02", texto=f"Ganó Liga y Torneo en {_anios_dobles[0]}" if r["LI02"] else None)
-    for _id, _u in [("LI03", 15), ("LI04", 40), ("LI05", 80), ("LI06", 150)]:
+    for _id, _u in [("LI03", 10), ("LI04", 20), ("LI05", 35), ("LI06", 50)]:
         _d(_id, n_liga_jugadas, _u, f"{n_liga_jugadas} batalla(s) de Liga jugada(s)")
-    for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 50)]:
+    for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 30)]:
         _d(_id, n_liga_ganadas, _u, f"{n_liga_ganadas} batalla(s) de Liga ganada(s)")
     _d("LI10", texto="Jugó todas las jornadas de una temporada de Liga" if r["LI10"] else None)
     _d("LI11", umbral=6, texto="6+ jornadas consecutivas de Liga sin faltar" if r["LI11"] else None)
-    _d("LI12", texto="10+ batallas de Liga en un mismo mes" if r["LI12"] else None)
-    _d("LI13", texto="100% de victorias en una temporada completa de Liga" if r["LI13"] else None)
 
     # SOCIAL
     _d("SO01", texto="Participó en Liga Junior (PJS/PES/PSS)" if r["SO01"] else None)
