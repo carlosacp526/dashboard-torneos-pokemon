@@ -129,10 +129,10 @@ LOGROS = [
     {"id":"LI03","num":153,"cat":"Ligas",       "rareza":"Bronce",    "icon":"🛡️","xp":150,  "name":"Recluta de Liga",       "desc":"Juega 10 batallas de Liga en total"},
     {"id":"LI04","num":154,"cat":"Ligas",       "rareza":"Plata",     "icon":"🛡️","xp":400,  "name":"Regular de Liga",       "desc":"Juega 20 batallas de Liga en total"},
     {"id":"LI05","num":155,"cat":"Ligas",       "rareza":"Oro",       "icon":"🛡️","xp":800,  "name":"Veterano de Liga",      "desc":"Juega 35 batallas de Liga en total"},
-    {"id":"LI06","num":156,"cat":"Ligas",       "rareza":"Legendario","icon":"🛡️","xp":1800, "name":"Leyenda de Liga",       "desc":"Juega 50 batallas de Liga en total"},
+    {"id":"LI06","num":156,"cat":"Ligas",       "rareza":"Legendario","icon":"🛡️","xp":1800, "name":"Leyenda de Liga",       "desc":"Juega 80 batallas de Liga en total"},
     {"id":"LI07","num":157,"cat":"Ligas",       "rareza":"Bronce",    "icon":"⚔️","xp":150,  "name":"Cazador de Liga",       "desc":"Gana 10 batallas de Liga en total"},
     {"id":"LI08","num":158,"cat":"Ligas",       "rareza":"Plata",     "icon":"⚔️","xp":400,  "name":"Verdugo de Liga",       "desc":"Gana 20 batallas de Liga en total"},
-    {"id":"LI09","num":159,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚔️","xp":900,  "name":"Amo de la Liga",        "desc":"Gana 30 batallas de Liga en total"},
+    {"id":"LI09","num":159,"cat":"Ligas",       "rareza":"Oro",       "icon":"⚔️","xp":650,  "name":"Amo de la Liga",        "desc":"Gana 30 batallas de Liga en total"},
     {"id":"LI10","num":160,"cat":"Ligas",       "rareza":"Oro",       "icon":"🗓️","xp":700,  "name":"Temporada Perfecta",    "desc":"Juega todas las jornadas programadas de una temporada de Liga"},
     {"id":"LI11","num":161,"cat":"Ligas",       "rareza":"Plata",     "icon":"🔗","xp":500,  "name":"Racha de Jornadas",     "desc":"Juega 6 jornadas consecutivas de Liga sin faltar ninguna"},
     # ── SOCIAL (9) ───────────────────────────────────────────────────────────
@@ -858,7 +858,7 @@ def evaluar_logros(
         pm_liga = pm_liga[pm_liga['Walkover'] != -1]
 
     n_liga_jugadas = len(pm_liga)
-    for _id, _u in [("LI03", 10), ("LI04", 20), ("LI05", 35), ("LI06", 50)]:
+    for _id, _u in [("LI03", 10), ("LI04", 20), ("LI05", 35), ("LI06", 80)]:
         r[_id] = n_liga_jugadas >= _u
 
     n_liga_ganadas = (
@@ -891,7 +891,12 @@ def evaluar_logros(
                 continue
             jornadas_jugador = set(pm_l[pm_l['_lt'] == lt]['_jornada']) - {''}
             jornadas_totales = set(df_liga_all[df_liga_all['_lt'] == lt]['_jornada']) - {''}
-            if len(jornadas_totales) >= 3 and jornadas_jugador == jornadas_totales:
+            # Piso de 8 jornadas (no 3): varias temporadas (PLST1, PMST4-7)
+            # solo tienen 5 jornadas en total, lo que volvía este logro
+            # trivial para esas ligas cortas — con datos reales, bajarlo a
+            # "cualquier temporada" hacía que 87/270 jugadores lo tuvieran
+            # (más que SO03 "Embajador", que exige entrar a Liga Master).
+            if len(jornadas_totales) >= 8 and jornadas_jugador == jornadas_totales:
                 return True
         return False
     r["LI10"] = _temporada_perfecta()
@@ -1633,7 +1638,7 @@ def evaluar_logros(
     _d("LI01", len(_ligas_std_jugadas), 2, "Ligas: " + (", ".join(sorted(_ligas_std_jugadas)) or "—"))
     _anios_dobles = sorted(_anios_liga_camp & _anios_torneo_camp)
     _d("LI02", texto=f"Ganó Liga y Torneo en {_anios_dobles[0]}" if r["LI02"] else None)
-    for _id, _u in [("LI03", 10), ("LI04", 20), ("LI05", 35), ("LI06", 50)]:
+    for _id, _u in [("LI03", 10), ("LI04", 20), ("LI05", 35), ("LI06", 80)]:
         _d(_id, n_liga_jugadas, _u, f"{n_liga_jugadas} batalla(s) de Liga jugada(s)")
     for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 30)]:
         _d(_id, n_liga_ganadas, _u, f"{n_liga_ganadas} batalla(s) de Liga ganada(s)")
