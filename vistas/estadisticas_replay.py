@@ -4,7 +4,16 @@ import os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields
-from vistas.replays import obtener_resumen_jugador
+from vistas.replays import obtener_resumen_jugador, obtener_promedios_globales
+
+
+def _lbl(nombre, glob_val, sufijo=""):
+    """Arma el label de un st.metric agregando '(prom. global: X)' al lado,
+    para poder comparar al jugador contra el resto de la comunidad -- o el
+    nombre solo si todavía no hay caché suficiente para calcular el global."""
+    if glob_val is None:
+        return nombre
+    return f"{nombre} (global: {glob_val}{sufijo})"
 
 
 def show():
@@ -42,6 +51,7 @@ def show():
     _CLAVES_ESPERADAS = {
         "n_replays", "pokemon_top", "nicknames", "duracion_prom_txt",
         "ko_causados", "ko_propios", "crits_dados", "crits_recibidos",
+        "ko_causados_prom", "ko_propios_prom", "crits_dados_prom", "crits_recibidos_prom",
         "turnos_prom", "efectividad_pct", "lead_top", "mega_top", "tera_top",
         "duplas_top", "rivales_top", "nombres_showdown",
         "se_prom", "resisted_prom", "weather_prom", "boosts_prom",
@@ -67,11 +77,27 @@ def show():
                     + ", ".join(f"`{n}`" for n in resumen_replay["nombres_showdown"])
                 )
 
+            glob = obtener_promedios_globales()
+            st.caption(
+                f"Comparando contra el promedio global de {glob['n_jugadores']} jugadores "
+                f"y {glob['n_replays_totales']} replays en caché."
+                if glob["n_jugadores"] else
+                "Todavía no hay suficientes replays en caché de otros jugadores para calcular un promedio global."
+            )
+
             rc1, rc2, rc3, rc4 = st.columns(4)
             rc1.metric("Replays analizados", resumen_replay["n_replays"])
-            rc2.metric("Duración promedio", resumen_replay["duracion_prom_txt"] or "—")
-            rc3.metric("KOs causados / propios", f"{resumen_replay['ko_causados']} / {resumen_replay['ko_propios']}")
-            rc4.metric("Crits dados / recibidos", f"{resumen_replay['crits_dados']} / {resumen_replay['crits_recibidos']}")
+            rc2.metric(_lbl("Duración promedio", glob["duracion_prom_txt"]), resumen_replay["duracion_prom_txt"] or "—")
+            rc3.metric(
+                _lbl("KOs causados/batalla", glob["ko_causados_prom"]),
+                resumen_replay["ko_causados_prom"],
+                help=f"{resumen_replay['ko_causados']} en total / {resumen_replay['n_replays']} replays"
+            )
+            rc4.metric(
+                _lbl("KOs propios/batalla", glob["ko_propios_prom"]),
+                resumen_replay["ko_propios_prom"],
+                help=f"{resumen_replay['ko_propios']} en total / {resumen_replay['n_replays']} replays"
+            )
 
             st.markdown("#### 🎯 Pokémon más usados")
             st.dataframe(resumen_replay["pokemon_top"], use_container_width=True, hide_index=True)
@@ -79,17 +105,48 @@ def show():
             st.markdown("---")
             st.markdown("### 🕹️ Estilo de juego")
             rd1, rd2, rd3, rd4 = st.columns(4)
-            rd1.metric("Turnos promedio", resumen_replay["turnos_prom"] or "—")
+            rd1.metric(_lbl("Turnos promedio", glob["turnos_prom"]), resumen_replay["turnos_prom"] or "—")
             reff = f"{resumen_replay['efectividad_pct']}%" if resumen_replay["efectividad_pct"] is not None else "—"
-            rd2.metric("Efectividad de tipo", reff, help="% de sus golpes notables que fueron súper efectivos (vs. resistidos)")
-            rd3.metric("Boosts por batalla", resumen_replay["boosts_prom"], help=f"{resumen_replay['boosts_propios']} en total / {resumen_replay['n_replays']} replays")
-            rd4.metric("Curas por batalla", resumen_replay["heals_prom"], help=f"{resumen_replay['heals_propios']} en total / {resumen_replay['n_replays']} replays")
+            glob_eff = f"{glob['efectividad_pct']}%" if glob["efectividad_pct"] is not None else None
+            rd2.metric(_lbl("Efectividad de tipo", glob_eff), reff, help="% de sus golpes notables que fueron súper efectivos (vs. resistidos)")
+            rd3.metric(
+                _lbl("Boosts por batalla", glob["boosts_prom"]), resumen_replay["boosts_prom"],
+                help=f"{resumen_replay['boosts_propios']} en total / {resumen_replay['n_replays']} replays"
+            )
+            rd4.metric(
+                _lbl("Curas por batalla", glob["heals_prom"]), resumen_replay["heals_prom"],
+                help=f"{resumen_replay['heals_propios']} en total / {resumen_replay['n_replays']} replays"
+            )
 
             re1, re2, re3, re4 = st.columns(4)
-            re1.metric("Clima propio por batalla", resumen_replay["weather_prom"], help=f"Activaciones de SU PROPIO clima (Drought/Drizzle/etc.) — {resumen_replay['weather_propio']} en total")
-            re2.metric("Transforms por batalla", resumen_replay["transforms_prom"], help=f"{resumen_replay['transforms_propios']} en total")
-            re3.metric("Cargas de 2 turnos/batalla", resumen_replay["prepares_prom"], help=f"Solar Beam, Fly, Dig y similares — {resumen_replay['prepares_propios']} en total")
-            re4.metric("Golpes SE / resistidos por batalla", f"{resumen_replay['se_prom']} / {resumen_replay['resisted_prom']}", help=f"{resumen_replay['supereffective_dados']} / {resumen_replay['resisted_dados']} en total")
+            re1.metric(
+                _lbl("Clima propio por batalla", glob["weather_prom"]), resumen_replay["weather_prom"],
+                help=f"Activaciones de SU PROPIO clima (Drought/Drizzle/etc.) — {resumen_replay['weather_propio']} en total"
+            )
+            re2.metric(
+                _lbl("Transforms por batalla", glob["transforms_prom"]), resumen_replay["transforms_prom"],
+                help=f"{resumen_replay['transforms_propios']} en total"
+            )
+            re3.metric(
+                _lbl("Cargas de 2 turnos/batalla", glob["prepares_prom"]), resumen_replay["prepares_prom"],
+                help=f"Solar Beam, Fly, Dig y similares — {resumen_replay['prepares_propios']} en total"
+            )
+            glob_se_res = f"{glob['se_prom']} / {glob['resisted_prom']}" if glob["se_prom"] is not None else None
+            re4.metric(
+                _lbl("Golpes SE/resistidos por batalla", glob_se_res),
+                f"{resumen_replay['se_prom']} / {resumen_replay['resisted_prom']}",
+                help=f"{resumen_replay['supereffective_dados']} / {resumen_replay['resisted_dados']} en total"
+            )
+
+            rf1, rf2 = st.columns(2)
+            rf1.metric(
+                _lbl("Crits dados/batalla", glob["crits_dados_prom"]), resumen_replay["crits_dados_prom"],
+                help=f"{resumen_replay['crits_dados']} en total / {resumen_replay['n_replays']} replays"
+            )
+            rf2.metric(
+                _lbl("Crits recibidos/batalla", glob["crits_recibidos_prom"]), resumen_replay["crits_recibidos_prom"],
+                help=f"{resumen_replay['crits_recibidos']} en total / {resumen_replay['n_replays']} replays"
+            )
 
             rcol_lead, rcol_mt = st.columns(2)
             with rcol_lead:

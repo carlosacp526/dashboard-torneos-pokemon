@@ -829,6 +829,73 @@ def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════
+# PROMEDIOS GLOBALES — mismas métricas que obtener_resumen_jugador pero
+# sobre TODO el caché (todos los jugadores, no uno puntual), para poder
+# mostrar "vos vs. el promedio de la comunidad" al lado de cada indicador.
+# No pide nada a la red -- es puro cruce de lo que ya está en el caché.
+# ══════════════════════════════════════════════════════════════════
+
+def obtener_promedios_globales() -> dict:
+    vacio = {
+        "n_replays_totales": 0, "n_jugadores": 0, "duracion_prom_txt": None,
+        "turnos_prom": None, "efectividad_pct": None,
+        "ko_causados_prom": None, "ko_propios_prom": None,
+        "crits_dados_prom": None, "crits_recibidos_prom": None,
+        "se_prom": None, "resisted_prom": None, "weather_prom": None,
+        "boosts_prom": None, "heals_prom": None, "transforms_prom": None,
+        "prepares_prom": None,
+    }
+    cache_df = _load_cache()
+    if cache_df.empty:
+        return vacio
+    ok = cache_df[cache_df["status"] == "ok"]
+    if ok.empty or "player_name" not in ok.columns:
+        return vacio
+
+    # Una fila por (replay, jugador) -- si no, las partidas donde se reveló
+    # más Pokémon pesarían de más en el promedio.
+    por_jugador_replay = ok.drop_duplicates(subset=["url", "player_name"])
+    por_jugador_replay = por_jugador_replay[por_jugador_replay["player_name"].astype(str).str.strip() != ""]
+    if por_jugador_replay.empty:
+        return vacio
+
+    def _num(col):
+        return pd.to_numeric(por_jugador_replay[col], errors="coerce")
+
+    def _media(col):
+        s = _num(col).dropna()
+        return round(s.mean(), 2) if not s.empty else None
+
+    duraciones = _num("duration_seconds").dropna()
+    dur_prom = round(duraciones.mean()) if not duraciones.empty else None
+    dur_txt = f"{int(dur_prom // 60)}m {int(dur_prom % 60)}s" if dur_prom is not None else None
+
+    se_total = _num("supereffective_dados").fillna(0).sum()
+    resist_total = _num("resisted_dados").fillna(0).sum()
+    total_notables = se_total + resist_total
+    efectividad_pct = round(se_total / total_notables * 100, 1) if total_notables else None
+
+    return {
+        "n_replays_totales": int(ok["url"].nunique()),
+        "n_jugadores": int(por_jugador_replay["player_name"].map(_toid).nunique()),
+        "duracion_prom_txt": dur_txt,
+        "turnos_prom": _media("turnos"),
+        "efectividad_pct": efectividad_pct,
+        "ko_causados_prom": _media("ko_causados"),
+        "ko_propios_prom": _media("ko_propios"),
+        "crits_dados_prom": _media("crits_dados"),
+        "crits_recibidos_prom": _media("crits_recibidos"),
+        "se_prom": _media("supereffective_dados"),
+        "resisted_prom": _media("resisted_dados"),
+        "weather_prom": _media("weather_propio"),
+        "boosts_prom": _media("boosts_propios"),
+        "heals_prom": _media("heals_propios"),
+        "transforms_prom": _media("transforms_propios"),
+        "prepares_prom": _media("prepares_propios"),
+    }
+
+
+# ══════════════════════════════════════════════════════════════════
 # RESUMEN POR JUGADOR — para el tab "Estadísticas de Juego" del perfil
 # (vistas/jugadores.py). Reutiliza el mismo caché/fetch que la página
 # de meta de replays; NO duplica lógica de descarga/parseo.
@@ -853,6 +920,7 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "n_replays": 0, "pokemon_top": pd.DataFrame(columns=["Pokémon", "Usos", "% de partidas"]),
         "nicknames": [], "duracion_prom_seg": None, "duracion_prom_txt": None,
         "ko_causados": 0, "ko_propios": 0, "crits_dados": 0, "crits_recibidos": 0,
+        "ko_causados_prom": 0, "ko_propios_prom": 0, "crits_dados_prom": 0, "crits_recibidos_prom": 0,
         "turnos_prom": None, "supereffective_dados": 0, "resisted_dados": 0,
         "efectividad_pct": None, "weather_propio": 0, "boosts_propios": 0,
         "heals_propios": 0, "transforms_propios": 0, "prepares_propios": 0,
@@ -965,6 +1033,10 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
         "ko_propios": _suma("ko_propios"),
         "crits_dados": _suma("crits_dados"),
         "crits_recibidos": _suma("crits_recibidos"),
+        "ko_causados_prom": _promedio("ko_causados"),
+        "ko_propios_prom": _promedio("ko_propios"),
+        "crits_dados_prom": _promedio("crits_dados"),
+        "crits_recibidos_prom": _promedio("crits_recibidos"),
         "turnos_prom": turnos_prom,
         "supereffective_dados": se_dados,
         "resisted_dados": resist_dados,
