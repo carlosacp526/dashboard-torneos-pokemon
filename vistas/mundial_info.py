@@ -412,7 +412,7 @@ MONOTYPE1_POSICIONES = {
 
 
         "JaLax":     "Top40",
-        "masafesio":     "Top40",
+        "darkam580":     "Top40",
         "Saga":     "Top40",
         "The.Ultracheese":     "Top40",
         "skll02":     "Top40",
@@ -437,7 +437,7 @@ MONOTYPE1_POSICIONES = {
 
         "Dino324000":     "Top16",
         "MafiaPolar6242":     "Top16",
-        "masafesio":     "Top16",
+        "darkam580":     "Top16",
         "Okari958":     "Top16",
         "Porygon Z":     "Top16",
         "SasoriVzla7":     "Top16",
@@ -572,7 +572,7 @@ MONOTYPE1_POSICIONES = {
         "LABIAMG":     "Top24",
 
         "lexodia":     "Top32",
-        "masafesio":     "Top32",
+        "darkam580":     "Top32",
         "Minipapus":     "Top32",
         "Roy Kasoy":     "Top32",
         "SasoriVzla7":     "Top32",
@@ -685,7 +685,7 @@ MONOTYPE1_POSICIONES = {
         "MafiaPolar6242":     "Top16",
         "HaoSigismondi":     "Top16",
         "ShinkaHMA":     "Top16",
-        "masafesio":     "Top16",
+        "darkam580":     "Top16",
         "Draco axel":     "Top16",
         "Elin beacil":     "Top16",
         "JaLax":     "Top16",
@@ -772,7 +772,7 @@ MONOTYPE1_POSICIONES = {
       "DOBLES": {
         "SasoriVzla7":   "Campeón",
         "HallacAs": "Subcampeón",
-        "masafesio":     "Top4",
+        "darkam580":     "Top4",
         "Roy Kasoy":     "Top4",
 
         "Bloody Cheese":     "Top8",
@@ -789,7 +789,7 @@ MONOTYPE1_LIGAS = {
         "SINGLES": {
             "Saga": "Participante",       # Jugador1 en SINGLES
             "HallacAs": "Participante",
-            "masafesio": "Top3",
+            "darkam580": "Top3",
             "Minipapus": "Participante" ,
             "Ake-Izou": "Participante" ,
             "MaskWolf": "Participante"  ,
