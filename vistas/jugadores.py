@@ -676,13 +676,27 @@ def generar_pdf_jugador(
         # (le llegaron a faltar 7 logros). Ahora nunca puede quedar desactualizada.
         LOGROS_GUIA = [(l['num'], l['name'], l['cat'], l['rareza'], l['xp'], l['desc']) for l in LOGROS]
 
-        # ── PÁGINAS 2-5 — una por rareza ──────────────────────────
-        for pag_idx, rar_name in enumerate(RAREZA_ORDEN_PDF):
+        # ── PÁGINAS DE RAREZA — una por rareza, salvo Bronce que ahora tiene
+        # tantos logros (106) que se parte en 2 páginas para que se vea bien
+        # (medallas e íconos no quedan microscópicos ni se corta la guía) ──
+        _rareza_pages = []
+        for _rn in RAREZA_ORDEN_PDF:
+            _lista_r = sorted([l for l in LOGROS if l['rareza'] == _rn], key=lambda x: x['num'])
+            if _rn == "Bronce" and len(_lista_r) > 1:
+                _mid = -(-len(_lista_r) // 2)  # mitad redondeada hacia arriba
+                _rareza_pages.append((_rn, _lista_r[:_mid], " (1/2)"))
+                _rareza_pages.append((_rn, _lista_r[_mid:], " (2/2)"))
+            else:
+                _rareza_pages.append((_rn, _lista_r, ""))
+
+        TOTAL_PAGINAS_LOGROS = 1 + len(_rareza_pages) + 1  # portada/stats + rareza + resumen final
+
+        for pag_idx, (rar_name, rar_list, _pag_suffix) in enumerate(_rareza_pages):
             cv.showPage()
             sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
 
-            _draw_header_logros(cv, player_query, rar_name,
-                                RAR_COL[rar_name], pag_idx+2, 5)
+            _draw_header_logros(cv, player_query, rar_name + _pag_suffix,
+                                RAR_COL[rar_name], pag_idx+2, TOTAL_PAGINAS_LOGROS)
 
             HDR2     = 44
             GRID_TOP = PH - HDR2 - 52
@@ -691,7 +705,10 @@ def generar_pdf_jugador(
             GRID_W   = PW - MARGIN*2
             HEADER_SEC = 11
 
-            rar_list = sorted([l for l in LOGROS if l['rareza']==rar_name], key=lambda x: x['num'])
+            # Stats del header (n_ok_r/xp_r) siempre sobre el TOTAL de la
+            # rareza, no solo esta mitad -- para que "82/106" tenga sentido
+            # aunque esta página solo dibuje la primera mitad de los íconos.
+            rar_list_full = sorted([l for l in LOGROS if l['rareza'] == rar_name], key=lambda x: x['num'])
             rar_col  = colors.HexColor(RAR_COL[rar_name])
             rar_bg   = colors.HexColor(RAR_BG[rar_name])
 
@@ -705,9 +722,9 @@ def generar_pdf_jugador(
             # header rareza
             rrect(cv, MARGIN, ICON_TOP - HEADER_SEC, GRID_W, HEADER_SEC,
                   r=4, fill_col=rar_col)
-            n_ok_r = sum(1 for l in rar_list if desbloqueados.get(l['id']))
-            xp_r   = sum(l['xp'] for l in rar_list if desbloqueados.get(l['id']))
-            txt(cv, f"{rar_name.upper()}   {n_ok_r} / {len(rar_list)}   ·   {xp_r:,} XP obtenidos",
+            n_ok_r = sum(1 for l in rar_list_full if desbloqueados.get(l['id']))
+            xp_r   = sum(l['xp'] for l in rar_list_full if desbloqueados.get(l['id']))
+            txt(cv, f"{rar_name.upper()}{_pag_suffix}   {n_ok_r} / {len(rar_list_full)}   ·   {xp_r:,} XP obtenidos",
                 MARGIN + GRID_W/2, ICON_TOP - HEADER_SEC + 3,
                 size=6.5, col=C_BG, font="Helvetica-Bold", anchor="center")
 
@@ -785,12 +802,13 @@ def generar_pdf_jugador(
             GUIA_H   = GUIA_TOP - GUIA_BOT
             GUIA_W   = GRID_W
 
-            guia_rar = sorted([l for l in LOGROS_GUIA if l[3]==rar_name], key=lambda x: x[0])
+            _nums_pagina = {l['num'] for l in rar_list}
+            guia_rar = sorted([l for l in LOGROS_GUIA if l[3]==rar_name and l[0] in _nums_pagina], key=lambda x: x[0])
 
             # header guía
             rrect(cv, MARGIN, GUIA_TOP - HEADER_SEC, GUIA_W, HEADER_SEC,
                   r=4, fill_col=colors.HexColor("#1a2a3a"))
-            txt(cv, f"GUÍA — {rar_name.upper()}",
+            txt(cv, f"GUÍA — {rar_name.upper()}{_pag_suffix}",
                 MARGIN + GUIA_W/2, GUIA_TOP - HEADER_SEC + 3,
                 size=6.5, col=C_ACCENT, font="Helvetica-Bold", anchor="center")
 
@@ -844,11 +862,11 @@ def generar_pdf_jugador(
                     cy_cur -= ROW_H2
 
             # footer
-            txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. {pag_idx+2} / 6",
+            txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. {pag_idx+2} / {TOTAL_PAGINAS_LOGROS}",
                 PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
         # ══════════════════════════════════════════════════════════
-        # PÁGINA 6 — RESUMEN GENERAL DE TODOS LOS LOGROS
+        # PÁGINA FINAL — RESUMEN GENERAL DE TODOS LOS LOGROS
         # ══════════════════════════════════════════════════════════
         cv.showPage()
         sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
@@ -1002,7 +1020,7 @@ def generar_pdf_jugador(
                         size=max(2.5, MEDAL_R6*0.25), col=C_WHITE,
                         font="Helvetica-Bold", anchor="center")
 
-        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. 6 / 6",
+        txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. {TOTAL_PAGINAS_LOGROS} / {TOTAL_PAGINAS_LOGROS}",
             PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
     cv.save()
