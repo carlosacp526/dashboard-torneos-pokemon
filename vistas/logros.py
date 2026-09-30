@@ -249,10 +249,59 @@ LOGROS = [
 {"id":"PA11","num":172,"cat":"Participación","rareza":"Plata","icon":"🛡️","xp":300, "name":"Sin Excusas",             "desc":"Participa en 10 torneos distintos sin dar ningún Walkover propio"},
 {"id":"ES20","num":173,"cat":"Estrategia","rareza":"Plata", "icon":"⛰️","xp":300, "name":"Todo Terreno",              "desc":"Juega 3+ Tiers distintos en el mismo mes"},
 
+# ── TANDA DE BRONCE (45) — 15 nuevos de categoría "Replay" (data de estilo
+# de juego extraída de replays reales) + 30 repartidos en categorías ya
+# existentes, todos de rareza Bronce ──────────────────────────────────────
+{"id":"RP01","num":174,"cat":"Replay","rareza":"Bronce","icon":"🎬","xp":50,  "name":"Primer Replay",        "desc":"Tiene al menos un replay de batalla analizado"},
+{"id":"RP02","num":175,"cat":"Replay","rareza":"Bronce","icon":"🏷️","xp":75,  "name":"Apodo Puesto",         "desc":"Usa un apodo (nickname) distinto de la especie en algún Pokémon"},
+{"id":"RP03","num":176,"cat":"Replay","rareza":"Bronce","icon":"🌦️","xp":100, "name":"Clima a Favor",        "desc":"Activa su propio clima (lluvia/sol/arena/nieve) en una batalla"},
+{"id":"RP04","num":177,"cat":"Replay","rareza":"Bronce","icon":"☀️","xp":100, "name":"Movimiento Cargado",   "desc":"Usa un movimiento de carga de 2 turnos (Solar Beam, Fly, Dig, etc.)"},
+{"id":"RP05","num":178,"cat":"Replay","rareza":"Bronce","icon":"👥","xp":150, "name":"Doble Cuerpo",         "desc":"Usa Transform (Ditto/Imposter) en una batalla"},
+{"id":"RP06","num":179,"cat":"Replay","rareza":"Bronce","icon":"💎","xp":100, "name":"Mega Debut",           "desc":"Mega-evoluciona un Pokémon en combate real"},
+{"id":"RP07","num":180,"cat":"Replay","rareza":"Bronce","icon":"🔷","xp":75,  "name":"Tera Debut",           "desc":"Teracristaliza un Pokémon en combate real"},
+{"id":"RP08","num":181,"cat":"Replay","rareza":"Bronce","icon":"✨","xp":75,  "name":"Golpe de Suerte",      "desc":"Landea un golpe crítico"},
+{"id":"RP09","num":182,"cat":"Replay","rareza":"Bronce","icon":"🩹","xp":125, "name":"A Pesar de Todo",      "desc":"Gana una batalla después de sufrir un golpe crítico"},
+{"id":"RP10","num":183,"cat":"Replay","rareza":"Bronce","icon":"⏱️","xp":100, "name":"Maratonista",          "desc":"Juega una batalla de 30+ turnos"},
+{"id":"RP11","num":184,"cat":"Replay","rareza":"Bronce","icon":"⚡","xp":150, "name":"Blitzkrieg",           "desc":"Gana una batalla en 5 turnos o menos"},
+{"id":"RP12","num":185,"cat":"Replay","rareza":"Bronce","icon":"💊","xp":100, "name":"Botiquín",             "desc":"Se cura 5+ veces en una sola batalla"},
+{"id":"RP13","num":186,"cat":"Replay","rareza":"Bronce","icon":"🤝","xp":100, "name":"Dúo Estable",          "desc":"Repite la misma pareja de Pokémon en 2+ replays distintos"},
+{"id":"RP14","num":187,"cat":"Replay","rareza":"Bronce","icon":"📛","xp":150, "name":"Multinombre",          "desc":"Usa 3+ apodos distintos entre todos sus replays"},
+{"id":"RP15","num":188,"cat":"Replay","rareza":"Bronce","icon":"🚀","xp":100, "name":"Lead de Confianza",    "desc":"Manda el mismo Pokémon como lead en 3+ replays distintos"},
+{"id":"TO26","num":189,"cat":"Torneo","rareza":"Bronce","icon":"🧗","xp":150, "name":"Primer Vistazo a Semis","desc":"Llega a semifinal de un torneo por primera vez"},
+{"id":"TO27","num":190,"cat":"Torneo","rareza":"Bronce","icon":"👊","xp":75,  "name":"Fase de Grupos Superada","desc":"Gana al menos una batalla en fase de grupos de un torneo"},
+{"id":"TO28","num":191,"cat":"Torneo","rareza":"Bronce","icon":"🎟️","xp":100, "name":"En Fase Eliminatoria", "desc":"Juega al menos una batalla en octavos de final o instancia posterior"},
+{"id":"TO29","num":192,"cat":"Torneo","rareza":"Bronce","icon":"🏹","xp":125, "name":"Bracket Ganado",       "desc":"Gana al menos una batalla en fase eliminatoria de un torneo"},
+{"id":"TO30","num":193,"cat":"Torneo","rareza":"Bronce","icon":"🇨🇭","xp":75,  "name":"Ronda Suiza",          "desc":"Juega al menos una batalla en ronda suiza"},
+{"id":"TO31","num":194,"cat":"Torneo","rareza":"Bronce","icon":"🗓️","xp":125, "name":"Torneos en Paralelo",  "desc":"Participa en 2+ torneos del mismo formato en el mismo mes"},
+{"id":"TO32","num":195,"cat":"Torneo","rareza":"Bronce","icon":"😤","xp":100, "name":"Sin Rodeos",           "desc":"Pierde una serie de torneo por el margen mínimo posible"},
+{"id":"TO33","num":196,"cat":"Torneo","rareza":"Bronce","icon":"🪜","xp":75,  "name":"Segunda Oportunidad",  "desc":"Juega en ronda de perdedores de un torneo"},
+{"id":"SO17","num":197,"cat":"Social","rareza":"Bronce","icon":"🙋","xp":50,  "name":"Cara a Cara",          "desc":"Se enfrenta 2+ veces contra el mismo rival"},
+{"id":"SO18","num":198,"cat":"Social","rareza":"Bronce","icon":"🌐","xp":75,  "name":"Primer Extranjero",    "desc":"Derrota a un jugador de otro país por primera vez"},
+{"id":"SO19","num":199,"cat":"Social","rareza":"Bronce","icon":"🔁","xp":100, "name":"Revancha Rápida",      "desc":"Se enfrenta al mismo rival 2+ veces en el mismo mes"},
+{"id":"SO20","num":200,"cat":"Social","rareza":"Bronce","icon":"👋","xp":75,  "name":"Nuevo Círculo",        "desc":"Se enfrentó a 10+ rivales distintos en total"},
+{"id":"SO21","num":201,"cat":"Social","rareza":"Bronce","icon":"🕊️","xp":100, "name":"Sin Rencores",         "desc":"Pierde contra un rival y le vuelve a tocar en el mismo torneo"},
+{"id":"SO22","num":202,"cat":"Social","rareza":"Bronce","icon":"📆","xp":50,  "name":"Dos Meses Seguidos",   "desc":"Juega en 2 meses consecutivos"},
+{"id":"RK15","num":203,"cat":"Ranking","rareza":"Bronce","icon":"🆕","xp":50,  "name":"Primer Registro",      "desc":"Alcanza un Score_completo mayor a 0"},
+{"id":"RK16","num":204,"cat":"Ranking","rareza":"Bronce","icon":"📈","xp":50,  "name":"Subida Chica",         "desc":"Sube de Elo (cualquier cantidad) de un mes a otro"},
+{"id":"RK17","num":205,"cat":"Ranking","rareza":"Bronce","icon":"🔄","xp":100, "name":"Bajón Superado",       "desc":"Baja de Elo en un mes y lo recupera al mes siguiente"},
+{"id":"RK18","num":206,"cat":"Ranking","rareza":"Bronce","icon":"🔢","xp":75,  "name":"ELO 900",              "desc":"Alcanza 900 pts de ELO al finalizar un mes"},
+{"id":"RK19","num":207,"cat":"Ranking","rareza":"Bronce","icon":"⚖️","xp":75,  "name":"Mes Parejo",           "desc":"Termina un mes con winrate de exactamente 50% (mín. 4 partidas)"},
+{"id":"RK20","num":208,"cat":"Ranking","rareza":"Bronce","icon":"🔥","xp":50,  "name":"Primera Racha",        "desc":"Encadena 2 victorias seguidas"},
+{"id":"ES21","num":209,"cat":"Estrategia","rareza":"Bronce","icon":"🌬️","xp":50,  "name":"Cambio de Aire",       "desc":"Juega en 2+ Tiers distintos"},
+{"id":"ES22","num":210,"cat":"Estrategia","rareza":"Bronce","icon":"🔀","xp":75,  "name":"Formato Nuevo",        "desc":"Juega en 2+ Formatos distintos (Singles/Dobles/VGC)"},
+{"id":"ES23","num":211,"cat":"Estrategia","rareza":"Bronce","icon":"🔍","xp":100, "name":"Curioso",              "desc":"Juega 3+ formatos especiales (Formato_esp) distintos en total"},
+{"id":"ES24","num":212,"cat":"Estrategia","rareza":"Bronce","icon":"🔒","xp":100, "name":"Primer Monotype Ganado","desc":"Gana una batalla en un torneo Monotype"},
+{"id":"ES25","num":213,"cat":"Estrategia","rareza":"Bronce","icon":"👑","xp":50,  "name":"Ubers por Primera Vez","desc":"Juega su primera batalla en Tier UBERS"},
+{"id":"ES26","num":214,"cat":"Estrategia","rareza":"Bronce","icon":"🐣","xp":50,  "name":"LC Debut",             "desc":"Juega su primera batalla en Tier LC"},
+{"id":"PA12","num":215,"cat":"Participación","rareza":"Bronce","icon":"2️⃣","xp":50, "name":"Segunda Vuelta",     "desc":"Participa en su segundo torneo"},
+{"id":"PR12","num":216,"cat":"Progresión","rareza":"Bronce","icon":"🏅","xp":50,  "name":"5 Logros",             "desc":"Desbloquea 5 logros en total"},
+{"id":"PR13","num":217,"cat":"Progresión","rareza":"Bronce","icon":"💠","xp":50,  "name":"XP 500",               "desc":"Acumula 500 puntos XP"},
+{"id":"SP23","num":218,"cat":"Especial","rareza":"Bronce","icon":"👋","xp":50,  "name":"De Vuelta",            "desc":"Vuelve a jugar tras 1+ mes de inactividad"},
+
 ]
 
 # Orden de categorías para mostrar
-CATEGORIAS_ORDEN = ["Participación","Victorias","Ranking","Estrategia","Torneo","Ligas","Social","Especial","Progresión"]
+CATEGORIAS_ORDEN = ["Participación","Victorias","Ranking","Estrategia","Torneo","Ligas","Social","Especial","Progresión","Replay"]
 
 # Mapeo N_Torneo -> generación de Pokémon, a nivel de módulo (no solo dentro de
 # evaluar_logros) para que otras vistas (ej. Panorama de Competencias en
@@ -286,6 +335,7 @@ CAT_COLORS = {
     "Social":        "#ad1457",
     "Especial":      "#4527a0",
     "Progresión":    "#37474f",
+    "Replay":        "#00acc1",
 }
 
 BW_COLORS = {"c1":"#aaa","c2":"#777","ring":"#555","shine":"#ddd","ribbon":"#999","text":"#fff"}
@@ -1696,6 +1746,264 @@ def evaluar_logros(
     r["PR08"] = xp_total >= 15000
     r["PR09"] = xp_total >= 20000
 
+    # ════════════════════════════════════════════════════════════════════
+    # TANDA DE BRONCE (45) — RP01-15 (categoría Replay), TO26-33, SO17-22,
+    # RK15-20, ES21-26, PA12, PR12-13, SP23
+    # ════════════════════════════════════════════════════════════════════
+
+    # ── RP01-15: leen el CACHÉ de replays existente (no descargan nada
+    # nuevo) -- solo se desbloquean para jugadores que ya usaron la página
+    # "Estadísticas de Replay" al menos una vez; mismo alias CSV<->Showdown
+    # que usa esa página (ver _construir_alias_showdown en vistas/replays.py) ──
+    def _cache_replay_jugador():
+        try:
+            from vistas.replays import _load_cache, _toid, _construir_alias_showdown
+        except Exception:
+            return pd.DataFrame()
+        cache_df = _load_cache()
+        if cache_df.empty or 'player_name' not in cache_df.columns:
+            return pd.DataFrame()
+        ok = cache_df[cache_df['status'] == 'ok']
+        if ok.empty:
+            return pd.DataFrame()
+        try:
+            alias_map = _construir_alias_showdown(df_raw) if df_raw is not None else {}
+        except Exception:
+            alias_map = {}
+        pq_id = _toid(player_query)
+        nombres_alias = alias_map.get(pq_id, set())
+        toids_conocidos = {_toid(n) for n in nombres_alias} | {pq_id}
+        es_propio = ok['player_name'].astype(str).map(_toid).isin(toids_conocidos)
+        return ok[es_propio].copy()
+
+    _cache_rp = _cache_replay_jugador()
+    _RP_IDS = ["RP02","RP03","RP04","RP05","RP06","RP07","RP08","RP09",
+               "RP10","RP11","RP12","RP13","RP14","RP15"]
+    r["RP01"] = not _cache_rp.empty
+
+    if _cache_rp.empty:
+        for _rpid in _RP_IDS:
+            r[_rpid] = False
+    else:
+        _rp_por_replay = _cache_rp.drop_duplicates(subset=["url"])
+
+        def _num_rp(col):
+            return pd.to_numeric(_rp_por_replay[col], errors="coerce").fillna(0)
+
+        r["RP02"] = bool((_cache_rp["nickname"].astype(str).str.strip() != "").any())
+        r["RP03"] = bool((_num_rp("weather_propio") > 0).any())
+        r["RP04"] = bool((_num_rp("prepares_propios") > 0).any())
+        r["RP05"] = bool((_num_rp("transforms_propios") > 0).any())
+        r["RP06"] = bool((_cache_rp["mega_en_combate"].astype(str) == "True").any())
+        r["RP07"] = bool((_cache_rp["tera_en_combate"].astype(str) == "True").any())
+        r["RP08"] = bool((_num_rp("crits_dados") > 0).any())
+        r["RP09"] = bool((
+            (_rp_por_replay["win"].astype(str) == "True") & (_num_rp("crits_recibidos") > 0)
+        ).any())
+
+        _turnos_rp = pd.to_numeric(_rp_por_replay["turnos"], errors="coerce")
+        r["RP10"] = bool((_turnos_rp >= 30).any())
+        r["RP11"] = bool((
+            (_rp_por_replay["win"].astype(str) == "True") & (_turnos_rp > 0) & (_turnos_rp <= 5)
+        ).any())
+        r["RP12"] = bool((_num_rp("heals_propios") >= 5).any())
+
+        from itertools import combinations as _combos_rp
+        from collections import Counter as _Counter_rp
+        _duplas_rp = _Counter_rp()
+        for _, _especies_rp in _cache_rp.groupby("url")["pokemon"]:
+            for _a_rp, _b_rp in _combos_rp(sorted(set(_especies_rp)), 2):
+                _duplas_rp[(_a_rp, _b_rp)] += 1
+        r["RP13"] = any(c >= 2 for c in _duplas_rp.values())
+
+        _nicks_rp = set(_cache_rp.loc[_cache_rp["nickname"].astype(str).str.strip() != "", "nickname"])
+        r["RP14"] = len(_nicks_rp) >= 3
+
+        _leads_rp = _cache_rp[_cache_rp["es_lead"].astype(str) == "True"]["pokemon"].value_counts()
+        r["RP15"] = bool(not _leads_rp.empty and _leads_rp.max() >= 3)
+
+    # ── TO26-33 ──────────────────────────────────────────────────────────
+    _regex_elim_bronce = 'octavos de final|cuartos de final|dieciseisavos de final|treintaidosavo'
+    r["TO26"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('semifinal', na=False)).any()
+    )
+    r["TO27"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and 'winner' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('fase de grupos', na=False) &
+         pm['winner'].str.lower().str.contains(pq, na=False)).any()
+    )
+    r["TO28"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains(_regex_elim_bronce, na=False, regex=True)).any()
+    )
+    r["TO29"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and 'winner' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains(_regex_elim_bronce, na=False, regex=True) &
+         pm['winner'].str.lower().str.contains(pq, na=False)).any()
+    )
+    r["TO30"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('ronda suiza', na=False)).any()
+    )
+
+    def _torneos_en_paralelo():
+        if pm.empty or 'league' not in pm.columns or 'date' not in pm.columns or 'N_Torneo' not in pm.columns:
+            return False
+        d = pm[pm['league'] == 'TORNEO'].dropna(subset=['date'])
+        grupos = {}
+        for _, fila in d.iterrows():
+            clave = (fila['date'].to_period('M'), str(fila.get('Formato_esp', '')).strip().upper())
+            grupos.setdefault(clave, set()).add(fila.get('N_Torneo'))
+        return any(len(s) >= 2 for s in grupos.values())
+    r["TO31"] = _torneos_en_paralelo()
+
+    def _sin_rodeos():
+        for bloque in _series_jug:
+            if len(bloque) < 2:
+                continue
+            if not any(str(row.get('league', '')).upper() == 'TORNEO' for row in bloque):
+                continue
+            ganadas = sum(1 for row in bloque if pq in str(row.get('winner', '')).strip().lower())
+            perdidas = len(bloque) - ganadas
+            if perdidas > ganadas and (perdidas - ganadas) == 1:
+                return True
+        return False
+    r["TO32"] = _sin_rodeos()
+
+    r["TO33"] = bool(
+        not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
+        ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('perdedores ronda', na=False)).any()
+    )
+
+    # ── SO17-22 ──────────────────────────────────────────────────────────
+    r["SO17"] = bool(_cruces_por_rival) and max(_cruces_por_rival.values()) >= 2
+    r["SO18"] = n_paises_derrotados >= 1
+
+    def _revancha_rapida():
+        if pm.empty or 'date' not in pm.columns:
+            return False
+        d = pm.dropna(subset=['date'])
+        if d.empty:
+            return False
+        conteo = {}
+        for _, row in d.iterrows():
+            p1 = str(row.get('player1', '')).strip().lower()
+            p2 = str(row.get('player2', '')).strip().lower()
+            rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+            if not rival:
+                continue
+            clave = (row['date'].to_period('M'), rival)
+            conteo[clave] = conteo.get(clave, 0) + 1
+        return any(c >= 2 for c in conteo.values())
+    r["SO19"] = _revancha_rapida()
+
+    r["SO20"] = len(rivales) >= 10
+
+    def _sin_rencores():
+        if pm.empty or 'league' not in pm.columns or 'N_Torneo' not in pm.columns:
+            return False
+        d = pm[pm['league'] == 'TORNEO'].copy()
+        if 'date' in d.columns:
+            d['date'] = pd.to_datetime(d['date'], errors='coerce')
+        for nt, grp in d.groupby('N_Torneo'):
+            grp_s = grp.sort_values('date') if 'date' in grp.columns else grp
+            perdio_contra = set()
+            for _, row in grp_s.iterrows():
+                p1 = str(row.get('player1', '')).strip().lower()
+                p2 = str(row.get('player2', '')).strip().lower()
+                winner = str(row.get('winner', '')).strip().lower()
+                rival = p2 if pq in p1 else (p1 if pq in p2 else None)
+                if not rival:
+                    continue
+                if rival in perdio_contra:
+                    return True
+                if pq not in winner:
+                    perdio_contra.add(rival)
+        return False
+    r["SO21"] = _sin_rencores()
+    r["SO22"] = _racha_presencia(min_meses=2)
+
+    # ── RK15-20 ──────────────────────────────────────────────────────────
+    r["RK15"] = score_max > 0
+
+    def _cierre_mensual_elo():
+        if data_filas is None or data_filas.empty:
+            return pd.Series(dtype=float)
+        dfj = data_filas
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
+        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False)
+        puntos = list(zip(dfj.loc[es_a, 'Fecha'], dfj.loc[es_a, 'Rating_A_NEW'])) + \
+                 list(zip(dfj.loc[es_b, 'Fecha'], dfj.loc[es_b, 'Rating_B_NEW']))
+        if not puntos:
+            return pd.Series(dtype=float)
+        dfp = pd.DataFrame(puntos, columns=['fecha', 'elo'])
+        dfp['fecha'] = pd.to_datetime(dfp['fecha'], errors='coerce')
+        dfp = dfp.dropna(subset=['fecha']).sort_values('fecha')
+        if dfp.empty:
+            return pd.Series(dtype=float)
+        dfp['mes'] = dfp['fecha'].dt.to_period('M')
+        return dfp.groupby('mes')['elo'].last()
+
+    _cierre_elo_bronce = _cierre_mensual_elo()
+    _meses_elo_ord = sorted(_cierre_elo_bronce.index) if not _cierre_elo_bronce.empty else []
+
+    r["RK16"] = any(
+        _cierre_elo_bronce[_meses_elo_ord[i]] > _cierre_elo_bronce[_meses_elo_ord[i - 1]]
+        for i in range(1, len(_meses_elo_ord))
+    )
+
+    def _bajon_superado():
+        if len(_meses_elo_ord) < 3:
+            return False
+        for i in range(1, len(_meses_elo_ord) - 1):
+            prev_ = _cierre_elo_bronce[_meses_elo_ord[i - 1]]
+            baja_ = _cierre_elo_bronce[_meses_elo_ord[i]]
+            recup_ = _cierre_elo_bronce[_meses_elo_ord[i + 1]]
+            if baja_ < prev_ and recup_ >= prev_:
+                return True
+        return False
+    r["RK17"] = _bajon_superado()
+    r["RK18"] = bool((_cierre_elo_bronce >= 900).any()) if not _cierre_elo_bronce.empty else False
+
+    def _mes_parejo(min_partidas=4):
+        if pm.empty or 'date' not in pm.columns or 'winner' not in pm.columns:
+            return False
+        d = pm.dropna(subset=['date']).copy()
+        if d.empty:
+            return False
+        d['_mes'] = d['date'].dt.to_period('M')
+        for _mes, grp in d.groupby('_mes'):
+            if len(grp) < min_partidas:
+                continue
+            w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            if w / len(grp) == 0.5:
+                return True
+        return False
+    r["RK19"] = _mes_parejo()
+    r["RK20"] = racha_max >= 2
+
+    # ── ES21-26 ──────────────────────────────────────────────────────────
+    r["ES21"] = bool('Tier' in pm.columns and pm['Tier'].dropna().nunique() >= 2)
+    r["ES22"] = len(formatos_jugados) >= 2
+    r["ES23"] = len(formatos_jugados_esp) >= 3
+
+    _torneos_monotype_todos = set()
+    for _s_mono in TORNEOS_TIPOS.values():
+        _torneos_monotype_todos |= _s_mono
+    r["ES24"] = bool(
+        not pm.empty and 'N_Torneo' in pm.columns and 'winner' in pm.columns and
+        (pm['N_Torneo'].isin(_torneos_monotype_todos) & pm['winner'].str.lower().str.contains(pq, na=False)).any()
+    )
+    r["ES25"] = bool('Tier' in pm.columns and pm['Tier'].astype(str).str.upper().str.contains('UBERS', na=False).any())
+    r["ES26"] = bool('Tier' in pm.columns and pm['Tier'].astype(str).str.upper().str.contains('LC', na=False).any())
+
+    # ── PA12, PR12-13, SP23 ──────────────────────────────────────────────
+    r["PA12"] = torneos_part >= 2
+    r["PR12"] = desbloq_total >= 5
+    r["PR13"] = xp_total >= 500
+    r["SP23"] = _fenix(dias_gap=30)
+
     if not incluir_detalles:
         return r
 
@@ -1877,6 +2185,60 @@ def evaluar_logros(
     _d("PR11", xp_total, 5000, f"{xp_total} XP acumulado")
     _d("PA11", texto="10+ torneos distintos sin dar ningún Walkover propio" if r["PA11"] else None)
     _d("ES20", umbral=3, texto="3+ tiers distintos en un mismo mes" if r["ES20"] else None)
+
+
+    # ── detalles de la tanda de Bronce ───────────────────────────────────
+    _d("RP01", texto="Tiene al menos un replay analizado" if r["RP01"] else None)
+    _d("RP02", texto="Usó un apodo distinto de la especie" if r["RP02"] else None)
+    _d("RP03", texto="Activó su propio clima en una batalla" if r["RP03"] else None)
+    _d("RP04", texto="Usó un movimiento de carga de 2 turnos" if r["RP04"] else None)
+    _d("RP05", texto="Usó Transform en una batalla" if r["RP05"] else None)
+    _d("RP06", texto="Mega-evolucionó en combate real" if r["RP06"] else None)
+    _d("RP07", texto="Teracristalizó en combate real" if r["RP07"] else None)
+    _d("RP08", texto="Landeó un golpe crítico" if r["RP08"] else None)
+    _d("RP09", texto="Ganó una batalla pese a recibir un crítico" if r["RP09"] else None)
+    _d("RP10", texto="Jugó una batalla de 30+ turnos" if r["RP10"] else None)
+    _d("RP11", texto="Ganó una batalla en 5 turnos o menos" if r["RP11"] else None)
+    _d("RP12", texto="Se curó 5+ veces en una sola batalla" if r["RP12"] else None)
+    _d("RP13", texto="Repitió la misma pareja de Pokémon en 2+ replays" if r["RP13"] else None)
+    _d("RP14", texto="Usó 3+ apodos distintos en total" if r["RP14"] else None)
+    _d("RP15", texto="Mandó el mismo lead en 3+ replays" if r["RP15"] else None)
+
+    _d("TO26", texto="Llegó a semifinal de un torneo" if r["TO26"] else None)
+    _d("TO27", texto="Ganó una batalla en fase de grupos" if r["TO27"] else None)
+    _d("TO28", texto="Jugó en octavos de final o instancia posterior" if r["TO28"] else None)
+    _d("TO29", texto="Ganó una batalla en fase eliminatoria" if r["TO29"] else None)
+    _d("TO30", texto="Jugó una batalla en ronda suiza" if r["TO30"] else None)
+    _d("TO31", texto="2+ torneos del mismo formato en un mismo mes" if r["TO31"] else None)
+    _d("TO32", texto="Perdió una serie de torneo por el margen mínimo" if r["TO32"] else None)
+    _d("TO33", texto="Jugó en ronda de perdedores de un torneo" if r["TO33"] else None)
+
+    _max_cruces_bronce = max(_cruces_por_rival.values()) if _cruces_por_rival else 0
+    _d("SO17", _max_cruces_bronce, 2, f"Máximo de cruces contra un mismo rival: {_max_cruces_bronce}")
+    _d("SO18", n_paises_derrotados, 1, f"{n_paises_derrotados} país(es) distinto(s) derrotado(s)")
+    _d("SO19", texto="Se enfrentó al mismo rival 2+ veces en un mismo mes" if r["SO19"] else None)
+    _d("SO20", len(rivales), 10, f"{len(rivales)} rival(es) distinto(s) enfrentado(s)")
+    _d("SO21", texto="Perdió contra un rival y le volvió a tocar en el mismo torneo" if r["SO21"] else None)
+    _d("SO22", umbral=2, texto="2+ meses consecutivos con al menos una batalla" if r["SO22"] else None)
+
+    _d("RK15", score_max, 0, f"Score_completo actual: {score_max:.1f}" if score_max else "Sin Score_completo aún")
+    _d("RK16", texto="Subió de Elo de un mes a otro" if r["RK16"] else None)
+    _d("RK17", texto="Bajó de Elo un mes y lo recuperó al siguiente" if r["RK17"] else None)
+    _d("RK18", umbral=900, texto="Alcanzó 900+ Elo al cierre de un mes" if r["RK18"] else None)
+    _d("RK19", texto="Terminó un mes con winrate exactamente 50%" if r["RK19"] else None)
+    _d("RK20", racha_max, 2, f"Racha máxima de victorias: {racha_max}")
+
+    _d("ES21", texto="Jugó en 2+ Tiers distintos" if r["ES21"] else None)
+    _d("ES22", len(formatos_jugados), 2, f"{len(formatos_jugados)} formato(s) distinto(s) jugado(s)")
+    _d("ES23", len(formatos_jugados_esp), 3, f"{len(formatos_jugados_esp)} formato(s) especial(es) distinto(s)")
+    _d("ES24", texto="Ganó una batalla en un torneo Monotype" if r["ES24"] else None)
+    _d("ES25", texto="Jugó su primera batalla en Tier UBERS" if r["ES25"] else None)
+    _d("ES26", texto="Jugó su primera batalla en Tier LC" if r["ES26"] else None)
+
+    _d("PA12", torneos_part, 2, f"{torneos_part} torneo(s) distinto(s) jugado(s)")
+    _d("PR12", desbloq_total, 5, f"{desbloq_total} logro(s) desbloqueado(s) en total")
+    _d("PR13", xp_total, 500, f"{xp_total} XP acumulado")
+    _d("SP23", texto="Volvió a jugar tras 1+ mes de inactividad" if r["SP23"] else None)
 
     return r, detalles
 
