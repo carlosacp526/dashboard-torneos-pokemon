@@ -25,7 +25,7 @@ from utils import load_data, normalize_columns, ensure_fields, build_base_liga, 
 from vistas.elo import calcular_elo
 from vistas.rachas import _calcular_rachas_actuales
 from vistas.rankings import _racha_ganadora_max_historica, _pico_elo_historico
-from vistas.logros_analisis import _precalcular_campeones, calcular_logros_comunidad
+from vistas.logros_analisis import _precalcular_campeones, calcular_logros_comunidad, _version_logros
 from vistas.logros import LOGROS
 from vistas.social import build_h2h, build_player_rivals, nemesis_y_presa
 from vistas.estilo import build_estilo_base, compute_fingerprint, asignar_arquetipos, EJES
@@ -65,7 +65,7 @@ def _extraer_datos_activos(_df_raw):
     estilo_long = build_estilo_base(_df_raw)
     fp = asignar_arquetipos(compute_fingerprint(estilo_long))
 
-    logros_matrix = calcular_logros_comunidad(_df_raw)
+    logros_matrix = calcular_logros_comunidad(_df_raw, logros_version=_version_logros())
     stats_all = compute_player_stats(df)
 
     pais_map = {}

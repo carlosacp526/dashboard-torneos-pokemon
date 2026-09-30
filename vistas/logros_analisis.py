@@ -170,8 +170,19 @@ def _precalcular_mas_buscado(_df_raw):
     return ganadores
 
 
+def _version_logros():
+    """Huella liviana de LOGROS (cantidad + ids) para pasarla como argumento
+    HASHEADO (sin '_' adelante) a calcular_logros_comunidad. st.cache_data
+    solo invalida el caché cuando cambia el CÓDIGO de la función o sus
+    argumentos hasheados -- como LOGROS se importa desde otro módulo, agregar
+    o sacar un logro ahí NO se detecta solo, y Streamlit Cloud sirve una
+    matriz vieja (le faltan columnas nuevas) hasta que el TTL de 1h expira.
+    Esto fuerza un cache-miss automático apenas cambia la lista."""
+    return (len(LOGROS), tuple(l["id"] for l in LOGROS))
+
+
 @st.cache_data(ttl=3600, show_spinner="Calculando logros de todos los jugadores (puede tardar 1-2 min la primera vez)...")
-def calcular_logros_comunidad(_df_raw):
+def calcular_logros_comunidad(_df_raw, logros_version=None):
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
 
@@ -236,7 +247,7 @@ def show():
                "dificultad real de cada medalla, y quiénes lideran la tabla — no un jugador puntual.")
 
     df_raw = load_data()
-    matriz = calcular_logros_comunidad(df_raw)
+    matriz = calcular_logros_comunidad(df_raw, logros_version=_version_logros())
 
     if matriz.empty:
         st.warning("No se pudo calcular la matriz de logros (¿hay datos cargados?).")
@@ -333,6 +344,10 @@ def show():
         filas_cat = []
         for cat in CATEGORIAS_ORDEN:
             ids_cat = logros_df[logros_df["cat"] == cat].index.tolist()
+            # Filtro defensivo: si `matriz` viene de un caché todavía no
+            # invalidado (versión vieja de LOGROS, sin columnas nuevas), no
+            # revienta con KeyError -- ignora los ids que todavía no están.
+            ids_cat = [i for i in ids_cat if i in matriz.columns]
             if not ids_cat:
                 continue
             sub = matriz[ids_cat]
@@ -373,6 +388,7 @@ def show():
         filas_rar = []
         for rareza in RAREZA_ORDEN:
             ids_rar = logros_df[logros_df["rareza"] == rareza].index.tolist()
+            ids_rar = [i for i in ids_rar if i in matriz.columns]
             if not ids_rar:
                 continue
             sub = matriz[ids_rar]
@@ -463,7 +479,8 @@ def show():
         })
         for rareza in RAREZA_ORDEN:
             ids_rar = logros_df[logros_df["rareza"] == rareza].index.tolist()
-            rank_df[rareza] = matriz[ids_rar].sum(axis=1).values
+            ids_rar = [i for i in ids_rar if i in matriz.columns]
+            rank_df[rareza] = matriz[ids_rar].sum(axis=1).values if ids_rar else 0
 
         c1, c2 = st.columns(2)
         with c1:
