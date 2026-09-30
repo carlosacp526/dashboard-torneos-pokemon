@@ -1179,9 +1179,14 @@ def show():
         # no alcanza para distinguir uno de otro a simple vista. Se calcula acá
         # afuera (no solo dentro del "if" de la columna Torneos) porque también
         # lo usa el bloque de Campeonatos de Torneo más abajo.
+        # N_Torneo NO es una clave unica global -- se reinicia en 1 para cada
+        # tipo de liga (TORNEO, LIGA, ASCENSO, CYPHER), asi que el mismo numero
+        # identifica eventos completamente distintos segun 'league'. Sin este
+        # filtro la moda de Aka_evento mezclaba nombres de LIGA con nombres de
+        # TORNEO que comparten N_Torneo (ej. "T1 -- PMST5" en vez del torneo real).
         aka_por_torneo = {}
-        if 'Aka_evento' in df_raw.columns and 'N_Torneo' in df_raw.columns:
-            _dt = df_raw[df_raw['N_Torneo'].notna() & df_raw['Aka_evento'].notna()]
+        if 'Aka_evento' in df_raw.columns and 'N_Torneo' in df_raw.columns and 'league' in df_raw.columns:
+            _dt = df_raw[(df_raw['league'] == 'TORNEO') & df_raw['N_Torneo'].notna() & df_raw['Aka_evento'].notna()]
             if not _dt.empty:
                 _dt = _dt.copy()
                 _dt['N_Torneo'] = _dt['N_Torneo'].astype(int)
@@ -1194,11 +1199,12 @@ def show():
             return f"T{int(nt)} — {aka}" if aka else f"Torneo {int(nt)}"
 
         # Tier de cada torneo (para mostrarlo junto al winrate en Campeonatos
-        # de Torneo) — mismo patrón que aka_por_torneo: moda por N_Torneo, ya
-        # que en la práctica un torneo se juega en un único Tier.
+        # de Torneo) — mismo patrón que aka_por_torneo: moda por N_Torneo,
+        # filtrando por league=='TORNEO' por la misma razón (N_Torneo se
+        # reinicia en 1 en cada tipo de liga).
         tier_por_torneo = {}
-        if 'Tier' in df_raw.columns and 'N_Torneo' in df_raw.columns:
-            _dtt = df_raw[df_raw['N_Torneo'].notna() & df_raw['Tier'].notna()]
+        if 'Tier' in df_raw.columns and 'N_Torneo' in df_raw.columns and 'league' in df_raw.columns:
+            _dtt = df_raw[(df_raw['league'] == 'TORNEO') & df_raw['N_Torneo'].notna() & df_raw['Tier'].notna()]
             if not _dtt.empty:
                 _dtt = _dtt.copy()
                 _dtt['N_Torneo'] = _dtt['N_Torneo'].astype(int)
