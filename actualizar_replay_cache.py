@@ -37,6 +37,7 @@ import sys
 import time
 
 import pandas as pd
+import requests
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_ROOT)
@@ -50,6 +51,28 @@ from vistas.replays import (  # noqa: E402
 
 CSV_PRINCIPAL = os.path.join(PROJECT_ROOT, "archivo_preuba1.csv")
 GUARDAR_CADA = 20  # cuantos replays nuevos procesar antes de grabar el CSV a disco
+
+
+def _limpiar_url_replay(url: str) -> str:
+    """Corrige problemas comunes de carga manual en la columna Match_replays
+    (tracking de Facebook pegado, dominio de batalla en vivo en vez de replay,
+    acortador psim.us, caracteres de encoding corruptos, dos URLs pegadas en
+    la misma celda) para poder descargar el replay real. El 'url' que se
+    guarda en el cache sigue siendo el original del CSV (ver main()) -- esto
+    solo cambia qué se pide al servidor de Showdown."""
+    u = url.strip().replace("�", "")
+    u = u.split("?")[0]  # ?fbclid=..., ?p2, etc.
+    if u.count("https://") > 1:
+        u = u[u.rindex("https://"):]  # dos URLs pegadas -> quedarse con la ultima
+    u = u.replace("play.pokemonshowdown.com/battle-", "replay.pokemonshowdown.com/")
+    u = u.rstrip("/")
+    if "psim.us/r/" in u:
+        try:
+            r = requests.get(u, timeout=10, allow_redirects=True)
+            u = r.url.split("?")[0].rstrip("/")
+        except Exception:
+            pass
+    return u
 
 
 def _urls_unicas_del_historial() -> pd.DataFrame:
@@ -108,10 +131,11 @@ def main():
     n_ok, n_fail = 0, 0
 
     for i, (_, row) in enumerate(pendientes.iterrows(), start=1):
-        url = row["Match_replays"]
+        url = row["Match_replays"]  # clave que se guarda en el cache (debe matchear Match_replays tal cual)
         fmt = row["Formato_esp"]
+        url_fetch = _limpiar_url_replay(url)  # URL que realmente se le pide a Showdown
 
-        resultado = _extraer_detalle_replay(url, fmt)
+        resultado = _extraer_detalle_replay(url_fetch, fmt)
         if resultado is None:
             filas_nuevas.append({
                 "url": url, "status": "failed", "player_id": "", "pokemon": "",
@@ -121,6 +145,8 @@ def main():
             })
             n_fail += 1
         else:
+            for fila in resultado:
+                fila["url"] = url  # conservar el url original del CSV, no el limpio
             filas_nuevas.extend(resultado)
             n_ok += 1
 
