@@ -358,7 +358,7 @@ MONOTYPE1_TIPOS = {
     72: "GRANDE",
     73: "GRANDE",
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
-    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84:"MEDIANO"
+    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84: "GRANDE",85:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -765,10 +765,32 @@ MONOTYPE1_POSICIONES = {
         "JaLax":     "Top8"
 
 
-        }}     ,
+        }}  , 84: {
+              "SINGLES": {
+                "Chris FPS":   "Campeón",
+                "Angello77": "Subcampeón",
+                "Ger":     "Top4",
+                "Porygon Z":     "Top4",
+        
+                "EmperorGambit":     "Top8",
+                "skll02":     "Top8",
+                "LABIAMG":     "Top8",
+                "Jers512":     "Top8",
+        
+        
+                "darkam580":     "Top16",
+                "ZapeohDev":     "Top16",
+                "gbrielzzzs":     "Top16",
+                "Ocnarf30":     "Top16",
+                "Draco axel":     "Top16",
+                "Aikauwu":     "Top16",
+                "Necroz":     "Top16",
+                "Joscake":     "Top16",
+        
+                }}   ,
 
         
-                 84: {
+                 85: {
       "DOBLES": {
         "SasoriVzla7":   "Campeón",
         "HallacAs": "Subcampeón",
