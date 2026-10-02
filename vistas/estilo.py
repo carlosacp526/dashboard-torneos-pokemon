@@ -11,7 +11,10 @@ import plotly.express as px
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields
-from vistas.replays import obtener_resumen_jugador, obtener_promedios_globales
+from vistas.replays import (
+    obtener_resumen_jugador, obtener_promedios_globales,
+    _load_cache as _load_replay_cache, _construir_alias_showdown,
+)
 
 MIN_PARTIDAS_ESTILO = 10
 
@@ -46,9 +49,18 @@ def build_huella_tactica(_df_raw: pd.DataFrame) -> pd.DataFrame:
     )
     jugadores = [j for j in jugadores if str(j).strip()]
 
+    # Cargar el cache y armar el mapa de alias UNA sola vez -- son caros
+    # (CSV de varios MB + cruce sobre todo el historial) y dan igual del
+    # jugador, así que recalcularlos en cada iteración del loop de abajo es
+    # lo que hacía esto tardar varios minutos en vez de unos segundos.
+    cache_df = _load_replay_cache()
+    alias_map = _construir_alias_showdown(_df_raw, cache_df=cache_df)
+
     filas = []
     for jugador in jugadores:
-        r = obtener_resumen_jugador(jugador, _df_raw)
+        r = obtener_resumen_jugador(
+            jugador, _df_raw, cache_df=cache_df, alias_map=alias_map, permitir_fetch=False
+        )
         if r['n_replays'] < TACTICA_MIN_REPLAYS:
             continue
         fila = {'jugador': jugador, 'n_replays': r['n_replays']}

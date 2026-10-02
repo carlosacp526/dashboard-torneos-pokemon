@@ -627,7 +627,7 @@ def _extraer_detalle_replay(url: str, formato_esp: str = ""):
 # CARGA MASIVA (usa/actualiza el caché persistente)
 # ══════════════════════════════════════════════════════════════════
 
-def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
+def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame, cache_df: pd.DataFrame = None, permitir_fetch: bool = True):
     """
     Devuelve (df_detalle, total_equipos, n_nuevos, n_fallidos, info_debug).
 
@@ -637,6 +637,14 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
       el mismo equipo en un Bo3). Si la columna Rep no existe, o viene vacía
       para una fila, esa fila NO se descarta (para no perder datos por un
       problema de columna en vez de lógica real).
+
+    'cache_df' permite pasar un cache ya cargado en memoria (en vez de releer
+    el CSV de disco en cada llamada) y 'permitir_fetch=False' desactiva por
+    completo la descarga de replays nuevos/fallidos -- pensado para uso masivo
+    (ej. calcular algo para CIENTOS de jugadores en loop), donde releer un CSV
+    de varios MB y golpear la red en cada iteración sería prohibitivo. El uso
+    interactivo normal (un jugador a la vez) no pasa estos parámetros y se
+    comporta exactamente igual que antes.
     """
     info_debug = {}
 
@@ -681,10 +689,11 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
 
     replays = replays.drop_duplicates(subset=["Match_replays"])
 
-    cache_df = _load_cache()
+    if cache_df is None:
+        cache_df = _load_cache()
     ok_urls = set(cache_df.loc[cache_df["status"] == "ok", "url"]) if not cache_df.empty else set()
 
-    a_pedir = replays[~replays["Match_replays"].isin(ok_urls)]
+    a_pedir = replays[~replays["Match_replays"].isin(ok_urls)] if permitir_fetch else replays.iloc[0:0]
 
     n_nuevos, n_fallidos = 0, 0
     filas_nuevas = []
@@ -746,11 +755,14 @@ def _cargar_todos_replays_detalle(df_filtrado: pd.DataFrame):
 # completamente distintos. Sirve para CUALQUIER jugador, no solo uno.
 # ══════════════════════════════════════════════════════════════════
 
-def _construir_alias_showdown(df_raw: pd.DataFrame) -> dict:
+def _construir_alias_showdown(df_raw: pd.DataFrame, cache_df: pd.DataFrame = None) -> dict:
     """Devuelve {toid_del_nombre_csv: {usernames_de_showdown_vistos}},
     construido cruzando TODO lo que ya haya en el caché de replays (no pide
-    nada nuevo a la red -- es puro cruce de datos ya descargados)."""
-    cache_df = _load_cache()
+    nada nuevo a la red -- es puro cruce de datos ya descargados). Acepta un
+    'cache_df' ya cargado para evitar releer el CSV cuando el caller ya lo
+    tiene en memoria (ver obtener_resumen_jugador)."""
+    if cache_df is None:
+        cache_df = _load_cache()
     if cache_df.empty or "player_name" not in cache_df.columns:
         return {}
     ok = cache_df[cache_df["status"] == "ok"]
@@ -901,7 +913,10 @@ def obtener_promedios_globales() -> dict:
 # de meta de replays; NO duplica lógica de descarga/parseo.
 # ══════════════════════════════════════════════════════════════════
 
-def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
+def obtener_resumen_jugador(
+    player_query: str, df_raw: pd.DataFrame,
+    cache_df: pd.DataFrame = None, alias_map: dict = None, permitir_fetch: bool = True,
+) -> dict:
     """
     Analiza (descargando si hace falta) los replays de un jugador puntual y
     devuelve un dict con dos tandas de métricas:
@@ -915,6 +930,14 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     Solo cubre las partidas de ESE jugador que tienen Match_replays con URL
     real -> es un resumen "según los replays disponibles", no del historial
     completo (mismo aviso que ya usa la página de Replays).
+
+    'cache_df' y 'alias_map' permiten pasar ambos ya calculados en vez de que
+    esta función los recalcule desde cero (releer el CSV de cache completo y
+    reconstruir el cruce CSV->Showdown sobre TODO el historial) -- son caros y
+    da igual el jugador consultado, así que para uso masivo (un loop sobre
+    muchos jugadores) el caller los arma una sola vez y los reusa. El uso
+    interactivo normal (un jugador a la vez, vía botón) no pasa estos
+    parámetros y se comporta exactamente igual que antes.
     """
     vacio = {
         "n_replays": 0, "pokemon_top": pd.DataFrame(columns=["Pokémon", "Usos", "% de partidas"]),
@@ -944,7 +967,7 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     if df_filtrado.empty:
         return vacio
 
-    df_detalle, _, _, _, _ = _cargar_todos_replays_detalle(df_filtrado)
+    df_detalle, _, _, _, _ = _cargar_todos_replays_detalle(df_filtrado, cache_df=cache_df, permitir_fetch=permitir_fetch)
     if df_detalle.empty or "player_name" not in df_detalle.columns:
         return vacio
 
@@ -954,7 +977,8 @@ def obtener_resumen_jugador(player_query: str, df_raw: pd.DataFrame) -> dict:
     # de Showdown totalmente distintos, deducidos cruzando quién ganó según
     # el CSV contra quién ganó según el replay real.
     pq_id = _toid(player_query)
-    alias_map = _construir_alias_showdown(df_raw)
+    if alias_map is None:
+        alias_map = _construir_alias_showdown(df_raw, cache_df=cache_df)
     nombres_showdown = sorted(alias_map.get(pq_id, set()))
     toids_conocidos = {_toid(n) for n in nombres_showdown} | {pq_id}
 
