@@ -15,44 +15,59 @@ from vistas.replays import obtener_resumen_jugador, obtener_promedios_globales
 
 MIN_PARTIDAS_ESTILO = 10
 
-# ── Etiqueta táctica secundaria (basada en replays, no en el CSV principal) ──
+# ── Huella Táctica (basada en replays, no en el CSV principal) ───────────────
 # El arquetipo de arriba (ARQUETIPOS) solo mide RESULTADO (gana/sobrevive).
-# Esta etiqueta describe CÓMO juega, usando los indicadores de Estadísticas
-# de Replay -- pero esos solo existen para partidas con replay ya archivado,
-# así que a diferencia de los 5 ejes (que cubren a TODO jugador con >= 10
-# partidas) esta etiqueta solo se muestra si hay suficientes replays propios
-# analizados, para no mostrar un tag poco confiable con 1-2 muestras.
+# La Huella Táctica describe CÓMO juega, con los mismos indicadores que
+# Estadísticas de Replay -- pero esos solo existen para partidas con replay ya
+# archivado, así que a diferencia de los 5 ejes principales (que cubren a TODO
+# jugador con >= 10 partidas) esta huella solo se calcula si hay suficientes
+# replays propios analizados, para no mostrar percentiles poco confiables con
+# 1-2 muestras.
 TACTICA_MIN_REPLAYS = 10
-TACTICA_RATIO_MIN = 1.3  # el jugador debe superar el promedio global en al menos 30% para que el rasgo se destaque
-
+TACTICA_EJES = ['efectividad_pct', 'weather_prom', 'boosts_prom', 'heals_prom', 'prepares_prom']
 TACTICOS = {
-    'efectividad_pct': ("🎯 Táctico", "Gran parte de sus golpes notables son súper efectivos -- elige bien la jugada según el tipo rival."),
-    'weather_prom':    ("☀️ Jugador de clima", "Activa su propio clima (sol, lluvia, arena, etc.) con mucha frecuencia -- construye el juego alrededor de eso."),
-    'boosts_prom':     ("💪 Setup", "Sube sus propias estadísticas seguido antes de atacar -- juega a construir ventaja antes de rematar."),
-    'heals_prom':      ("💚 Stall / Recovery", "Se cura con frecuencia -- prioriza desgastar al rival antes que cerrar rápido."),
-    'prepares_prom':   ("🌙 Movimientos de carga", "Usa seguido movimientos que cargan un turno (Solar Beam, Fly, etc.) -- apuesta a pegadas grandes."),
+    'efectividad_pct': ("🎯 Táctico", "Golpes notables que fueron súper efectivos -- elige bien la jugada según el tipo rival."),
+    'weather_prom':    ("☀️ Jugador de clima", "Activa su propio clima (sol, lluvia, arena, etc.) por batalla -- construye el juego alrededor de eso."),
+    'boosts_prom':     ("💪 Setup", "Sube sus propias estadísticas por batalla antes de atacar -- juega a construir ventaja antes de rematar."),
+    'heals_prom':      ("💚 Stall / Recovery", "Se cura por batalla -- prioriza desgastar al rival antes que cerrar rápido."),
+    'prepares_prom':   ("🌙 Movimientos de carga", "Usa por batalla movimientos que cargan un turno (Solar Beam, Fly, etc.) -- apuesta a pegadas grandes."),
 }
 
 
-def calcular_tag_tactico(resumen: dict, globales: dict):
-    """Devuelve (emoji+nombre, descripción, métrica, valor_jugador, valor_global)
-    del rasgo táctico más destacado del jugador vs. el promedio de la comunidad,
-    o None si no hay replays suficientes o ningún rasgo se destaca de verdad."""
-    if not resumen or resumen.get('n_replays', 0) < TACTICA_MIN_REPLAYS:
-        return None
+@st.cache_data(ttl=3600 * 6, show_spinner=False)
+def build_huella_tactica(_df_raw: pd.DataFrame) -> pd.DataFrame:
+    """Una fila por jugador con >= TACTICA_MIN_REPLAYS replays analizados: sus
+    5 métricas de estilo de juego (crudas) + el percentil de cada una contra
+    el resto de jugadores elegibles (0-100, 100 = el más alto de la comunidad).
+    Pesado (recorre a cada jugador del historial) -- cacheado varias horas
+    porque el cache de replays del que depende solo se actualiza semanalmente."""
+    jugadores = sorted(
+        (set(_df_raw['player1'].dropna()) | set(_df_raw['player2'].dropna()))
+    )
+    jugadores = [j for j in jugadores if str(j).strip()]
 
-    mejor = None
-    mejor_ratio = TACTICA_RATIO_MIN
-    for metrica, (nombre, desc) in TACTICOS.items():
-        val_j = resumen.get(metrica)
-        val_g = globales.get(metrica)
-        if val_j is None or not val_g:
+    filas = []
+    for jugador in jugadores:
+        r = obtener_resumen_jugador(jugador, _df_raw)
+        if r['n_replays'] < TACTICA_MIN_REPLAYS:
             continue
-        ratio = val_j / val_g
-        if ratio > mejor_ratio:
-            mejor_ratio = ratio
-            mejor = (nombre, desc, metrica, val_j, val_g)
-    return mejor
+        fila = {'jugador': jugador, 'n_replays': r['n_replays']}
+        fila.update({m: r.get(m) for m in TACTICA_EJES})
+        filas.append(fila)
+
+    tabla = pd.DataFrame(filas)
+    if tabla.empty:
+        return tabla
+    for m in TACTICA_EJES:
+        tabla[m] = pd.to_numeric(tabla[m], errors='coerce')
+        tabla[f'{m}_pct'] = (tabla[m].rank(pct=True) * 100).round(0)
+    return tabla
+
+
+def _radar_trace_tactico(vals_pct, name, color, fill=True):
+    r = [vals_pct[f'{e}_pct'] for e in TACTICA_EJES] + [vals_pct[f'{TACTICA_EJES[0]}_pct']]
+    theta = [TACTICOS[e][0] for e in TACTICA_EJES] + [TACTICOS[TACTICA_EJES[0]][0]]
+    return go.Scatterpolar(r=r, theta=theta, name=name, fill='toself' if fill else None, line=dict(color=color))
 
 EJES = ['contundencia', 'resistencia', 'consistencia', 'confiabilidad', 'dominancia']
 EJES_LABEL = {
@@ -228,22 +243,45 @@ def show():
             for e in EJES:
                 st.progress(min(max(int(row[e]), 0), 100) / 100, text=f"{EJES_LABEL[e]}: {row[e]:.0f}/100")
 
-            with st.spinner("Buscando rasgo táctico en sus replays..."):
-                resumen_sel = obtener_resumen_jugador(sel, df_raw)
-                globales_tactica = obtener_promedios_globales()
-            tag = calcular_tag_tactico(resumen_sel, globales_tactica)
-            st.markdown("---")
-            if tag:
-                nombre_tag, desc_tag, _, val_j, val_g = tag
-                st.markdown(f"**🏷️ Estilo táctico:** {nombre_tag}")
-                st.caption(f"{desc_tag} ({val_j} vs. promedio global {val_g}, basado en {resumen_sel['n_replays']} replays analizados)")
-            elif resumen_sel.get('n_replays', 0) >= TACTICA_MIN_REPLAYS:
-                st.caption(f"🏷️ Estilo táctico: sin rasgo que se destaque claramente ({resumen_sel['n_replays']} replays analizados).")
-            else:
-                st.caption(
-                    f"🏷️ Estilo táctico: todavía no hay suficientes replays analizados para este jugador "
-                    f"(mínimo {TACTICA_MIN_REPLAYS}, tiene {resumen_sel.get('n_replays', 0)})."
+        st.markdown("---")
+        st.markdown("#### 🧭 Huella Táctica (según replays)")
+        st.caption(
+            "Describe CÓMO juega, a diferencia de la Huella de Estilo de arriba (que solo mide "
+            "resultado). Cada eje es el percentil del jugador contra el resto de la comunidad con "
+            "replays analizados -- 100 = el más alto de todos, 50 = justo en la mediana."
+        )
+        with st.spinner("Calculando huella táctica (puede tardar la primera vez)..."):
+            tactica_df = build_huella_tactica(df_raw)
+        fila_tac = tactica_df[tactica_df['jugador'] == sel] if not tactica_df.empty else pd.DataFrame()
+
+        if fila_tac.empty:
+            n_replays_sel = obtener_resumen_jugador(sel, df_raw).get('n_replays', 0)
+            st.info(
+                f"Todavía no hay suficientes replays analizados para este jugador "
+                f"(mínimo {TACTICA_MIN_REPLAYS}, tiene {n_replays_sel})."
+            )
+        else:
+            row_tac = fila_tac.iloc[0]
+            cT1, cT2 = st.columns([3, 2])
+            with cT1:
+                fig_tac = go.Figure()
+                fig_tac.add_trace(_radar_trace_tactico(row_tac, sel, "#F39C12"))
+                fig_tac.update_layout(
+                    polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+                    title=f"Huella Táctica — {sel}", height=400
                 )
+                st.plotly_chart(fig_tac, use_container_width=True)
+            with cT2:
+                st.metric("Replays analizados", int(row_tac['n_replays']))
+                ejes_validos = [e for e in TACTICA_EJES if pd.notna(row_tac[f'{e}_pct'])]
+                if ejes_validos:
+                    mejor_eje = max(ejes_validos, key=lambda e: row_tac[f'{e}_pct'])
+                    nombre_mejor, desc_mejor = TACTICOS[mejor_eje]
+                    st.markdown(f"**Rasgo más marcado:** {nombre_mejor}")
+                    st.caption(f"{desc_mejor} (percentil {row_tac[f'{mejor_eje}_pct']:.0f})")
+                for e in ejes_validos:
+                    pct = row_tac[f'{e}_pct']
+                    st.progress(pct / 100, text=f"{TACTICOS[e][0]}: percentil {pct:.0f}")
 
     with tab2:
         jugadores = sorted(fp['jugador'].unique())
@@ -320,19 +358,30 @@ sino el más inusual comparado con los demás:
 | Confiabilidad | ⏰ El Puntual |
 | Dominancia    | 👑 Dominante |
 
-### Estilo táctico (secundario)
+### Huella Táctica (secundaria)
 
 El arquetipo de arriba solo mide **resultado** (cuánto gana, cuánto sobrevive) porque se calcula con
-columnas que tiene TODA partida del CSV principal. En "🪪 Mi Huella" además se muestra un **🏷️ Estilo
-táctico**, que describe *cómo* juega usando los indicadores de la página Estadísticas de Replay (efectividad
-de tipo, clima propio, boosts, curas, movimientos de carga) — pero esos solo existen para partidas con
-replay ya archivado, así que:
+columnas que tiene TODA partida del CSV principal. En "🪪 Mi Huella" además se muestra una **🧭 Huella
+Táctica**, que describe *cómo* juega usando los mismos indicadores de la página Estadísticas de Replay
+— pero esos solo existen para partidas con replay ya archivado, así que:
 
-- Solo se calcula si el jugador tiene al menos **{TACTICA_MIN_REPLAYS} replays analizados** (si no, se
-  avisa en vez de mostrar un rasgo poco confiable).
-- Se elige el indicador en el que el jugador más supera el promedio global (en términos relativos, no
-  absolutos) entre: efectividad de tipo, clima propio, boosts, curas y movimientos de carga — y debe
-  superarlo por al menos un {int((TACTICA_RATIO_MIN-1)*100)}% para considerarse un rasgo real.
+| Eje | Qué mide |
+|-----|----------|
+| 🎯 Táctico | % de sus golpes notables que fueron súper efectivos |
+| ☀️ Jugador de clima | Activaciones de su propio clima por batalla |
+| 💪 Setup | Subidas de stat a sí mismo por batalla |
+| 💚 Stall / Recovery | Curas por batalla |
+| 🌙 Movimientos de carga | Uso de movimientos de 2 turnos (Solar Beam, Fly, etc.) por batalla |
+
+- Solo se calcula para jugadores con al menos **{TACTICA_MIN_REPLAYS} replays analizados** (si no, se
+  avisa en vez de mostrar un percentil poco confiable).
+- A diferencia de los 5 ejes de arriba (que usan un valor directo 0-100), acá cada eje es un
+  **percentil** contra el resto de jugadores elegibles: 100 significa "el más alto de toda la
+  comunidad", 50 significa "justo en la mediana" — porque estos indicadores no tienen un tope natural
+  (no hay un "máximo" de curas por batalla como sí lo hay de Pokémon vivos de 6).
+- El "Rasgo más marcado" es simplemente el eje con el percentil más alto del jugador — no hace falta
+  que sea extremo para mostrarse, igual que el arquetipo principal muestra el eje dominante aunque la
+  diferencia con los demás sea chica.
 - Es independiente del arquetipo principal: un mismo jugador puede ser 🗡️ Sweeper (por resultado) y
   ☀️ Jugador de clima (por cómo lo logra) al mismo tiempo.
 """)
