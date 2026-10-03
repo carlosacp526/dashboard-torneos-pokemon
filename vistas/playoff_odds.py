@@ -220,6 +220,29 @@ def _inferir_grupos(df_torneo):
     return list(grupos.values())
 
 
+def _mapa_padres(rondas):
+    """Para cada cupo "Pendiente" de una ronda, índice de la serie de la ronda
+    anterior de la que saldrá su jugador: {(ridx, sidx, "p1"|"p2"): idx_serie_previa}.
+
+    Los cupos Pendiente de una ronda, en orden de aparición (serie por serie, p1
+    antes que p2), se llenan con las series de la ronda anterior en orden. No se
+    asume 2*i / 2*i+1 porque con byes (ej. Octavos con 4 series y Cuartos con 4
+    series que ya traen un jugador fijo cada una) eso dejaba cupos sin padre.
+    Una serie previa ya decidida cuyo ganador ya aparece como jugador concreto en
+    esta ronda no cuenta: ese cupo ya se resolvió."""
+    mapa = {}
+    for ridx in range(1, len(rondas)):
+        series = rondas[ridx]["series"]
+        previas = rondas[ridx - 1]["series"]
+        concretos = {s[l] for s in series for l in ("p1", "p2") if s[l] is not None}
+        disponibles = [k for k, s in enumerate(previas)
+                       if not (s["decidido"] and s["ganador"] in concretos)]
+        cupos = [(sidx, l) for sidx, s in enumerate(series) for l in ("p1", "p2") if s[l] is None]
+        for (sidx, l), k in zip(cupos, disponibles):
+            mapa[(ridx, sidx, l)] = k
+    return mapa
+
+
 def _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims=1000, seed=42):
     """
     Simula el bracket completo n_sims veces: para cada serie sin decidir, usa
@@ -240,6 +263,7 @@ def _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims=1000, 
         return prob_cache[key]
 
     etapas = [r["nombre"] for r in rondas]
+    mapa_padres = _mapa_padres(rondas)
     # Quiénes ya quedaron eliminados en series REALMENTE decididas (no depende de la simulación).
     ya_eliminados = set()
     for ronda in rondas:
@@ -264,27 +288,15 @@ def _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims=1000, 
 
         for ridx, ronda in enumerate(rondas):
             for sidx, serie in enumerate(ronda["series"]):
-                # Los dos padres de esta serie son las series (2*sidx) y (2*sidx+1) de la
-                # ronda anterior, pero el dato NO garantiza que el padre par siempre caiga
-                # en p1 y el impar en p2 (el lado ya concreto puede venir de cualquiera de
-                # los dos) — así que si un lado ya es concreto, el lado "Pendiente" toma el
-                # padre que sea DISTINTO del nombre ya concreto, no uno fijo por índice.
-                padres = [ganador_de.get((ridx - 1, 2 * sidx)), ganador_de.get((ridx - 1, 2 * sidx + 1))]
-                padres_disp = [x for x in padres if x is not None]
-
-                if serie["p1"] is not None and serie["p2"] is not None:
-                    p1, p2 = serie["p1"], serie["p2"]
-                elif serie["p1"] is not None:
-                    restantes = [x for x in padres_disp if x != serie["p1"]]
-                    p1 = serie["p1"]
-                    p2 = restantes[0] if restantes else (padres_disp[0] if padres_disp else None)
-                elif serie["p2"] is not None:
-                    restantes = [x for x in padres_disp if x != serie["p2"]]
-                    p2 = serie["p2"]
-                    p1 = restantes[0] if restantes else (padres_disp[0] if padres_disp else None)
-                else:
-                    p1 = padres_disp[0] if len(padres_disp) >= 1 else None
-                    p2 = padres_disp[1] if len(padres_disp) >= 2 else None
+                # Cada lado "Pendiente" se llena con el ganador de la serie anterior que le
+                # corresponde según _mapa_padres (maneja byes: una ronda puede tener series
+                # con un jugador ya fijo y el otro lado esperando a una serie previa).
+                p1 = serie["p1"] if serie["p1"] is not None else (
+                    ganador_de.get((ridx - 1, mapa_padres[(ridx, sidx, "p1")]))
+                    if (ridx, sidx, "p1") in mapa_padres else None)
+                p2 = serie["p2"] if serie["p2"] is not None else (
+                    ganador_de.get((ridx - 1, mapa_padres[(ridx, sidx, "p2")]))
+                    if (ridx, sidx, "p2") in mapa_padres else None)
 
                 if p1 is None or p2 is None:
                     continue  # todavía no se puede resolver esta serie (falta info de una rama)
