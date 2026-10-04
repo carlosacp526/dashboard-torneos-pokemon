@@ -261,7 +261,7 @@ def show():
     st.header("📝 Reporte de Scouting")
     st.caption(
         "Un resumen redactado del nivel, estilo y rivalidades de cada jugador **activo** (con partidas en los "
-        "últimos 6 meses), generado a partir de las mismas métricas del resto de la app — Elo, rachas, títulos, "
+        "últimos 6 meses) que tenga **batallas pendientes**, generado a partir de las mismas métricas del resto de la app — Elo, rachas, títulos, "
         "arquetipo de estilo, némesis/presa y logros. Se recalcula solo cuando cambia el historial."
     )
 
@@ -270,12 +270,26 @@ def show():
         st.info("No hay jugadores activos para generar reportes.")
         return
 
-    nombres = sorted(datos.keys())
+    # Solo jugadores con alguna batalla pendiente (Walkover == -1) con rival ya definido
+    # ("Pendiente"/"Walk Over (W.O)" son cupos sin jugador real todavía).
+    dfp = ensure_fields(normalize_columns(df_raw.copy()))
+    dfp = dfp[dfp["Walkover"] == -1]
+    placeholders = {"pendiente", "walk over (w.o)"}
+    con_pendientes = {
+        str(j).strip().lower()
+        for col in ("player1", "player2") for j in dfp[col].dropna()
+        if str(j).strip().lower() not in placeholders
+    }
+    nombres = sorted(n for n in datos if n.strip().lower() in con_pendientes)
+    if not nombres:
+        st.info("No hay jugadores activos con batallas pendientes.")
+        return
+
     c_search, c_info = st.columns([3, 1])
     with c_search:
-        jugador_sel = st.selectbox("🔍 Elegí un jugador activo", nombres, key="scouting_jugador")
+        jugador_sel = st.selectbox("🔍 Elegí un jugador con batallas pendientes", nombres, key="scouting_jugador")
     with c_info:
-        st.metric("👥 Jugadores activos", len(nombres))
+        st.metric("⏳ Jugadores con pendientes", len(nombres))
 
     d = datos[jugador_sel]
     st.markdown("---")
@@ -293,7 +307,7 @@ def show():
         st.metric("🏅 Logros", f"{d['logros']['total']}/{len(LOGROS)}", f"{d['logros']['xp']:,} XP")
 
     st.markdown("---")
-    with st.expander("📋 Ver reportes de todos los jugadores activos"):
+    with st.expander("📋 Ver reportes de todos los jugadores con batallas pendientes"):
         filtro = st.text_input("Filtrar por nombre", "", key="scouting_filtro")
         lista = [n for n in nombres if filtro.lower() in n.lower()] if filtro else nombres
         for n in lista:
