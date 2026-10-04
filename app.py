@@ -28,7 +28,28 @@ from vistas import fairplay
 from vistas import scouting
 from vistas import reglamento
 from vistas import estadisticas_replay
-p_calidad    = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
+
+
+@st.cache_resource
+def _precalentar_scouting():
+    """Una sola vez por proceso del servidor: arma en segundo plano los datos del Reporte de
+    Scouting (data/scouting_cache.pkl) para que la página abra al instante. Si el pkl ya está
+    al día (ver precalcular_scouting.py) esto solo lo lee y termina."""
+    import threading
+
+    def _run():
+        try:
+            scouting.precalentar()
+        except Exception:
+            pass   # solo es un precalentado: si falla, la página calcula al abrirse como antes
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return t
+
+
+_precalentar_scouting()
+p_calidad   = st.Page(calidad.show,      title="🔬 Calidad de Ligas",       url_path="calidad")
 p_retencion  = st.Page(retencion.show,    title="🔁 Participación y Retención", url_path="retencion")
 p_social     = st.Page(social.show,       title="🕸️ Analítica Social",       url_path="social")
 p_estilo     = st.Page(estilo.show,       title="🎭 Estilo y Comportamiento", url_path="estilo")

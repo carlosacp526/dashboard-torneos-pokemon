@@ -19,9 +19,16 @@ import streamlit as st
 import pandas as pd
 import os, sys
 import hashlib
+import pickle
+import datetime
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
 from utils import load_data, normalize_columns, ensure_fields, build_base_liga, build_base_torneo, compute_player_stats
+from vistas.replays import (
+    _load_cache as _load_replay_cache, _construir_alias_showdown,
+    obtener_resumen_jugador, obtener_promedios_globales, CACHE_FILE as REPLAY_CACHE_FILE,
+)
 from vistas.elo import calcular_elo
 from vistas.rachas import _calcular_rachas_actuales
 from vistas.rankings import _racha_ganadora_max_historica, _pico_elo_historico
@@ -41,8 +48,80 @@ def _pick(jugador, salt, opciones):
     return opciones[h % len(opciones)]
 
 
-@st.cache_data(ttl=3600, show_spinner="Calculando datos de scouting de todos los jugadores activos...")
+MIN_REPLAYS_REPORTE = 5   # con menos replays analizados no se redacta la parte de replays
+SCOUTING_CACHE_PATH = os.path.join(PROJECT_ROOT, "data", "scouting_cache.pkl")
+SCOUTING_SCHEMA = 2       # subir cuando cambie la forma de `datos` para invalidar el pkl viejo
+
+
+def _resumen_replay_compacto(r, glob):
+    """Recorta lo que devuelve obtener_resumen_jugador a lo que usa el reporte."""
+    if not r or r.get("n_replays", 0) == 0:
+        return None
+    top = r["pokemon_top"].head(3)
+    lead = r["lead_top"].head(1)
+    return {
+        "n_replays": int(r["n_replays"]),
+        "pokemon_top": [(row["Pokémon"], float(row["% de partidas"])) for _, row in top.iterrows()],
+        "lead": (lead.iloc[0]["Pokémon"], int(lead.iloc[0]["Veces de lead"])) if not lead.empty else None,
+        "tera_top": list(r.get("tera_top", []))[:3],
+        "mega_top": list(r.get("mega_top", []))[:2],
+        "turnos_prom": r.get("turnos_prom"),
+        "duracion_prom_txt": r.get("duracion_prom_txt"),
+        "efectividad_pct": r.get("efectividad_pct"),
+        "ko_causados_prom": r.get("ko_causados_prom"),
+        "glob_turnos_prom": glob.get("turnos_prom"),
+        "glob_efectividad_pct": glob.get("efectividad_pct"),
+    }
+
+
+def _firma_datos():
+    """Huella del contenido de TODO lo que alimenta el scouting (historial, cache de
+    replays, celulares, versión de logros) + la semana actual (la condición de 'activo'
+    depende de la fecha). Si coincide con la guardada en el pkl, el pkl sirve tal cual."""
+    h = hashlib.md5()
+    for p in (os.path.join(PROJECT_ROOT, "archivo_preuba1.csv"), REPLAY_CACHE_FILE,
+              os.path.join(PROJECT_ROOT, "celulares.xlsx")):
+        h.update(os.path.basename(p).encode())
+        if os.path.exists(p):
+            with open(p, "rb") as f:
+                for bloque in iter(lambda: f.read(1 << 20), b""):
+                    h.update(bloque)
+    h.update(str(_version_logros()).encode())
+    h.update(str(SCOUTING_SCHEMA).encode())
+    h.update(str(datetime.date.today().isocalendar()[:2]).encode())
+    return h.hexdigest()
+
+
+def cargar_o_calcular_datos(df_raw):
+    """Devuelve los datos de scouting de todos los jugadores activos. Primero intenta el
+    pkl precalculado en disco (data/scouting_cache.pkl, ver precalcular_scouting.py y el
+    precalentado de app.py); si no existe o quedó viejo, calcula y lo vuelve a guardar."""
+    firma = _firma_datos()
+    try:
+        with open(SCOUTING_CACHE_PATH, "rb") as f:
+            guardado = pickle.load(f)
+        if guardado.get("firma") == firma:
+            return guardado["datos"]
+    except Exception:
+        pass
+    datos = calcular_datos_scouting(df_raw)
+    try:
+        os.makedirs(os.path.dirname(SCOUTING_CACHE_PATH), exist_ok=True)
+        tmp = SCOUTING_CACHE_PATH + ".tmp"
+        with open(tmp, "wb") as f:
+            pickle.dump({"firma": firma, "datos": datos}, f)
+        os.replace(tmp, SCOUTING_CACHE_PATH)
+    except Exception:
+        pass
+    return datos
+
+
+@st.cache_data(ttl=3600 * 6, show_spinner="Cargando datos de scouting...")
 def _extraer_datos_activos(_df_raw):
+    return cargar_o_calcular_datos(_df_raw)
+
+
+def calcular_datos_scouting(_df_raw):
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
 
@@ -82,6 +161,12 @@ def _extraer_datos_activos(_df_raw):
     m = df[df["winner"].notna()].copy()
     if "Walkover" in m.columns:
         m = m[m["Walkover"] >= 0]
+
+    # Cache de replays y alias CSV->Showdown: se arman UNA vez (son caros) y se reusan
+    # para todos los jugadores; permitir_fetch=False -> nunca golpea la red.
+    replay_cache = _load_replay_cache()
+    alias_map = _construir_alias_showdown(_df_raw, cache_df=replay_cache)
+    glob_replay = obtener_promedios_globales()
 
     datos = {}
     for jugador in activos:
@@ -149,8 +234,18 @@ def _extraer_datos_activos(_df_raw):
             "racha_actual": racha_actual, "racha_max_historica": racha_max_hist,
             "titulos": n_titulos, "nemesis": nemesis, "presa": presa, "estilo": estilo,
             "formato_favorito": fmt_fav, "logros": logros_info,
+            "replay": _resumen_replay_compacto(
+                obtener_resumen_jugador(jugador, _df_raw, cache_df=replay_cache,
+                                        alias_map=alias_map, permitir_fetch=False),
+                glob_replay),
         }
     return datos
+
+
+def precalentar():
+    """Deja listo el pkl de scouting (si falta o está viejo) sin que nadie lo pida.
+    Lo llama app.py en un hilo al arrancar y precalcular_scouting.py a mano."""
+    return cargar_o_calcular_datos(load_data())
 
 
 def _redactar_reporte(jugador, d):
@@ -204,6 +299,45 @@ def _redactar_reporte(jugador, d):
             f"Se siente más cómodo en {ff['formato']}, donde mantiene un {ff['winrate']}% de winrate.",
             f"Su terreno preferido es {ff['formato']} ({ff['winrate']}% de victorias ahí).",
         ]))
+
+    # ── Replays: Pokémon, leads, Tera/Mega, ritmo de partida ──────────────
+    rp = d.get("replay")
+    if rp and rp["n_replays"] >= MIN_REPLAYS_REPORTE and rp["pokemon_top"]:
+        nrep = rp["n_replays"]
+        top = rp["pokemon_top"]
+        favs = ", ".join(f"{n} ({p:.0f}%)" for n, p in top)
+        frases.append(_pick(jugador, "rp_pokes", [
+            f"En los {nrep} replays que analizamos, sus Pokémon de confianza son {favs}.",
+            f"Mirando {nrep} replays, se repite con {favs}.",
+        ]))
+        if rp.get("lead") and rp["lead"][1] >= 2:
+            frases.append(_pick(jugador, "rp_lead", [
+                f"Suele abrir con {rp['lead'][0]} ({rp['lead'][1]} veces de lead).",
+                f"Su lead preferido es {rp['lead'][0]}, con el que arrancó {rp['lead'][1]} partidas.",
+            ]))
+        # tera_top/mega_top guardan como máximo 3/2 especies (orden alfabético, no de uso): si
+        # se llenó el tope hay más de las que se ven, así que se dice "varios ... entre ellos".
+        tera, mega = rp.get("tera_top") or [], rp.get("mega_top") or []
+        if tera:
+            frases.append(
+                f"Activa Tera en combate con varios Pokémon (entre ellos {', '.join(tera)})." if len(tera) >= 3
+                else f"Activa Tera en combate sobre {' y '.join(tera)}.")
+        if mega:
+            frases.append(
+                f"Usa Mega en combate con varios Pokémon (entre ellos {', '.join(mega)})." if len(mega) >= 2
+                else f"Evoluciona a Mega en combate con {mega[0]}.")
+        t, gt = rp.get("turnos_prom"), rp.get("glob_turnos_prom")
+        if t and gt:
+            if t >= gt * 1.15:
+                frases.append(f"Juega partidas largas y de desgaste: {t:.0f} turnos de promedio (la comunidad ronda {gt:.0f}).")
+            elif t <= gt * 0.85:
+                frases.append(f"Prefiere cerrar rápido: {t:.0f} turnos de promedio contra {gt:.0f} de la comunidad.")
+        ef, gef = rp.get("efectividad_pct"), rp.get("glob_efectividad_pct")
+        if ef is not None and gef is not None:
+            if ef >= gef + 5:
+                frases.append(f"Aprovecha bien las debilidades de tipo ({ef:.0f}% de golpes super efectivos entre los notables, vs {gef:.0f}% promedio).")
+            elif ef <= gef - 5:
+                frases.append(f"Le cuesta explotar las debilidades de tipo ({ef:.0f}% de golpes super efectivos, vs {gef:.0f}% promedio).")
 
     # ── Highlights: títulos, racha, logros ────────────────────────────
     highlights = []
@@ -305,6 +439,7 @@ def show():
         st.metric("🎯 Winrate", f"{d['winrate']}%", f"{d['victorias']}/{d['partidas']} partidas")
         st.metric("🏆 Títulos", d["titulos"])
         st.metric("🏅 Logros", f"{d['logros']['total']}/{len(LOGROS)}", f"{d['logros']['xp']:,} XP")
+        st.metric("🎮 Replays analizados", (d.get("replay") or {}).get("n_replays", 0))
 
     st.markdown("---")
     with st.expander("📋 Ver reportes de todos los jugadores con batallas pendientes"):
