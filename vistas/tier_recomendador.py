@@ -109,6 +109,8 @@ def build_tier_recomendaciones(df_raw):
         "balance": balance.values,
         "jugadores_confiables_balance": n_conf.astype(int).values,
     })
+    # último uso en CUALQUIER contexto (liga o torneo): lo usa show() para dejar descansar un tier
+    out["meses_desde_uso"] = out[["meses_desde_liga", "meses_desde_torneo"]].min(axis=1)
     out["meses_desde_liga_cap"] = out["meses_desde_liga"].clip(upper=12)
     out["meses_desde_torneo_cap"] = out["meses_desde_torneo"].clip(upper=12)
 
@@ -156,7 +158,20 @@ def show():
     label_recencia = "Meses sin usarse en Liga" if contexto == "📅 Jornada de Liga" else "Meses sin usarse en Torneo"
     vigentes = liga_vigentes if contexto == "📅 Jornada de Liga" else torneo_vigentes
 
-    disponibles = tabla[~tabla["Tier"].isin(vigentes)]
+    descanso = st.slider(
+        "🛌 Dejar descansar un tier: no recomendar los usados en los últimos N meses (en Liga o en Torneo)",
+        min_value=0, max_value=12, value=3, key="tier_descanso",
+        help="0 = no excluir nada. Con 3, un tier usado este mes, el mes pasado o hace 2 meses no aparece en el ranking.",
+    )
+    tabla_ok = tabla[tabla["meses_desde_uso"] >= descanso]
+    recientes = tabla[(tabla["meses_desde_uso"] < descanso) & ~tabla["Tier"].isin(vigentes)]
+    if not recientes.empty:
+        st.info(
+            f"🛌 Excluidos por haberse usado hace menos de {descanso} mes(es): "
+            f"{', '.join(sorted(recientes['Tier'].tolist()))}."
+        )
+
+    disponibles = tabla_ok[~tabla_ok["Tier"].isin(vigentes)]
     en_curso = tabla[tabla["Tier"].isin(vigentes)]
 
     if not en_curso.empty:
@@ -216,6 +231,10 @@ Cuatro señales, normalizadas 0-1 entre todos los tiers y combinadas con distint
 **Pesos:**
 - Jornada de Liga: 30% participación + 25% balance + 30% variedad + 15% base histórica.
 - Torneo Próximo: 30% participación + 15% balance + 25% tendencia + 15% variedad + 15% base histórica.
+
+**Descanso de tiers:** el control "Dejar descansar un tier" (3 meses por defecto) saca del ranking los tiers que
+se usaron hace menos de N meses en Liga **o** en Torneo. Sin esto, la participación reciente premia justamente
+a los tiers que acaban de jugarse (porque por haberse jugado hace poco tienen mucha gente reciente).
 
 **Exclusión de tiers en curso:** un tier con cruces pendientes (`Walkover == -1`) en el contexto elegido
 (Liga o Torneo) todavía tiene una temporada corriendo — no se recomienda de nuevo hasta que cierre, aunque
