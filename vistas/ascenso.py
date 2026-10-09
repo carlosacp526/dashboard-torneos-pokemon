@@ -2,9 +2,9 @@ from vistas.competencia_evento import mostrar_competencia
 
 
 def show():
-    # Cada Ascenso juega varias llaves a la vez (una por Tier), así que no hay un único
-    # podio por victorias: se muestra la tabla general y el resultado de cada Final por Tier.
+    # Igual que en Torneos: el primero de la tabla (victorias, desempate por score) es el campeón.
+    # Además se muestra el resultado de cada Final por Tier, porque Ascenso juega varias llaves a la vez.
     mostrar_competencia(
         league="ASCENSO", titulo="Tablas de Posiciones — Torneos de Ascenso", icono="⬆️", etiqueta="Ascenso",
-        banner_path="bannercypheryascenso/TORNEO ASCENSO IM.jpeg", con_finales=True, con_podio=False,
+        banner_path="bannercypheryascenso/TORNEO ASCENSO IM.jpeg", con_finales=True, con_podio=True,
     )

@@ -45,7 +45,7 @@ def _finales_por_tier(df_evento):
 def mostrar_competencia(league, titulo, icono, etiqueta, banner_path, con_finales=False, con_podio=True):
     """league: valor de la columna `league` (CYPHER / ASCENSO). etiqueta: cómo se llama cada evento
     ("Fecha", "Ascenso"). con_finales: muestra el resultado de las Finales por Tier (Ascenso).
-    con_podio: muestra Campeón/Subcampeón/Tercero por victorias (no aplica si hay varias llaves)."""
+    con_podio: el primero de la tabla es el Campeón; muestra Campeón/Subcampeón/Tercero."""
     df_raw = load_data()
     base, df_l = build_base_torneo(df_raw, league=league)
 
@@ -120,7 +120,8 @@ def mostrar_competencia(league, titulo, icono, etiqueta, banner_path, con_finale
             if not fin.empty:
                 st.markdown("### 🏁 Finales por Tier")
                 st.dataframe(fin[['Tier', 'Formato', 'Ganador', 'Serie']], use_container_width=True, hide_index=True)
-                st.caption("Cada Tier se juega en su propia llave. La tabla de arriba suma las victorias de todas las llaves.")
+                st.caption("Detalle de cada llave: cada Tier se juega por separado. La tabla de arriba (y el campeón) "
+                           "suman las victorias de todas las llaves.")
 
         st.markdown("---")
         c1, c2, c3, c4 = st.columns(4)
