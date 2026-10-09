@@ -281,6 +281,68 @@ def generar_tabla_jornada(df_base_jornada, lt, num_jornada):
     tabla['RANK'] = range(1, len(tabla)+1)
     return tabla[['RANK','AKA','PUNTOS','SCORE','PARTIDAS','Victorias']].copy()
 
+def generar_evolucion_posiciones(df_liga, lt):
+    """Posición de cada jugador en la tabla ACUMULADA de la temporada `lt` después de cada jornada.
+    Mismo criterio que generar_tabla_temporada (Victorias y desempate por score_completo, con
+    score_final), pero usando solo las batallas jugadas hasta esa jornada.
+    Devuelve [Jornada, AKA, RANK, Victorias, SCORE]; un jugador aparece desde la jornada en que
+    juega su primera batalla."""
+    cols = ["Jornada", "AKA", "RANK", "Victorias", "SCORE"]
+    if df_liga is None or df_liga.empty or "Liga_Temporada" not in df_liga.columns:
+        return pd.DataFrame(columns=cols)
+    d = df_liga[df_liga["Liga_Temporada"] == lt].copy()
+    if d.empty:
+        return pd.DataFrame(columns=cols)
+    filas = []
+    for j in sorted(d["N_Torneo"].dropna().unique()):
+        sub = d[d["N_Torneo"] <= j]
+        juegos = pd.concat([sub["player1"], sub["player2"]]).value_counts()
+        base = pd.DataFrame({"Juegos": juegos})
+        base["Victorias"] = sub["winner"].value_counts().reindex(base.index).fillna(0).astype(int)
+        base["Derrotas"] = base["Juegos"] - base["Victorias"]
+        gan = sub.groupby("winner")[["pokemons Sob", "pokemon vencidos"]].sum()
+        perdedor = sub["player2"].where(sub["winner"] == sub["player1"], sub["player1"])
+        per = pd.DataFrame({"Participante": perdedor,
+                            "sob": (6 - sub["pokemon vencidos"]).clip(lower=0),
+                            "venc": (6 - sub["pokemons Sob"]).clip(lower=0)}).groupby("Participante").sum()
+        base["pokes_sobrevivientes"] = (gan["pokemons Sob"].reindex(base.index).fillna(0)
+                                        + per["sob"].reindex(base.index).fillna(0))
+        base["poke_vencidos"] = (gan["pokemon vencidos"].reindex(base.index).fillna(0)
+                                 + per["venc"].reindex(base.index).fillna(0))
+        sc = score_final(base)
+        sc["SCORE"] = sc["score_completo"].round(2)
+        sc = sc.sort_index().sort_values(["Victorias", "SCORE"], ascending=[False, False], kind="mergesort")
+        for rank, (aka, r) in enumerate(sc.iterrows(), start=1):
+            filas.append({"Jornada": int(j), "AKA": aka, "RANK": rank,
+                          "Victorias": int(r["Victorias"]), "SCORE": r["SCORE"]})
+    return pd.DataFrame(filas, columns=cols)
+
+def generar_mvps_jornada(base_jornada, df_liga_jornada, lt):
+    """MVP de cada jornada de la temporada `lt`: el jugador con mayor SCORE de esa jornada.
+    Un jugador cuyas batallas de la jornada fueron TODAS Walk Over a su favor (Walkover == 1:
+    score inflado, p. ej. 100 sin haber jugado) no puede ser MVP: se salta al siguiente.
+    Si dos jugadores elegibles empatan en el máximo, ambos son MVP de esa jornada.
+    Devuelve [Jornada, AKA, SCORE, Victorias, Partidas]."""
+    cols = ["Jornada", "AKA", "SCORE", "Victorias", "Partidas"]
+    if base_jornada is None or base_jornada.empty:
+        return pd.DataFrame(columns=cols)
+    bj = base_jornada[base_jornada["Liga_Temporada"] == lt]
+    dj = df_liga_jornada[df_liga_jornada["Liga_Temporada"] == lt]
+    filas = []
+    for nj in sorted(bj["N_Jornada"].dropna().unique()):
+        t = bj[bj["N_Jornada"] == nj].copy()
+        d = dj[(dj["N_Jornada"] == nj) & (dj["Walkover"] == 0)]
+        jugaron = set(d["player1"]) | set(d["player2"])      # al menos una batalla real (no W.O.)
+        t = t[t["Participante"].isin(jugaron)]
+        if t.empty:
+            continue
+        t["SCORE"] = t["score_completo"].round(2)
+        mx = t["SCORE"].max()
+        for _, r in t[t["SCORE"] == mx].iterrows():
+            filas.append({"Jornada": int(nj), "AKA": r["Participante"], "SCORE": r["SCORE"],
+                          "Victorias": int(r["Victorias"]), "Partidas": int(r["Juegos"])})
+    return pd.DataFrame(filas, columns=cols)
+
 def obtener_banner(liga):
     if liga in LOGOS_LIGAS and os.path.exists(LOGOS_LIGAS[liga]):
         return LOGOS_LIGAS[liga]

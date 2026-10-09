@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import (load_data, generar_tabla_temporada,
+from utils import (load_data, generar_tabla_temporada, generar_evolucion_posiciones, generar_mvps_jornada,
                    obtener_banner, obtener_logo_liga,
                    build_base_liga, build_base_jornada,
                    generar_tabla_jornada, volver_inicio,
@@ -50,7 +51,8 @@ def show():
 
                 for idx_t, temporada in enumerate(temporadas_liga):
                     with tabs_temp[idx_t]:
-                        tab_gen, tab_jorn, tab_fmt = st.tabs(["📋 Tabla General","📅 Por Jornada","🎯 Formatos y Enfrentamientos"])
+                        tab_gen, tab_jorn, tab_evo, tab_fmt = st.tabs(
+                            ["📋 Tabla General","📅 Por Jornada","📈 Evolución y MVPs","🎯 Formatos y Enfrentamientos"])
 
                         with tab_gen:
                             tabla = generar_tabla_temporada(base2, temporada)
@@ -179,6 +181,75 @@ def show():
                                         csv_j = tjd.to_csv(index=False).encode('utf-8')
                                         st.download_button(f"📥 Descargar Jornada {int(nj)}", csv_j,
                                                            f"jornada_{int(nj)}_{temporada}.csv", "text/csv")
+
+                        with tab_evo:
+                            evo = generar_evolucion_posiciones(df_liga, temporada)
+                            if evo.empty:
+                                st.info(f"No hay datos para {temporada}")
+                            else:
+                                st.markdown(f"### 📈 Evolución de Posiciones — {temporada}")
+                                st.caption("Posición de cada jugador en la tabla acumulada de la temporada después de cada "
+                                           "jornada (victorias y desempate por score, igual que la Tabla General).")
+                                ult = evo['Jornada'].max()
+                                orden = (evo[evo['Jornada'] == ult].sort_values('RANK')['AKA'].tolist()
+                                         + [a for a in evo['AKA'].unique() if a not in set(evo[evo['Jornada'] == ult]['AKA'])])
+                                sel = st.multiselect("Jugadores a mostrar", orden, default=orden, key=f"evo_sel_{temporada}")
+                                n_pos = int(evo['RANK'].max())
+                                paleta = px.colors.qualitative.Dark24 + px.colors.qualitative.Light24
+                                fig_evo = go.Figure()
+                                for i, aka in enumerate(orden):
+                                    if aka not in sel:
+                                        continue
+                                    g = evo[evo['AKA'] == aka].sort_values('Jornada')
+                                    color = paleta[i % len(paleta)]
+                                    fig_evo.add_trace(go.Scatter(
+                                        x=[f"J{int(j)}" for j in g['Jornada']], y=g['RANK'], name=aka,
+                                        mode='lines+markers+text', text=g['RANK'], textposition='middle center',
+                                        textfont=dict(color='white', size=11),
+                                        marker=dict(size=24, color=color, line=dict(color='white', width=1)),
+                                        line=dict(width=3, color=color),
+                                        customdata=g[['Victorias', 'SCORE']].values,
+                                        hovertemplate=f"<b>{aka}</b><br>Posición %{{y}}<br>Victorias %{{customdata[0]}}"
+                                                      "<br>Score %{customdata[1]:.2f}<extra></extra>"))
+                                fig_evo.update_yaxes(range=[n_pos + 0.5, 0.5], tickmode='linear', tick0=1, dtick=1,
+                                                     title='Posición', gridcolor='rgba(128,128,128,0.25)')
+                                fig_evo.update_xaxes(type='category', title='')
+                                fig_evo.update_layout(height=max(450, n_pos * 48), legend_title='AKA',
+                                                      margin=dict(l=10, r=10, t=30, b=10))
+                                st.plotly_chart(fig_evo, use_container_width=True)
+                                st.download_button(f"📥 Descargar evolución {temporada}",
+                                                   evo.to_csv(index=False).encode('utf-8'),
+                                                   f"evolucion_posiciones_{temporada}.csv", "text/csv",
+                                                   key=f"dl_evo_{temporada}")
+
+                                # ── MVPs por jornada ─────────────────────────────────
+                                st.markdown("---")
+                                st.markdown(f"### 🌟 MVPs por Jornada — {temporada}")
+                                mvps = generar_mvps_jornada(base2_jornada, df_liga_jornada, temporada)
+                                if mvps.empty:
+                                    st.info("Todavía no hay jornadas jugadas para calcular MVPs.")
+                                else:
+                                    resumen_mvp = (mvps.groupby('AKA')
+                                                   .agg(MVPs=('Jornada', 'size'),
+                                                        Jornadas=('Jornada', lambda s: ", ".join(f"J{int(j)}" for j in sorted(s))),
+                                                        **{'Mejor score': ('SCORE', 'max')})
+                                                   .reset_index().rename(columns={'AKA': 'Aka'})
+                                                   .sort_values(['MVPs', 'Mejor score'], ascending=[False, False])
+                                                   .reset_index(drop=True))
+                                    st.caption("MVP = el jugador con el mayor SCORE de cada jornada. Quien tuvo todas sus batallas "
+                                               "de la jornada como Walk Over a favor no cuenta (aunque su score sea 100). "
+                                               "Si dos jugadores empatan en el máximo, ambos son MVP.")
+                                    cm1, cm2 = st.columns([2, 3])
+                                    with cm1:
+                                        st.dataframe(resumen_mvp[['Aka', 'MVPs', 'Jornadas']], use_container_width=True,
+                                                     hide_index=True, height=min(500, len(resumen_mvp) * 38 + 60))
+                                    with cm2:
+                                        st.dataframe(mvps.rename(columns={'AKA': 'MVP'})[['Jornada', 'MVP', 'SCORE', 'Victorias', 'Partidas']],
+                                                     use_container_width=True, hide_index=True,
+                                                     height=min(500, len(mvps) * 38 + 60))
+                                    st.download_button(f"📥 Descargar MVPs {temporada}",
+                                                       resumen_mvp.to_csv(index=False).encode('utf-8'),
+                                                       f"mvps_{temporada}.csv", "text/csv", key=f"dl_mvp_{temporada}")
 
                         with tab_fmt:
                             st.markdown(f"### 🎯 Victorias por Formato — {temporada}")
