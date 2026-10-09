@@ -358,7 +358,8 @@ MONOTYPE1_TIPOS = {
     72: "GRANDE",
     73: "GRANDE",
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
-    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84: "GRANDE",85:"MEDIANO"
+    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
+    ,87:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -803,8 +804,74 @@ MONOTYPE1_POSICIONES = {
         "Chonarthas":     "Top8"
 
 
-        }}     
+        }}     ,
+
+                  86: {
+              "VGC": {
+       "mathixd1":   "Campeón",
+      "Saperoko10": "Subcampeón",
+        "Hydreigon_chelas":     "Top4",
+        "Ricomam":     "Top4",
+
+        "Bloody Cheese":     "Top8",
+        "A25":     "Top8",
+        "Jorginho":     "Top8",
+        "Saga":     "Top8",
+
+        "Akaru":     "Top16",
+        "CaradeCoso":     "Top16",
+        "David Wong":     "Top16",
+        "Fur4nko":     "Top16",
+        "JohanSalapo":     "Top16",
+        "mtdrumr":     "Top16",
+        "Lautaro":     "Top16",
+        "Wiwi":     "Top16",
+
+        "Aikauwu":     "Top24",
+        "Angello77":     "Top24",
+        "Angelowos":     "Top24",
+        "Chechin":     "Top24",
+        "Chonarthas":     "Top24",
+        "D'AllFather":     "Top24",
+        "Edenking":     "Top24",
+        "GatitaGolosa123":     "Top24",
+
+        "MafiaPolar":     "Top32",
+        "masafesio":     "Top32",
+        "Monstruonio":     "Top32",
+        "Peruano Tactico":     "Top32",
+        "Roy Kasoy":     "Top32",
+        "ShinkaHMA":     "Top32",
+        "The Glenko":     "Top32",
+        "The.Ultracheese":     "Top32",
+
+
+        "Draco axel":     "Top40",
+        "Fabricio19jr":     "Top40",
+        "Fullhax":     "Top40",
+        "Ger":     "Top40",
+        "Gold":     "Top40",
+        "JaLax":     "Top40",
+        "Jaspersd25":     "Top40",
+        "Joscake":     "Top40",
+        
+        
+                }}   
+    ,
+             87: {
+          "DOBLES": {
+            "SasoriVzla7":   "Campeón",
+            "Draco axel": "Subcampeón",
+            "Jaspersd25":     "Top4",
+            "Necroz":     "Top4",
     
+            "masafesio":     "Top8",
+            "Saga":     "Top8",
+            "Akaru":     "Top8",
+            "D'AllFather":     "Top8",
+    
+    
+            }} 
         }
 MONOTYPE1_LIGAS = {
     "PJS": {
