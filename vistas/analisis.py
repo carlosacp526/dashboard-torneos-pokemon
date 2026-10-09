@@ -29,6 +29,48 @@ def _img_b64_local(path):
     except Exception:
         return None
 
+_SIN_JUGADOR = {'walk over (w.o)', 'pendiente', 'nan', ''}
+
+
+def calcular_finales_torneos(df_torneo):
+    """Una fila por (torneo, finalista): quién jugó cada Final de torneo y si la ganó.
+
+    - Una final es UNA sola, aunque sea un Bo3/Bo5 (varias filas, una por juego): gana quien
+      tenga más victorias en esa serie. Los jugadores pueden venir como player1 o player2.
+    - Las filas contra "Walk Over (W.O)" no son juegos reales: no cuentan ni como rival ni
+      como victoria (si no quedan al menos 2 jugadores reales, no hay final jugada).
+    - Si dos o más jugadores empatan con el máximo de victorias, todos son ganadores (ej.
+      Torneo 61: Chris FPS y Mr.Shadowdusk ganan la final de 4 jugadores; Joscake y
+      Angello77 la pierden). Torneos de varios jugadores en la final (Free For All) se
+      resuelven con la misma regla.
+    - Finales con juegos pendientes (Walkover == -1) no se cuentan hasta que terminen.
+    """
+    cols = ['N_Torneo', 'Evento', 'Jugador', 'Gano', 'Finalistas']
+    if df_torneo is None or df_torneo.empty or 'round' not in df_torneo.columns:
+        return pd.DataFrame(columns=cols)
+    d = df_torneo[df_torneo['round'].astype(str).str.strip().str.lower() == 'final'].copy()
+    for c in ('player1', 'player2', 'winner'):
+        d[c] = d[c].astype(str).str.strip()
+    real = ~d['player1'].str.lower().isin(_SIN_JUGADOR) & ~d['player2'].str.lower().isin(_SIN_JUGADOR)
+    d = d[real]
+    filas = []
+    for nt, g in d.groupby('N_Torneo'):
+        if (g['Walkover'] == -1).any():
+            continue
+        jugadores = sorted(set(g['player1']) | set(g['player2']))
+        if len(jugadores) < 2:
+            continue
+        victorias = g[g['winner'].isin(jugadores)]['winner'].value_counts()
+        if victorias.empty:
+            continue
+        ganadores = set(victorias[victorias == victorias.max()].index)
+        evento = g['Aka_evento'].dropna().iloc[0] if 'Aka_evento' in g.columns and g['Aka_evento'].notna().any() else ''
+        for j in jugadores:
+            filas.append({'N_Torneo': nt, 'Evento': evento, 'Jugador': j,
+                          'Gano': j in ganadores, 'Finalistas': len(jugadores)})
+    return pd.DataFrame(filas, columns=cols)
+
+
 def show():
     df_raw = load_data()
     df = normalize_columns(df_raw.copy())
@@ -496,6 +538,53 @@ def show():
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.info("No se encontró la columna 'Tier'.")
+
+    # -- Jugadores con más finales jugadas (debajo del Panorama de Competencias) ----
+    st.markdown("---")
+    st.subheader("🏁 Jugadores con más finales jugadas")
+    finales = calcular_finales_torneos(df_torneo_all)
+    if finales.empty:
+        st.info("Todavía no hay finales de torneo terminadas para mostrar.")
+    else:
+        resumen_f = finales.groupby('Jugador').agg(Finales=('Gano', 'size'), Ganadas=('Gano', 'sum')).reset_index()
+        resumen_f['Ganadas'] = resumen_f['Ganadas'].astype(int)
+        resumen_f['Perdidas'] = resumen_f['Finales'] - resumen_f['Ganadas']
+        resumen_f['Ratio de victoria (%)'] = (resumen_f['Ganadas'] / resumen_f['Finales'] * 100).round(1)
+
+        c_f1, c_f2 = st.columns([1, 3])
+        with c_f1:
+            max_fin = int(resumen_f['Finales'].max())
+            min_fin = st.slider("Mínimo de finales jugadas", 1, max(max_fin, 2), min(2, max_fin), key="finales_min")
+        vis = resumen_f[resumen_f['Finales'] >= min_fin].sort_values(
+            ['Finales', 'Ganadas', 'Ratio de victoria (%)'], ascending=False).reset_index(drop=True)
+        with c_f2:
+            st.caption(
+                f"{finales['N_Torneo'].nunique()} torneos con final terminada · {len(resumen_f)} jugadores han jugado al menos una. "
+                "Cada final cuenta una sola vez aunque sea Bo3 o Bo5: gana quien tenga más victorias en la serie."
+            )
+        if vis.empty:
+            st.info("Ningún jugador alcanza ese mínimo de finales.")
+        else:
+            top = vis.head(15).iloc[::-1]
+            fig = go.Figure()
+            fig.add_bar(y=top['Jugador'], x=top['Ganadas'], name='Ganadas', orientation='h', marker_color='#F1C40F',
+                        text=top['Ganadas'], textposition='inside')
+            fig.add_bar(y=top['Jugador'], x=top['Perdidas'], name='Perdidas', orientation='h', marker_color='#B0B7C3',
+                        text=top['Perdidas'], textposition='inside')
+            fig.update_layout(barmode='stack', title='Finales jugadas (top 15)', xaxis_title='Finales', yaxis_title='',
+                              height=max(380, len(top) * 30), legend=dict(orientation='h', y=1.08))
+            st.plotly_chart(fig, use_container_width=True)
+            st.dataframe(vis, use_container_width=True, hide_index=True, height=360)
+
+        with st.expander("📖 Cómo se cuentan las finales"):
+            st.markdown("""
+- Solo **torneos** (ronda "Final"); las finales todavía sin terminar no cuentan.
+- Una final es **una sola** aunque se juegue al mejor de 3 o de 5: gana quien tenga **más victorias** en esa serie.
+- Los juegos contra "Walk Over (W.O)" no se cuentan como juego ni como rival.
+- **Torneo 61:** la final fue de 4 jugadores y hay **dos ganadores** (Chris FPS y Mr.Shadowdusk). Cada uno suma una final ganada;
+  Joscake y Angello77 suman una final perdida. Lo mismo vale para cualquier final con empate en el máximo de victorias.
+- Las finales de **Ascenso** y las de liga no se incluyen.
+            """)
 
     # ── Winrate General por Jugador ──────────────────────────────────
     # Filtro global de partidas mínimas: se define UNA sola vez acá y se reutiliza
