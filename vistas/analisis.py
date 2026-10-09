@@ -71,6 +71,40 @@ def calcular_finales_torneos(df_torneo):
     return pd.DataFrame(filas, columns=cols)
 
 
+def finales_recientes(df, limite=8):
+    """Últimas finales TERMINADAS, una fila por final (no por juego): [Evento, Campeones, Fecha].
+    Una final Bo3/Bo5 son varias filas y cuenta una sola vez; gana quien tenga más victorias de la serie
+    (empate en el máximo = co-campeones, ej. Torneo 61). Los Walk Over no cuentan como juego ni rival.
+    Cada torneo es una final; en Ascenso hay una por Tier (se juegan varias llaves a la vez)."""
+    cols = ['Evento', 'Campeones', 'Fecha']
+    if df is None or df.empty or 'round' not in df.columns:
+        return pd.DataFrame(columns=cols)
+    d = df[df['round'].astype(str).str.strip().str.lower() == 'final'].copy()
+    claves = ['league', 'N_Torneo']
+    d['_llave'] = d['Tier'].astype(str).where(d['league'] == 'ASCENSO', '')
+    filas = []
+    for (liga, nt, llave), g in d.groupby(claves + ['_llave'], dropna=False):
+        if (g['Walkover'] == -1).any():
+            continue
+        real = g[~g['player1'].astype(str).str.strip().str.lower().isin(_SIN_JUGADOR)
+                 & ~g['player2'].astype(str).str.strip().str.lower().isin(_SIN_JUGADOR)]
+        jugadores = set(real['player1'].astype(str).str.strip()) | set(real['player2'].astype(str).str.strip())
+        victorias = real['winner'].astype(str).str.strip().value_counts()
+        victorias = victorias[victorias.index.isin(jugadores)]
+        fecha = pd.to_datetime(g['date'], errors='coerce').max()
+        if victorias.empty or pd.isna(fecha):
+            continue
+        campeones = sorted(victorias[victorias == victorias.max()].index)
+        evento = g['Aka_evento'].dropna().iloc[0] if g['Aka_evento'].notna().any() else liga
+        if llave:
+            evento = f"{evento} · {llave}"
+        filas.append({'Evento': evento, 'Campeones': campeones, 'Fecha': fecha, '_nt': nt})
+    if not filas:
+        return pd.DataFrame(columns=cols)
+    out = pd.DataFrame(filas).sort_values(['Fecha', '_nt'], ascending=[False, False]).head(limite)
+    return out[cols].reset_index(drop=True)
+
+
 def show():
     df_raw = load_data()
     df = normalize_columns(df_raw.copy())
@@ -116,11 +150,12 @@ def show():
                      7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
     eventos_importantes = []
     if not recientes.empty and 'round' in recientes.columns:
-        finales = recientes[recientes['round'].astype(str).str.strip().str.lower() == 'final'].head(8)
-        for _, r in finales.iterrows():
-            ev = r.get('Aka_evento') or r.get('league', '')
-            fmes = f"{_MESES_TICKER[r['date'].month]} {r['date'].year}"
-            eventos_importantes.append(f"🏆 {r['winner']} es campeón de {ev} ({fmes})")
+        for _, r in finales_recientes(df).iterrows():
+            fmes = f"{_MESES_TICKER[r['Fecha'].month]} {r['Fecha'].year}"
+            cs = r['Campeones']
+            quien = cs[0] if len(cs) == 1 else ", ".join(cs[:-1]) + f" y {cs[-1]}"
+            verbo = "es campeón" if len(cs) == 1 else "son campeones"
+            eventos_importantes.append(f"🏆 {quien} {verbo} de {r['Evento']} ({fmes})")
 
     rachas_ticker = _calcular_rachas_actuales(df_raw)
     if not rachas_ticker.empty:
