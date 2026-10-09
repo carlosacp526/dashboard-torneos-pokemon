@@ -1529,9 +1529,9 @@ def show():
         st.markdown("---")
 
         # Tabs del jugador
-        tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8,tab9 = st.tabs([
+        tab1,tab2,tab3,tab4,tab5,tab6,tab6b,tab7,tab8,tab9 = st.tabs([
             "📋 Historial","📊 Generales","🏆 Por Evento","🎯 Por Tier",
-            "🎮 Por Formato","📅 Por Mes","📆 Por Año","⚔️ Por Rival","🏅 Logros"
+            "🎮 Por Formato","📅 Por Mes","📈 Mes Acumulado","📆 Por Año","⚔️ Por Rival","🏅 Logros"
         ])
 
         with tab1:
@@ -1613,6 +1613,7 @@ def show():
             else:
                 st.info("No hay estadísticas por formato.")
 
+        df_m = None   # tabla mensual; la arma tab6 y la reutiliza "Mes Acumulado"
         with tab6:
             if 'date' in player_matches.columns:
                 pm_copy = player_matches.copy()
@@ -1636,6 +1637,30 @@ def show():
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.info("No hay datos por mes.")
+
+        with tab6b:
+            if df_m is None or df_m.empty:
+                st.info("No hay datos por mes.")
+            else:
+                df_ac = df_m[['Mes', 'Partidas', 'Victorias', 'Derrotas']].copy()
+                df_ac['Partidas acum.'] = df_ac['Partidas'].cumsum()
+                df_ac['Victorias acum.'] = df_ac['Victorias'].cumsum()
+                df_ac['Derrotas acum.'] = df_ac['Derrotas'].cumsum()
+                df_ac['Winrate acum.%'] = (df_ac['Victorias acum.'] / df_ac['Partidas acum.'] * 100).round(2)
+                st.caption("Cada mes suma todo lo jugado hasta ese momento: la línea muestra cómo evoluciona "
+                           "el winrate de toda su carrera (se mueve cada vez menos a medida que acumula partidas).")
+                fig = px.line(df_ac, x='Mes', y='Winrate acum.%', markers=True, text='Winrate acum.%',
+                              title=f'Winrate acumulado por Mes — {player_query}')
+                fig.update_traces(texttemplate='%{text:.1f}%', textposition='top center')
+                fig.add_hline(y=50, line_dash="dash", line_color="gray", annotation_text="50%")
+                st.plotly_chart(fig, use_container_width=True)
+
+                fig2 = px.line(df_ac, x='Mes', y=['Victorias acum.', 'Derrotas acum.'], markers=True,
+                               color_discrete_map={'Victorias acum.': '#2ECC71', 'Derrotas acum.': '#E74C3C'},
+                               title=f'Victorias y derrotas acumuladas — {player_query}')
+                fig2.update_layout(yaxis_title='Partidas', legend_title='')
+                st.plotly_chart(fig2, use_container_width=True)
+                st.dataframe(df_ac, use_container_width=True)
 
         with tab7:
             if 'date' in player_matches.columns:
