@@ -83,6 +83,10 @@ def show():
     )
     leagues = df['league'].fillna('Sin liga').unique().tolist()
 
+    # ══ PARTE 1 — La comunidad hoy ══
+    st.header("📌 La comunidad hoy")
+    st.caption("Los números generales y lo último que pasó en el historial.")
+
     # ── Estadísticas generales ──────────────────────────────────────
     st.markdown('<div id="estadisticas"></div>', unsafe_allow_html=True)
     st.subheader("Estadísticas generales")
@@ -164,7 +168,7 @@ def show():
     # uniforme, con un panel de KPIs siempre visible arriba de las pestañas.
     st.markdown('<div id="panorama-competencias"></div>', unsafe_allow_html=True)
     st.markdown("---")
-    st.subheader("🗂️ Panorama de Competencias")
+    st.header("🗂️ Panorama de Competencias")
     st.caption("La historia de la comunidad en cuatro pasos: **1)** qué hemos jugado, **2)** qué tan grandes han sido "
                "los torneos, **3)** quiénes han ganado y **4)** quiénes llegan a las finales — misma categorización "
                "oficial de PUNTAJES_MUNDIAL3.png.")
@@ -639,37 +643,10 @@ def show():
 - Las finales de **Ascenso** y las de liga no se incluyen.
             """)
 
-    # ── Winrate General por Jugador ──────────────────────────────────
-    # Filtro global de partidas mínimas: se define UNA sola vez acá y se reutiliza
-    # más abajo en "Clasificación por Evento" y "Clasificación por Tiers", en vez
-    # de pedirlo por separado en cada sección.
-    st.markdown('<div id="winrate-general"></div>', unsafe_allow_html=True)
-    st.subheader("🏆 Winrate General por Jugador")
-    st.caption("Todo el historial, sin filtrar por evento ni tier. El mínimo de partidas de acá aplica también a las secciones de abajo.")
-
-    stats_global = compute_player_score(df)
-    max_partidas_global = int(stats_global['Partidas'].max()) if not stats_global.empty else 1
-    min_partidas_global = st.slider(
-        "Mínimo de partidas jugadas (global)", 1, max_partidas_global,
-        min(5, max_partidas_global), key="minb_global",
-        help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
-    )
-    stats_global_f = stats_global[stats_global['Partidas'] >= min_partidas_global]
-
-    tab_g1, tab_g2 = st.tabs(["📊 Tabla","🏆 Top Winrate"])
-    with tab_g1:
-        if stats_global_f.empty: st.info("Nadie cumple ese mínimo de partidas.")
-        else: st.dataframe(stats_global_f, use_container_width=True)
-    with tab_g2:
-        if stats_global_f.empty:
-            st.info("Nadie cumple ese mínimo de partidas.")
-        else:
-            fig = px.bar(stats_global_f.head(20), x='Jugador', y='Winrate%',
-                         title=f"Top 20 por Winrate — General (mín. {min_partidas_global} partidas)",
-                         color='Winrate%', color_continuous_scale='RdYlGn',
-                         hover_data=['Partidas','Score'])
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+    # ══ PARTE 3 — Cuándo y qué se juega ══
+    st.markdown("---")
+    st.header("📅 Cuándo y qué se juega")
+    st.caption("Cómo ha evolucionado la actividad mes a mes y año a año, y en qué tiers, formatos y eventos se concentran las partidas.")
 
     # ── Evolución temporal ──────────────────────────────────────────
     st.markdown('<div id="evolucion"></div>', unsafe_allow_html=True)
@@ -728,6 +705,11 @@ def show():
         st.plotly_chart(fig, use_container_width=True)
 
 
+
+    # ══ PARTE 4 — Quiénes juegan ══
+    st.markdown("---")
+    st.header("👥 Quiénes juegan")
+    st.caption("De dónde son los jugadores y cómo rinden: primero en general, luego por evento y por tier.")
 
     # ── Jugadores por País ──────────────────────────────────────────
     st.markdown('<div id="paises"></div>', unsafe_allow_html=True)
@@ -933,6 +915,39 @@ def show():
     else:
         st.info("Subí **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
 
+
+    st.markdown("---")
+    # ── Winrate General por Jugador ──────────────────────────────────
+    # Filtro global de partidas mínimas: se define UNA sola vez acá y se reutiliza
+    # más abajo en "Clasificación por Evento" y "Clasificación por Tiers", en vez
+    # de pedirlo por separado en cada sección.
+    st.markdown('<div id="winrate-general"></div>', unsafe_allow_html=True)
+    st.subheader("🏆 Winrate General por Jugador")
+    st.caption("Todo el historial, sin filtrar por evento ni tier. El mínimo de partidas de acá aplica también a las secciones de abajo.")
+
+    stats_global = compute_player_score(df)
+    max_partidas_global = int(stats_global['Partidas'].max()) if not stats_global.empty else 1
+    min_partidas_global = st.slider(
+        "Mínimo de partidas jugadas (global)", 1, max_partidas_global,
+        min(5, max_partidas_global), key="minb_global",
+        help="Evita que alguien con 1-2 partidas gane 100% de winrate y quede arriba de jugadores con más historial."
+    )
+    stats_global_f = stats_global[stats_global['Partidas'] >= min_partidas_global]
+
+    tab_g1, tab_g2 = st.tabs(["📊 Tabla","🏆 Top Winrate"])
+    with tab_g1:
+        if stats_global_f.empty: st.info("Nadie cumple ese mínimo de partidas.")
+        else: st.dataframe(stats_global_f, use_container_width=True)
+    with tab_g2:
+        if stats_global_f.empty:
+            st.info("Nadie cumple ese mínimo de partidas.")
+        else:
+            fig = px.bar(stats_global_f.head(20), x='Jugador', y='Winrate%',
+                         title=f"Top 20 por Winrate — General (mín. {min_partidas_global} partidas)",
+                         color='Winrate%', color_continuous_scale='RdYlGn',
+                         hover_data=['Partidas','Score'])
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
 
     # ── Clasificación por Evento ────────────────────────────────────
     st.markdown('<div id="clasificacion-evento"></div>', unsafe_allow_html=True)
