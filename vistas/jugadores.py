@@ -677,7 +677,7 @@ def generar_pdf_jugador(
         LOGROS_GUIA = [(l['num'], l['name'], l['cat'], l['rareza'], l['xp'], l['desc']) for l in LOGROS]
 
         # ── PÁGINAS DE RAREZA — una por rareza, salvo Bronce que ahora tiene
-        # tantos logros (106) que se parte en 2 páginas para que se vea bien
+        # tantos logros (109 hoy) que se parte en 2 páginas para que se vea bien
         # (medallas e íconos no quedan microscópicos ni se corta la guía) ──
         _rareza_pages = []
         for _rn in RAREZA_ORDEN_PDF:

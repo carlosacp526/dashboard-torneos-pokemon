@@ -343,6 +343,47 @@ def generar_mvps_jornada(base_jornada, df_liga_jornada, lt):
                           "Victorias": int(r["Victorias"]), "Partidas": int(r["Juegos"])})
     return pd.DataFrame(filas, columns=cols)
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def precalcular_logros_ligas(_df_raw):
+    """Datos de MVPs y posiciones de liga para los logros LI13-LI18, calculados UNA vez para toda la
+    comunidad (claves = nombre en minúscula):
+      mvps        {jugador: cantidad de MVPs de jornada}
+      mvp_consec  MVP en 2 jornadas seguidas de la misma temporada
+      lider       1° de la tabla acumulada tras la jornada 2 o posterior
+      escalada    subió 4+ posiciones en una sola jornada
+      remontada   fuera del top 3 a mitad de una temporada TERMINADA y la cerró en el top 3
+    Todo es histórico: una vez cumplido no se pierde."""
+    out = {"mvps": {}, "mvp_consec": set(), "lider": set(), "escalada": set(), "remontada": set()}
+    try:
+        _, df_liga = build_base_liga(_df_raw)
+        base_j, df_j = build_base_jornada(df_liga)
+    except Exception:
+        return out
+    key = lambda a: str(a).strip().lower()
+    for lt in sorted(df_liga["Liga_Temporada"].dropna().unique()):
+        mv = generar_mvps_jornada(base_j, df_j, lt)
+        for a, g in mv.groupby("AKA"):
+            out["mvps"][key(a)] = out["mvps"].get(key(a), 0) + len(g)
+            jornadas = set(g["Jornada"])
+            if any((j + 1) in jornadas for j in jornadas):
+                out["mvp_consec"].add(key(a))
+
+        ev = generar_evolucion_posiciones(df_liga, lt)
+        if ev.empty:
+            continue
+        en_curso = ((_df_raw["Llave_cat"] == lt) & (_df_raw["Walkover"] == -1)).any()
+        todas = sorted(ev["Jornada"].unique())
+        mitad = todas[max(0, (len(todas) // 2) - 1)]
+        for a, g in ev.groupby("AKA"):
+            r = g.sort_values("Jornada").set_index("Jornada")["RANK"]
+            if ((r.index >= 2) & (r == 1)).any():
+                out["lider"].add(key(a))
+            if (r.diff().dropna() <= -4).any():
+                out["escalada"].add(key(a))
+            if not en_curso and mitad in r.index and r[mitad] > 3 and r.iloc[-1] <= 3:
+                out["remontada"].add(key(a))
+    return out
+
 def obtener_banner(liga):
     if liga in LOGOS_LIGAS and os.path.exists(LOGOS_LIGAS[liga]):
         return LOGOS_LIGAS[liga]

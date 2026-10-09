@@ -2,7 +2,7 @@
 vistas/logros_analisis.py
 --------------------------
 Análisis de Logros — vista agregada a nivel COMUNIDAD (no de un jugador
-puntual): evalúa los 147 logros de vistas/logros.py contra todos los
+puntual): evalúa todos los logros de vistas/logros.py (224 hoy) contra todos los
 jugadores del historico y responde preguntas como cuántos jugadores tienen
 logros, qué tan repartido está por categoría/rareza, cuáles son los logros
 más raros/más comunes, y quiénes lideran el ranking de logros y XP.

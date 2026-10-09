@@ -1,5 +1,5 @@
 """
-logros.py — Sistema de 151 logros Poketubi (nueva versión)
+logros.py — Sistema de 224 logros Poketubi (nueva versión)
 Fuente: logros_pokemon.xlsx
 """
 
@@ -297,6 +297,16 @@ LOGROS = [
 {"id":"PR12","num":216,"cat":"Progresión","rareza":"Bronce","icon":"🏅","xp":50,  "name":"5 Logros",             "desc":"Desbloquea 5 logros en total"},
 {"id":"PR13","num":217,"cat":"Progresión","rareza":"Bronce","icon":"💠","xp":50,  "name":"XP 500",               "desc":"Acumula 500 puntos XP"},
 {"id":"SP23","num":218,"cat":"Especial","rareza":"Bronce","icon":"👋","xp":50,  "name":"De Vuelta",            "desc":"Vuelve a jugar tras 1+ mes de inactividad"},
+
+# ── MVPs Y EVOLUCIÓN DE POSICIONES EN LIGA (6) — salen de las pestañas "Evolución y MVPs" de Ligas
+# (utils.generar_mvps_jornada / generar_evolucion_posiciones). MVP = mayor score de la jornada; quien
+# tuvo todas sus batallas de la jornada como Walk Over a favor no cuenta. Todos son históricos (no se pierden). ──
+{"id":"LI13","num":219,"cat":"Ligas","rareza":"Bronce","icon":"🌟","xp":150, "name":"MVP de la Jornada",       "desc":"Es el MVP (mayor score) de una jornada de liga"},
+{"id":"LI14","num":220,"cat":"Ligas","rareza":"Bronce","icon":"👑","xp":100, "name":"Líder Provisional",       "desc":"Lidera la tabla acumulada de una liga tras la jornada 2 o posterior"},
+{"id":"LI15","num":221,"cat":"Ligas","rareza":"Bronce","icon":"⬆️","xp":100, "name":"Escalador",               "desc":"Sube 4 o más posiciones en la tabla de una liga en una sola jornada"},
+{"id":"LI16","num":222,"cat":"Ligas","rareza":"Oro",   "icon":"⭐","xp":700, "name":"MVP Recurrente",          "desc":"Acumula 5 MVPs de jornada de liga"},
+{"id":"LI17","num":223,"cat":"Ligas","rareza":"Oro",   "icon":"✌️","xp":700, "name":"Doble MVP",               "desc":"Es MVP en 2 jornadas seguidas de la misma temporada de liga"},
+{"id":"LI18","num":224,"cat":"Ligas","rareza":"Oro",   "icon":"🔥","xp":800, "name":"Remontada de Temporada",  "desc":"Estaba fuera del top 3 a mitad de una temporada de liga y la terminó en el top 3"},
 
 ]
 
@@ -1038,6 +1048,18 @@ def evaluar_logros(
                     return True
         return False
     r["LI12"] = _ascenso_confirmado()
+
+    # LI13–LI18: MVPs de jornada y evolución de posiciones (precalculado una vez para toda la comunidad,
+    # ver utils.precalcular_logros_ligas; sirve igual para quien llame a evaluar_logros).
+    from utils import precalcular_logros_ligas
+    _lx = precalcular_logros_ligas(df_raw)
+    _n_mvps = _lx["mvps"].get(pq, 0)
+    r["LI13"] = _n_mvps >= 1
+    r["LI14"] = pq in _lx["lider"]
+    r["LI15"] = pq in _lx["escalada"]
+    r["LI16"] = _n_mvps >= 5
+    r["LI17"] = pq in _lx["mvp_consec"]
+    r["LI18"] = pq in _lx["remontada"]
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     if any('PES' in str(l).upper() for l in ligas_jugadas):
@@ -2182,6 +2204,12 @@ def evaluar_logros(
     _d("SP21", texto="Venció al mismo rival en 2+ formatos de torneo distintos" if r["SP21"] else None)
     _d("SP22", umbral=3, texto="3+ meses consecutivos con al menos una batalla" if r["SP22"] else None)
     _d("LI12", texto="Jugó primero en una categoría de Liga y luego en una superior" if r["LI12"] else None)
+    _d("LI13", _n_mvps, 1, f"{_n_mvps} MVP(s) de jornada de liga")
+    _d("LI14", texto="Lideró la tabla acumulada de una liga tras la jornada 2 o posterior" if r["LI14"] else None)
+    _d("LI15", texto="Subió 4+ posiciones en la tabla de una liga en una sola jornada" if r["LI15"] else None)
+    _d("LI16", _n_mvps, 5, f"{_n_mvps} MVP(s) de jornada de liga")
+    _d("LI17", texto="MVP en 2 jornadas seguidas de la misma temporada" if r["LI17"] else None)
+    _d("LI18", texto="Fuera del top 3 a mitad de temporada y terminó en el top 3" if r["LI18"] else None)
     _d("PR11", xp_total, 5000, f"{xp_total} XP acumulado")
     _d("PA11", texto="10+ torneos distintos sin dar ningún Walkover propio" if r["PA11"] else None)
     _d("ES20", umbral=3, texto="3+ tiers distintos en un mismo mes" if r["ES20"] else None)

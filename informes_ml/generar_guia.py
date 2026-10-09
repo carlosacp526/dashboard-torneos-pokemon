@@ -310,7 +310,7 @@ def diagrama_logros():
     d = Drawing(480, 210)
     d.hAlign = 'CENTER'
     dbox(d, 110, 168, 260, 34, "Historial de batallas del jugador\n(filtrado de archivo_preuba1.csv)", fill=DARK)
-    dbox(d, 110, 112, 260, 40, "evaluar_logros()\n122 condiciones + listas blancas hardcodeadas\n(p.ej. GANADORES_LIGA)", fill=MAGENTA)
+    dbox(d, 110, 112, 260, 40, "evaluar_logros()\n224 logros + listas blancas hardcodeadas\n(p.ej. GANADORES_LIGA)", fill=MAGENTA)
     dbox(d, 110, 62, 260, 34, "Mapa  { id_logro: bool }", fill=BLUE)
     dbox(d, 10, 4, 205, 40, "Perfil del jugador\n(pestana Logros, medallas PNG\nbase64 desde logros_imagenes.py)", fill=GOLD, fontsize=6.8)
     dbox(d, 265, 4, 205, 40, "generar_pdf_jugador()\nreportlab.canvas - 1 pagina\npor rareza + resumen", fill=GOLD, fontsize=6.8)
@@ -827,12 +827,12 @@ def build_story():
           "Requiere un minimo de 10 partidas para calcular el perfil de un jugador.",
           "Ranking de Confiabilidad: quien causa menos walkovers en contra del resto."]),
         ("Analisis de Logros", "logros_analisis.py",
-         "Pagina nueva: a diferencia del perfil individual, evalua los 122 logros contra TODOS los "
+         "Pagina nueva: a diferencia del perfil individual, evalua los 224 logros contra TODOS los "
          "jugadores del historico a la vez (matriz jugador x logro, cacheada 1h - la primera carga "
          "tarda ~50s) para responder preguntas a nivel comunidad, en 7 pestanas.",
          ["Panorama general: KPIs arriba de todo (jugadores evaluados, % con al menos 1 logro, % "
           "del catalogo ya obtenido por alguien, promedio de logros y XP por jugador).",
-          "Catalogo Completo: los 122 logros con cuantos jugadores tiene cada uno, con buscador por "
+          "Catalogo Completo: los 224 logros con cuantos jugadores tiene cada uno, con buscador por "
           "nombre/descripcion y filtros por categoria y rareza.",
           "Por Categoria y Por Rareza: % de jugadores que llegan a distintos umbrales de completitud "
           "DENTRO de cada grupo (al menos 1, mitad, 3/4, 100%) - revela que tan filtrante es cada nivel.",
@@ -966,7 +966,7 @@ def build_story():
     # ── 1.6 — LOGROS ──
     story.append(h1("1.6 - Sistema de logros (\"logros\")"))
     story.append(p("<font face='Courier'>vistas/logros.py</font> define <b>LOGROS</b>, una lista "
-                   "hardcodeada de <b>122 logros</b> (id, categoria, rareza, xp, nombre, descripcion), "
+                   "hardcodeada de <b>224 logros</b> (id, categoria, rareza, xp, nombre, descripcion), "
                    "y <font face='Courier'>evaluar_logros(...)</font>, que devuelve un mapa "
                    "<font face='Courier'>{id: bool}</font> de desbloqueo por jugador a partir de su "
                    "historial de partidas."))
