@@ -62,6 +62,10 @@ def _precalcular_campeones(_df_raw, _base2, _base_torneo_final):
         for nt in _base_torneo_final['Torneo_Temp'].unique():
             if int(nt) in CAMPEON_MANUAL_TORNEO:
                 continue
+            # Igual que con las ligas: un torneo con batallas pendientes (Walkover == -1) todavía no
+            # tiene campeón; el líder parcial de la tabla no cuenta como título.
+            if ((_df_raw['league'] == 'TORNEO') & (_df_raw['N_Torneo'] == nt) & (_df_raw['Walkover'] == -1)).any():
+                continue
             tabla = generar_tabla_torneo(_base_torneo_final, nt)
             if tabla is not None and not tabla.empty:
                 camp = tabla[tabla['RANK'] == 1]

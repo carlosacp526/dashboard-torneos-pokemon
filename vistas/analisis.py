@@ -165,8 +165,9 @@ def show():
     st.markdown('<div id="panorama-competencias"></div>', unsafe_allow_html=True)
     st.markdown("---")
     st.subheader("🗂️ Panorama de Competencias")
-    st.caption("Cuántas temporadas hemos tenido de cada Liga, y cuántos Torneos según su tamaño, "
-               "Formato y Tier — misma categorización oficial de PUNTAJES_MUNDIAL3.png.")
+    st.caption("La historia de la comunidad en cuatro pasos: **1)** qué hemos jugado, **2)** qué tan grandes han sido "
+               "los torneos, **3)** quiénes han ganado y **4)** quiénes llegan a las finales — misma categorización "
+               "oficial de PUNTAJES_MUNDIAL3.png.")
 
     st.markdown("""
     <style>
@@ -347,9 +348,22 @@ def show():
             st.markdown(_kpi_card("⭐", "—", "Tier más usado", accent="#9B59B6"), unsafe_allow_html=True)
 
     st.write("")
-    tab_temp, tab_tam, tab_batallas, tab_gen, tab_fmt_tier = st.tabs(
-        ["📅 Temporadas por Liga", "🥊 Torneos por Tamaño", "⚔️ Batallas por Tamaño",
-         "🧬 Torneos por Generación", "🎮 Torneos por Formato y Tier"])
+    total_temporadas = int(temp_liga['Temporadas'].sum()) if not temp_liga.empty else 0
+    total_torneos = int(df_torneo_all['N_Torneo'].nunique()) if not df_torneo_all.empty else 0
+
+    # Capítulo 1 — qué hemos jugado
+    st.markdown("#### 📚 1 · Qué hemos jugado")
+    st.caption(f"{total_temporadas} temporadas de liga y {total_torneos} torneos, repartidos en distintos "
+               "formatos, tiers y generaciones de Pokémon.")
+    tab_temp, tab_fmt_tier, tab_gen = st.tabs(
+        ["📅 Temporadas por Liga", "🎮 Torneos por Formato y Tier", "🧬 Torneos por Generación"])
+
+    # Capítulo 2 — qué tan grandes han sido
+    st.markdown("#### 📏 2 · Qué tan grandes han sido")
+    if not participantes_por_torneo.empty:
+        st.caption(f"Los torneos han reunido desde {int(participantes_por_torneo['Participantes'].min())} hasta "
+                   f"{int(participantes_por_torneo['Participantes'].max())} participantes, y cada uno se clasifica por tamaño.")
+    tab_tam, tab_batallas = st.tabs(["🥊 Torneos por Tamaño", "⚔️ Batallas por Tamaño"])
 
     # -- Temporadas por Liga --------------------------------------------
     with tab_temp:
@@ -539,9 +553,48 @@ def show():
                 else:
                     st.info("No se encontró la columna 'Tier'.")
 
-    # -- Jugadores con más finales jugadas (debajo del Panorama de Competencias) ----
+    # Capítulo 3 — quiénes han ganado (Campeones Poketubi: títulos de Liga + Torneo)
+    # Misma fuente que los logros y los perfiles (_precalcular_campeones), así los números coinciden.
     st.markdown("---")
-    st.subheader("🏁 Jugadores con más finales jugadas")
+    st.markdown("#### 🏆 3 · Quiénes han ganado")
+    base_liga_c, _ = build_base_liga(df_raw)
+    base_torneo_c, _ = build_base_torneo(df_raw)
+    camp_liga, camp_torneo = _precalcular_campeones(df_raw, base_liga_c, base_torneo_c)
+    nombres_vistos = pd.concat([df['player1'], df['player2']]).dropna().astype(str).str.strip()
+    nombre_real = (nombres_vistos.groupby(nombres_vistos.str.lower()).agg(lambda s: s.value_counts().index[0]).to_dict())
+    filas_c = []
+    for k in set(camp_liga) | set(camp_torneo):
+        ligas_g = sorted(c['Liga'] for c in camp_liga.get(k, []))
+        torneos_g = sorted(int(c['Torneo']) for c in camp_torneo.get(k, []))
+        filas_c.append({'Participante': nombre_real.get(k, k), 'Ligas': len(ligas_g), 'Torneos': len(torneos_g),
+                        'Total': len(ligas_g) + len(torneos_g),
+                        'Ligas ganadas': ", ".join(ligas_g), 'Torneos ganados': ", ".join(f"T{t}" for t in torneos_g)})
+    campeones_df = pd.DataFrame(filas_c)
+    if campeones_df.empty:
+        st.info("Todavía no hay campeones registrados.")
+    else:
+        campeones_df = campeones_df.sort_values(['Total', 'Ligas', 'Participante'], ascending=[False, False, True]).reset_index(drop=True)
+        top_c = campeones_df.iloc[0]
+        st.caption(f"{len(campeones_df)} campeones distintos entre ligas y torneos terminados. "
+                   f"El que más títulos suma es **{top_c['Participante']}** con {int(top_c['Total'])}.")
+        fig_c = go.Figure()
+        fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Ligas'], name='Ligas', marker_color='#D64550')
+        fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Torneos'], name='Torneos', marker_color='#7A4FC4')
+        fig_c.add_scatter(x=campeones_df['Participante'], y=campeones_df['Total'], mode='text', text=campeones_df['Total'],
+                          textposition='top center', showlegend=False, hoverinfo='skip')
+        fig_c.update_layout(**_PLOTLY_BASE)
+        fig_c.update_layout(barmode='stack', title='Campeones Poketubi', xaxis_tickangle=-45, legend_title='Tipo',
+                            yaxis_title='Liga / Torneo', xaxis_title='', height=480)
+        st.plotly_chart(fig_c, use_container_width=True)
+        with st.expander("📋 Ver detalle de títulos"):
+            st.dataframe(campeones_df[['Participante', 'Total', 'Ligas', 'Torneos', 'Ligas ganadas', 'Torneos ganados']],
+                         use_container_width=True, hide_index=True)
+        st.caption("Solo cuentan ligas y torneos terminados. Torneo 61: dos campeones (Chris FPS y Mr.Shadowdusk).")
+
+    # Capítulo 4 — quiénes llegan a las finales
+    st.markdown("---")
+    st.markdown("#### 🏁 4 · Quiénes llegan a las finales")
+    st.subheader("Jugadores con más finales jugadas")
     finales = calcular_finales_torneos(df_torneo_all)
     if finales.empty:
         st.info("Todavía no hay finales de torneo terminadas para mostrar.")
