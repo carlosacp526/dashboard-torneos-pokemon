@@ -28,6 +28,7 @@ from vistas import fairplay
 from vistas import scouting
 from vistas import reglamento
 from vistas import estadisticas_replay
+from vistas import cypher, ascenso
 
 
 @st.cache_resource
@@ -60,7 +61,9 @@ p_analisis   = st.Page(analisis.show,     title="📊 Análisis General",       
 p_jugadores  = st.Page(jugadores.show,    title="👤 Jugadores",              url_path="jugadores")
 p_ligas      = st.Page(ligas.show,        title="🏆 Ligas",                  url_path="ligas")
 p_torneos    = st.Page(torneos.show,      title="🥊 Torneos",                url_path="torneos")
-p_rankings   = st.Page(rankings.show,     title="🏅 Histórico",               url_path="rankings")
+p_cypher     = st.Page(cypher.show,       title="🎤 Cypher",                 url_path="cypher")
+p_ascenso    = st.Page(ascenso.show,      title="⬆️ Ascenso",                url_path="ascenso")
+p_rankings   = st.Page(rankings.show,    title="🏅 Histórico",               url_path="rankings")
 p_elo        = st.Page(elo.show,          title="⚡ Ranking Elo",            url_path="elo")
 p_prediccion = st.Page(prediccion.show,   title="🤖 Predicción",             url_path="prediccion")
 p_tcg = st.Page(tcg.show,   title="🃏TCG",             url_path="tcg")
@@ -86,6 +89,8 @@ st.session_state["_pages"] = {
     "replays":    p_replays,
     "ligas":      p_ligas,
     "torneos":    p_torneos,
+    "cypher":     p_cypher,
+    "ascenso":    p_ascenso,
 
     "elo":        p_elo,
     "calidad":    p_calidad,
@@ -115,7 +120,7 @@ pg = st.navigation({
     "🏠 Lobby": [p_inicio],
     "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay],
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
-    "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_roleplay, p_seeding],
+    "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_cypher, p_ascenso, p_roleplay, p_seeding],
     "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
     "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting],
 })

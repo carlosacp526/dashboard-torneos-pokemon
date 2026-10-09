@@ -357,8 +357,10 @@ def build_base_liga(df):
     return score_final(base), df_liga
 
 @st.cache_data(ttl=3600)
-def build_base_torneo(df):
-    df_t = df[(df.league == "TORNEO") & (df.Walkover >= 0)].copy()
+def build_base_torneo(df, league="TORNEO"):
+    """Standings por evento (N_Torneo). `league` permite reusar el mismo cálculo para
+    otras competencias con la misma estructura (CYPHER, ASCENSO); por defecto TORNEO."""
+    df_t = df[(df.league == league) & (df.Walkover >= 0)].copy()
     df_t["Torneo_Temp"] = df_t["N_Torneo"]
 
     Ganador = df_t.groupby(["Torneo_Temp","winner"])["N_Torneo"].count().reset_index()
