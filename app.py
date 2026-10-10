@@ -43,6 +43,13 @@ def _precalentar_scouting():
             scouting.precalentar()
         except Exception:
             pass   # solo es un precalentado: si falla, la página calcula al abrirse como antes
+        try:
+            from utils import load_data
+            # matriz de logros de TODA la comunidad (la usa "Análisis de Logros" y el scouting): ~1 min de
+            # cálculo, cacheada en memoria; calentarla acá evita que el primer visitante espere.
+            logros_analisis.calcular_logros_comunidad(load_data(), logros_version=logros_analisis._version_logros())
+        except Exception:
+            pass
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()

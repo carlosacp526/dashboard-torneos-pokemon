@@ -374,6 +374,40 @@ def medal_svg(rareza: str, icon: str, color: bool = True, size: int = 64) -> str
 # EVALUADOR DE LOGROS
 # ══════════════════════════════════════════════════════════════════════════════
 
+_RP_MEMO = {}
+
+
+def _base_replays_comunidad(df_raw):
+    """(ok, alias_map, toid) del caché de replays, calculado UNA vez por proceso y reusado por todos los
+    jugadores: `ok` son las filas status == 'ok' con la columna `_toid` (id normalizado del jugador de
+    Showdown) ya calculada. Se recalcula solo si cambia el CSV de replays o el historial. None si no hay datos."""
+    try:
+        from vistas.replays import _load_cache, _toid, _construir_alias_showdown, CACHE_FILE
+    except Exception:
+        return None
+    try:
+        st_ = os.stat(CACHE_FILE)
+        firma = (st_.st_mtime_ns, st_.st_size, 0 if df_raw is None else len(df_raw))
+    except OSError:
+        firma = (0, 0, 0 if df_raw is None else len(df_raw))
+    if _RP_MEMO.get("firma") == firma:
+        return _RP_MEMO["base"]
+    base = None
+    cache_df = _load_cache()
+    if not cache_df.empty and 'player_name' in cache_df.columns:
+        ok = cache_df[cache_df['status'] == 'ok']
+        if not ok.empty:
+            try:
+                alias_map = _construir_alias_showdown(df_raw, cache_df=cache_df) if df_raw is not None else {}
+            except Exception:
+                alias_map = {}
+            ok = ok.copy()
+            ok['_toid'] = ok['player_name'].astype(str).map(_toid)
+            base = (ok, alias_map, _toid)
+    _RP_MEMO["firma"], _RP_MEMO["base"] = firma, base
+    return base
+
+
 def evaluar_logros(
     player_query: str,
     player_matches: pd.DataFrame,
@@ -1778,25 +1812,17 @@ def evaluar_logros(
     # "Estadísticas de Replay" al menos una vez; mismo alias CSV<->Showdown
     # que usa esa página (ver _construir_alias_showdown en vistas/replays.py) ──
     def _cache_replay_jugador():
-        try:
-            from vistas.replays import _load_cache, _toid, _construir_alias_showdown
-        except Exception:
+        # El caché de replays (CSV de ~17 MB), el mapa de alias CSV->Showdown y el toid de cada fila son
+        # iguales para TODOS los jugadores: se arman una vez (ver _base_replays_comunidad) y no por jugador
+        # — releerlos 270 veces era lo que hacía tardar minutos a "Análisis de Logros".
+        base = _base_replays_comunidad(df_raw)
+        if base is None:
             return pd.DataFrame()
-        cache_df = _load_cache()
-        if cache_df.empty or 'player_name' not in cache_df.columns:
-            return pd.DataFrame()
-        ok = cache_df[cache_df['status'] == 'ok']
-        if ok.empty:
-            return pd.DataFrame()
-        try:
-            alias_map = _construir_alias_showdown(df_raw) if df_raw is not None else {}
-        except Exception:
-            alias_map = {}
+        ok, alias_map, _toid = base
         pq_id = _toid(player_query)
         nombres_alias = alias_map.get(pq_id, set())
         toids_conocidos = {_toid(n) for n in nombres_alias} | {pq_id}
-        es_propio = ok['player_name'].astype(str).map(_toid).isin(toids_conocidos)
-        return ok[es_propio].copy()
+        return ok[ok['_toid'].isin(toids_conocidos)].copy()
 
     _cache_rp = _cache_replay_jugador()
     _RP_IDS = ["RP02","RP03","RP04","RP05","RP06","RP07","RP08","RP09",

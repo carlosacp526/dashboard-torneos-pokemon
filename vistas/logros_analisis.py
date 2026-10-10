@@ -185,7 +185,7 @@ def _version_logros():
     return (len(LOGROS), tuple(l["id"] for l in LOGROS))
 
 
-@st.cache_data(ttl=3600, show_spinner="Calculando logros de todos los jugadores (puede tardar 1-2 min la primera vez)...")
+@st.cache_data(ttl=12 * 3600, show_spinner="Calculando logros de todos los jugadores (puede tardar ~1 min la primera vez)...")
 def calcular_logros_comunidad(_df_raw, logros_version=None):
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
