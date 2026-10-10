@@ -15,7 +15,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import os, sys
+import os, sys, hashlib, pickle, threading, time, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, normalize_columns, ensure_fields, build_base_liga,
@@ -185,8 +185,9 @@ def _version_logros():
     return (len(LOGROS), tuple(l["id"] for l in LOGROS))
 
 
-@st.cache_data(ttl=12 * 3600, show_spinner="Calculando logros de todos los jugadores (puede tardar ~1 min la primera vez)...")
-def calcular_logros_comunidad(_df_raw, logros_version=None):
+def _calcular_logros_comunidad_pesado(_df_raw):
+    """Evalúa los logros de TODOS los jugadores (~1-1.5 min). No se llama desde la página: ver
+    calcular_logros_comunidad, que lee el resultado guardado en disco."""
     df = normalize_columns(_df_raw.copy())
     df = ensure_fields(df)
 
@@ -224,6 +225,96 @@ def calcular_logros_comunidad(_df_raw, logros_version=None):
     return pd.DataFrame(filas).set_index("Jugador")
 
 
+# ── Matriz de logros guardada en disco ─────────────────────────────────────────────────────────────
+# Calcularla toma ~1-1.5 min en una PC y bastante más en un servidor chico, así que NO se calcula al abrir
+# la página: se guarda en data/logros_comunidad.pkl (que viaja con el repo) y la página solo lo lee.
+# Si quedó viejo (cambió el historial, los replays o la lista de logros) se muestra igual lo último
+# calculado y se recalcula en segundo plano. Regenerarlo a mano: python precalcular_logros.py
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOGROS_CACHE_PATH = os.path.join(PROJECT_ROOT, "data", "logros_comunidad.pkl")
+LOGROS_SCHEMA = 1          # subir si cambia la forma del pkl o la lógica del cálculo
+_REFRESCO = {"activo": False, "ultimo_intento": 0.0}
+_REFRESCO_LOCK = threading.Lock()
+
+
+def _firma_logros():
+    """Huella del contenido que alimenta los logros (historial, caché de replays, lista de logros, esquema).
+    Los CSV se normalizan a saltos de línea '\n' para que dé igual en Windows (CRLF) y en el servidor (LF)."""
+    h = hashlib.md5()
+    for ruta in (os.path.join(PROJECT_ROOT, "archivo_preuba1.csv"), os.path.join(PROJECT_ROOT, "data", "replay_cache.csv")):
+        h.update(os.path.basename(ruta).encode())
+        if os.path.exists(ruta):
+            with open(ruta, "rb") as f:
+                h.update(f.read().replace(bytes([13, 10]), bytes([10])))
+    h.update(repr(_version_logros()).encode())
+    h.update(str(LOGROS_SCHEMA).encode())
+    return h.hexdigest()
+
+
+def _leer_pkl_logros():
+    try:
+        with open(LOGROS_CACHE_PATH, "rb") as f:
+            g = pickle.load(f)
+        return g if isinstance(g, dict) and "matriz" in g else None
+    except Exception:
+        return None
+
+
+def _guardar_pkl_logros(firma, matriz):
+    matriz = matriz.copy()
+    matriz.attrs["calculada_el"] = datetime.datetime.now().isoformat(timespec="minutes")
+    try:
+        os.makedirs(os.path.dirname(LOGROS_CACHE_PATH), exist_ok=True)
+        tmp = LOGROS_CACHE_PATH + ".tmp"
+        with open(tmp, "wb") as f:
+            pickle.dump({"firma": firma, "matriz": matriz}, f)
+        os.replace(tmp, LOGROS_CACHE_PATH)
+    except Exception:
+        pass
+    return matriz
+
+
+def regenerar_pkl_logros(df_raw):
+    """Calcula la matriz completa y la guarda (lo usa precalcular_logros.py y el refresco en segundo plano)."""
+    firma = _firma_logros()
+    return _guardar_pkl_logros(firma, _calcular_logros_comunidad_pesado(df_raw))
+
+
+def _refrescar_en_segundo_plano(df_raw):
+    with _REFRESCO_LOCK:
+        if _REFRESCO["activo"] or time.time() - _REFRESCO["ultimo_intento"] < 1800:
+            return
+        _REFRESCO["activo"], _REFRESCO["ultimo_intento"] = True, time.time()
+
+    def _run():
+        try:
+            regenerar_pkl_logros(df_raw)
+        except Exception:
+            pass
+        finally:
+            _REFRESCO["activo"] = False
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+@st.cache_data(ttl=600, show_spinner="Cargando logros de la comunidad...")
+def calcular_logros_comunidad(_df_raw, logros_version=None):
+    """Matriz jugador x logro de toda la comunidad. Lee el pkl guardado en disco (instantáneo); solo calcula
+    en el momento si no existe o le faltan logros nuevos. Si está viejo la devuelve igual, marcada con
+    attrs['desactualizada'] = True, y lanza el recálculo en segundo plano."""
+    firma = _firma_logros()
+    g = _leer_pkl_logros()
+    ids_actuales = {l["id"] for l in LOGROS}
+    if g is not None and not g["matriz"].empty and ids_actuales <= set(g["matriz"].columns):
+        matriz = g["matriz"]
+        if g.get("firma") != firma:
+            matriz = matriz.copy()
+            matriz.attrs["desactualizada"] = True
+            _refrescar_en_segundo_plano(_df_raw)
+        return matriz
+    return regenerar_pkl_logros(_df_raw)   # no hay nada guardado utilizable: toca calcular
+
+
 def _umbrales(sub, total_jugadores):
     """Para un subconjunto de columnas (una categoria o una rareza): % de
     jugadores que llegaron a cada umbral de completitud DENTRO de ese
@@ -256,6 +347,10 @@ def show():
     if matriz.empty:
         st.warning("No se pudo calcular la matriz de logros (¿hay datos cargados?).")
         return
+
+    if matriz.attrs.get("desactualizada"):
+        st.info(f"Mostrando los logros calculados el {matriz.attrs.get('calculada_el', '—')}. Hay datos más "
+                "recientes y se están recalculando en segundo plano: recargá la página en un par de minutos.")
 
     logros_df = pd.DataFrame(LOGROS).set_index("id")
     total_jugadores = len(matriz)

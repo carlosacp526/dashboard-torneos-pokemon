@@ -84,8 +84,10 @@ def _firma_datos():
         h.update(os.path.basename(p).encode())
         if os.path.exists(p):
             with open(p, "rb") as f:
-                for bloque in iter(lambda: f.read(1 << 20), b""):
-                    h.update(bloque)
+                datos_arch = f.read()
+            if p.endswith(".csv"):   # igual en Windows (CRLF) y en el servidor (LF)
+                datos_arch = datos_arch.replace(bytes([13, 10]), bytes([10]))
+            h.update(datos_arch)
     h.update(str(_version_logros()).encode())
     h.update(str(SCOUTING_SCHEMA).encode())
     h.update(str(datetime.date.today().isocalendar()[:2]).encode())
