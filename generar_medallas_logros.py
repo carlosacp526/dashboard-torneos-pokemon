@@ -1,8 +1,8 @@
 """
 Genera las cartas (medallas) de logros nuevos en el mismo estilo pixel-art que las existentes
-(160x200: franja de categoría, medalla tipo reloj, pastilla de rareza y nombre) y las registra:
-  - vistas/imagenes_logros_png/NNN_nombre.png
-  - vistas/logros_imagenes.py  (dict IMAGENES_LOGROS {num: base64}, lo que usa la app)
+(160x200: franja de categoría, medalla tipo reloj, pastilla de rareza y nombre) y las guarda en
+vistas/imagenes_logros_png/NNN_nombre.png, que es lo que lee la app (vistas/logros.py::_get_img_bytes).
+Ya NO se registran en vistas/logros_imagenes.py: ese .py de ~43 MB con todo en base64 quedó solo como último recurso.
 
 Uso (desde Produccion/):
     python generar_medallas_logros.py            # genera las que estén en GLIFOS y falten
@@ -203,13 +203,8 @@ def main():
     args = ap.parse_args()
 
     from vistas.logros import LOGROS
-    try:
-        from vistas.logros_imagenes import IMAGENES_LOGROS
-        existentes = set(IMAGENES_LOGROS)
-    except Exception:
-        existentes = set()
-
     os.makedirs(PNG_DIR, exist_ok=True)
+    existentes = {int(m.group(1)) for m in (re.match(r"(\d+)_.*\.png$", f) for f in os.listdir(PNG_DIR)) if m}
     nuevas = {}
     for l in LOGROS:
         if l["id"] not in GLIFOS or (l["num"] in existentes and not args.todas):
@@ -217,13 +212,10 @@ def main():
         img = crear_carta(l["num"], l["name"], l["rareza"], l["cat"], GLIFOS[l["id"]])
         ruta = os.path.join(PNG_DIR, f"{l['num']:03d}_{_slug(l['name'])}.png")
         img.save(ruta)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG", optimize=True)
-        nuevas[l["num"]] = base64.b64encode(buf.getvalue()).decode()
+        nuevas[l["num"]] = ruta
         print(f"  {l['id']} #{l['num']} {l['name']} -> {os.path.basename(ruta)}")
     if nuevas:
-        registrar_en_py(nuevas)
-        print(f"{len(nuevas)} medalla(s) registradas en vistas/logros_imagenes.py")
+        print(f"{len(nuevas)} medalla(s) guardadas en vistas/imagenes_logros_png/")
     else:
         print("No hay medallas nuevas por generar.")
 

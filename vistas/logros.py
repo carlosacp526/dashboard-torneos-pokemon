@@ -9,37 +9,50 @@ import os, base64, glob, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from vistas.elo import cargar_paises, _pais_de, get_round_order
 
-# ── Imágenes embebidas directamente (sin dependencia de paths) ───────────────
-try:
-    from vistas.logros_imagenes import IMAGENES_LOGROS as _IMGS
-except ImportError:
-    try:
-        from logros_imagenes import IMAGENES_LOGROS as _IMGS
-    except ImportError:
-        _IMGS = {}
+# ── Medallas de los logros ───────────────────────────────────────────────────
+# Se leen de los PNG en vistas/imagenes_logros_png/ (un archivo por logro, NNN_nombre.png), solo cuando se
+# piden. Antes se importaba logros_imagenes.py (un único .py de ~43 MB con todas en base64) al arrancar la app:
+# compilarlo gasta mucha memoria y en el servidor llegó a fallar con un SyntaxError. Ese archivo queda solo
+# como último recurso si falta algún PNG, y se importa recién en ese momento.
+_DIR_PNG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes_logros_png")
+_IMG_CACHE = {}
 
-# def _get_img_bytes(num: int):
-#     """Retorna bytes PNG del logro num, o None si no está disponible."""
-#     b64 = _IMGS.get(num)
-#     if b64:
-#         import base64 as _b64
-#         return _b64.b64decode(b64)
-#     return None
+
+def _img_desde_base64(num: int):
+    try:
+        from vistas.logros_imagenes import IMAGENES_LOGROS
+    except Exception:
+        try:
+            from logros_imagenes import IMAGENES_LOGROS
+        except Exception:
+            return None
+    b64 = IMAGENES_LOGROS.get(num)
+    if not b64:
+        return None
+    b64 = b64.strip()
+    b64 += "=" * (-len(b64) % 4)
+    try:
+        return base64.b64decode(b64)
+    except Exception:
+        return None
 
 
 def _get_img_bytes(num: int):
     """Retorna bytes PNG del logro num, o None si no está disponible."""
-    b64 = _IMGS.get(num)
-    if b64:
-        import base64 as _b64
-        # asegurar padding correcto
-        b64 = b64.strip()
-        b64 += "=" * (-len(b64) % 4)
+    if num in _IMG_CACHE:
+        return _IMG_CACHE[num]
+    data = None
+    archivos = sorted(glob.glob(os.path.join(_DIR_PNG, f"{num:03d}_*.png")), key=len)
+    if archivos:
         try:
-            return _b64.b64decode(b64)
+            with open(archivos[0], "rb") as f:
+                data = f.read()
         except Exception:
-            return None
-    return None
+            data = None
+    if data is None:
+        data = _img_desde_base64(num)
+    _IMG_CACHE[num] = data
+    return data
 
 def _img_b64(path: str) -> str:
     with open(path, "rb") as f:
