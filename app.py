@@ -127,7 +127,10 @@ pg = st.navigation({
     "🏠 Lobby": [p_inicio],
     "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay],
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
-    "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_cypher, p_ascenso, p_roleplay, p_seeding],
+    "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_cypher, p_ascenso, p_seeding],
+    # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
+    # hoy Roleplay; el Torneo 100 se suma acá cuando esté la info.
+    "🌟 Torneos Especiales": [p_roleplay],
     "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
     "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting],
 })
@@ -164,9 +167,12 @@ section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div:nth-of-
     background: rgba(230, 126, 34, 0.16);  border-left-color: #E67E22;   /* Competencia */
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div:nth-of-type(5) {
-    background: rgba(241, 196, 15, 0.18);  border-left-color: #F1C40F;   /* Rankings & Calidad */
+    background: rgba(26, 188, 156, 0.16);  border-left-color: #1ABC9C;   /* Torneos Especiales */
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div:nth-of-type(6) {
+    background: rgba(241, 196, 15, 0.18);  border-left-color: #F1C40F;   /* Rankings & Calidad */
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div:nth-of-type(7) {
     background: rgba(46, 204, 113, 0.16);  border-left-color: #2ECC71;   /* Organizador */
 }
 section[data-testid="stSidebar"] [data-testid="stNavSectionHeader"] {

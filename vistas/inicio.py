@@ -54,10 +54,16 @@ GRUPOS = [
              ["📋 Tabla por fecha", "🏆 Podio de cada fecha", "📊 Victorias y score"]),
             ("ascenso", "⬆️", "Ascenso",
              ["📋 Tabla por evento de ascenso", "🏁 Final de cada Tier", "📊 Victorias y score"]),
-            ("roleplay", "🎭", "Roleplay",
-             ["🎭 Torneo de draft por tiers", "📋 Equipos y Pokémon", "🏆 Formato VGC"]),
             ("seeding", "🌱", "Seeding de Torneo",
              ["🏅 Ranking de entrada por Elo", "🌱 Bracket con seeding estándar", "🥊 Probabilidad de cruces"]),
+        ],
+    },
+    {
+        "titulo": "🌟 Torneos Especiales",
+        "color": "#1ABC9C",
+        "items": [
+            ("roleplay", "🎭", "Roleplay",
+             ["🎭 Torneo de draft por tiers", "📋 Equipos y Pokémon", "🏆 Formato VGC"]),
         ],
     },
     {
