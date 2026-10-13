@@ -623,7 +623,8 @@ def show():
         fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Ligas'], name='Ligas', marker_color='#D64550')
         fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Torneos'], name='Torneos', marker_color='#7A4FC4')
         fig_c.add_scatter(x=campeones_df['Participante'], y=campeones_df['Total'], mode='text', text=campeones_df['Total'],
-                          textposition='top center', showlegend=False, hoverinfo='skip')
+                          textposition='top center', textfont=dict(color='white', size=13),
+                          showlegend=False, hoverinfo='skip')
         fig_c.update_layout(**_PLOTLY_BASE)
         fig_c.update_layout(barmode='stack', title='Campeones Poketubi', xaxis_tickangle=-45, legend_title='Tipo',
                             yaxis_title='Liga / Torneo', xaxis_title='', height=480)
