@@ -29,6 +29,7 @@ from vistas import scouting
 from vistas import reglamento
 from vistas import estadisticas_replay
 from vistas import cypher, ascenso
+from vistas import score_xtream
 
 
 @st.cache_resource
@@ -83,6 +84,7 @@ p_playoff_odds = st.Page(playoff_odds.show, title="🎲 Playoff Odds", url_path=
 p_seeding = st.Page(seeding.show, title="🌱 Seeding de Torneo", url_path="seeding")
 p_tier_recomendador = st.Page(tier_recomendador.show, title="🎯 Recomendador de Tier", url_path="tier-recomendador")
 p_rachas = st.Page(rachas.show, title="🔥 Rachas", url_path="rachas")
+p_score_xtream = st.Page(score_xtream.show, title="⚡ Score Xtream", url_path="score-xtream")
 p_fairplay = st.Page(fairplay.show, title="⚖️ Fair Play", url_path="fairplay")
 p_scouting = st.Page(scouting.show, title="📝 Reporte de Scouting", url_path="scouting")
 p_reglamento = st.Page(reglamento.show, title="📜 Reglamento", url_path="reglamento")
@@ -118,6 +120,7 @@ st.session_state["_pages"] = {
    "fairplay": p_fairplay,
    "scouting": p_scouting,
    "reglamento": p_reglamento,
+   "score_xtream": p_score_xtream,
 }
 
 # Mismas 5 categorías que usa la grilla de tarjetas de Inicio (vistas/inicio.py
@@ -125,7 +128,7 @@ st.session_state["_pages"] = {
 # vez de tener 19 páginas sueltas bajo un único "Secciones".
 pg = st.navigation({
     "🏠 Lobby": [p_inicio],
-    "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay],
+    "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
     "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):

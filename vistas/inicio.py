@@ -26,6 +26,8 @@ GRUPOS = [
              ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🏆 Ranking de jugadores"]),
             ("rachas", "🔥", "Rachas",
              ["🔥 Racha actual de cada jugador (en vivo)", "🧊 Top rachas ganadoras y perdedoras", "📜 Mejores rachas de toda la historia, por año y competencia"]),
+            ("score_xtream", "⚡", "Score Xtream",
+             ["⚡ Puntaje de 0 a 1000 por jugador", "🏆 Ranking y de qué se compone", "🔎 Detalle y metodología"]),
         ],
     },
     {
