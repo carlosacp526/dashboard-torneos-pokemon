@@ -358,7 +358,7 @@ MONOTYPE1_TIPOS = {
     72: "GRANDE",
     73: "GRANDE",
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
-    ,81:"GRANDE",82:"MEDIANO",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
+    ,81:"GRANDE",82:"MEDIANO",83:"GRANDE",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
     ,87:"MEDIANO"
 }
 MONOTYPE1_POSICIONES = {
@@ -766,7 +766,29 @@ MONOTYPE1_POSICIONES = {
         "JaLax":     "Top8"
 
 
-        }}  , 84: {
+        }} ,       83: {
+      "SINGLES": {
+        "Chris FPS":   "Campeón",
+        "Peruano Tactico": "Subcampeón",
+        "skll02":     "Top4",
+        "Elin beacil":     "Top4",
+
+        "Okari958":     "Top8",
+        "Arnau":     "Top8",
+        "Aikauwu":     "Top8",
+        "Chonarthas":     "Top8",
+
+
+        "MafiaPolar6242":     "Top16",
+        "The.Ultracheese	":     "Top16",
+        "Saga":     "Top16",
+        "Bloody Cheese":     "Top16",
+        "Angello77":     "Top16",
+        "Draco axel":     "Top16",
+        "Ger":     "Top16",
+        "SasoriVzla7":     "Top16",
+
+        }} , 84: {
               "SINGLES": {
                 "Chris FPS":   "Campeón",
                 "Angello77": "Subcampeón",
@@ -836,8 +858,8 @@ MONOTYPE1_POSICIONES = {
         "Edenking":     "Top24",
         "GatitaGolosa123":     "Top24",
 
-        "MafiaPolar":     "Top32",
-        "masafesio":     "Top32",
+        "MafiaPolar6242":     "Top32",
+        "darkam580":     "Top32",
         "Monstruonio":     "Top32",
         "Peruano Tactico":     "Top32",
         "Roy Kasoy":     "Top32",
@@ -865,7 +887,7 @@ MONOTYPE1_POSICIONES = {
             "Jaspersd25":     "Top4",
             "Necroz":     "Top4",
     
-            "masafesio":     "Top8",
+            "darkam580":     "Top8",
             "Saga":     "Top8",
             "Akaru":     "Top8",
             "D'AllFather":     "Top8",
