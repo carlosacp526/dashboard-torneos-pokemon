@@ -75,15 +75,14 @@ def finales_recientes(df, limite=8):
     """Últimas finales TERMINADAS, una fila por final (no por juego): [Evento, Campeones, Fecha].
     Una final Bo3/Bo5 son varias filas y cuenta una sola vez; gana quien tenga más victorias de la serie
     (empate en el máximo = co-campeones, ej. Torneo 61). Los Walk Over no cuentan como juego ni rival.
-    Cada torneo es una final; en Ascenso hay una por Tier (se juegan varias llaves a la vez)."""
+    Solo torneos: en Ascenso una final es una serie cuyos juegos se juegan en Tiers distintos y el campeón es el
+    primero de su tabla, así que no se anuncia desde acá."""
     cols = ['Evento', 'Campeones', 'Fecha']
     if df is None or df.empty or 'round' not in df.columns:
         return pd.DataFrame(columns=cols)
-    d = df[df['round'].astype(str).str.strip().str.lower() == 'final'].copy()
-    claves = ['league', 'N_Torneo']
-    d['_llave'] = d['Tier'].astype(str).where(d['league'] == 'ASCENSO', '')
+    d = df[(df['round'].astype(str).str.strip().str.lower() == 'final') & (df['league'] == 'TORNEO')].copy()
     filas = []
-    for (liga, nt, llave), g in d.groupby(claves + ['_llave'], dropna=False):
+    for (liga, nt), g in d.groupby(['league', 'N_Torneo'], dropna=False):
         if (g['Walkover'] == -1).any():
             continue
         real = g[~g['player1'].astype(str).str.strip().str.lower().isin(_SIN_JUGADOR)
@@ -96,8 +95,6 @@ def finales_recientes(df, limite=8):
             continue
         campeones = sorted(victorias[victorias == victorias.max()].index)
         evento = g['Aka_evento'].dropna().iloc[0] if g['Aka_evento'].notna().any() else liga
-        if llave:
-            evento = f"{evento} · {llave}"
         filas.append({'Evento': evento, 'Campeones': campeones, 'Fecha': fecha, '_nt': nt})
     if not filas:
         return pd.DataFrame(columns=cols)

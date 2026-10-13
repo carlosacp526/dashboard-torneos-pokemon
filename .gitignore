@@ -13,3 +13,7 @@ informes_ml/_build/
 
 # Backup local de replays de Showdown (no se pushea, solo respaldo en disco)
 replays_archive/
+
+# Archivos temporales de actualizar_todo.py
+data/.actualizando.lock
+data/actualizar_todo.log

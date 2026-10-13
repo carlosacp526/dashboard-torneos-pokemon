@@ -10,9 +10,9 @@ Si queda viejo, la página muestra lo último calculado y recalcula sola en segu
 
 Cómo se arma (ver la pestaña "Metodología" de la página para el detalle):
   1000 x suma de [peso x valor 0-1] de 11 componentes  +  ajuste de Walk Over (fair play), acotado a 0-1000.
-  Rendimiento (45%): win rate, victorias, partidas, pokes sobrevivientes y pokes vencidos.
-  Palmarés (20%): campeonatos de liga y torneo.   Participación (17%): torneos, liga y tiers distintos.
-  Replays (6%): replays desde 2024.   Logros (12%): logros desbloqueados.
+  Rendimiento (40%): win rate, victorias, partidas, pokes sobrevivientes y pokes vencidos.
+  Palmarés (28%): campeonatos de liga y torneo.   Participación (15%): torneos, liga y tiers distintos.
+  Replays (5%): replays desde 2024.   Logros (12%): logros desbloqueados.
   Todo lo de rendimiento se mide sobre batallas REALES (sin Walk Over): el Walk Over se premia o castiga aparte.
 """
 import os, sys, hashlib, pickle, threading, time, datetime
@@ -29,7 +29,7 @@ from vistas.logros_analisis import _precalcular_campeones, calcular_logros_comun
 
 SCORE_PKL = os.path.join(PROJECT_ROOT, "data", "score_xtream.pkl")
 SCORE_CSV = os.path.join(PROJECT_ROOT, "data", "score_xtream.csv")
-SCORE_SCHEMA = 2            # subir si cambian los pesos o la fórmula: invalida el pkl guardado
+SCORE_SCHEMA = 3            # subir si cambian los pesos o la fórmula: invalida el pkl guardado
 MIN_PARTIDAS_REF = 10       # los percentiles de referencia se calculan con jugadores de al menos estas partidas reales
 K_SUAVIZADO = 20            # "partidas fantasma" con el promedio general: evita que 3 partidas den 100% de win rate
 PUNTOS_MAX = 1000
@@ -38,16 +38,16 @@ WO_CONTRA_PTS, WO_CONTRA_TOPE = 12, 150   # cada Walk Over en contra (no se pres
 
 # componente -> (etiqueta, grupo, peso, cómo se mide)
 COMPONENTES = {
-    "win_rate":    ("Win rate", "Rendimiento", 0.14, "% de victorias suavizado (20 partidas con el promedio general), escalado entre el percentil 5 y 95"),
-    "victorias":   ("Victorias totales", "Rendimiento", 0.10, "Victorias reales, escala logarítmica (hasta el percentil 99)"),
-    "partidas":    ("Partidas", "Rendimiento", 0.07, "Partidas reales jugadas, escala logarítmica (hasta el percentil 99)"),
-    "pokes_sob":   ("Pokes sobrevivientes", "Rendimiento", 0.07, "Promedio de Pokémon que le sobreviven por partida, suavizado y escalado p5-p95"),
-    "pokes_venc":  ("Pokes vencidos", "Rendimiento", 0.07, "Promedio de Pokémon rivales que vence por partida, suavizado y escalado p5-p95"),
-    "campeonatos": ("Campeonatos", "Palmarés", 0.20, "Ligas y torneos ganados: 1 - e^(-títulos / 2.5), con rendimientos decrecientes"),
-    "torneos":     ("Participación en torneos", "Participación", 0.06, "Torneos distintos en los que jugó, escala logarítmica"),
-    "liga":        ("Participación en liga", "Participación", 0.06, "Jornadas de liga jugadas, escala logarítmica"),
+    "win_rate":    ("Win rate", "Rendimiento", 0.13, "% de victorias suavizado (20 partidas con el promedio general), escalado entre el percentil 5 y 95"),
+    "victorias":   ("Victorias totales", "Rendimiento", 0.09, "Victorias reales, escala logarítmica (hasta el percentil 99)"),
+    "partidas":    ("Partidas", "Rendimiento", 0.06, "Partidas reales jugadas, escala logarítmica (hasta el percentil 99)"),
+    "pokes_sob":   ("Pokes sobrevivientes", "Rendimiento", 0.06, "Promedio de Pokémon que le sobreviven por partida, suavizado y escalado p5-p95"),
+    "pokes_venc":  ("Pokes vencidos", "Rendimiento", 0.06, "Promedio de Pokémon rivales que vence por partida, suavizado y escalado p5-p95"),
+    "campeonatos": ("Campeonatos", "Palmarés", 0.28, "Ligas y torneos ganados: 1 - e^(-títulos / 2.5), con rendimientos decrecientes"),
+    "torneos":     ("Participación en torneos", "Participación", 0.05, "Torneos distintos en los que jugó, escala logarítmica"),
+    "liga":        ("Participación en liga", "Participación", 0.05, "Jornadas de liga jugadas, escala logarítmica"),
     "tiers":       ("Tiers jugados", "Participación", 0.05, "Tiers distintos en los que jugó batallas reales, escala logarítmica"),
-    "replays":     ("Replays 2024+", "Replays", 0.06, "Replays distintos de sus batallas desde 2024, escala logarítmica"),
+    "replays":     ("Replays 2024+", "Replays", 0.05, "Replays distintos de sus batallas desde 2024, escala logarítmica"),
     "logros":      ("Logros obtenidos", "Logros", 0.12, "Cantidad de logros desbloqueados respecto al percentil 99"),
 }
 GRUPOS = ["Rendimiento", "Palmarés", "Participación", "Replays", "Logros"]
