@@ -290,6 +290,9 @@ def show():
         p1 = df_torneo_all[['N_Torneo', 'player1']].rename(columns={'player1': 'Jugador'})
         p2 = df_torneo_all[['N_Torneo', 'player2']].rename(columns={'player2': 'Jugador'})
         jugadores_torneo = pd.concat([p1, p2], ignore_index=True).dropna(subset=['Jugador', 'N_Torneo'])
+        # "Pendiente" (cupo de una ronda que todavía no tiene jugador) y "Walk Over (W.O)" no son participantes
+        jugadores_torneo['Jugador'] = jugadores_torneo['Jugador'].astype(str).str.strip()
+        jugadores_torneo = jugadores_torneo[~jugadores_torneo['Jugador'].str.lower().isin(_SIN_JUGADOR)]
         participantes_por_torneo = jugadores_torneo.groupby('N_Torneo')['Jugador'].nunique() \
             .reset_index(name='Participantes')
 

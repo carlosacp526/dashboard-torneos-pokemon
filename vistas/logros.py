@@ -1633,9 +1633,10 @@ def evaluar_logros(
         if df_raw is None or 'N_Torneo' not in df_raw.columns:
             return 0
         sub = df_raw[(df_raw['league'] == 'TORNEO') & (df_raw['N_Torneo'] == nt)]
-        jugadores = set(sub['player1'].dropna().astype(str).str.lower()) | \
-                    set(sub['player2'].dropna().astype(str).str.lower())
-        return len(jugadores)
+        jugadores = set(sub['player1'].dropna().astype(str).str.strip().str.lower()) | \
+                    set(sub['player2'].dropna().astype(str).str.strip().str.lower())
+        # "Pendiente" y "Walk Over (W.O)" son cupos sin jugador, no participantes
+        return len(jugadores - {'pendiente', 'walk over (w.o)', 'nan', ''})
 
     _categorias_torneos_ganados = set()
     for camp in campeonatos_torneo_final:
