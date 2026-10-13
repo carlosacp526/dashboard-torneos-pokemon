@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import os, base64, glob, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from vistas.elo import cargar_paises, _pais_de
+from vistas.elo import cargar_paises, _pais_de, get_round_order
 
 # ── Imágenes embebidas directamente (sin dependencia de paths) ───────────────
 try:
@@ -106,7 +106,7 @@ LOGROS = [
     {"id":"ES09","num":47,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🎨","xp":50,   "name":"Maestro de OU",         "desc":"Participa una batalla en Formato_esp de OU"},
     {"id":"ES10","num":48,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"✨","xp":50,   "name":"Maestro de DOU",        "desc":"Participa una batalla en Formato_esp de DOU"},
     {"id":"ES11","num":49,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"🚫","xp":50,   "name":"Maestro de VGC",        "desc":"Participa una batalla en Formato_esp de VGC"},
-    {"id":"ES12","num":50,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💫","xp":50,   "name":"Maestro de LC",         "desc":"Participa una batalla en Formato_esp de LC"},
+    {"id":"ES12","num":50,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💫","xp":50,   "name":"Maestro de LC",         "desc":"Participa en una batalla de LC (Singles o Dobles)"},
     {"id":"ES13","num":51,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💪","xp":50,   "name":"Maestro de UBERS",      "desc":"Participa una batalla en Formato_esp de UBERS"},
     {"id":"ES14","num":52,"cat":"Estrategia",   "rareza":"Plata",     "icon":"🌿","xp":250,  "name":"Campeón OUs",           "desc":"Participa una batalla en Formato_esp de OU y DOU"},
     {"id":"ES15","num":91,"cat":"Estrategia",   "rareza":"Bronce",    "icon":"💡","xp":100,  "name":"Maestro del Natdex",    "desc":"Participa una batalla de Formato_esp de NAT DEX"},
@@ -291,8 +291,8 @@ LOGROS = [
 {"id":"ES22","num":210,"cat":"Estrategia","rareza":"Bronce","icon":"🔀","xp":75,  "name":"Formato Nuevo",        "desc":"Juega en 2+ Formatos distintos (Singles/Dobles/VGC)"},
 {"id":"ES23","num":211,"cat":"Estrategia","rareza":"Bronce","icon":"🔍","xp":100, "name":"Curioso",              "desc":"Juega 3+ formatos especiales (Formato_esp) distintos en total"},
 {"id":"ES24","num":212,"cat":"Estrategia","rareza":"Bronce","icon":"🔒","xp":100, "name":"Primer Monotype Ganado","desc":"Gana una batalla en un torneo Monotype"},
-{"id":"ES25","num":213,"cat":"Estrategia","rareza":"Bronce","icon":"👑","xp":50,  "name":"Ubers por Primera Vez","desc":"Juega su primera batalla en Tier UBERS"},
-{"id":"ES26","num":214,"cat":"Estrategia","rareza":"Bronce","icon":"🐣","xp":50,  "name":"LC Debut",             "desc":"Juega su primera batalla en Tier LC"},
+{"id":"LI19","num":213,"cat":"Ligas","rareza":"Bronce","icon":"✅","xp":100, "name":"Jornada Perfecta",      "desc":"Gana todas sus batallas de una jornada de liga (3 o más), sin ningún Walk Over a favor"},
+{"id":"LI20","num":214,"cat":"Ligas","rareza":"Bronce","icon":"🔝","xp":100, "name":"Top 5 Constante",       "desc":"No sale del top 5 de la tabla en ninguna jornada de una temporada de liga terminada"},
 {"id":"PA12","num":215,"cat":"Participación","rareza":"Bronce","icon":"2️⃣","xp":50, "name":"Segunda Vuelta",     "desc":"Participa en su segundo torneo"},
 {"id":"PR12","num":216,"cat":"Progresión","rareza":"Bronce","icon":"🏅","xp":50,  "name":"5 Logros",             "desc":"Desbloquea 5 logros en total"},
 {"id":"PR13","num":217,"cat":"Progresión","rareza":"Bronce","icon":"💠","xp":50,  "name":"XP 500",               "desc":"Acumula 500 puntos XP"},
@@ -536,31 +536,15 @@ def evaluar_logros(
         if 'Walkover' in pm_s.columns:
             pm_s = pm_s[pm_s['Walkover'] != -1]
 
-        # Ordenar correctamente: fecha → N_Torneo → orden de ronda
-        ROUND_ORDER_RACHA = {
-            'ronda suiza 1':10,'ronda suiza 2':11,'ronda suiza 3':12,
-            'ronda suiza 4':13,'ronda suiza 5':14,'ronda suiza 6':15,
-            'fase de grupos':20,'playoff':25,
-            'treintaidosavo de final':30,'dieciseisavos de final':40,
-            'octavos de final':50,'cuartos de final':60,'semifinal':70,'final':90,
-        }
-        def _ro(r):
-            if pd.isna(r): return 50
-            r_low = str(r).strip().lower()
-            if ' j' in r_low:
-                try: return int(r_low.split(' j')[1])
-                except: pass
-            return ROUND_ORDER_RACHA.get(r_low, 50)
-
-        pm_s['_ro'] = pm_s['round'].apply(_ro) if 'round' in pm_s.columns else 50
+        # Mismo orden que Rachas en Vivo y el Histórico: fecha → N_Torneo → orden de ronda (vistas.elo.get_round_order)
+        pm_s['_ro'] = pm_s['round'].apply(get_round_order) if 'round' in pm_s.columns else 50
         pm_s['_nt'] = pm_s['N_Torneo'].fillna(0) if 'N_Torneo' in pm_s.columns else 0
         pm_s = pm_s.dropna(subset=['date']).sort_values(['date','_nt','_ro'])
 
         racha = 0
         for _, row in pm_s.iterrows():
             winner = str(row.get('winner', '')).strip().lower()
-            # Comparación exacta primero, luego contains como fallback
-            gano = (winner == pq) or (pq in winner and len(pq) > 4)
+            gano = winner == pq   # comparación exacta, igual que Rachas en Vivo
             if gano:
                 racha += 1
                 racha_max = max(racha_max, racha)
@@ -880,9 +864,9 @@ def evaluar_logros(
     r["ES09"] = any(str(f).upper() in ('OU',) for f in formatos_jugados_esp)
     r["ES10"] = any('DOU' in str(f).upper() for f in formatos_jugados_esp)
     r["ES11"] = any('VGC' in str(f).upper() for f in formatos_jugados_esp)
-    r["ES12"] = any(str(f).upper() == 'LC' for f in formatos_jugados_esp)
+    r["ES12"] = any('LC' in str(f).upper().split() for f in formatos_jugados_esp)   # 'LC' y 'DOBLES LC'
     r["ES13"] = any('UBERS' in str(f).upper() for f in formatos_jugados_esp)
-    r["ES14"] = any('OU' in str(f).upper() for f in formatos_jugados_esp) and any('DOU' in str(f).upper() for f in formatos_jugados_esp)
+    r["ES14"] = bool(r["ES09"]) and bool(r["ES10"])   # OU exacto Y DOU ('OU' in 'DOU' hacía que bastara con DOU)
     r["ES15"] = any('NAT DEX' in str(f).upper() for f in formatos_jugados_esp)
 
     # TORNEO
@@ -1094,6 +1078,8 @@ def evaluar_logros(
     r["LI16"] = _n_mvps >= 5
     r["LI17"] = pq in _lx["mvp_consec"]
     r["LI18"] = pq in _lx["remontada"]
+    r["LI19"] = pq in _lx["perfecta"]
+    r["LI20"] = pq in _lx["top5"]
     # SOCIAL
     r["SO01"] = any('PJS' in str(l).upper() for l in ligas_jugadas)
     if any('PES' in str(l).upper() for l in ligas_jugadas):
@@ -2043,8 +2029,6 @@ def evaluar_logros(
         not pm.empty and 'N_Torneo' in pm.columns and 'winner' in pm.columns and
         (pm['N_Torneo'].isin(_torneos_monotype_todos) & pm['winner'].str.lower().str.contains(pq, na=False)).any()
     )
-    r["ES25"] = bool('Tier' in pm.columns and pm['Tier'].astype(str).str.upper().str.contains('UBERS', na=False).any())
-    r["ES26"] = bool('Tier' in pm.columns and pm['Tier'].astype(str).str.upper().str.contains('LC', na=False).any())
 
     # ── PA12, PR12-13, SP23 ──────────────────────────────────────────────
     r["PA12"] = torneos_part >= 2
@@ -2110,7 +2094,7 @@ def evaluar_logros(
     _d("ES09", texto="Jugó OU" if r["ES09"] else None)
     _d("ES10", texto="Jugó DOU" if r["ES10"] else None)
     _d("ES11", texto="Jugó VGC" if r["ES11"] else None)
-    _d("ES12", texto="Jugó LC" if r["ES12"] else None)
+    _d("ES12", texto="Jugó LC (Singles o Dobles)" if r["ES12"] else None)
     _d("ES13", texto="Jugó Ubers" if r["ES13"] else None)
     _d("ES14", texto="Jugó OU y DOU" if r["ES14"] else None)
     _d("ES15", texto="Jugó Nat Dex" if r["ES15"] else None)
@@ -2236,6 +2220,8 @@ def evaluar_logros(
     _d("LI16", _n_mvps, 5, f"{_n_mvps} MVP(s) de jornada de liga")
     _d("LI17", texto="MVP en 2 jornadas seguidas de la misma temporada" if r["LI17"] else None)
     _d("LI18", texto="Fuera del top 3 a mitad de temporada y terminó en el top 3" if r["LI18"] else None)
+    _d("LI19", texto="Ganó todas sus batallas (3+) de una jornada de liga sin Walk Over" if r["LI19"] else None)
+    _d("LI20", texto="No salió del top 5 en ninguna jornada de una temporada de liga terminada" if r["LI20"] else None)
     _d("PR11", xp_total, 5000, f"{xp_total} XP acumulado")
     _d("PA11", texto="10+ torneos distintos sin dar ningún Walkover propio" if r["PA11"] else None)
     _d("ES20", umbral=3, texto="3+ tiers distintos en un mismo mes" if r["ES20"] else None)
@@ -2286,8 +2272,6 @@ def evaluar_logros(
     _d("ES22", len(formatos_jugados), 2, f"{len(formatos_jugados)} formato(s) distinto(s) jugado(s)")
     _d("ES23", len(formatos_jugados_esp), 3, f"{len(formatos_jugados_esp)} formato(s) especial(es) distinto(s)")
     _d("ES24", texto="Ganó una batalla en un torneo Monotype" if r["ES24"] else None)
-    _d("ES25", texto="Jugó su primera batalla en Tier UBERS" if r["ES25"] else None)
-    _d("ES26", texto="Jugó su primera batalla en Tier LC" if r["ES26"] else None)
 
     _d("PA12", torneos_part, 2, f"{torneos_part} torneo(s) distinto(s) jugado(s)")
     _d("PR12", desbloq_total, 5, f"{desbloq_total} logro(s) desbloqueado(s) en total")

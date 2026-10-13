@@ -352,8 +352,11 @@ def precalcular_logros_ligas(_df_raw):
       lider       1° de la tabla acumulada tras la jornada 2 o posterior
       escalada    subió 4+ posiciones en una sola jornada
       remontada   fuera del top 3 a mitad de una temporada TERMINADA y la cerró en el top 3
+      perfecta    ganó todas sus batallas (3+) de una jornada, sin ningún Walk Over
+      top5        no salió del top 5 en ninguna jornada de una temporada TERMINADA de 5+ jornadas
     Todo es histórico: una vez cumplido no se pierde."""
-    out = {"mvps": {}, "mvp_consec": set(), "lider": set(), "escalada": set(), "remontada": set()}
+    out = {"mvps": {}, "mvp_consec": set(), "lider": set(), "escalada": set(), "remontada": set(),
+           "perfecta": set(), "top5": set()}
     try:
         _, df_liga = build_base_liga(_df_raw)
         base_j, df_j = build_base_jornada(df_liga)
@@ -367,6 +370,17 @@ def precalcular_logros_ligas(_df_raw):
             jornadas = set(g["Jornada"])
             if any((j + 1) in jornadas for j in jornadas):
                 out["mvp_consec"].add(key(a))
+
+        # Jornada Perfecta: todas sus batallas de la jornada ganadas (3+) y ninguna fue Walk Over
+        d = df_j[df_j["Liga_Temporada"] == lt]
+        largo = pd.concat([
+            d[["N_Jornada", "player1", "winner", "Walkover"]].rename(columns={"player1": "p"}),
+            d[["N_Jornada", "player2", "winner", "Walkover"]].rename(columns={"player2": "p"})])
+        largo["gano"] = largo["winner"] == largo["p"]
+        largo["real"] = largo["Walkover"] == 0
+        por_jornada = largo.groupby(["N_Jornada", "p"]).agg(n=("gano", "size"), w=("gano", "sum"), real=("real", "all"))
+        for (_, a) in por_jornada[(por_jornada["n"] >= 3) & (por_jornada["w"] == por_jornada["n"]) & por_jornada["real"]].index:
+            out["perfecta"].add(key(a))
 
         ev = generar_evolucion_posiciones(df_liga, lt)
         if ev.empty:
@@ -382,6 +396,8 @@ def precalcular_logros_ligas(_df_raw):
                 out["escalada"].add(key(a))
             if not en_curso and mitad in r.index and r[mitad] > 3 and r.iloc[-1] <= 3:
                 out["remontada"].add(key(a))
+            if not en_curso and len(todas) >= 5 and len(r) == len(todas) and (r <= 5).all():
+                out["top5"].add(key(a))
     return out
 
 def obtener_banner(liga):

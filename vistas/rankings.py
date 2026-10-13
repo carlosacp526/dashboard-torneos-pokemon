@@ -9,38 +9,13 @@ from vistas.logros_analisis import _precalcular_campeones
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def _racha_ganadora_max_historica(df_raw):
-    """Racha ganadora consecutiva más larga de CADA jugador en toda su historia
-    (a diferencia de vistas/rachas.py, que mide la racha ACTUAL vigente)."""
-    df = normalize_columns(df_raw.copy())
-    df = ensure_fields(df)
-    m = df[df['winner'].notna()].copy()
-    if 'Walkover' in df.columns:
-        m = m[m['Walkover'] >= 0]
-    if m.empty:
+    """Racha ganadora consecutiva más larga de CADA jugador en toda su historia (a diferencia de la pestaña
+    En vivo de vistas/rachas.py, que mide la racha ACTUAL). Usa el mismo motor que la pestaña Históricas."""
+    from vistas.rachas import calcular_rachas_maximas
+    r = calcular_rachas_maximas(df_raw)
+    if r.empty:
         return pd.DataFrame()
-    m['_ro'] = m['round'].apply(get_round_order) if 'round' in m.columns else 50
-    m['_nt'] = m['N_Torneo'].fillna(0) if 'N_Torneo' in m.columns else 0
-    m = m.dropna(subset=['player1', 'player2', 'winner', 'date'])
-    m = m.sort_values(['date', '_nt', '_ro'], ascending=True)
-
-    p1 = m.rename(columns={'player1': 'Jugador'})
-    p1['Resultado'] = (p1['winner'].str.strip() == p1['Jugador'].str.strip())
-    p2 = m.rename(columns={'player2': 'Jugador'})
-    p2['Resultado'] = (p2['winner'].str.strip() == p2['Jugador'].str.strip())
-    largo = pd.concat([p1[['Jugador', 'Resultado', 'date', '_nt', '_ro']],
-                        p2[['Jugador', 'Resultado', 'date', '_nt', '_ro']]], ignore_index=True)
-    largo = largo.sort_values(['Jugador', 'date', '_nt', '_ro'])
-
-    filas = []
-    for jugador, g in largo.groupby('Jugador', sort=False):
-        if not jugador or str(jugador).strip() == '':
-            continue
-        mejor = actual = 0
-        for gano in g['Resultado']:
-            actual = actual + 1 if gano else 0
-            mejor = max(mejor, actual)
-        filas.append({'Jugador': jugador, 'Racha máxima': mejor})
-    return pd.DataFrame(filas)
+    return r[['Jugador', 'Racha Ganadora']].rename(columns={'Racha Ganadora': 'Racha máxima'})
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

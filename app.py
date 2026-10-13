@@ -82,7 +82,7 @@ p_logros_analisis = st.Page(logros_analisis.show, title="🧭 Análisis de Logro
 p_playoff_odds = st.Page(playoff_odds.show, title="🎲 Playoff Odds", url_path="playoff-odds")
 p_seeding = st.Page(seeding.show, title="🌱 Seeding de Torneo", url_path="seeding")
 p_tier_recomendador = st.Page(tier_recomendador.show, title="🎯 Recomendador de Tier", url_path="tier-recomendador")
-p_rachas = st.Page(rachas.show, title="🔥 Rachas en Vivo", url_path="rachas")
+p_rachas = st.Page(rachas.show, title="🔥 Rachas", url_path="rachas")
 p_fairplay = st.Page(fairplay.show, title="⚖️ Fair Play", url_path="fairplay")
 p_scouting = st.Page(scouting.show, title="📝 Reporte de Scouting", url_path="scouting")
 p_reglamento = st.Page(reglamento.show, title="📜 Reglamento", url_path="reglamento")

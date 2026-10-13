@@ -110,6 +110,18 @@ def glifo_remontada(d, p):
     d.polygon([(99, 86), (100, 101), (87, 94)], fill=s)
 
 
+def glifo_check(d, p):
+    s = p["shine"]
+    d.ellipse([64, 85, 96, 117], outline=s, width=3)
+    d.line([(71, 102), (78, 110), (91, 93)], fill=s, width=4, joint="curve")
+
+
+def glifo_top5(d, p):
+    s = p["shine"]
+    _texto_centrado(d, (80, 89), "TOP", _font(10), s)
+    _texto_centrado(d, (80, 107), "5", _font(26), s)
+
+
 # id del logro -> función que dibuja su glifo
 GLIFOS = {
     "LI13": glifo_estrella,        # MVP de la Jornada
@@ -118,6 +130,8 @@ GLIFOS = {
     "LI16": glifo_estrella_5,      # MVP Recurrente
     "LI17": glifo_dos_estrellas,   # Doble MVP
     "LI18": glifo_remontada,       # Remontada de Temporada
+    "LI19": glifo_check,           # Jornada Perfecta
+    "LI20": glifo_top5,            # Top 5 Constante
 }
 
 

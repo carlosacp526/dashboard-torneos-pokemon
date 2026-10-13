@@ -24,8 +24,8 @@ GRUPOS = [
              ["🎭 Huella de estilo en 5 ejes", "⏰ Ranking de Confiabilidad"]),
             ("logros_analisis", "🧭", "Análisis de Logros",
              ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🏆 Ranking de jugadores"]),
-            ("rachas", "🔥", "Rachas en Vivo",
-             ["🔥 Racha actual (no histórica) de cada jugador", "🧊 Top rachas ganadoras y perdedoras", "📅 Filtro por actividad reciente"]),
+            ("rachas", "🔥", "Rachas",
+             ["🔥 Racha actual de cada jugador (en vivo)", "🧊 Top rachas ganadoras y perdedoras", "📜 Mejores rachas de toda la historia, por año y competencia"]),
         ],
     },
     {

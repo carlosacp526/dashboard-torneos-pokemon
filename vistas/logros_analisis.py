@@ -232,7 +232,7 @@ def _calcular_logros_comunidad_pesado(_df_raw):
 # calculado y se recalcula en segundo plano. Regenerarlo a mano: python precalcular_logros.py
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGROS_CACHE_PATH = os.path.join(PROJECT_ROOT, "data", "logros_comunidad.pkl")
-LOGROS_SCHEMA = 1          # subir si cambia la forma del pkl o la lógica del cálculo
+LOGROS_SCHEMA = 2          # subir si cambia la forma del pkl o la lógica del cálculo
 _REFRESCO = {"activo": False, "ultimo_intento": 0.0}
 _REFRESCO_LOCK = threading.Lock()
 
