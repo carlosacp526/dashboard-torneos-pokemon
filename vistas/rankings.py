@@ -15,28 +15,33 @@ def show():
     st.markdown('<div id="campeones"></div>', unsafe_allow_html=True)
     st.header("🏆 Salón de la Fama - Campeones")
 
-    tab_champ = st.tabs(["2026-II","2026-I","2025-III","2025-II","2025-I","2024","2023","2022","2021"])
-    images = [ ("campeones/campeones_2026_II.png","Campeones 2026-II"), ("campeones/campeones_2026_I.png","Campeones 2026-I"), ("campeones/campeones_2025_III.png","Campeones 2025-III"),
-              ("campeones/campeones_2025_II.png","Campeones 2025-II"),
-              ("campeones/campeones_2025_I.png","Campeones 2025-I"),
-              ("campeones/campeones_2024.png","Campeones 2024"),
-              ("campeones/campeones_2023.png","Campeones 2023"),
-               ("campeones/campeones_2022.png","Campeones 2022"),
-              ("campeones/campeones_2021.png","Campeones 2021")
+    estilo = st.radio("Estilo", ["🕹️ Pixel", "🖼️ Clásico"], horizontal=True, key="campeones_estilo",
+                      help="Pixel: tarjetas automáticas desde los datos (se actualizan solas). Clásico: las imágenes curadas por temporada.")
+    if estilo.startswith("🕹️"):
+        from vistas import campeones_pixel
+        campeones_pixel.render(df_raw)
+    else:
+        tab_champ = st.tabs(["2026-II","2026-I","2025-III","2025-II","2025-I","2024","2023","2022","2021"])
+        images = [ ("campeones/campeones_2026_II.png","Campeones 2026-II"), ("campeones/campeones_2026_I.png","Campeones 2026-I"), ("campeones/campeones_2025_III.png","Campeones 2025-III"),
+                  ("campeones/campeones_2025_II.png","Campeones 2025-II"),
+                  ("campeones/campeones_2025_I.png","Campeones 2025-I"),
+                  ("campeones/campeones_2024.png","Campeones 2024"),
+                  ("campeones/campeones_2023.png","Campeones 2023"),
+                   ("campeones/campeones_2022.png","Campeones 2022"),
+                  ("campeones/campeones_2021.png","Campeones 2021")
 
 
 
 
-             ]
+                 ]
 
-    for tab, (img, caption) in zip(tab_champ, images):
-        with tab:
-            if os.path.exists(img):
-                st.image(img, width=900)
-                st.caption(caption)
-            else:
-                st.info(f"Coloca '{img}' en la carpeta del proyecto")
-
+        for tab, (img, caption) in zip(tab_champ, images):
+            with tab:
+                if os.path.exists(img):
+                    st.image(img, width=900)
+                    st.caption(caption)
+                else:
+                    st.info(f"Coloca '{img}' en la carpeta del proyecto")
 
     st.markdown("---")
 
