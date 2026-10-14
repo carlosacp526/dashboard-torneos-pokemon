@@ -25,8 +25,11 @@ from utils import buscar_imagen_jugador, build_base_liga, build_base_torneo, nor
 from vistas.logros_analisis import _precalcular_campeones
 
 # (etiqueta de la pestaña, primer torneo, último torneo). El último periodo queda abierto: los torneos nuevos entran solos.
+# Máximo 14 campeones por periodo (torneos + ligas): cuando el periodo abierto se acerque a 14, ciérralo con su último
+# torneo y abre uno nuevo con el siguiente número.
 PERIODOS = [
-    ("2026-II", 69, 9999),
+    ("2026-III", 83, 9999),
+    ("2026-II", 69, 82),
     ("2026-I", 57, 68),
     ("2025-III", 49, 56),
     ("2025-II", 41, 48),
@@ -168,7 +171,7 @@ def _datos_campeones(_df_raw):
 def _periodo_de_liga(fecha, inicio=None):
     """Las ligas se agrupan por la fecha en que cerraron, igual que las imagenes curadas del Salon de la Fama:
     2022 (incluye la de dic 2021), 2023 y 2024 por año; 2025-I (ene-abr 2025); 2025-II (may-dic 2025, incluye lo que cierra en 2025-III);
-    2026-I (ene-abr 2026); 2026-II (desde may 2026)."""
+    2026-I (ene-abr 2026); 2026-II (may-ago 2026); 2026-III (desde la fecha de su primer torneo, sep 2026, y lo que venga después)."""
     if fecha is None or pd.isna(fecha):
         return None
     y, m = fecha.year, fecha.month
@@ -178,6 +181,9 @@ def _periodo_de_liga(fecha, inicio=None):
         return str(y)
     if y == 2025:
         return "2025-I" if m <= 4 else "2025-II"
+    ini3 = (inicio or {}).get("2026-III")
+    if y >= 2027 or (ini3 is not None and not pd.isna(ini3) and fecha >= ini3):
+        return "2026-III"
     return "2026-I" if m <= 4 else "2026-II"
 
 
