@@ -193,6 +193,16 @@ def participantes(torneo_id):
     return sorted(ps, key=lambda p: (p.get("seed") is None, p.get("seed") or 0, p.get("nombre", "").lower()))
 
 
+def jugadores_conocidos():
+    """Nombres de todos los participantes que ya pasaron por algún torneo creado en la app."""
+    vistos = {}
+    for p in _sel("torneo_participantes"):
+        n = (p.get("nombre") or "").strip()
+        if n:
+            vistos.setdefault(n.lower(), n)
+    return sorted(vistos.values(), key=str.lower)
+
+
 def agregar_participantes(torneo_id, nombres):
     """Agrega nombres (ignora vacíos y duplicados). Devuelve cuántos se agregaron."""
     actuales = {p["nombre"].strip().lower() for p in participantes(torneo_id)}

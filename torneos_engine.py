@@ -31,7 +31,33 @@ FORMATOS = {
     "grupos": "Grupos + fase final",
 }
 
-LLAVES_LIGA = ("RR", "G", "S")      # llaves donde se permite empatar
+LLAVES_LIGA = ("RR", "G", "S", "G:S")      # llaves donde se permite empatar
+
+# Criterios de "Clasificar por" (como Challonge) y desempates disponibles
+RANK_POR = {
+    "victorias_partido": "Victorias del partido",
+    "victorias_juego": "Victorias de juego/set",
+    "pct_juego": "Porcentaje de victoria del juego",
+    "dif_juego": "Diferencia de juegos/sets",
+    "puntos_anotados": "Puntos anotados",
+    "dif_puntos": "Diferencia de puntos",
+    "personalizado": "Personalizado (sistema de puntos)",
+}
+DESEMPATES_OPC = {k: v for k, v in RANK_POR.items() if k != "personalizado"}
+DESEMPATES_OPC.update({"h2h": "Victorias del partido contra empatados", "buchholz": "Buchholz (victorias de rivales)",
+                       "manual": "Desempate manual", "ninguno": "— (ninguno)"})
+_ALIAS_DESEMPATE = {"dif": "dif_juego", "jg": "victorias_juego", "victorias": "victorias_partido"}
+DESEMPATES_DEFECTO = {      # al cambiar "Clasificar por" se reponen estos (igual que Challonge)
+    "victorias_partido": ["h2h", "victorias_juego", "dif_puntos", "manual"],
+    "victorias_juego": ["victorias_juego", "dif_puntos", "puntos_anotados", "manual"],
+    "pct_juego": ["victorias_juego", "dif_puntos", "puntos_anotados", "manual"],
+    "dif_juego": ["victorias_juego", "dif_puntos", "puntos_anotados", "manual"],
+    "puntos_anotados": ["dif_puntos", "victorias_juego", "h2h", "manual"],
+    "dif_puntos": ["puntos_anotados", "victorias_juego", "h2h", "manual"],
+    "personalizado": ["h2h", "dif_juego", "victorias_juego", "manual"],
+}
+ETAPAS_GRUPO = {"single": "Single Elimination", "double": "Double Elimination",
+                "roundrobin": "Round Robin", "swiss": "Swiss"}
 
 
 # ----------------------------------------------------------------------------- utilidades
@@ -195,26 +221,73 @@ def repartir_grupos(pids, n_grupos):
     return grupos
 
 
-def gen_grupos(pids, n_grupos, vueltas=1):
-    """Devuelve (matches, grupos) donde grupos[i] es la lista de pids del grupo i."""
-    if n_grupos < 1 or len(pids) < 2 * n_grupos:
-        raise ValueError("Cada grupo necesita al menos 2 participantes.")
-    grupos = repartir_grupos(pids, n_grupos)
+def _prefijar(ms, gi):
+    """Marca las partidas de una llave como parte del grupo gi (llave 'G:W', 'G:L', ...)."""
+    for m in ms:
+        if m["llave"] != "G":
+            m["llave"] = "G:" + m["llave"]
+        m["grupo"] = gi
+    return ms
+
+
+def gen_grupos(pids, tamano, etapa="roundrobin", vueltas=1, reinicio=True):
+    """Fase de grupos de `tamano` participantes por grupo; cada grupo juega `etapa`
+    (single, double, roundrobin, swiss). Devuelve (matches, grupos). Suizo: solo la ronda 1."""
+    n_g = max(1, math.ceil(len(pids) / max(2, tamano)))
+    grupos = repartir_grupos(pids, n_g)
+    if any(len(g) < 2 for g in grupos) or (etapa == "double" and any(len(g) < 3 for g in grupos)):
+        raise ValueError("Hay grupos demasiado chicos para ese formato: ajustá el tamaño de grupo.")
     out = []
     for gi, g in enumerate(grupos):
-        out += gen_roundrobin(g, vueltas, llave="G", grupo=gi, orden0=_siguiente_orden(out))
+        o = _siguiente_orden(out)
+        if etapa == "single":
+            nuevos = _prefijar(gen_single(g, False, o), gi)
+        elif etapa == "double":
+            nuevos = _prefijar(gen_double(g, reinicio, o), gi)
+        elif etapa == "swiss":
+            nuevos = gen_ronda_suiza([], g, {}, 1, "G:S", gi)
+            for i, m in enumerate(nuevos):
+                m["detalle"]["orden"] = o + i
+        else:
+            nuevos = gen_roundrobin(g, vueltas, llave="G", grupo=gi, orden0=o)
+        out += nuevos
     recalcular(out)
     return out, grupos
+
+
+def clasificacion_grupo(matches, g_pids, cfg, gi):
+    """Pids del grupo gi ordenados de mejor a peor según la etapa de grupo."""
+    etapa = cfg.get("etapa_grupo", "roundrobin")
+    if etapa == "roundrobin":
+        return [x["pid"] for x in tabla_posiciones(matches, g_pids, cfg, ("G",), gi)]
+    if etapa == "swiss":
+        return [x["pid"] for x in tabla_posiciones(matches, g_pids, cfg, ("G:S",), gi)]
+    sub = [{**m, "llave": m["llave"][2:]} for m in matches if m["grupo"] == gi and m["llave"].startswith("G:")]
+    orden = []
+    for _, ps in clasificacion_eliminacion(sub, etapa):
+        orden += sorted(ps, key=g_pids.index)
+    return orden + [p for p in g_pids if p not in orden]
+
+
+def rondas_grupo(cfg, tam):
+    return int(cfg.get("rondas_grupo") or rondas_suizo_recomendadas(tam))
+
+
+def grupos_terminados(matches, cfg, grupos):
+    """¿Terminó la fase de grupos? (suizo: también las rondas configuradas)."""
+    gm = [m for m in matches if m["llave"].startswith("G")]
+    if not gm or not all(m["estado"] == "finalizada" for m in gm):
+        return False
+    if cfg.get("etapa_grupo") == "swiss":
+        return all(ultima_ronda(matches, "G:S", gi) >= rondas_grupo(cfg, len(g)) for gi, g in enumerate(grupos))
+    return True
 
 
 def gen_final_grupos(matches, pids, cfg, grupos, avanzan, formato_final="single",
                      tercer_puesto=False, reinicio=True):
     """Arma la fase final con los `avanzan` primeros de cada grupo. Devuelve partidas nuevas."""
+    tablas = [clasificacion_grupo(matches, g, cfg, gi) for gi, g in enumerate(grupos)]
     cuali = []
-    tablas = []
-    for gi, g in enumerate(grupos):
-        t = tabla_posiciones(matches, g, cfg, llaves=("G",), grupo=gi)
-        tablas.append([x["pid"] for x in t])
     for pos in range(avanzan):                 # todos los 1ros, luego todos los 2dos...
         for gi in range(len(grupos)):
             if pos < len(tablas[gi]):
@@ -307,7 +380,7 @@ def recalcular(matches):
     return matches
 
 
-def reportar(matches, mid, puntaje1, puntaje2, ganador=None, wo=False):
+def reportar(matches, mid, puntaje1, puntaje2, ganador=None, wo=False, puntos=None):
     """Carga un resultado. ganador (pid) solo hace falta para forzar (walkover) o si no hay
     puntajes distintos. Devuelve (ok, mensaje)."""
     m = next((x for x in matches if x["id"] == mid), None)
@@ -335,6 +408,10 @@ def reportar(matches, mid, puntaje1, puntaje2, ganador=None, wo=False):
     d["par"] = [m["p1"], m["p2"]]
     d["empate"] = ganador is None
     d["wo"] = bool(wo)
+    if puntos and (puntos[0] or puntos[1]):
+        d["pun"] = [int(puntos[0] or 0), int(puntos[1] or 0)]
+    else:
+        d.pop("pun", None)
     recalcular(matches)
     return True, "Resultado guardado."
 
@@ -348,6 +425,7 @@ def reabrir(matches, mid):
     m["detalle"].pop("par", None)
     m["detalle"].pop("empate", None)
     m["detalle"].pop("wo", None)
+    m["detalle"].pop("pun", None)
     recalcular(matches)
 
 
@@ -384,16 +462,20 @@ def _jugadas(matches, llaves, grupo=None):
 
 
 def tabla_posiciones(matches, pids, cfg, llaves=("RR",), grupo=None):
-    """Tabla de liga/suizo/grupo. cfg: pts_victoria, pts_empate, pts_derrota, pts_bye,
-    desempates (lista de: h2h, dif, jg, buchholz, victorias, sorteo)."""
+    """Tabla de liga/suizo/grupo. cfg: rank_por, desempates (hasta 4, ver DESEMPATES_OPC), manual
+    ({pid: orden}), y para 'personalizado': pts_victoria, pts_empate, pts_derrota, pts_bye, pts_juego."""
+    rank = cfg.get("rank_por") or "victorias_partido"
     pv = float(cfg.get("pts_victoria", 1))
     pe = float(cfg.get("pts_empate", 0.5))
     pd = float(cfg.get("pts_derrota", 0))
     pb = float(cfg.get("pts_bye", pv))
-    desempates = cfg.get("desempates") or ["h2h", "dif", "jg"]
+    pj_ = float(cfg.get("pts_juego", 0))
+    desempates = [_ALIAS_DESEMPATE.get(d, d) for d in
+                  (cfg.get("desempates") or DESEMPATES_DEFECTO.get(rank, DESEMPATES_DEFECTO["victorias_partido"]))]
+    manual = cfg.get("manual") or {}
     st = {p: {"pid": p, "pj": 0, "g": 0, "e": 0, "p": 0, "pts": 0.0, "jg": 0, "jp": 0, "byes": 0,
-              "rivales": []} for p in pids}
-    h2h = defaultdict(float)
+              "pf": 0, "pc": 0, "rivales": []} for p in pids}
+    h2h = defaultdict(float)            # victorias de x sobre y
     for m in _jugadas(matches, llaves, grupo):
         a, b = m["p1"], m["p2"]
         if m["detalle"].get("bye"):
@@ -407,16 +489,19 @@ def tabla_posiciones(matches, pids, cfg, llaves=("RR",), grupo=None):
         if a not in st or b not in st:
             continue
         s1, s2 = m["puntaje1"] or 0, m["puntaje2"] or 0
-        for x, y, sx, sy in ((a, b, s1, s2), (b, a, s2, s1)):
+        pun = m["detalle"].get("pun") or [0, 0]
+        for x, y, sx, sy, px, py in ((a, b, s1, s2, pun[0], pun[1]), (b, a, s2, s1, pun[1], pun[0])):
             st[x]["pj"] += 1
             st[x]["jg"] += sx
             st[x]["jp"] += sy
+            st[x]["pf"] += px or 0
+            st[x]["pc"] += py or 0
+            st[x]["pts"] += pj_ * sx
             st[x]["rivales"].append(y)
         if m["ganador"] is None:
-            for x, y in ((a, b), (b, a)):
+            for x in (a, b):
                 st[x]["e"] += 1
                 st[x]["pts"] += pe
-                h2h[(x, y)] += pe
         else:
             w = m["ganador"]
             l = b if w == a else a
@@ -424,40 +509,49 @@ def tabla_posiciones(matches, pids, cfg, llaves=("RR",), grupo=None):
             st[w]["pts"] += pv
             st[l]["p"] += 1
             st[l]["pts"] += pd
-            h2h[(w, l)] += pv
-            h2h[(l, w)] += pd
-    for p, s in st.items():
-        s["dif"] = s["jg"] - s["jp"]
-        s["buchholz"] = sum(st[r]["pts"] for r in s["rivales"] if r in st)
-        s["victorias"] = s["g"]
+            h2h[(w, l)] += 1
+    for p, s_ in st.items():
+        s_["dif"] = s_["jg"] - s_["jp"]
+        s_["dpts"] = s_["pf"] - s_["pc"]
+        s_["pct"] = s_["jg"] / (s_["jg"] + s_["jp"]) if (s_["jg"] + s_["jp"]) else 0.0
+        s_["victorias_partido"] = s_["g"]
+        s_["victorias_juego"] = s_["jg"]
+        s_["pct_juego"] = s_["pct"]
+        s_["dif_juego"] = s_["dif"]
+        s_["puntos_anotados"] = s_["pf"]
+        s_["dif_puntos"] = s_["dpts"]
+        s_["personalizado"] = s_["pts"]
+    for p, s_ in st.items():
+        s_["buchholz"] = sum(st[r]["g"] for r in s_["rivales"] if r in st)
     orden_semilla = {p: i for i, p in enumerate(pids)}
     rnd = random.Random(7)
     azar = {p: rnd.random() for p in pids}
-    por_pts = defaultdict(list)
-    for p, s in st.items():
-        por_pts[s["pts"]].append(p)
-    for p, s in st.items():
-        grupo_emp = por_pts[s["pts"]]
-        s["h2h"] = sum(h2h[(p, q)] for q in grupo_emp if q != p)
+    por_valor = defaultdict(list)
+    for p, s_ in st.items():
+        por_valor[s_[rank]].append(p)
+    for p, s_ in st.items():            # victorias contra los que empatan en el criterio principal
+        s_["h2h"] = sum(h2h[(p, q)] for q in por_valor[s_[rank]] if q != p)
 
     def clave(p):
-        s = st[p]
-        k = [-s["pts"]]
+        s_ = st[p]
+        k = [-s_[rank]]
         for d in desempates:
-            if d == "sorteo":
+            if d == "manual":
+                k.append(manual.get(p, 10 ** 6))
+            elif d == "sorteo":
                 k.append(azar[p])
-            elif d in s:
-                k.append(-s[d])
+            elif d in s_:
+                k.append(-s_[d])
         k.append(orden_semilla[p])
         return tuple(k)
 
     orden = sorted(pids, key=clave)
     res = []
     for i, p in enumerate(orden, 1):
-        s = dict(st[p])
-        s["pos"] = i
-        s.pop("rivales", None)
-        res.append(s)
+        r = dict(st[p])
+        r["pos"] = i
+        r.pop("rivales", None)
+        res.append(r)
     return res
 
 
@@ -521,15 +615,16 @@ def rondas_suizo_recomendadas(n):
     return max(1, math.ceil(math.log2(max(n, 2))))
 
 
-def gen_ronda_suiza(matches, pids, cfg, ronda):
-    """Empareja la ronda `ronda` (1-based). pids en orden de seed. Devuelve partidas nuevas."""
-    jugadas = [m for m in matches if m["llave"] == "S"]
+def gen_ronda_suiza(matches, pids, cfg, ronda, llave="S", grupo=None):
+    """Empareja la ronda `ronda` (1-based). pids en orden de seed. Devuelve partidas nuevas.
+    En fase de grupos usar llave="G:S" y el índice de grupo."""
+    jugadas = [m for m in matches if m["llave"] == llave and (grupo is None or m["grupo"] == grupo)]
     vistos = {frozenset((m["p1"], m["p2"])) for m in jugadas if m["p1"] and m["p2"]}
     con_bye = {m["p1"] for m in jugadas if m["detalle"].get("bye")}
     if ronda == 1:
         orden = list(pids)
     else:
-        orden = [t["pid"] for t in tabla_posiciones(matches, pids, cfg, llaves=("S",))]
+        orden = [t["pid"] for t in tabla_posiciones(matches, pids, cfg, llaves=(llave,), grupo=grupo)]
     bye = None
     if len(orden) % 2:
         for p in reversed(orden):
@@ -562,17 +657,18 @@ def gen_ronda_suiza(matches, pids, cfg, ronda):
     nuevos = []
     base = _siguiente_orden(matches)
     for i, (a, b) in enumerate(pares):
-        nuevos.append(_m(base + len(nuevos), "S", ronda, i, p1=a, p2=b))
+        nuevos.append(_m(base + len(nuevos), llave, ronda, i, p1=a, p2=b, grupo=grupo))
     if bye:
-        nuevos.append(_m(base + len(nuevos), "S", ronda, len(pares), p1=bye, e2=True))
+        nuevos.append(_m(base + len(nuevos), llave, ronda, len(pares), p1=bye, e2=True, grupo=grupo))
     recalcular(nuevos)
     return nuevos
 
 
-def ronda_completa(matches, llave, ronda):
-    ms = [m for m in matches if m["llave"] == llave and m["ronda"] == ronda]
+def ronda_completa(matches, llave, ronda, grupo=None):
+    ms = [m for m in matches if m["llave"] == llave and m["ronda"] == ronda and (grupo is None or m["grupo"] == grupo)]
     return bool(ms) and all(m["estado"] == "finalizada" for m in ms)
 
 
-def ultima_ronda(matches, llave):
-    return max((m["ronda"] for m in matches if m["llave"] == llave), default=0)
+def ultima_ronda(matches, llave, grupo=None):
+    return max((m["ronda"] for m in matches if m["llave"] == llave and (grupo is None or m["grupo"] == grupo)),
+               default=0)
