@@ -5,6 +5,32 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _racha_ganadora_max_historica(df_raw):
+    """Racha ganadora consecutiva más larga de CADA jugador en toda su historia (a diferencia de la pestaña
+    En vivo de vistas/rachas.py, que mide la racha ACTUAL). Usa el mismo motor que la pestaña Históricas.
+    La usa vistas/scouting.py."""
+    from vistas.rachas import calcular_rachas_maximas
+    r = calcular_rachas_maximas(df_raw)
+    if r.empty:
+        return pd.DataFrame()
+    return r[['Jugador', 'Racha Ganadora']].rename(columns={'Racha Ganadora': 'Racha máxima'})
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _pico_elo_historico(df_raw):
+    """Elo más alto que cada jugador alcanzó en algún momento (no el actual). La usa vistas/scouting.py."""
+    from vistas.elo import calcular_elo
+    _, data_filas, _ = calcular_elo(df_raw)
+    if data_filas.empty:
+        return pd.DataFrame()
+    a = data_filas[['Jugador_A', 'Rating_A_NEW']].rename(columns={'Jugador_A': 'Jugador', 'Rating_A_NEW': 'Elo'})
+    b = data_filas[['Jugador_B', 'Rating_B_NEW']].rename(columns={'Jugador_B': 'Jugador', 'Rating_B_NEW': 'Elo'})
+    todo = pd.concat([a, b], ignore_index=True)
+    todo = todo[todo['Jugador'].astype(str).str.strip() != '']
+    return todo.groupby('Jugador')['Elo'].max().reset_index().rename(columns={'Elo': 'Pico Elo'})
+
+
 def show():
     df_raw = load_data()
     df = normalize_columns(df_raw.copy())
