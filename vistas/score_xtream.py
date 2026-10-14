@@ -58,11 +58,11 @@ _SIN_JUGADOR = {"walk over (w.o)", "pendiente", "nan", ""}
 
 # Categorías con cortes FIJOS sobre el Score_Xtream (no dependen de la población): (nombre, emoji, desde, hasta, color, descripción)
 CATEGORIAS = [
-    ("Aspirante",   "🌱", 0,   200,  "#95A5A6", "Recién llegando o con poca actividad: está construyendo su historia en la comunidad."),
-    ("Competidor",  "⚔️", 200, 350,  "#3498DB", "Juega con regularidad y ya tiene recorrido, pero todavía sin resultados que lo destaquen."),
-    ("Veterano",    "🛡️", 350, 500,  "#2ECC71", "Presencia sólida y constante: rendimiento por encima del promedio y varios logros."),
-    ("Élite",       "💎", 500, 700,  "#9B59B6", "Referente de la comunidad: rinde alto de forma sostenida y suele tener campeonatos."),
-    ("Leyenda",     "👑", 700, 1000.0001, "#F1C40F", "La cima: palmarés, rendimiento y trayectoria al máximo nivel."),
+    ("Rookie Trainer",     "🎒", 0,   200,  "#95A5A6", "Recién llegando o con poca actividad: está construyendo su historia en la comunidad."),
+    ("Pokémon Challenger", "⚔️", 200, 350,  "#5FA37A", "Juega con regularidad y ya tiene recorrido, pero todavía sin resultados que lo destaquen."),
+    ("Elite Trainer",      "🛡️", 350, 500,  "#4A90D9", "Presencia sólida y constante: rendimiento por encima del promedio y varios logros."),
+    ("Pokémon Champion",   "🏆", 500, 700,  "#D4A843", "Referente de la comunidad: rinde alto de forma sostenida y suele tener campeonatos."),
+    ("Poketubi Legend",    "👑", 700, 1000.0001, "#A66BD9", "La cima: palmarés, rendimiento y trayectoria al máximo nivel."),
 ]
 ORDEN_CATEGORIAS = [c[0] for c in CATEGORIAS]
 
