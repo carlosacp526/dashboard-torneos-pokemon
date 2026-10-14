@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data, normalize_columns, ensure_fields, buscar_imagen_jugador
+from vistas import motion
 
 # ── Clase PSElo (exacta del notebook) ──────────────────────────────
 class PSElo:
@@ -497,7 +498,15 @@ def show():
         ).ffill()
         pivot_a_full.index = pivot_a_full.index.astype(str)
 
-        tab_mes, tab_anio, tab_torneo = st.tabs(["📅 Ranking Mensual", "📆 Ranking Anual", "🏆 Ranking por Torneo"])
+        tab_mes, tab_anio, tab_torneo, tab_carrera = st.tabs(
+            ["📅 Ranking Mensual", "📆 Ranking Anual", "🏆 Ranking por Torneo", "🎬 Carrera Elo"])
+
+        with tab_carrera:
+            st.caption("Top 10 de Elo al cierre de cada mes. Pulsa ▶ o mueve el control para ver cómo cambian las posiciones.")
+            solo_act = st.toggle("Solo jugadores activos hoy", value=False, key="carrera_solo_activos")
+            motion.ranking_race(
+                pivot_m_full, titulo="Top 10 Elo — evolución mensual", top_n=10,
+                solo=set(activos['Participantes']) if solo_act else None)
 
         with tab_mes:
             meses_disp = pivot_m_full.index.tolist()
