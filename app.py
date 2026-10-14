@@ -31,6 +31,7 @@ from vistas import estadisticas_replay
 from vistas import cypher, ascenso
 from vistas import score_xtream
 from vistas import motion
+from vistas import mis_torneos
 
 
 @st.cache_resource
@@ -88,6 +89,7 @@ p_rachas = st.Page(rachas.show, title="🔥 Rachas", url_path="rachas")
 p_score_xtream = st.Page(score_xtream.show, title="⚡ Score Xtream", url_path="score-xtream")
 p_fairplay = st.Page(fairplay.show, title="⚖️ Fair Play", url_path="fairplay")
 p_scouting = st.Page(scouting.show, title="📝 Reporte de Scouting", url_path="scouting")
+p_mis_torneos = st.Page(mis_torneos.show, title="🧩 Crear Torneos", url_path="mis-torneos")
 p_reglamento = st.Page(reglamento.show, title="📜 Reglamento", url_path="reglamento")
 p_estadisticas_replay = st.Page(estadisticas_replay.show, title="📼 Estadísticas de Replay", url_path="estadisticas-replay")
 st.session_state["_pages"] = {
@@ -131,7 +133,7 @@ pg = st.navigation({
     "🏠 Lobby": [p_inicio],
     "🔬 Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
     "👤 Jugadores": [p_jugadores, p_tcg, p_headtohead],
-    "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_cypher, p_ascenso, p_seeding],
+    "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
     # hoy Roleplay; el Torneo 100 se suma acá cuando esté la info.
     "🌟 Torneos Especiales": [p_roleplay],

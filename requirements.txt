@@ -7,4 +7,4 @@ xgboost
 lightgbm
 shap
 reportlab 
-openpyxl
+openpyxlrequests

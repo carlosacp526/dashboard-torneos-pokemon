@@ -17,3 +17,6 @@ replays_archive/
 # Archivos temporales de actualizar_todo.py
 data/.actualizando.lock
 data/actualizar_todo.log
+
+# Torneos creados en modo local de prueba
+data/torneos_local.json
