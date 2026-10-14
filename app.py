@@ -30,6 +30,7 @@ from vistas import reglamento
 from vistas import estadisticas_replay
 from vistas import cypher, ascenso
 from vistas import score_xtream
+from vistas import motion
 
 
 @st.cache_resource
@@ -184,5 +185,7 @@ section[data-testid="stSidebar"] [data-testid="stNavSectionHeader"] {
 }
 </style>
 """, unsafe_allow_html=True)
+
+motion.inject()   # capa global de movimiento (entradas escalonadas, hover, press); ver vistas/motion.py
 
 pg.run()
