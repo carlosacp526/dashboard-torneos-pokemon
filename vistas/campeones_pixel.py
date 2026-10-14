@@ -23,6 +23,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 from utils import buscar_imagen_jugador, build_base_liga, build_base_torneo, normalize_columns, ensure_fields
 from vistas.logros_analisis import _precalcular_campeones
+from vistas.elo import cargar_paises, _pais_de, _iso2_de
 
 # (etiqueta de la pestaña, primer torneo, último torneo). El último periodo queda abierto: los torneos nuevos entran solos.
 # Máximo 14 campeones por periodo (torneos + ligas): cuando el periodo abierto se acerque a 14, ciérralo con su último
@@ -70,9 +71,11 @@ CSS = """
 .pxc-ph img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;object-position:center top;background:#dfe3ee}
 .pxc-ph img.pix{image-rendering:pixelated}
 .pxc-cup{position:absolute;right:3px;top:3px;font-size:15px;line-height:1;filter:drop-shadow(1px 1px 0 #2b040b)}
-.pxc-name{position:relative;z-index:2;display:block;width:calc(100% - 6px);box-sizing:border-box;margin:-13px 0 0 -4px;background:#b3122a;color:#fff;
+.pxc-name{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:6px;width:calc(100% - 6px);box-sizing:border-box;margin:-13px 0 0 -4px;background:#b3122a;color:#fff;
  border:2px solid #fff;font-family:'Press Start 2P','Pixelify Sans',monospace;font-size:8px;line-height:1.35;padding:7px 8px 6px;text-shadow:1px 1px 0 #2b040b;
  clip-path:polygon(0 0,100% 0,calc(100% - 7px) 100%,0 100%);word-break:break-word}
+.pxc-name span{min-width:0}
+.pxc-flag{flex:none;width:18px;height:auto;object-fit:fill!important;border:1px solid #fff;margin-right:5px;box-shadow:1px 1px 0 #2b040b}
 .px-pie{font-family:'Pixelify Sans',monospace;color:#9fa3ff;font-size:14px;margin-top:10px}
 </style>
 """
@@ -187,13 +190,29 @@ def _periodo_de_liga(fecha, inicio=None):
     return "2026-I" if m <= 4 else "2026-II"
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _paises():
+    return cargar_paises()
+
+
+def _bandera(nombre):
+    """<img> de la bandera del país del jugador (celulares.xlsx), o vacío si no se sabe. Imagen y no emoji: en Windows el
+    emoji de bandera se ve como dos letras."""
+    pais = _pais_de(_paises(), nombre)
+    iso = _iso2_de(pais)
+    if not iso:
+        return ""
+    return (f'<img class="pxc-flag" src="https://flagcdn.com/w40/{iso.lower()}.png" '
+            f'alt="{html.escape(pais)}" title="{html.escape(pais)}">')
+
+
 def _tarjeta(arriba, nombre, trofeo=False):
     """Cinta superior (torneo / evento) + foto en marco blanco + cinta con el nombre sobre el borde inferior de la foto."""
     img, es_pixel = _retrato(nombre)
     cup = '<div class="pxc-cup">🏆</div>' if trofeo else ""
     return (f'<div class="pxc"><div class="pxc-tab">{arriba}</div>'
             f'<div class="pxc-ph">{cup}<img class="{"pix" if es_pixel else ""}" src="{img}" alt=""></div>'
-            f'<div class="pxc-name">{html.escape(nombre.upper())}</div></div>')
+            f'<div class="pxc-name"><span>{html.escape(nombre.upper())}</span>{_bandera(nombre)}</div></div>')
 
 
 def render(df_raw):

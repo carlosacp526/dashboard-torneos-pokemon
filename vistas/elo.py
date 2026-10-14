@@ -304,7 +304,7 @@ def _pais_de(paises: dict, jugador: str) -> str:
 # de que el sistema tenga una fuente con esa ligadura - la imagen se ve igual
 # en cualquier sistema/navegador.
 PAIS_ISO2 = {
-    'argentina': 'AR', 'bolivia': 'BO', 'brazil': 'BR', 'chile': 'CL',
+    'arabia saudit': 'SA', 'arabia saudita': 'SA', 'argentina': 'AR', 'bolivia': 'BO', 'brazil': 'BR', 'chile': 'CL',
     'colombia': 'CO', 'costa rica': 'CR', 'cuba': 'CU', 'eeuu': 'US',
     'ecuador': 'EC', 'el salvador': 'SV', 'espana': 'ES', 'guatemala': 'GT',
     'honduras': 'HN', 'mexico': 'MX', 'nicaragua': 'NI', 'panama': 'PA',
