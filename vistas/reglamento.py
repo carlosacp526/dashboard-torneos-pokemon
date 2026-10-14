@@ -193,19 +193,20 @@ def show():
     <div class="regl-hero">
         <h1>📜 Reglamento Oficial de Poketubi</h1>
         <p>Formatos y tiers, tamaños y tipos de torneo, el sistema de Ligas con Ascenso,
-        la modalidad Cypher, la regla de Walkover, y los términos de comunicación por WhatsApp.
+        la modalidad Cypher, la regla de Walkover, los Mundiales, y los términos de comunicación por WhatsApp.
         Todo en un solo lugar, explicado simple.</p>
     </div>
     </div>
     """, unsafe_allow_html=True)
 
-    tab_formatos, tab_tam, tab_tipos, tab_ligas, tab_cypher, tab_wo, tab_tyc = st.tabs([
+    tab_formatos, tab_tam, tab_tipos, tab_ligas, tab_cypher, tab_wo, tab_mundial, tab_tyc = st.tabs([
         "🎮 Formatos y Tiers",
         "📏 Tamaños de Torneo",
         "🗂️ Tipos de Torneo",
         "🏆 Ligas y Ascenso",
         "🔐 Cypher",
         "⏱️ Regla de WO",
+        "🌎 Mundiales",
         "📜 Términos y Condiciones",
     ])
 
@@ -412,6 +413,62 @@ def show():
               "Solo el staff puede confirmar el WO como resultado oficial. Enviá tu evidencia y esperá "
               "la resolución.",
               "✔ Resultado oficial")
+
+    # ══════════════════════════════════════════════════════════════
+    # TAB — MUNDIALES (Origins, Generations, Monotype_1)
+    # ══════════════════════════════════════════════════════════════
+    with tab_mundial:
+        st.markdown("### 🌎 Mundiales de Poketubi")
+        st.write("El Mundial reúne a los jugadores de nivel alto que fueron acumulando puntos en torneos y "
+                 "ligas. Cada mundial cuenta un tramo de torneos y ligas; los puntos que se ganan en el "
+                 "camino definen quién clasifica. Las tablas de puntos están en la pestaña "
+                 "**📏 Tamaños de Torneo** y en la página **🌎 Mundial Pokémon**.")
+
+        st.markdown('<div class="regl-section-label">Mundial 1 — Origins</div>', unsafe_allow_html=True)
+        _step(1, "Qué cuenta para clasificar",
+              "Torneos 1 al 26 y las ligas PJS (T1, T2, T3 y T4), PSS (T1, T2, T3 y T4), "
+              "PMS (T1, T2, T3, T4 y T5) y PES (T1).",
+              "Torneos 1–26")
+        _step(2, "Cómo se juega",
+              "6 rondas suizas en distintos formatos: Singles y Dobles (random y equipos libres en OU, DOU, "
+              "Nat Dex) y VGC del reglamento vigente. Cada ronda se juega en una semana distinta y "
+              "cada ronda son 3 batallas contra el oponente. Hay que enviar los replays respectivos.",
+              "6 rondas suizas · 3 batallas por ronda")
+        _step(3, "Premios",
+              "Los puntos se suman para el mundial siguiente: 300 puntos al campeón, 150 al Top 4 y 100 "
+              "por participar (rondas completas). Premio de 10 USD para el campeón.",
+              "10 USD al campeón")
+
+        st.markdown('<div class="regl-section-label">Mundial 2 — Generations</div>', unsafe_allow_html=True)
+        _step(4, "Qué cuenta para clasificar",
+              "Torneos 27 al 67 y las ligas PJS (T5), PSS (T5), PMS (T6), PES (T2) y PLS (T1). "
+              "Reúne a los jugadores de nivel alto en distintas generaciones.",
+              "Torneos 27–67")
+        _step(5, "Cómo se juega",
+              "6 rondas suizas y Top 8 en el mismo formato: Nat Dex. Cada ronda dura una semana o semana y "
+              "media y se toma una generación de forma progresiva. Cada ronda es 1 batalla contra el "
+              "oponente. Hay que enviar los replays respectivos y respetar las fechas.",
+              "6 rondas suizas + Top 8 · Nat Dex")
+        _step(6, "Premios y penalidad",
+              "Mismos puntos para el mundial siguiente (300 / 150 / 100). Premio de 20 USD para el "
+              "campeón. Por cada batalla no jugada se descuentan 10 puntos.",
+              "20 USD al campeón · −10 pts por batalla no jugada")
+
+        st.markdown('<div class="regl-section-label">Mundial 3 — Monotype_1 (actual)</div>', unsafe_allow_html=True)
+        _step(7, "Cómo va",
+              "Cuenta desde el Torneo 68 en adelante, con tres rankings paralelos: Singles, Dobles y VGC. "
+              "El formato de cada torneo se detecta desde el historial. Los rankings en vivo están en la "
+              "página 🌎 Mundial Pokémon.",
+              "Torneos 68 en adelante · 3 rankings")
+        _step(8, "Puntajes",
+              "Se usan las mismas tablas de clasificación: Mundial, Regional (80+ jugadores), Special Event "
+              "(más de 45), Grande (más de 24), Mediano (hasta 24) y Pequeño (menos de 13), más las tablas de "
+              "Ligas (PLS, PGS, PMS, PSS, PES y PJS).",
+              "Tabla oficial: mundial/PUNTAJES_MUNDIAL3.png")
+
+        pm = PUNTAJES.get("MUNDIAL", {})
+        st.info("Puntos del evento Mundial: " + " · ".join(f"{pos} = {pts} pts" for pos, pts in pm.items())
+                + ". Esos puntos se suman para el mundial siguiente.")
 
     # ══════════════════════════════════════════════════════════════
     # TAB — TÉRMINOS Y CONDICIONES (WHATSAPP)
