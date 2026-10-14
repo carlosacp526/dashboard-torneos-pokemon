@@ -29,7 +29,7 @@ from vistas.logros_analisis import _precalcular_campeones, calcular_logros_comun
 
 SCORE_PKL = os.path.join(PROJECT_ROOT, "data", "score_xtream.pkl")
 SCORE_CSV = os.path.join(PROJECT_ROOT, "data", "score_xtream.csv")
-SCORE_SCHEMA = 5            # subir si cambian los pesos o la fórmula: invalida el pkl guardado
+SCORE_SCHEMA = 6            # subir si cambian los pesos o la fórmula: invalida el pkl guardado
 MIN_PARTIDAS_REF = 10       # los percentiles de referencia se calculan con jugadores de al menos estas partidas reales
 K_SUAVIZADO = 20            # "partidas fantasma" con el promedio general: evita que 3 partidas den 100% de win rate
 PUNTOS_MAX = 1000
@@ -43,14 +43,15 @@ COMPONENTES = {
     "partidas":    ("Partidas", "Rendimiento", 0.06, "Partidas reales jugadas, escala logarítmica (hasta el percentil 99)"),
     "pokes_sob":   ("Pokes sobrevivientes", "Rendimiento", 0.06, "Promedio de Pokémon que le sobreviven por partida, suavizado y escalado p5-p95"),
     "pokes_venc":  ("Pokes vencidos", "Rendimiento", 0.06, "Promedio de Pokémon rivales que vence por partida, suavizado y escalado p5-p95"),
-    "campeonatos": ("Campeonatos", "Palmarés", 0.28, "Ligas y torneos ganados: 1 - e^(-títulos / 2.5), con rendimientos decrecientes"),
+    "campeonatos": ("Campeonatos", "Palmarés", 0.20, "Ligas y torneos ganados: 1 - e^(-títulos / 2.5), con rendimientos decrecientes"),
+    "mundial":     ("Mundiales ganados", "Mundial", 0.10, "Mundiales ganados (Origins, Generaciones...): 1 - e^(-títulos), cada Mundial vale mucho más que un torneo"),
     "torneos":     ("Participación en torneos", "Participación", 0.05, "Torneos distintos en los que jugó, escala logarítmica"),
     "liga":        ("Participación en liga", "Participación", 0.05, "Jornadas de liga jugadas, escala logarítmica"),
     "tiers":       ("Tiers jugados", "Participación", 0.05, "Tiers distintos en los que jugó batallas reales, escala logarítmica"),
     "replays":     ("Replays 2024+", "Replays", 0.05, "Replays distintos de sus batallas desde 2024, escala logarítmica"),
-    "logros":      ("Logros obtenidos", "Logros", 0.12, "Cantidad de logros desbloqueados respecto al percentil 99"),
+    "logros":      ("Logros obtenidos", "Logros", 0.10, "Cantidad de logros desbloqueados respecto al percentil 99"),
 }
-GRUPOS = ["Rendimiento", "Palmarés", "Participación", "Replays", "Logros"]
+GRUPOS = ["Rendimiento", "Palmarés", "Mundial", "Participación", "Replays", "Logros"]
 assert abs(sum(c[2] for c in COMPONENTES.values()) - 1) < 1e-9
 
 _SIN_JUGADOR = {"walk over (w.o)", "pendiente", "nan", ""}
@@ -144,6 +145,12 @@ def _metricas(df_raw, matriz_logros):
     camp_liga, camp_torneo = _precalcular_campeones(df_raw, base_l, base_t)
     c_liga = pd.Series({k: len(v) for k, v in camp_liga.items()}, name="camp_liga", dtype=float)
     c_torneo = pd.Series({k: len(v) for k, v in camp_torneo.items()}, name="camp_torneo", dtype=float)
+    # Mundiales: torneos marcados en Aka_evento como "Mundial ..." (el "Mundialito" de rol no cuenta)
+    ev = df.get("Aka_evento", pd.Series(dtype=str)).astype(str)
+    es_m = ev.str.contains("mundial", case=False, na=False) & ~ev.str.contains("mundialito", case=False, na=False)
+    torneos_mundial = set(pd.to_numeric(df.loc[es_m & (df["league"] == "TORNEO"), "N_Torneo"], errors="coerce").dropna().astype(int))
+    c_mundial = pd.Series({k: sum(1 for x in v if int(x["Torneo"]) in torneos_mundial) for k, v in camp_torneo.items()},
+                          name="camp_mundial", dtype=float)
 
     logros = pd.Series(dtype=float, name="logros")
     if matriz_logros is not None and not matriz_logros.empty:
@@ -154,10 +161,10 @@ def _metricas(df_raw, matriz_logros):
     # nombre a mostrar = el más usado
     nombres = largo_b.groupby("key")["Jugador"].agg(lambda s: s.value_counts().index[0]).rename("Jugador")
 
-    t = pd.concat([nombres, m, tor, jornadas, temporadas, replays, wo_favor, wo_contra, c_liga, c_torneo, logros], axis=1)
+    t = pd.concat([nombres, m, tor, jornadas, temporadas, replays, wo_favor, wo_contra, c_liga, c_torneo, c_mundial, logros], axis=1)
     t = t[t["Jugador"].notna()].copy()
     cols0 = ["partidas", "victorias", "sob_sum", "venc_sum", "tiers", "torneos", "jornadas_liga", "temporadas_liga",
-             "replays_2024", "wo_favor", "wo_contra", "camp_liga", "camp_torneo", "logros"]
+             "replays_2024", "wo_favor", "wo_contra", "camp_liga", "camp_torneo", "camp_mundial", "logros"]
     t[cols0] = t[cols0].fillna(0)
     t["campeonatos"] = t["camp_liga"] + t["camp_torneo"]
     return t
@@ -205,6 +212,7 @@ def calcular_score_xtream(df_raw, matriz_logros):
     f["pokes_sob"] = entre_p5_p95(sob_s, sob_ref)
     f["pokes_venc"] = entre_p5_p95(venc_s, venc_ref)
     f["campeonatos"] = 1 - np.exp(-t["campeonatos"] / 2.5)
+    f["mundial"] = 1 - np.exp(-t["camp_mundial"])
     f["torneos"] = log_p99(t["torneos"], ref["torneos"])
     f["liga"] = log_p99(t["jornadas_liga"], ref["jornadas_liga"])
     f["tiers"] = log_p99(t["tiers"], ref["tiers"])
@@ -229,6 +237,7 @@ def calcular_score_xtream(df_raw, matriz_logros):
     out["Campeonatos"] = t["campeonatos"].astype(int)
     out["Camp. liga"] = t["camp_liga"].astype(int)
     out["Camp. torneo"] = t["camp_torneo"].astype(int)
+    out["Mundiales"] = t["camp_mundial"].astype(int)
     out["Torneos"] = t["torneos"].astype(int)
     out["Jornadas liga"] = t["jornadas_liga"].astype(int)
     out["Tiers"] = t["tiers"].astype(int)
@@ -335,7 +344,7 @@ def precalentar():
 # ══════════════════════════════════════════════════════════════════════════════
 # PÁGINA
 # ══════════════════════════════════════════════════════════════════════════════
-COLORES_GRUPO = {"Rendimiento": "#E74C3C", "Palmarés": "#F1C40F", "Participación": "#3498DB",
+COLORES_GRUPO = {"Rendimiento": "#E74C3C", "Palmarés": "#F1C40F", "Mundial": "#E67E22", "Participación": "#3498DB",
                  "Replays": "#9B59B6", "Logros": "#2ECC71", "Fair Play": "#95A5A6"}
 
 
@@ -477,7 +486,7 @@ def show():
             st.plotly_chart(fig, use_container_width=True)
 
             vis = v[v["Jugador"].str.contains(buscar, case=False, na=False, regex=False)] if buscar else v
-            cols = ["Rank", "Jugador", "Categoría", "Score_Xtream"] + GRUPOS + ["Fair Play", "Partidas", "Win rate %", "Campeonatos",
+            cols = ["Rank", "Jugador", "Categoría", "Score_Xtream"] + GRUPOS + ["Fair Play", "Partidas", "Win rate %", "Campeonatos", "Mundiales",
                                                                     "Torneos", "Jornadas liga", "Tiers", "Replays 2024+",
                                                                     "WO a favor", "WO en contra", "Logros obtenidos"]
             st.dataframe(vis[cols], use_container_width=True, hide_index=True, height=520)
@@ -509,7 +518,7 @@ def show():
                            height=470, margin=dict(l=10, r=10, t=50, b=10))
         st.plotly_chart(figj, use_container_width=True)
         crudo = {c: fila[c] for c in ["Partidas", "Victorias", "Win rate %", "Pokes sob./partida", "Pokes venc./partida",
-                                       "Campeonatos", "Camp. liga", "Camp. torneo", "Torneos", "Jornadas liga", "Tiers",
+                                       "Campeonatos", "Camp. liga", "Camp. torneo", "Mundiales", "Torneos", "Jornadas liga", "Tiers",
                                        "Replays 2024+", "WO a favor", "WO en contra", "Logros obtenidos"]}
         st.dataframe(pd.DataFrame({"Métrica": list(crudo), "Valor": [str(x) for x in crudo.values()]}),
                      use_container_width=True, hide_index=True)
@@ -530,7 +539,8 @@ def show():
 - **Fair play (Walk Over):** cada Walk Over **a favor** (por ronda, no por partida: un Bo3 cuenta una vez; el rival no se presentó o no tenía rival, y figura como ganador) suma **{WO_FAVOR_PTS} puntos** (máx. +{WO_FAVOR_TOPE}); cada Walk Over
   **en contra** (no se presentó él) resta **{WO_CONTRA_PTS} puntos** (máx. -{WO_CONTRA_TOPE}). Las victorias por Walk Over **no** cuentan en win rate,
   victorias, partidas ni pokes: esas métricas usan solo batallas reales.
-- **Campeonatos:** ligas y torneos terminados, con la misma fuente que los logros y los perfiles (el Torneo 61 tiene dos campeones).
+- **Mundial:** grupo propio (10%). Cada Mundial ganado (Origins, Generaciones...) da una fracción grande del grupo: 1 título = 63%, 2 = 86%. El campeón también suma como torneo ganado en Campeonatos. El Mundialito de rol no cuenta.
+- **Campeonatos:** ligas y torneos terminados (liga y torneo valen igual), con la misma fuente que los logros y los perfiles (el Torneo 61 tiene dos campeones).
 - **Replays:** replays distintos de batallas jugadas desde 2024.
 - **Logros:** logros desbloqueados según el sistema de logros actual.
 - **Se calcula fuera de la página** y se guarda en `data/score_xtream.pkl` y `data/score_xtream.csv`. Para regenerarlo:
