@@ -29,7 +29,7 @@ from vistas.logros_analisis import _precalcular_campeones, calcular_logros_comun
 
 SCORE_PKL = os.path.join(PROJECT_ROOT, "data", "score_xtream.pkl")
 SCORE_CSV = os.path.join(PROJECT_ROOT, "data", "score_xtream.csv")
-SCORE_SCHEMA = 4            # subir si cambian los pesos o la fórmula: invalida el pkl guardado
+SCORE_SCHEMA = 5            # subir si cambian los pesos o la fórmula: invalida el pkl guardado
 MIN_PARTIDAS_REF = 10       # los percentiles de referencia se calculan con jugadores de al menos estas partidas reales
 K_SUAVIZADO = 20            # "partidas fantasma" con el promedio general: evita que 3 partidas den 100% de win rate
 PUNTOS_MAX = 1000
@@ -129,11 +129,14 @@ def _metricas(df_raw, matriz_logros):
     # Walk Over: a favor = ganó porque el rival no se presentó; en contra = no se presentó él
     # El ganador de CUALQUIER Walk Over se premia, aunque el rival figure como "walk over (w.o)" (sin jugador real);
     # el castigo solo se aplica cuando el que no se presentó es un jugador real.
-    wo_all = base[(base["Walkover"] == 1) & ~base["winner"].str.lower().isin(_SIN_JUGADOR)]
-    wo_favor = wo_all["winner"].str.lower().value_counts().rename("wo_favor")
-    wo = wo_all[~sin.loc[wo_all.index]]
-    perdedor = wo["player2"].where(wo["winner"].str.lower() == wo["player1"].str.lower(), wo["player1"])
-    wo_contra = perdedor.str.lower().value_counts().rename("wo_contra")
+    # Se cuenta UNA vez por ronda (no por partida): un Bo3 perdido por WO son 3 filas pero es una sola ausencia.
+    ronda = [c for c in ("league", "N_Torneo", "Llave_cat", "round") if c in base.columns]
+    wo_all = base[(base["Walkover"] == 1) & ~base["winner"].str.lower().isin(_SIN_JUGADOR)].copy()
+    wo_all["_w"] = wo_all["winner"].str.lower()
+    wo_favor = wo_all.drop_duplicates(ronda + ["_w"])["_w"].value_counts().rename("wo_favor")
+    wo = wo_all[~sin.loc[wo_all.index]].copy()
+    wo["_p"] = wo["player2"].where(wo["winner"].str.lower() == wo["player1"].str.lower(), wo["player1"]).str.lower()
+    wo_contra = wo.drop_duplicates(ronda + ["_p"])["_p"].value_counts().rename("wo_contra")
 
     # campeonatos (misma fuente que logros y perfiles)
     base_l, _ = build_base_liga(df_raw)
@@ -524,7 +527,7 @@ def show():
         st.dataframe(tm, use_container_width=True, hide_index=True)
         st.markdown(
             f"""
-- **Fair play (Walk Over):** cada Walk Over **a favor** (el rival no se presentó o no tenía rival, y figura como ganador) suma **{WO_FAVOR_PTS} puntos** (máx. +{WO_FAVOR_TOPE}); cada Walk Over
+- **Fair play (Walk Over):** cada Walk Over **a favor** (por ronda, no por partida: un Bo3 cuenta una vez; el rival no se presentó o no tenía rival, y figura como ganador) suma **{WO_FAVOR_PTS} puntos** (máx. +{WO_FAVOR_TOPE}); cada Walk Over
   **en contra** (no se presentó él) resta **{WO_CONTRA_PTS} puntos** (máx. -{WO_CONTRA_TOPE}). Las victorias por Walk Over **no** cuentan en win rate,
   victorias, partidas ni pokes: esas métricas usan solo batallas reales.
 - **Campeonatos:** ligas y torneos terminados, con la misma fuente que los logros y los perfiles (el Torneo 61 tiene dos campeones).
