@@ -691,11 +691,19 @@ def _form_resultado(torneo, matches, m, nombres, cfg, modo):
     s1 = c2.number_input(n1, min_value=0, value=int(m["puntaje1"] or 0), step=1, key=f"s1_{key}")
     s2 = c3.number_input(n2, min_value=0, value=int(m["puntaje2"] or 0), step=1, key=f"s2_{key}")
     c1.caption(f"Serie al mejor de {bo}" if bo else "Ingresá los juegos/sets ganados por cada jugador.")
-    pun = m["detalle"].get("pun") or [0, 0]
-    with st.expander("Puntos anotados (opcional, para 'Puntos anotados' / 'Diferencia de puntos')"):
-        p1c, p2c = st.columns(2)
-        pt1 = p1c.number_input(f"Puntos de {n1}", min_value=0, value=int(pun[0]), step=1, key=f"pt1_{key}")
-        pt2 = p2c.number_input(f"Puntos de {n2}", min_value=0, value=int(pun[1]), step=1, key=f"pt2_{key}")
+    n_bat = int(bo or 1)                     # una fila de puntos por batalla de la serie
+    prev = m["detalle"].get("juegos") or []
+    juegos = []
+    with st.expander(f"Puntos anotados por batalla ({n_bat}) — opcional, solo para desempates",
+                     expanded=bool(prev)):
+        st.caption(f"Puntaje de cada batalla (por ejemplo Pokémon que le quedaron vivos a cada jugador). "
+                   f"Se suman para 'Puntos anotados' y 'Diferencia de puntos'. Si el Bo es {n_bat}, hay {n_bat} fila(s).")
+        for i in range(n_bat):
+            a, b = (prev[i] if i < len(prev) else [0, 0])
+            ca, cb = st.columns(2)
+            pa = ca.number_input(f"Batalla {i + 1} · {n1}", min_value=0, value=int(a), step=1, key=f"pj{i}a_{key}")
+            pb = cb.number_input(f"Batalla {i + 1} · {n2}", min_value=0, value=int(b), step=1, key=f"pj{i}b_{key}")
+            juegos.append([pa, pb])
     wo = st.checkbox("Walkover / descalificación (elegir ganador a mano)", value=bool(m["detalle"].get("wo")),
                      key=f"wo_{key}")
     ganador = None
@@ -709,7 +717,7 @@ def _form_resultado(torneo, matches, m, nombres, cfg, modo):
         if sin_empate and not wo and s1 == s2:
             st.error("Este torneo no permite empates.")
             return
-        ok, msg = T.reportar(matches, m["id"], int(s1), int(s2), ganador=ganador, wo=wo, puntos=(pt1, pt2))
+        ok, msg = T.reportar(matches, m["id"], int(s1), int(s2), ganador=ganador, wo=wo, juegos=juegos)
         if ok:
             _persistir(torneo, matches)
             st.rerun()

@@ -380,7 +380,7 @@ def recalcular(matches):
     return matches
 
 
-def reportar(matches, mid, puntaje1, puntaje2, ganador=None, wo=False, puntos=None):
+def reportar(matches, mid, puntaje1, puntaje2, ganador=None, wo=False, puntos=None, juegos=None):
     """Carga un resultado. ganador (pid) solo hace falta para forzar (walkover) o si no hay
     puntajes distintos. Devuelve (ok, mensaje)."""
     m = next((x for x in matches if x["id"] == mid), None)
@@ -408,6 +408,14 @@ def reportar(matches, mid, puntaje1, puntaje2, ganador=None, wo=False, puntos=No
     d["par"] = [m["p1"], m["p2"]]
     d["empate"] = ganador is None
     d["wo"] = bool(wo)
+    # puntos por batalla: juegos = [[p1, p2], ...] (una fila por batalla de la serie); el total alimenta
+    # "Puntos anotados" / "Diferencia de puntos" en las tablas
+    juegos = [[int(a or 0), int(b or 0)] for a, b in (juegos or [])]
+    if any(a or b for a, b in juegos):
+        d["juegos"] = juegos
+        puntos = (sum(a for a, _ in juegos), sum(b for _, b in juegos))
+    else:
+        d.pop("juegos", None)
     if puntos and (puntos[0] or puntos[1]):
         d["pun"] = [int(puntos[0] or 0), int(puntos[1] or 0)]
     else:
@@ -426,6 +434,7 @@ def reabrir(matches, mid):
     m["detalle"].pop("empate", None)
     m["detalle"].pop("wo", None)
     m["detalle"].pop("pun", None)
+    m["detalle"].pop("juegos", None)
     recalcular(matches)
 
 
