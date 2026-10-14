@@ -55,6 +55,24 @@ assert abs(sum(c[2] for c in COMPONENTES.values()) - 1) < 1e-9
 
 _SIN_JUGADOR = {"walk over (w.o)", "pendiente", "nan", ""}
 
+# Categorías con cortes FIJOS sobre el Score_Xtream (no dependen de la población): (nombre, emoji, desde, hasta, color, descripción)
+CATEGORIAS = [
+    ("Aspirante",   "🌱", 0,   200,  "#95A5A6", "Recién llegando o con poca actividad: está construyendo su historia en la comunidad."),
+    ("Competidor",  "⚔️", 200, 350,  "#3498DB", "Juega con regularidad y ya tiene recorrido, pero todavía sin resultados que lo destaquen."),
+    ("Veterano",    "🛡️", 350, 500,  "#2ECC71", "Presencia sólida y constante: rendimiento por encima del promedio y varios logros."),
+    ("Élite",       "💎", 500, 700,  "#9B59B6", "Referente de la comunidad: rinde alto de forma sostenida y suele tener campeonatos."),
+    ("Leyenda",     "👑", 700, 1000.0001, "#F1C40F", "La cima: palmarés, rendimiento y trayectoria al máximo nivel."),
+]
+ORDEN_CATEGORIAS = [c[0] for c in CATEGORIAS]
+
+
+def categoria_de(score):
+    """Nombre de la categoría para un Score_Xtream (cortes fijos de CATEGORIAS)."""
+    for nombre, _, lo, hi, _, _ in CATEGORIAS:
+        if lo <= score < hi:
+            return nombre
+    return CATEGORIAS[0][0]
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CÁLCULO
@@ -318,6 +336,93 @@ COLORES_GRUPO = {"Rendimiento": "#E74C3C", "Palmarés": "#F1C40F", "Participaci�
                  "Replays": "#9B59B6", "Logros": "#2ECC71", "Fair Play": "#95A5A6"}
 
 
+def _tab_categorias(tabla):
+    """Análisis por categoría (cortes fijos sobre el Score_Xtream)."""
+    st.subheader("🧩 Categorías de jugadores")
+    st.caption("Cinco categorías con cortes fijos sobre el Score_Xtream: el puesto en la escala no cambia aunque cambie la "
+               "población, solo si cambia el puntaje del jugador.")
+    min_p = st.slider("Mínimo de partidas reales", 0, 100, 10, key="sx_cat_min",
+                      help="Con pocas partidas el score no es confiable. 0 = incluir a todos.")
+    v = tabla[tabla["Partidas"] >= min_p]
+    if v.empty:
+        st.info("Nadie llega a ese mínimo de partidas.")
+        return
+
+    # Leyenda de la escala
+    cols = st.columns(len(CATEGORIAS))
+    for col, (nom, emo, lo, hi, color, desc) in zip(cols, CATEGORIAS):
+        n = int((v["Categoría"] == nom).sum())
+        rango = f"{lo}–{int(hi)}" if hi <= 1000 else f"{lo}–1000"
+        col.markdown(
+            f"<div style='border-top:4px solid {color};padding:8px 6px;background:rgba(127,127,127,.08);border-radius:6px'>"
+            f"<div style='font-size:1.6rem'>{emo}</div><b>{nom}</b><br>"
+            f"<span style='opacity:.7'>{rango} pts</span><br><b style='font-size:1.3rem'>{n}</b> "
+            f"<span style='opacity:.7'>({100*n/len(v):.0f}%)</span></div>", unsafe_allow_html=True)
+    with st.expander("¿Qué significa cada categoría?"):
+        for nom, emo, lo, hi, _, desc in CATEGORIAS:
+            st.markdown(f"- {emo} **{nom}** ({lo}–{min(int(hi), 1000)}): {desc}")
+
+    # Distribución
+    resumen = (v.groupby("Categoría").agg(
+        Jugadores=("Jugador", "size"), Score_prom=("Score_Xtream", "mean"),
+        Partidas_prom=("Partidas", "mean"), WinRate=("Win rate %", "mean"),
+        Campeonatos=("Campeonatos", "sum"), Camp_prom=("Campeonatos", "mean"),
+        Torneos_prom=("Torneos", "mean"), Logros_prom=("Logros obtenidos", "mean"),
+        Replays_prom=("Replays 2024+", "mean"), WO_contra=("WO en contra", "mean"),
+    ).reindex(ORDEN_CATEGORIAS).fillna(0))
+    colores = {c[0]: c[4] for c in CATEGORIAS}
+
+    g1, g2 = st.columns(2)
+    with g1:
+        fig = go.Figure(go.Bar(x=resumen.index, y=resumen["Jugadores"], marker_color=[colores[c] for c in resumen.index],
+                               text=resumen["Jugadores"], textposition="outside"))
+        fig.update_layout(title="Jugadores por categoría", height=360, yaxis_title="Jugadores", margin=dict(t=50, b=10))
+        st.plotly_chart(fig, use_container_width=True)
+    with g2:
+        fig = go.Figure()
+        for nom in ORDEN_CATEGORIAS:
+            x = v.loc[v["Categoría"] == nom, "Score_Xtream"]
+            if len(x):
+                fig.add_trace(go.Box(y=x, name=nom, marker_color=colores[nom], boxmean=True))
+        fig.update_layout(title="Dispersión del Score dentro de cada categoría", height=360, showlegend=False,
+                          yaxis_title="Score_Xtream", margin=dict(t=50, b=10))
+        st.plotly_chart(fig, use_container_width=True)
+
+    # De qué se compone cada categoría
+    comp = v.groupby("Categoría")[GRUPOS + ["Fair Play"]].mean().reindex(ORDEN_CATEGORIAS).fillna(0)
+    fig = go.Figure()
+    for g in GRUPOS + ["Fair Play"]:
+        fig.add_bar(x=comp.index, y=comp[g], name=g, marker_color=COLORES_GRUPO[g])
+    fig.update_layout(barmode="relative", title="Qué diferencia a cada categoría: puntos promedio por grupo",
+                      yaxis_title="Puntos promedio", height=400, legend=dict(orientation="h", y=1.1), margin=dict(t=70, b=10))
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Perfil comparado
+    perfil = resumen[["Jugadores", "Score_prom", "Partidas_prom", "WinRate", "Camp_prom", "Torneos_prom",
+                      "Logros_prom", "Replays_prom", "WO_contra"]].round(1)
+    perfil.columns = ["Jugadores", "Score prom.", "Partidas prom.", "Win rate % prom.", "Campeonatos prom.",
+                      "Torneos prom.", "Logros prom.", "Replays 2024+ prom.", "WO en contra prom."]
+    st.markdown("**Perfil promedio de cada categoría**")
+    st.dataframe(perfil, use_container_width=True)
+
+    tot_camp = int(resumen["Campeonatos"].sum())
+    if tot_camp:
+        top = resumen["Campeonatos"].idxmax()
+        st.caption(f"De los {tot_camp} campeonatos en esta selección, {int(resumen['Campeonatos'].max())} "
+                   f"({100*resumen['Campeonatos'].max()/tot_camp:.0f}%) están en la categoría {top}.")
+
+    # Lista por categoría
+    st.markdown("**Jugadores de una categoría**")
+    sel = st.radio("Categoría", ORDEN_CATEGORIAS[::-1], horizontal=True, key="sx_cat_sel",
+                   format_func=lambda n: f"{next(c[1] for c in CATEGORIAS if c[0] == n)} {n}")
+    lista = v[v["Categoría"] == sel].sort_values("Score_Xtream", ascending=False)
+    if lista.empty:
+        st.info("Nadie en esta categoría con ese mínimo de partidas.")
+    else:
+        st.dataframe(lista[["Rank", "Jugador", "Score_Xtream", "Partidas", "Win rate %", "Campeonatos",
+                            "Torneos", "Logros obtenidos"]], use_container_width=True, hide_index=True, height=420)
+
+
 def show():
     st.header("⚡ Score Xtream")
     st.caption(
@@ -333,7 +438,10 @@ def show():
         st.info(f"Mostrando el cálculo del {meta.get('calculado_el', '—')}. Hay datos más recientes y se están "
                 "recalculando en segundo plano: recargá la página en un par de minutos.")
 
-    tab_rank, tab_jug, tab_met = st.tabs(["🏆 Ranking", "🔎 Jugador", "📖 Metodología"])
+    tabla = tabla.copy()
+    tabla["Categoría"] = tabla["Score_Xtream"].map(categoria_de)
+
+    tab_rank, tab_cat, tab_jug, tab_met = st.tabs(["🏆 Ranking", "🧩 Categorías", "🔎 Jugador", "📖 Metodología"])
 
     # ── Ranking ───────────────────────────────────────────────────────
     with tab_rank:
@@ -366,12 +474,16 @@ def show():
             st.plotly_chart(fig, use_container_width=True)
 
             vis = v[v["Jugador"].str.contains(buscar, case=False, na=False, regex=False)] if buscar else v
-            cols = ["Rank", "Jugador", "Score_Xtream"] + GRUPOS + ["Fair Play", "Partidas", "Win rate %", "Campeonatos",
+            cols = ["Rank", "Jugador", "Categoría", "Score_Xtream"] + GRUPOS + ["Fair Play", "Partidas", "Win rate %", "Campeonatos",
                                                                     "Torneos", "Jornadas liga", "Tiers", "Replays 2024+",
                                                                     "WO a favor", "WO en contra", "Logros obtenidos"]
             st.dataframe(vis[cols], use_container_width=True, hide_index=True, height=520)
             st.download_button("📥 Descargar ranking (CSV)",
                                vis[cols].to_csv(index=False, sep=";").encode("utf-8-sig"), "score_xtream.csv", "text/csv")
+
+    # ── Categorías ────────────────────────────────────────────────────
+    with tab_cat:
+        _tab_categorias(tabla)
 
     # ── Jugador ───────────────────────────────────────────────────────
     with tab_jug:
@@ -380,7 +492,7 @@ def show():
         fila = tabla[tabla["Jugador"] == sel].iloc[0]
         pct = float((tabla["Score_Xtream"] < fila["Score_Xtream"]).mean() * 100)
         a1, a2, a3, a4 = st.columns(4)
-        a1.metric("⚡ Score_Xtream", f"{fila['Score_Xtream']:.1f}")
+        a1.metric("⚡ Score_Xtream", f"{fila['Score_Xtream']:.1f}", fila["Categoría"], delta_color="off")
         a2.metric("🏅 Puesto", f"#{int(fila['Rank'])}", f"de {len(tabla)} jugadores", delta_color="off")
         a3.metric("📈 Supera al", f"{pct:.0f}%", "de los jugadores", delta_color="off")
         a4.metric("⚖️ Fair play", f"{fila['Fair Play']:+.0f} pts", f"{int(fila['WO a favor'])} WO a favor · {int(fila['WO en contra'])} en contra", delta_color="off")
