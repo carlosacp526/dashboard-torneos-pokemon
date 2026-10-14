@@ -98,6 +98,32 @@ def _opciones_csv(col):
     return []
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def _max_n_torneo_csv(league):
+    try:
+        from utils import load_data
+        df = load_data()
+        if "N_Torneo" in df.columns and "league" in df.columns:
+            v = pd.to_numeric(df.loc[df["league"].astype(str).str.upper() == league, "N_Torneo"], errors="coerce").max()
+            return int(v) if pd.notna(v) else 0
+    except Exception:
+        pass
+    return 0
+
+
+def _siguiente_n_torneo(league, excluir_id=None):
+    """Máximo N_Torneo de esa liga entre el histórico y los torneos creados aquí, más uno."""
+    m = _max_n_torneo_csv(league)
+    for t in DB.listar_torneos(incluir_privados=True):
+        c = t.get("config") or {}
+        if t["id"] != excluir_id and c.get("league") == league and c.get("n_torneo"):
+            m = max(m, int(c["n_torneo"]))
+    return m + 1
+
+
+LIGAS = ["TORNEO", "LIGA", "ASCENSO", "CYPHER"]
+
+
 def _campo_lista(etiqueta, col, key, actual=""):
     """Selectbox con los valores del histórico + 'Otro…' para escribir uno nuevo."""
     OTRO = "✏️ Otro…"
@@ -482,6 +508,8 @@ def _tab_participantes(torneo, parts):
 def _tab_info(torneo, parts):
     cfg = torneo["config"]
     f = torneo["formato"]
+    if cfg.get("n_torneo"):
+        st.markdown(f"**Evento:** {cfg.get('league', 'TORNEO')} N° {cfg['n_torneo']}")
     st.markdown(f"**Tier:** {cfg.get('tier') or '—'}  \n**Formato:** {cfg.get('formato_batalla') or '—'}  \n"
                 f"**Estructura:** {_formato_txt(torneo)}  \n**Jugadores:** {len(parts)}")
     if torneo.get("inicio"):
@@ -767,15 +795,23 @@ def _org_extra(torneo, parts, matches):
             tier = _campo_lista("Tier", "Tier", f"tb_tier_{torneo['id']}", torneo["config"].get("tier", ""))
         with e2:
             fbat = _campo_lista("Formato", "Formato", f"tb_fbat_{torneo['id']}", torneo["config"].get("formato_batalla", ""))
+        n1, n2 = st.columns(2)
+        lg_act = torneo["config"].get("league", "TORNEO")
+        league = n1.selectbox("Liga / tipo de evento", LIGAS, index=LIGAS.index(lg_act) if lg_act in LIGAS else 0,
+                              key=f"tb_lg_{torneo['id']}")
+        nt = n2.number_input("Número de torneo", 1, 9999, int(torneo["config"].get("n_torneo") or
+                             _siguiente_n_torneo(league, torneo["id"])), step=1, key=f"tb_nt_{torneo['id']}")
         if st.button("Guardar datos"):
-            cfg = {**torneo["config"], "inscripcion_abierta": ins, "tier": tier, "formato_batalla": fbat}
+            cfg = {**torneo["config"], "inscripcion_abierta": ins, "tier": tier, "formato_batalla": fbat,
+                   "league": league, "n_torneo": int(nt)}
             DB.actualizar_torneo(torneo["id"], nombre=n.strip() or torneo["nombre"], descripcion=d, privado=pv,
                                  config=cfg, juego=f"{tier} · {fbat}")
             st.rerun()
         if matches:
             nums = _numeros(matches)
             km = _kmap(matches)
-            filas = [{"torneo": torneo["nombre"], "tier": torneo["config"].get("tier", ""),
+            filas = [{"torneo": torneo["nombre"], "league": torneo["config"].get("league", ""),
+                      "n_torneo": torneo["config"].get("n_torneo", ""), "tier": torneo["config"].get("tier", ""),
                       "formato": torneo["config"].get("formato_batalla", ""), "n": nums.get(m["id"]), "ronda": _nombre_ronda(m, km),
                       "llave": m["llave"], "jugador1": _nm(nombres, m["p1"]), "jugador2": _nm(nombres, m["p2"]),
                       "puntaje1": m["puntaje1"], "puntaje2": m["puntaje2"],
@@ -832,6 +868,10 @@ def _crear():
         tier = _campo_lista("Tier", "Tier", "cr_tier")
     with c2:
         fbatalla = _campo_lista("Formato", "Formato", "cr_fbat")
+    c1, c2 = st.columns(2)
+    league = c1.selectbox("Liga / tipo de evento", LIGAS, key="cr_league")
+    n_torneo = c2.number_input(f"Número de torneo (siguiente sugerido: {_siguiente_n_torneo(league)})", 1, 9999,
+                               _siguiente_n_torneo(league), step=1, key=f"cr_ntor_{league}")
     desc = st.text_area("Descripción / reglas", key="cr_desc")
     c1, c2, c3 = st.columns(3)
     bo = c1.selectbox("Series al mejor de", [None, 1, 3, 5, 7],
@@ -842,7 +882,8 @@ def _crear():
     if st.checkbox("Definir fecha y hora de inicio", key="cr_usar_fecha"):
         a, b = st.columns(2)
         inicio = f"{a.date_input('Fecha', key='cr_fecha')}T{b.time_input('Hora', key='cr_hora')}"
-    cfg = {"bo": bo, "inscripcion_abierta": abierta, "tier": tier, "formato_batalla": fbatalla}
+    cfg = {"bo": bo, "inscripcion_abierta": abierta, "tier": tier, "formato_batalla": fbatalla,
+           "league": league, "n_torneo": int(n_torneo)}
 
     st.markdown("##### Información del juego")
     tipo = st.radio("Tipo", ["una", "dos"], key="cr_tipo",
@@ -912,6 +953,7 @@ def _lista():
                     f'<span class="tb-badge" style="--c:{col}">{etq}</span>'
                     f'{" 🔒" if t.get("privado") else ""}<br>'
                     f'<span style="opacity:.75">{html.escape(_formato_txt(t))} · {n} participantes'
+                    f'{" · N° " + str(t["config"].get("n_torneo")) if t["config"].get("n_torneo") else ""}'
                     f'{" · " + html.escape(str(t["config"].get("tier"))) if t["config"].get("tier") else ""}'
                     f'{" · " + html.escape(str(t["config"].get("formato_batalla"))) if t["config"].get("formato_batalla") else ""}'
                     f'</span></div>',
