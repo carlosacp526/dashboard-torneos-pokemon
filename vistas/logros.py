@@ -1305,7 +1305,7 @@ def evaluar_logros(
     
     GANADORES_LIGA = {
         "PJS": {"lautaro","alonso26ca", "alechiii","lexodia","porygon z","emperorgambit"},
-        "PES": {"caradecoso","chescor"},
+        "PES": {"caradecoso","chescor","nitr0kill3r"},
         "PSS": {"ricomam","haseo","elin beacil","roy kasoy","akaru"},
         "PMS": {"luigillanos","joscake","angello77","lautaro","darmanethan"},
         "PLS": {"car10seduard0"}
