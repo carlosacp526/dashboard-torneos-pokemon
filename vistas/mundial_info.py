@@ -919,7 +919,19 @@ MONOTYPE1_LIGAS = {
                   "Bamdara": "Participante",
                   "Mar": "Top3",# y también VGC
         },
-    }
+    },
+
+    "PES": {
+        "SINGLES": {"Chris FPS": "Top3","Draco axel": "Participante",
+                    "Porygon Z": "Participante","lexodia": "Participante",
+        "Ocnarf30": "Participante", "JaLax": "Participante"},
+        "DOBLES": {
+                   "Jhos": "Participante"
+        },
+        "VGC": {"Nitr0kill3r": "Campeón","SasoriVzla7": "Top3",
+                "Moirix": "Participante","Alonso26ca": "Participante", "Fabricio19jr": "Participante"
+        },
+    },
 }
 
 
