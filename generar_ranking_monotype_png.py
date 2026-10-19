@@ -14,6 +14,7 @@ asi que los PNG siempre coinciden con lo que se ve en la app. El top 16 de cada 
 import os
 import sys
 import logging
+import time
 
 logging.disable(logging.CRITICAL)
 from PIL import Image, ImageDraw, ImageFont
@@ -206,6 +207,21 @@ def dibujar_combinado(rankings):
     return img
 
 
+def _guardar(img, ruta):
+    """Guarda en un archivo temporal y lo mueve al destino, con reintentos: nunca deja un PNG a medias
+    (si el editor o git tienen el archivo abierto en ese instante, reintenta en vez de truncarlo)."""
+    tmp = ruta + ".tmp"
+    for intento in range(5):
+        try:
+            img.save(tmp, format="PNG")
+            os.replace(tmp, ruta)
+            return
+        except OSError:
+            if intento == 4:
+                raise
+            time.sleep(2)
+
+
 def main():
     os.makedirs(SALIDA, exist_ok=True)
     rankings = _ranking(load_data())
@@ -214,11 +230,11 @@ def main():
             print(f"{fmt}: sin datos, se omite")
             continue
         base = os.path.join(SALIDA, f"ranking_monotype_{fmt.lower()}")
-        dibujar(fmt, filas, columnas=3, ancho=1920).save(base + ".png")
-        dibujar(fmt, filas, columnas=1, ancho=1080).save(base + "_vertical.png")
+        _guardar(dibujar(fmt, filas, columnas=3, ancho=1920), base + ".png")
+        _guardar(dibujar(fmt, filas, columnas=1, ancho=1080), base + "_vertical.png")
         print(f"{fmt}: {len(filas)} jugadores -> {base}.png / _vertical.png")
     ruta = os.path.join(SALIDA, "ranking_monotype_3formatos.png")
-    dibujar_combinado(rankings).save(ruta)
+    _guardar(dibujar_combinado(rankings), ruta)
     print(f"Combinado -> {ruta}")
 
 
