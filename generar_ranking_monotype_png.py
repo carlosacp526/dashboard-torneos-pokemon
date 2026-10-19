@@ -17,7 +17,7 @@ from utils import load_data
 from vistas import mundial_info as mi
 
 TOP_N = 16
-ANCHO, ALTO = 1080, 1350
+ANCHO = 1080   # el alto depende de cuantos jugadores tengan puntos
 SALIDA = "rankings_monotype"
 FUENTE = r"C:\Windows\Fonts\bahnschrift.ttf"
 FUENTE_B = r"C:\Windows\Fonts\arialbd.ttf"
@@ -34,11 +34,11 @@ def _f(size, bold=False):
     return ImageFont.truetype(FUENTE_B if bold else FUENTE, size)
 
 
-def _gradiente(c1, c2):
-    img = Image.new("RGB", (ANCHO, ALTO), c1)
+def _gradiente(c1, c2, alto):
+    img = Image.new("RGB", (ANCHO, alto), c1)
     px = ImageDraw.Draw(img)
-    for y in range(ALTO):
-        t = y / (ALTO - 1)
+    for y in range(alto):
+        t = y / (alto - 1)
         px.line([(0, y), (ANCHO, y)], fill=tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3)))
     return img
 
@@ -81,9 +81,41 @@ def _texto_ajustado(draw, texto, fuente, ancho_max):
     return texto
 
 
+def _fila(d, y, h, rank, jug, pts, wr, max_pts, acento, clasifica):
+    if rank == 1:
+        relleno, texto_c = (255, 205, 60, 255), (30, 20, 0)
+    elif rank == 2:
+        relleno, texto_c = (205, 210, 220, 255), (25, 28, 35)
+    elif rank == 3:
+        relleno, texto_c = (205, 130, 70, 255), (35, 18, 5)
+    elif clasifica:
+        relleno, texto_c = (255, 255, 255, 26), (255, 255, 255)
+    else:   # fuera del top 16: mas apagado
+        relleno, texto_c = (255, 255, 255, 12), (255, 255, 255, 150)
+    d.rounded_rectangle([50, y, ANCHO - 50, y + h - 8], radius=14, fill=relleno)
+    if rank > 3:   # barra de progreso proporcional al puntaje
+        ancho_b = int((ANCHO - 100) * pts / max_pts)
+        d.rounded_rectangle([50, y, 50 + max(ancho_b, 30), y + h - 8], radius=14,
+                            fill=acento + ((70,) if clasifica else (35,)))
+    g = 1.0 if clasifica else 0.82   # filas fuera del top, letra un poco mas chica
+    cy = y + (h - 8) // 2
+    d.text((74, cy), f"{rank}", font=_f(int(30 * g), True), fill=texto_c, anchor="lm")
+    d.text((190, cy), _texto_ajustado(d, jug, _f(int(32 * g), True), 400), font=_f(int(32 * g), True),
+           fill=texto_c, anchor="lm")
+    # puntos del Mundial primero, luego el win rate (desempate)
+    d.text((730, cy), f"{pts}", font=_f(int(34 * g), True), fill=texto_c, anchor="rm")
+    d.text((730 - d.textlength(str(pts), font=_f(int(34 * g), True)) - 10, cy + 3), "pts",
+           font=_f(int(20 * g)), fill=texto_c, anchor="rm")
+    d.text((900, cy), f"{wr[0]:.1f}%" if wr else "-", font=_f(int(30 * g), True), fill=texto_c, anchor="rm")
+    d.text((912, cy + 3), f"WR · {wr[1]}p" if wr else "WR", font=_f(int(18 * g)), fill=texto_c, anchor="lm")
+
+
 def dibujar(fmt, filas):
     c1, c2, acento, claro = PALETAS[fmt]
-    img = _gradiente(c1, c2)
+    H_TOP, H_RESTO, H_CORTE = 56, 46, 64
+    resto = max(len(filas) - TOP_N, 0)
+    alto = 250 + min(len(filas), TOP_N) * H_TOP + (H_CORTE + resto * H_RESTO if resto else 0) + 150
+    img = _gradiente(c1, c2, alto)
     d = ImageDraw.Draw(img, "RGBA")
 
     # cabecera
@@ -96,42 +128,27 @@ def dibujar(fmt, filas):
     d.text((190, 168), f"Puntajes actuales  ·  El Top {TOP_N} clasifica", font=_f(28), fill=(255, 255, 255, 200))
     d.rectangle([50, 222, ANCHO - 50, 227], fill=acento)
 
-    top = filas[:TOP_N]
     max_pts = max(f[2] for f in filas) or 1
-
-    y0, alto_fila = 250, 56
-    for k, (rank, jug, pts, sxv) in enumerate(top):
-        y = y0 + k * alto_fila
-        if rank == 1:
-            relleno, texto_c = (255, 205, 60, 255), (30, 20, 0)
-        elif rank == 2:
-            relleno, texto_c = (205, 210, 220, 255), (25, 28, 35)
-        elif rank == 3:
-            relleno, texto_c = (205, 130, 70, 255), (35, 18, 5)
-        else:
-            relleno, texto_c = (255, 255, 255, 26), (255, 255, 255)
-        d.rounded_rectangle([50, y, ANCHO - 50, y + alto_fila - 8], radius=14, fill=relleno)
-        if rank > 3:   # barra de progreso proporcional al puntaje
-            ancho_b = int((ANCHO - 100) * pts / max_pts)
-            d.rounded_rectangle([50, y, 50 + max(ancho_b, 30), y + alto_fila - 8], radius=14, fill=acento + (70,))
-        cy = y + (alto_fila - 8) // 2
-        d.text((74, cy), f"{rank}", font=_f(30, True), fill=texto_c, anchor="lm")
-        nombre = _texto_ajustado(d, jug, _f(32, True), 400)
-        d.text((190, cy), nombre, font=_f(32, True), fill=texto_c, anchor="lm")
-        # puntos del Mundial primero, luego el win rate (desempate)
-        d.text((730, cy), f"{pts}", font=_f(34, True), fill=texto_c, anchor="rm")
-        d.text((730 - d.textlength(str(pts), font=_f(34, True)) - 10, cy + 3), "pts",
-               font=_f(20), fill=texto_c, anchor="rm")
-        sx_txt = f"{sxv[0]:.1f}%" if sxv else "-"
-        d.text((900, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
-        d.text((912, cy + 3), f"WR · {sxv[1]}p" if sxv else "WR", font=_f(18), fill=texto_c, anchor="lm")
+    y = 250
+    for rank, jug, pts, wr in filas[:TOP_N]:
+        _fila(d, y, H_TOP, rank, jug, pts, wr, max_pts, acento, True)
+        y += H_TOP
+    if resto:
+        # linea de corte entre clasificados y el resto
+        d.rectangle([50, y + 14, ANCHO - 50, y + 17], fill=acento)
+        d.text((ANCHO // 2, y + 40), f"▲ CLASIFICAN (TOP {TOP_N})   ·   NO CLASIFICAN ▼", font=_f(22, True),
+               fill=claro, anchor="mm")
+        y += H_CORTE
+        for rank, jug, pts, wr in filas[TOP_N:]:
+            _fila(d, y, H_RESTO, rank, jug, pts, wr, max_pts, acento, False)
+            y += H_RESTO
 
     torneos = sorted(t for t, fm in mi.MONOTYPE1_POSICIONES.items() if fmt in {str(k).upper() for k in fm})
     pie = f"Empates en puntos: win rate en los torneos del Mundial de {fmt}  ·  {len(filas)} jugadores"
-    d.text((ANCHO // 2, ALTO - 86), "Torneos: " + ", ".join(f"T{t}" for t in torneos),
+    d.text((ANCHO // 2, alto - 86), "Torneos: " + ", ".join(f"T{t}" for t in torneos),
            font=_f(20), fill=(255, 255, 255, 140), anchor="mm")
-    d.text((ANCHO // 2, ALTO - 56), pie, font=_f(24), fill=(255, 255, 255, 170), anchor="mm")
-    d.text((ANCHO // 2, ALTO - 24), "poketubi", font=_f(20, True), fill=claro, anchor="mm")
+    d.text((ANCHO // 2, alto - 56), pie, font=_f(24), fill=(255, 255, 255, 170), anchor="mm")
+    d.text((ANCHO // 2, alto - 24), "poketubi", font=_f(20, True), fill=claro, anchor="mm")
     return img
 
 
