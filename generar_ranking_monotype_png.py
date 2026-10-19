@@ -45,10 +45,10 @@ def _gradiente(c1, c2):
 
 
 def _score_xtream():
-    """Score_Xtream por jugador (minusculas), usado solo para desempatar."""
+    """Win rate % por jugador (minusculas), usado solo para desempatar."""
     try:
         d = pd.read_csv("data/score_xtream.csv", sep=";", encoding="utf-8-sig")
-        return {str(j).strip().lower(): float(v) for j, v in zip(d["Jugador"], d["Score_Xtream"])}
+        return {str(j).strip().lower(): float(v) for j, v in zip(d["Jugador"], d["Win rate %"])}
     except Exception:
         return {}
 
@@ -59,7 +59,7 @@ def _ranking(df_raw):
     sx = _score_xtream()
     out = {}
     for fmt, pts in rankings.items():
-        # mismos puntos -> gana el de mayor Score_Xtream (luego orden alfabetico); sin empates en la tabla
+        # mismos puntos -> gana el de mayor win rate (luego orden alfabetico); sin empates en la tabla
         orden = sorted(pts.items(), key=lambda kv: (-kv[1], -sx.get(kv[0].strip().lower(), 0.0), kv[0].lower()))
         out[fmt] = [(i, jug, p, sx.get(jug.strip().lower())) for i, (jug, p) in enumerate(orden, 1)]
     return out
@@ -108,15 +108,15 @@ def dibujar(fmt, filas):
         d.text((74, cy), f"{rank}", font=_f(30, True), fill=texto_c, anchor="lm")
         nombre = _texto_ajustado(d, jug, _f(32, True), 400)
         d.text((190, cy), nombre, font=_f(32, True), fill=texto_c, anchor="lm")
-        # puntos del Mundial primero, luego el Score_Xtream (desempate)
+        # puntos del Mundial primero, luego el win rate (desempate)
         d.text((730, cy), f"{pts}", font=_f(34, True), fill=texto_c, anchor="rm")
         d.text((730 - d.textlength(str(pts), font=_f(34, True)) - 10, cy + 3), "pts",
                font=_f(20), fill=texto_c, anchor="rm")
-        sx_txt = f"{sxv:.0f}" if sxv is not None else "-"
+        sx_txt = f"{sxv:.1f}%" if sxv is not None else "-"
         d.text((935, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
-        d.text((947, cy + 3), "Xtream", font=_f(18), fill=texto_c, anchor="lm")
+        d.text((947, cy + 3), "WR", font=_f(18), fill=texto_c, anchor="lm")
 
-    pie = f"Empates en puntos se desempatan por Score_Xtream  ·  {len(filas)} jugadores puntuados"
+    pie = f"Empates en puntos se desempatan por win rate  ·  {len(filas)} jugadores puntuados"
     d.text((ANCHO // 2, ALTO - 56), pie, font=_f(24), fill=(255, 255, 255, 170), anchor="mm")
     d.text((ANCHO // 2, ALTO - 24), "poketubi", font=_f(20, True), fill=claro, anchor="mm")
     return img
