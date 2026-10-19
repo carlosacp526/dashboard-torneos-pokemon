@@ -3,6 +3,7 @@ Actualiza TODO lo precalculado con un solo comando, en el orden correcto:
     1) matriz de logros de la comunidad   -> data/logros_comunidad.pkl
     2) Score_Xtream                        -> data/score_xtream.pkl y data/score_xtream.csv
     3) datos del reporte de scouting       -> data/scouting_cache.pkl
+    4) PNG del ranking del Mundial Monotype I -> rankings_monotype/ (siempre; si nada cambió, queda idéntico)
 Solo recalcula lo que quedó viejo (cambió el historial, los replays o la lista de logros).
 
 Uso (desde Produccion/):
@@ -11,7 +12,7 @@ Uso (desde Produccion/):
     python actualizar_todo.py --commit --push    # además sube los archivos generados a git
     python actualizar_todo.py --instalar-hook    # instala un hook de git (ver abajo)
 
-Hook de git: con --instalar-hook, cada commit que cambie archivo_preuba1.csv o data/replay_cache.csv lanza
+Hook de git: con --instalar-hook, cada commit que cambie archivo_preuba1.csv, data/replay_cache.csv o vistas/mundial_info.py lanza
 `actualizar_todo.py --commit --push` en segundo plano (queda registro en data/actualizar_todo.log). El commit
 de los archivos generados no toca el CSV, así que no vuelve a disparar el hook. Si hay otra corrida en curso,
 la nueva espera su turno (candado en data/.actualizando.lock) y al terminar revisa si quedó algo viejo.
@@ -27,7 +28,7 @@ os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 
 LOCK = os.path.join(ROOT, "data", ".actualizando.lock")
-ARCHIVOS = ["data/logros_comunidad.pkl", "data/score_xtream.pkl", "data/score_xtream.csv", "data/scouting_cache.pkl"]
+ARCHIVOS = ["data/logros_comunidad.pkl", "data/score_xtream.pkl", "data/score_xtream.csv", "data/scouting_cache.pkl", "rankings_monotype"]
 CONFIG_GIT = ["-c", "core.autocrlf=false"]
 
 
@@ -85,6 +86,17 @@ def _pasos(forzar):
     return hizo
 
 
+def _ranking_pngs():
+    """Regenera los PNG del ranking de Monotype I (puntos de mundial_info.py + win rate del CSV)."""
+    try:
+        import generar_ranking_monotype_png as gr
+        t = time.time()
+        gr.main()
+        log(f"Ranking Monotype I: PNG regenerados ({time.time() - t:.0f}s)")
+    except Exception as e:                               # un fallo de imagen no debe frenar lo demás
+        log(f"Ranking Monotype I: falló ({e})")
+
+
 def _git(*args):
     return subprocess.run(["git", *CONFIG_GIT, *args], cwd=ROOT, capture_output=True, text=True)
 
@@ -98,7 +110,7 @@ def _subir(push):
     if _git("diff", "--cached", "--quiet", "--", *ARCHIVOS).returncode == 0:
         log("Git: no hay cambios en los archivos generados")
         return
-    r = _git("commit", "-m", "Actualiza datos precalculados (logros, Score_Xtream y scouting)", "--", *ARCHIVOS)
+    r = _git("commit", "-m", "Actualiza datos precalculados (logros, Score_Xtream, scouting y rankings Monotype I)", "--", *ARCHIVOS)
     log("Git: commit " + ("hecho" if r.returncode == 0 else f"falló: {r.stderr.strip()[:200]}"))
     if r.returncode == 0 and push:
         p = _git("push", "origin", "main")
@@ -118,7 +130,7 @@ def _instalar_hook():
     contenido = f"""#!/bin/sh
 # Instalado por actualizar_todo.py --instalar-hook: si el commit cambió el historial o los replays,
 # recalcula en segundo plano lo precalculado (logros, Score_Xtream, scouting) y lo sube.
-git diff-tree --no-commit-id --name-only -r HEAD | grep -q -E '^(archivo_preuba1\\.csv|data/replay_cache\\.csv)$' || exit 0
+git diff-tree --no-commit-id --name-only -r HEAD | grep -q -E '^(archivo_preuba1\\.csv|data/replay_cache\\.csv|vistas/mundial_info\\.py)$' || exit 0
 cd "$(git rev-parse --show-toplevel)" || exit 0
 nohup "{py}" actualizar_todo.py --commit --push > data/actualizar_todo.log 2>&1 &
 exit 0
@@ -163,6 +175,7 @@ def main():
             hizo = _pasos(a.forzar and pasada == 0)
             if not hizo:
                 break
+        _ranking_pngs()
         if a.commit or a.push:
             _subir(a.push)
         log(f"Listo ({time.time() - t0:.0f}s)")
