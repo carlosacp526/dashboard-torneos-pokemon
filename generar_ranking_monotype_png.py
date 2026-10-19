@@ -11,7 +11,6 @@ import sys
 import logging
 
 logging.disable(logging.CRITICAL)
-import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 
 from utils import load_data
@@ -44,24 +43,35 @@ def _gradiente(c1, c2):
     return img
 
 
-def _score_xtream():
-    """Win rate % por jugador (minusculas), usado solo para desempatar."""
-    try:
-        d = pd.read_csv("data/score_xtream.csv", sep=";", encoding="utf-8-sig")
-        return {str(j).strip().lower(): float(v) for j, v in zip(d["Jugador"], d["Win rate %"])}
-    except Exception:
-        return {}
+def _winrates(df_raw):
+    """Win rate por formato y jugador, solo con las batallas jugadas (Walkover == 0) de los torneos del
+    Mundial Monotype I que pertenecen a ese formato (MONOTYPE1_POSICIONES). Devuelve {fmt: {jugador: (wr %, juegos)}}."""
+    out = {}
+    for fmt in ("SINGLES", "DOBLES", "VGC"):
+        torneos = [t for t, fm in mi.MONOTYPE1_POSICIONES.items() if fmt in {str(k).upper() for k in fm}]
+        g = df_raw[(df_raw["league"] == "TORNEO") & (df_raw["N_Torneo"].isin(torneos))
+                   & (df_raw["Formato"].astype(str).str.upper() == fmt) & (df_raw["Walkover"] == 0)]
+        res = {}
+        for p1, p2, w in zip(g["player1"], g["player2"], g["winner"]):
+            for j in (p1, p2):
+                v = res.setdefault(str(j).strip().lower(), [0, 0])
+                v[1] += 1
+                v[0] += str(w).strip().lower() == str(j).strip().lower()
+        out[fmt] = {j: (100.0 * v[0] / v[1], v[1]) for j, v in res.items() if v[1]}
+    return out
 
 
 def _ranking(df_raw):
     rankings, _ = mi._calcular_puntos_por_formato(
         mi.MONOTYPE1_TIPOS, mi.MONOTYPE1_POSICIONES, mi.MONOTYPE1_LIGAS, df_raw, mi.MONOTYPE1_PENALIDADES)
-    sx = _score_xtream()
+    wr = _winrates(df_raw)
     out = {}
     for fmt, pts in rankings.items():
-        # mismos puntos -> gana el de mayor win rate (luego orden alfabetico); sin empates en la tabla
-        orden = sorted(pts.items(), key=lambda kv: (-kv[1], -sx.get(kv[0].strip().lower(), 0.0), kv[0].lower()))
-        out[fmt] = [(i, jug, p, sx.get(jug.strip().lower())) for i, (jug, p) in enumerate(orden, 1)]
+        w = wr.get(fmt, {})
+        # mismos puntos -> gana el de mayor win rate en los torneos de ese formato (luego mas partidas, luego nombre)
+        orden = sorted(pts.items(), key=lambda kv: (-kv[1], -w.get(kv[0].strip().lower(), (-1, 0))[0],
+                                                   -w.get(kv[0].strip().lower(), (0, 0))[1], kv[0].lower()))
+        out[fmt] = [(i, jug, p, w.get(jug.strip().lower())) for i, (jug, p) in enumerate(orden, 1)]
     return out
 
 
@@ -112,11 +122,14 @@ def dibujar(fmt, filas):
         d.text((730, cy), f"{pts}", font=_f(34, True), fill=texto_c, anchor="rm")
         d.text((730 - d.textlength(str(pts), font=_f(34, True)) - 10, cy + 3), "pts",
                font=_f(20), fill=texto_c, anchor="rm")
-        sx_txt = f"{sxv:.1f}%" if sxv is not None else "-"
-        d.text((935, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
-        d.text((947, cy + 3), "WR", font=_f(18), fill=texto_c, anchor="lm")
+        sx_txt = f"{sxv[0]:.1f}%" if sxv else "-"
+        d.text((900, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
+        d.text((912, cy + 3), f"WR · {sxv[1]}p" if sxv else "WR", font=_f(18), fill=texto_c, anchor="lm")
 
-    pie = f"Empates en puntos se desempatan por win rate  ·  {len(filas)} jugadores puntuados"
+    torneos = sorted(t for t, fm in mi.MONOTYPE1_POSICIONES.items() if fmt in {str(k).upper() for k in fm})
+    pie = f"Empates en puntos: win rate en los torneos del Mundial de {fmt}  ·  {len(filas)} jugadores"
+    d.text((ANCHO // 2, ALTO - 86), "Torneos: " + ", ".join(f"T{t}" for t in torneos),
+           font=_f(20), fill=(255, 255, 255, 140), anchor="mm")
     d.text((ANCHO // 2, ALTO - 56), pie, font=_f(24), fill=(255, 255, 255, 170), anchor="mm")
     d.text((ANCHO // 2, ALTO - 24), "poketubi", font=_f(20, True), fill=claro, anchor="mm")
     return img
