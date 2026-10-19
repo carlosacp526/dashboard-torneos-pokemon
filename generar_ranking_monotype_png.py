@@ -44,13 +44,13 @@ def _gradiente(c1, c2):
 
 
 def _winrates(df_raw):
-    """Win rate por formato y jugador, solo con las batallas jugadas (Walkover == 0) de los torneos del
+    """Win rate por formato y jugador, con las batallas definidas, walkovers incluidos (Walkover >= 0; -1 = pendiente) de los torneos del
     Mundial Monotype I que pertenecen a ese formato (MONOTYPE1_POSICIONES). Devuelve {fmt: {jugador: (wr %, juegos)}}."""
     out = {}
     for fmt in ("SINGLES", "DOBLES", "VGC"):
         torneos = [t for t, fm in mi.MONOTYPE1_POSICIONES.items() if fmt in {str(k).upper() for k in fm}]
         g = df_raw[(df_raw["league"] == "TORNEO") & (df_raw["N_Torneo"].isin(torneos))
-                   & (df_raw["Formato"].astype(str).str.upper() == fmt) & (df_raw["Walkover"] == 0)]
+                   & (df_raw["Formato"].astype(str).str.upper() == fmt) & (df_raw["Walkover"] >= 0)]
         res = {}
         for p1, p2, w in zip(g["player1"], g["player2"], g["winner"]):
             for j in (p1, p2):
