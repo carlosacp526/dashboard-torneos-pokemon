@@ -106,15 +106,15 @@ def dibujar(fmt, filas):
             d.rounded_rectangle([50, y, 50 + max(ancho_b, 30), y + alto_fila - 8], radius=14, fill=acento + (70,))
         cy = y + (alto_fila - 8) // 2
         d.text((74, cy), f"{rank}", font=_f(30, True), fill=texto_c, anchor="lm")
-        nombre = _texto_ajustado(d, jug, _f(32, True), 440)
+        nombre = _texto_ajustado(d, jug, _f(32, True), 400)
         d.text((190, cy), nombre, font=_f(32, True), fill=texto_c, anchor="lm")
-        # Score_Xtream al costado (columna entre el nombre y los puntos)
-        sx_txt = f"{sxv:.0f}" if sxv is not None else "-"
-        d.text((790, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
-        d.text((802, cy + 3), "Xtream", font=_f(18), fill=texto_c, anchor="lm")
-        d.text((ANCHO - 74, cy), f"{pts}", font=_f(34, True), fill=texto_c, anchor="rm")
-        d.text((ANCHO - 74 - d.textlength(str(pts), font=_f(34, True)) - 10, cy + 3), "pts",
+        # puntos del Mundial primero, luego el Score_Xtream (desempate)
+        d.text((730, cy), f"{pts}", font=_f(34, True), fill=texto_c, anchor="rm")
+        d.text((730 - d.textlength(str(pts), font=_f(34, True)) - 10, cy + 3), "pts",
                font=_f(20), fill=texto_c, anchor="rm")
+        sx_txt = f"{sxv:.0f}" if sxv is not None else "-"
+        d.text((935, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
+        d.text((947, cy + 3), "Xtream", font=_f(18), fill=texto_c, anchor="lm")
 
     pie = f"Empates en puntos se desempatan por Score_Xtream  ·  {len(filas)} jugadores puntuados"
     d.text((ANCHO // 2, ALTO - 56), pie, font=_f(24), fill=(255, 255, 255, 170), anchor="mm")
