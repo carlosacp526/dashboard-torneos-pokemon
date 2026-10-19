@@ -61,7 +61,7 @@ def _ranking(df_raw):
     for fmt, pts in rankings.items():
         # mismos puntos -> gana el de mayor Score_Xtream (luego orden alfabetico); sin empates en la tabla
         orden = sorted(pts.items(), key=lambda kv: (-kv[1], -sx.get(kv[0].strip().lower(), 0.0), kv[0].lower()))
-        out[fmt] = [(i, jug, p) for i, (jug, p) in enumerate(orden, 1)]
+        out[fmt] = [(i, jug, p, sx.get(jug.strip().lower())) for i, (jug, p) in enumerate(orden, 1)]
     return out
 
 
@@ -90,7 +90,7 @@ def dibujar(fmt, filas):
     max_pts = max(f[2] for f in filas) or 1
 
     y0, alto_fila = 250, 56
-    for k, (rank, jug, pts) in enumerate(top):
+    for k, (rank, jug, pts, sxv) in enumerate(top):
         y = y0 + k * alto_fila
         if rank == 1:
             relleno, texto_c = (255, 205, 60, 255), (30, 20, 0)
@@ -106,8 +106,12 @@ def dibujar(fmt, filas):
             d.rounded_rectangle([50, y, 50 + max(ancho_b, 30), y + alto_fila - 8], radius=14, fill=acento + (70,))
         cy = y + (alto_fila - 8) // 2
         d.text((74, cy), f"{rank}", font=_f(30, True), fill=texto_c, anchor="lm")
-        nombre = _texto_ajustado(d, jug, _f(32, True), 640)
+        nombre = _texto_ajustado(d, jug, _f(32, True), 440)
         d.text((190, cy), nombre, font=_f(32, True), fill=texto_c, anchor="lm")
+        # Score_Xtream al costado (columna entre el nombre y los puntos)
+        sx_txt = f"{sxv:.0f}" if sxv is not None else "-"
+        d.text((790, cy), sx_txt, font=_f(30, True), fill=texto_c, anchor="rm")
+        d.text((802, cy + 3), "Xtream", font=_f(18), fill=texto_c, anchor="lm")
         d.text((ANCHO - 74, cy), f"{pts}", font=_f(34, True), fill=texto_c, anchor="rm")
         d.text((ANCHO - 74 - d.textlength(str(pts), font=_f(34, True)) - 10, cy + 3), "pts",
                font=_f(20), fill=texto_c, anchor="rm")
