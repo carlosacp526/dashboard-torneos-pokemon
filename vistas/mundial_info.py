@@ -127,8 +127,8 @@ def _calcular_puntos(tipos, posiciones, ligas_list, df_raw):
                 rank    = row["RANK"]
                 if rank == 1:
                     pts, pos = tabla.get("Campeón", 0), "Campeón"
-                elif rank <= 3:
-                    pts, pos = tabla.get("Top3", 0), "Top3"
+                elif rank <= (4 if prefijo in ("PLS", "PGS") else 3):   # PLS/PGS: la tabla oficial paga al Top4
+                    pts, pos = tabla.get("Top3", 0), ("Top4" if prefijo in ("PLS", "PGS") else "Top3")
                 else:
                     pts, pos = tabla.get("Participante", 0), "Participante"
                 puntos_jugador[jugador] = puntos_jugador.get(jugador, 0) + pts
@@ -253,8 +253,8 @@ def _calcular_puntos_por_formato(tipos, posiciones, ligas_dict, df_raw, penalida
                 rank    = row["RANK"]
                 if rank == 1:
                     pts, pos = tabla.get("Campeón", 0), "Campeón"
-                elif rank <= 3:
-                    pts, pos = tabla.get("Top3", 0), "Top3"
+                elif rank <= (4 if prefijo in ("PLS", "PGS") else 3):   # PLS/PGS: la tabla oficial paga al Top4
+                    pts, pos = tabla.get("Top3", 0), ("Top4" if prefijo in ("PLS", "PGS") else "Top3")
                 else:
                     pts, pos = tabla.get("Participante", 0), "Participante"
                 rankings[liga_fmt][jugador] = rankings[liga_fmt].get(jugador, 0) + pts
