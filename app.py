@@ -185,6 +185,16 @@ section[data-testid="stSidebar"] [data-testid="stNavSectionHeader"] {
     border-radius: 4px 8px 0 0;
     font-weight: 700;
 }
+/* Móvil: menos margen superior y padding lateral */
+@media (max-width: 640px) {
+    [data-testid="stMainBlockContainer"], .block-container {
+        padding-top: 2.5rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+    h1 { font-size: 1.7rem !important; }
+    [data-testid="stDataFrame"], [data-testid="stTable"] { overflow-x: auto; }
+}
 </style>
 """, unsafe_allow_html=True)
 

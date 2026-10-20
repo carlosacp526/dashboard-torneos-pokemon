@@ -23,6 +23,8 @@ from utils import load_data
 from vistas import mundial_info as mi
 
 TOP_N = 16
+# Temporadas de liga que forman parte del Mundial Monotype I (cuentan para el win rate junto con los torneos)
+LIGAS_MONOTYPE = ["PJST6", "PEST3"]
 SALIDA = "rankings_monotype"
 FUENTE = r"C:\Windows\Fonts\bahnschrift.ttf"
 FUENTE_B = r"C:\Windows\Fonts\arialbd.ttf"
@@ -50,11 +52,13 @@ def _gradiente(c1, c2, ancho, alto):
 
 def _winrates(df_raw):
     """Win rate por formato y jugador, con las batallas definidas, walkovers incluidos (Walkover >= 0; -1 = pendiente) de los torneos del
-    Mundial Monotype I que pertenecen a ese formato (MONOTYPE1_POSICIONES). Devuelve {fmt: {jugador: (wr %, juegos)}}."""
+    Mundial Monotype I que pertenecen a ese formato (MONOTYPE1_POSICIONES) y de las ligas PJS T6 y PES T3. Devuelve {fmt: {jugador: (wr %, juegos)}}."""
     out = {}
     for fmt in ("SINGLES", "DOBLES", "VGC"):
         torneos = _torneos_fmt(fmt)
-        g = df_raw[(df_raw["league"] == "TORNEO") & (df_raw["N_Torneo"].isin(torneos))
+        en_torneo = (df_raw["league"] == "TORNEO") & (df_raw["N_Torneo"].isin(torneos))
+        en_liga = (df_raw["league"] == "LIGA") & (df_raw["Aka_evento"].isin(LIGAS_MONOTYPE))
+        g = df_raw[(en_torneo | en_liga)
                    & (df_raw["Formato"].astype(str).str.upper() == fmt) & (df_raw["Walkover"] >= 0)]
         res = {}
         for p1, p2, w in zip(g["player1"], g["player2"], g["winner"]):

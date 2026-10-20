@@ -417,7 +417,7 @@ MONOTYPE1_POSICIONES = {
         "Saga":     "Top40",
         "The.Ultracheese":     "Top40",
         "skll02":     "Top40",
-        "Hallacas":     "Top40",
+        "HallacAs":     "Top40",
         "D'AllFather":     "Top40",
         "Blazing":     "Top40",
 
@@ -535,7 +535,7 @@ MONOTYPE1_POSICIONES = {
         "Draco axel":     "Top16",
         "Fur4nko":     "Top16",
         "GatitaGolosa123":     "Top16",
-        "Hallacas":     "Top16",
+        "HallacAs":     "Top16",
         "HaoSigismondi":     "Top16",
         "Ger":     "Top16"
 
@@ -561,7 +561,7 @@ MONOTYPE1_POSICIONES = {
         "jztrkr":     "Top16",
         "MafiaPolar6242":     "Top16",
         "Moirix":     "Top16",
-        "mounstronio":     "Top16",
+        "Monstruonio":     "Top16",
 
         "Arnau":     "Top24",
         "CaradeCoso":     "Top24",
@@ -584,7 +584,7 @@ MONOTYPE1_POSICIONES = {
 
         "afroier":     "Top40",
         "Fabricio19jr":     "Top40",
-        "Hallacas":     "Top40",
+        "HallacAs":     "Top40",
         "2DpkmN":     "Top40",
         "Haseo":     "Top40",
         "MigueR34":     "Top40",
@@ -780,7 +780,7 @@ MONOTYPE1_POSICIONES = {
 
 
         "MafiaPolar6242":     "Top16",
-        "The.Ultracheese	":     "Top16",
+        "The.Ultracheese":     "Top16",
         "Saga":     "Top16",
         "Bloody Cheese":     "Top16",
         "Angello77":     "Top16",
