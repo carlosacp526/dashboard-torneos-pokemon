@@ -79,6 +79,16 @@ h1 { letter-spacing: -0.02em; line-height: 1.1; }
 /* Imágenes: contorno interior de 1px sin tinte, separa la imagen del fondo */
 [data-testid="stImage"] img { outline: 1px solid rgba(127, 127, 127, 0.2); outline-offset: -1px; border-radius: 8px; }
 
+/* Tarjetas con borde de color (podios, rangos, tiers): el color es un anillo de box-shadow, no un
+   border plano, así se puede sumar una sombra ambiental y una elevación al hover sin dos capas
+   compitiendo. Cada vista arma su propio box-shadow con su color (ver _tarjeta_podio en elo.py); esta
+   clase solo pone la transición y el hover compartidos. */
+.pk-rankcard {
+    border-radius: 12px;
+    transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease;
+}
+.pk-rankcard:hover { transform: translateY(-3px); }
+
 /* Logros: la grilla de tarjetas (8 columnas) entra en cascada; las desbloqueadas llevan un destello único */
 @keyframes pk-shine {
     from { transform: translateX(-130%) skewX(-20deg); }

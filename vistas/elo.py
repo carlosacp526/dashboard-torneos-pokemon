@@ -336,6 +336,20 @@ def _pais_con_bandera(pais: str) -> str:
     return f'<span style="white-space:nowrap">{img}{pais}</span>' if img else pais
 
 
+def _tarjeta_podio(color, medalla, jugador, valor, etiqueta, pais=None):
+    """Tarjeta de podio (1ro/2do/3er lugar): el color de rango es un anillo de box-shadow en vez de
+    un border plano, así se suma una sombra ambiental y el hover (.pk-rankcard, ver motion.py) eleva
+    la tarjeta sin que las dos capas compitan."""
+    pais_html = f'<div style="font-size:0.85rem;color:#aaa">{pais}</div>' if pais else ""
+    return f"""<div class="pk-rankcard" style="background:linear-gradient(135deg,{color}22,{color}44);
+box-shadow:0 0 0 2px {color},0 4px 12px rgba(0,0,0,.16);padding:16px;text-align:center">
+<div style="font-size:2rem">{medalla}</div>
+<div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
+{pais_html}
+<div style="font-size:1.5rem;font-weight:bold;color:{color}">{valor}</div>
+<div style="font-size:0.8rem;color:#aaa">{etiqueta}</div></div>"""
+
+
 def show():
     df_raw = load_data()
 
@@ -363,15 +377,7 @@ def show():
             jugador = top10.loc[idx, 'Participantes']
             elo_val = int(top10.loc[idx, 'Elo'])
             pais_val = _pais_con_bandera(top10.loc[idx, 'Pais'])
-            st.markdown(f"""
-            <div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
-                        border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:center">
-                <div style="font-size:2rem">{medallas[idx]}</div>
-                <div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
-                <div style="font-size:0.85rem;color:#aaa">{pais_val}</div>
-                <div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
-                <div style="font-size:0.8rem;color:#aaa">ELO</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(_tarjeta_podio(colores[idx], medallas[idx], jugador, elo_val, "ELO", pais_val), unsafe_allow_html=True)
             # imagen del jugador
             path = buscar_imagen_jugador(jugador)
             if path:
@@ -636,12 +642,7 @@ def show():
                     with podio_f[idx]:
                         jugador = top10_fmt.loc[idx,'Participantes']
                         elo_val = int(top10_fmt.loc[idx,'Elo'])
-                        st.markdown(f"""<div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
-border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:center">
-<div style="font-size:2rem">{medallas[idx]}</div>
-<div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
-<div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
-<div style="font-size:0.8rem;color:#aaa">ELO {formato}</div></div>""", unsafe_allow_html=True)
+                        st.markdown(_tarjeta_podio(colores[idx], medallas[idx], jugador, elo_val, f"ELO {formato}"), unsafe_allow_html=True)
                         path = buscar_imagen_jugador(jugador)
                         if path:
                             st.image(path, width=100)
@@ -705,12 +706,7 @@ border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:cente
                     with podio_t[idx]:
                         jugador = top10_tier.loc[idx,'Participantes']
                         elo_val = int(top10_tier.loc[idx,'Elo'])
-                        st.markdown(f"""<div style="background:linear-gradient(135deg,{colores[idx]}22,{colores[idx]}44);
-border:2px solid {colores[idx]};border-radius:12px;padding:16px;text-align:center">
-<div style="font-size:2rem">{medallas[idx]}</div>
-<div style="font-weight:bold;font-size:1.1rem">{jugador}</div>
-<div style="font-size:1.5rem;font-weight:bold;color:{colores[idx]}">{elo_val}</div>
-<div style="font-size:0.8rem;color:#aaa">ELO {tier}</div></div>""", unsafe_allow_html=True)
+                        st.markdown(_tarjeta_podio(colores[idx], medallas[idx], jugador, elo_val, f"ELO {tier}"), unsafe_allow_html=True)
                         path = buscar_imagen_jugador(jugador)
                         if path:
                             st.image(path, width=100)

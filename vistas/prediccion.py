@@ -277,7 +277,7 @@ def _render_player_card(nombre, stats, color, df_j):
     total  = stats["total_juegos"]
 
     st.markdown(f"""
-    <div style="border:2px solid {color};border-radius:14px;padding:18px 20px;background:{color}11">
+    <div class="pk-rankcard" style="box-shadow:0 0 0 2px {color},0 3px 10px rgba(0,0,0,.12);border-radius:14px;padding:18px 20px;background:{color}11">
         <div style="font-size:1.35rem;font-weight:700;color:{color};margin-bottom:6px">🎮 {nombre}</div>
         <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:10px">
             <div style="text-align:center">
@@ -513,8 +513,8 @@ def show():
                 clr    = "#2ecc71" if es_fav else "#e74c3c"
                 with col:
                     st.markdown(f"""
-                    <div style="text-align:center;padding:22px;background:{clr}22;
-                                border:2px solid {clr};border-radius:14px">
+                    <div class="pk-rankcard" style="text-align:center;padding:22px;background:{clr}22;
+                                box-shadow:0 0 0 2px {clr},0 3px 10px rgba(0,0,0,.14);border-radius:14px">
                         <div style="font-size:1.3rem;font-weight:bold">{jug}</div>
                         <div style="font-size:2.8rem;font-weight:800;color:{clr}">{pjug*100:.1f}%</div>
                         {"<div style='font-size:0.9rem;font-weight:600;color:"+clr+"'>⭐ FAVORITO</div>" if es_fav else ""}

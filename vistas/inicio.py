@@ -131,8 +131,7 @@ CARD_CSS = """
 .nav-card, .stat-card {
     background: linear-gradient(135deg, #2C1B4E 0%, #4A2F82 100%);
     border-radius: 18px; padding: 1.3rem 1.4rem; margin-bottom: 0.7rem; height: 100%;
-    box-shadow: 0 8px 22px rgba(0,0,0,0.35);
-    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 8px 22px rgba(0,0,0,0.35);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stat-card { text-align: center; padding: 0.9rem 0.5rem; }

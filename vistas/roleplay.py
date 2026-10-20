@@ -227,7 +227,7 @@ def show():
 
                 with col:
                     st.markdown(f"""
-<div style="background:#1B2B3B;border:1px solid {bg_e};border-radius:10px;
+<div class="pk-rankcard" style="background:#1B2B3B;box-shadow:0 0 0 1px {bg_e},0 2px 8px rgba(0,0,0,.25);border-radius:10px;
             padding:14px;margin-bottom:8px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
     <div style="font-weight:bold;color:#ECF0F1;font-size:0.95em">{eq['Equipo']}</div>

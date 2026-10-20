@@ -372,7 +372,7 @@ def show():
             prom = float(row.get('PROMEDIO', 0))
             with col:
                 st.markdown(f"""
-<div style="background:{color}22;border:2px solid {color};border-radius:10px;
+<div class="pk-rankcard" style="background:{color}22;box-shadow:0 0 0 2px {color},0 3px 10px rgba(0,0,0,.12);
             padding:12px;text-align:center;margin-bottom:8px">
   <div style="font-size:1.4em;font-weight:bold;color:{color}">{idx}</div>
   <div style="font-size:0.7em;color:#888">{fmt}</div>
@@ -627,8 +627,8 @@ Cuantos más de esos 7 puntos cumpla, más alto sube en la escala de 5 niveles.
             score = int(row.get(idc, 0))
             lbl, clr = SCORE_LABELS.get(score, ("⚫", "#95A5A6"))
             col.markdown(
-                f'<div style="text-align:center;padding:8px;background:{clr}22;'
-                f'border:1px solid {clr};border-radius:8px">'
+                f'<div class="pk-rankcard" style="text-align:center;padding:8px;background:{clr}22;'
+                f'box-shadow:0 0 0 1px {clr},0 2px 6px rgba(0,0,0,.1);border-radius:8px">'
                 f'<div style="font-size:0.7em;color:#666">{ID_LABELS.get(idc,idc)}</div>'
                 f'<div style="font-size:1.5em;font-weight:bold;color:{clr}">{score}</div>'
                 f'<div style="font-size:0.65em;color:{clr}">{lbl}</div></div>',

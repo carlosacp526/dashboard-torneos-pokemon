@@ -169,7 +169,8 @@ def show():
 .poketubi-ticker-wrap {{
     width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box;
     background: linear-gradient(90deg, rgba(155,89,182,0.18), rgba(233,30,99,0.18));
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.12);
+    border-radius: 10px;
     padding: 20px 0; margin-bottom: 16px;
 }}
 .poketubi-ticker-move {{
@@ -208,8 +209,10 @@ def show():
     st.markdown("""
     <style>
     .kpi-card{background:linear-gradient(180deg,#ffffff 0%,#f6f8fb 100%);
-        border:1px solid #e8e8ee;border-radius:14px;padding:14px 16px 12px;
-        box-shadow:0 2px 10px rgba(20,20,40,0.07);height:100%;}
+        border-radius:14px;padding:14px 16px 12px;
+        box-shadow:0 0 0 1px rgba(20,20,40,0.06),0 1px 2px rgba(20,20,40,0.06),0 2px 10px rgba(20,20,40,0.07);
+        transition:transform 200ms cubic-bezier(0.2,0,0,1),box-shadow 200ms ease;height:100%;}
+    .kpi-card:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(20,20,40,0.1),0 4px 14px rgba(20,20,40,0.12);}
     .kpi-icon{font-size:20px;line-height:1;margin-bottom:6px;}
     .kpi-value{font-size:26px;font-weight:800;color:#14142b;line-height:1.15;}
     .kpi-label{font-size:11.5px;color:#6b7280;text-transform:uppercase;
