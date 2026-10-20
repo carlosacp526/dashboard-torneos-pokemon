@@ -79,8 +79,9 @@ PUNTAJES = {
     "PSS": {"Campeón": 100, "Top3": 60,  "Participante": 30},
     "PES": {"Campeón": 80,  "Top3": 40,  "Participante": 20},
     "PJS": {"Campeón": 50,  "Top3": 25,  "Participante": 10},
-    "PLS": {"Campeón": 200, "Top3": 120, "Participante": 50},
-    "PGS": {"Campeón": 200, "Top3": 120, "Participante": 50},   # mismo puntaje que Legends
+    # PLS y PGS: la tabla oficial (mundial/PUNTAJES_MUNDIAL3.png) paga los 120 al Top4; se deja Top3 por compatibilidad con el calculo automatico
+    "PLS": {"Campeón": 200, "Top3": 120, "Top4": 120, "Participante": 50},
+    "PGS": {"Campeón": 200, "Top3": 120, "Top4": 120, "Participante": 50},   # mismo puntaje que Legends
 }
 
 
