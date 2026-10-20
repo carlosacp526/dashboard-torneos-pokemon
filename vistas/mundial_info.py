@@ -80,6 +80,7 @@ PUNTAJES = {
     "PES": {"Campeón": 80,  "Top3": 40,  "Participante": 20},
     "PJS": {"Campeón": 50,  "Top3": 25,  "Participante": 10},
     "PLS": {"Campeón": 200, "Top3": 120, "Participante": 50},
+    "PGS": {"Campeón": 200, "Top3": 120, "Participante": 50},   # mismo puntaje que Legends
 }
 
 
