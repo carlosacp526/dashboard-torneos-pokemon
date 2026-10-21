@@ -362,6 +362,7 @@ MONOTYPE1_TIPOS = {
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
     ,81:"GRANDE",82:"MEDIANO",83:"GRANDE",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
     ,87:"MEDIANO"
+    ,89:"MEDIANO"   # CHAMPIONS BSS M-C, 16 jugadores
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -895,7 +896,19 @@ MONOTYPE1_POSICIONES = {
             "D'AllFather":     "Top8",
     
     
-            }} 
+            }},
+    # T89 CHAMPIONS BSS M-C (Singles, 16 jugadores, llave: octavos -> final). Posiciones tomadas de la llave real del CSV.
+    89: {
+          "SINGLES": {
+            "Peruano Tactico": "Campeón",
+            "SasoriVzla7":     "Subcampeón",
+            "Chris FPS":       "Top4",
+            "Bloody Cheese":   "Top4",
+            "Angelowos":       "Top8",
+            "skll02":          "Top8",
+            "Jaspersd25":      "Top8",
+            "Fur4nko":         "Top8",
+            }}
         }
 MONOTYPE1_LIGAS = {
     "PJS": {
