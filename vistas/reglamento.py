@@ -382,8 +382,8 @@ def show():
         st.caption("Cuándo y cómo se aplica el Walkover en torneos Poketubi")
 
         st.markdown('<div class="regl-section-label">Antes del partido</div>', unsafe_allow_html=True)
-        _step(1, "Coordiná bien la fecha",
-              "Acordá con tu rival el día + hora + zona horaria con anticipación. Se debe llegar a un "
+        _step(1, "Coordina bien la fecha",
+              "Acuerda con tu rival el día + hora + zona horaria con anticipación. Se debe llegar a un "
               "acuerdo claro entre ambas partes antes de jugar.")
         _step(2, "El primero en contactar y dar fechas accesibles tiene la prioridad",
               "Quien contacta primero y ofrece fechas concretas y accesibles tiene la prioridad del WO "
@@ -393,24 +393,30 @@ def show():
               "Cuenta como sin respuesta si el rival dice cosas como \"aún no armo team\" o no ofrece "
               "una fecha concreta y accesible. El conteo oficial comienza desde ese mensaje.",
               "Conteo activo")
-        _step(4, "48 horas sin respuesta válida → WO automático",
-              "Si en 48 horas el rival no responde o solo da respuestas vagas sin fecha accesible, el "
-              "WO es automático a favor de quien contactó primero. No necesitás pedirlo.",
-              "WO automático")
+        _step(4, "Torneo: 24 horas sin respuesta válida → WO automático",
+              "En Torneo el plazo es de 24 horas: si el rival no responde o solo da respuestas vagas "
+              "sin fecha accesible, el WO es automático a favor de quien contactó primero. No "
+              "necesitas pedirlo.",
+              "WO automático · Torneo")
+        _step(5, "Liga: 48 horas sin respuesta válida → WO automático",
+              "En Liga el plazo es de 48 horas: si el rival no responde o solo da respuestas vagas "
+              "sin fecha accesible, el WO es automático a favor de quien contactó primero. No "
+              "necesitas pedirlo.",
+              "WO automático · Liga")
 
         st.markdown('<div class="regl-section-label">El día del partido</div>', unsafe_allow_html=True)
-        _step(5, "Hora confirmada — se espera al rival",
-              "Con la hora acordada, ambos deben estar disponibles a tiempo. El que llegó espera al otro.")
-        _step(6, "15 minutos de tolerancia",
-              "Si tu rival no aparece pasados 15 minutos de la hora acordada, podés solicitar el WO al staff.",
+        _step(6, "Hora confirmada — se espera al rival",
+              "Con la hora acordada, ambos deben estar disponibles a tiempo.")
+        _step(7, "15 minutos de tolerancia",
+              "Si tu rival no aparece pasados 15 minutos de la hora acordada, puedes solicitar el WO al staff.",
               "Se puede pedir WO")
 
         st.markdown('<div class="regl-section-label">Evidencia y validación</div>', unsafe_allow_html=True)
-        _step(7, "Capturas de pantalla obligatorias",
-              "Guardá capturas de la coordinación, la hora acordada y la ausencia del rival. Sin "
+        _step(8, "Capturas de pantalla obligatorias",
+              "Guarda capturas de la coordinación, la hora acordada y la ausencia del rival. Sin "
               "evidencia, el staff no puede validar el WO.")
-        _step(8, "Staff valida — resultado oficial",
-              "Solo el staff puede confirmar el WO como resultado oficial. Enviá tu evidencia y esperá "
+        _step(9, "Staff valida — resultado oficial",
+              "Solo el staff puede confirmar el WO como resultado oficial. Envía tu evidencia y espera "
               "la resolución.",
               "✔ Resultado oficial")
 
