@@ -12,8 +12,16 @@ LOGOS_LIGAS = {
 }
 
 @st.cache_data(ttl=3600)
-def load_data():
+def _leer_csv(mtime):
+    # mtime solo sirve de clave de caché: si el CSV cambia (nuevo deploy), se vuelve a leer sin reboot.
     return pd.read_csv("archivo_preuba1.csv", sep=";")
+
+def load_data():
+    try:
+        mtime = os.path.getmtime("archivo_preuba1.csv")
+    except OSError:
+        mtime = 0
+    return _leer_csv(mtime)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
