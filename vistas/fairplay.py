@@ -40,9 +40,27 @@ def show():
     st.subheader("📈 Tendencia de Walkovers por mes")
     j = jugadas.dropna(subset=['date']).copy()
     j['Mes'] = j['date'].dt.to_period('M').dt.to_timestamp()
-    tend = j.groupby('Mes').agg(Total=('Walkover', 'size'), WO=('Walkover', lambda s: (s == 1).sum())).reset_index()
-    tend['WO%'] = (tend['WO'] / tend['Total'] * 100).round(1)
-    fig_tend = px.line(tend, x='Mes', y='WO%', markers=True)
+    dims = {"General": None, "Tipo de evento": "league", "Tier": "Tier", "Formato": "Formato"}
+    dims = {k: v for k, v in dims.items() if v is None or v in j.columns}
+    ver_por = st.radio("Ver por", list(dims), horizontal=True, key="fp_tend_dim")
+    col_dim = dims[ver_por]
+
+    if col_dim is None:
+        tend = j.groupby('Mes').agg(Total=('Walkover', 'size'), WO=('Walkover', lambda s: (s == 1).sum())).reset_index()
+        tend['WO%'] = (tend['WO'] / tend['Total'] * 100).round(1)
+        fig_tend = px.line(tend, x='Mes', y='WO%', markers=True, hover_data=['Total', 'WO'])
+    else:
+        j = j.dropna(subset=[col_dim]).copy()
+        j[col_dim] = j[col_dim].astype(str)
+        volumen = j[col_dim].value_counts()
+        sel = st.multiselect(ver_por, list(volumen.index), default=list(volumen.index[:5 if col_dim == 'Tier' else 10]),
+                             key="fp_tend_sel", help="Ordenados por cantidad de partidas")
+        j = j[j[col_dim].isin(sel)]
+        tend = (j.groupby(['Mes', col_dim])
+                  .agg(Total=('Walkover', 'size'), WO=('Walkover', lambda s: (s == 1).sum())).reset_index())
+        tend['WO%'] = (tend['WO'] / tend['Total'] * 100).round(1)
+        fig_tend = px.line(tend, x='Mes', y='WO%', color=col_dim, markers=True, hover_data=['Total', 'WO'])
+        st.caption("Los meses con pocas partidas se mueven mucho (ver 'Total' al pasar el mouse).")
     fig_tend.add_hline(y=wo_pct, line_dash='dot', line_color='gray',
                         annotation_text=f'Promedio global {wo_pct}%')
     fig_tend.update_layout(template='plotly_dark', margin=dict(l=10, r=10, t=10, b=10))
