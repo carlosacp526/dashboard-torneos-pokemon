@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
-import os
+import os, io, base64
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import buscar_imagen_jugador
 
 # ── Configuración ─────────────────────────────────────────────────────────────
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "guerra_mafias_3.xlsx")
@@ -35,6 +38,14 @@ GRUPOS = {
     "Grupo 8": ("#6C5CE7", ["Willy", "Mouka", "Ricomam", "Nesha H"]),
 }
 
+CANON = {n.lower(): n for _, (_c, _js) in GRUPOS.items() for n in _js}
+
+
+def _canon(j):
+    """Nombre de la lista de la mafia -> nombre usado en los grupos."""
+    return CANON.get(ALIAS_MAFIA.get(j, j).strip().lower(), j)
+
+
 # El Excel mezcla nombres de Showdown, de la grilla y del afiche; todo se lleva al nombre del afiche.
 ALIAS_EXCEL = {
     "ger": "Gerr", "sr wolf": "Aldo", "davarv": "David", "clauz": "Star", "skll02": "Lee",
@@ -60,6 +71,49 @@ def _img(nombre):
         st.image(ruta, use_container_width=True)
 
 
+# Las fotos están guardadas con el nombre de Showdown/CSV; se prueba el del afiche y sus alias.
+FOTO_EXTRA = {"Mochila": ["Fran_Guarderia", "Fran"], "Chris": ["Chris_FPS"], "Aldo": ["Sr Wolf"], "Star": ["Clauz"],
+              "Leo F": ["Nube"], "Jesus": ["Jesus"], "Pirica": ["Necrozzz"]}
+
+
+@st.cache_data(show_spinner=False)
+def _foto_uri(nombre, lado=72):
+    """Foto del jugador (cuadrada, miniatura) como data URI; si no tiene, la imagen Desconocido."""
+    cands = [nombre] + FOTO_EXTRA.get(nombre, []) + [k for k, v in ALIAS_EXCEL.items() if v == nombre]
+    ruta = None
+    for c in cands:
+        ruta = buscar_imagen_jugador(c)
+        if ruta:
+            break
+    ruta = ruta or buscar_imagen_jugador("Desconocido")
+    if not ruta:
+        return None
+    try:
+        from PIL import Image
+        im = Image.open(ruta).convert("RGBA")
+        w, h = im.size
+        m = min(w, h)
+        im = im.crop(((w - m) // 2, 0, (w - m) // 2 + m, m)).resize((lado, lado))
+        fondo = Image.new("RGB", im.size, (30, 30, 40))
+        fondo.paste(im, mask=im.split()[3])
+        buf = io.BytesIO()
+        fondo.save(buf, "JPEG", quality=80)
+        return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return None
+
+
+def _con_foto(df):
+    out = df.copy()
+    out.insert(0, "Foto", [_foto_uri(j) for j in out["Jugador"]])
+    return out
+
+
+def _cfg():
+    return {"Foto": st.column_config.ImageColumn("Foto", width="small"),
+            "WR%": st.column_config.ProgressColumn("WR%", min_value=0, max_value=100, format="%.0f%%")}
+
+
 @st.cache_data(ttl=3600)
 def _cargar():
     if not os.path.exists(DATA_PATH):
@@ -77,10 +131,14 @@ def _cargar():
 
 
 def _card(titulo, color, jugadores):
-    items = "".join(f"<li>{j}</li>" for j in jugadores)
+    items = "".join(
+        f'<li style="list-style:none;display:flex;align-items:center;gap:8px;margin:4px 0">'
+        f'<img src="{_foto_uri(_canon(j))}" '
+        f'style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1px solid {color}"> {j}</li>'
+        for j in jugadores)
     return (f'<div style="border:2px solid {color};border-radius:12px;padding:12px 16px;margin-bottom:12px;'
             f'background:{color}1A"><div style="font-weight:800;font-size:1.05em;color:{color};margin-bottom:6px">{titulo}</div>'
-            f'<ul style="margin:0;padding-left:18px">{items}</ul></div>')
+            f'<ul style="margin:0;padding-left:0">{items}</ul></div>')
 
 
 def _standings(bat, pts, grupo, jugadores):
@@ -93,6 +151,7 @@ def _standings(bat, pts, grupo, jugadores):
         pt = pts[(pts["Grupo"] == grupo) & (pts["Jugador"] == p)]["Puntos"]
         pt = pt.iloc[0] if len(pt) and pd.notna(pt.iloc[0]) else None
         rows.append({"Jugador": p, "Jugadas": len(jug), "V": v, "D": len(jug) - v,
+                     "WR%": round(v / len(jug) * 100) if len(jug) else 0,
                      "Puntos": None if pt is None else int(pt)})
     df = pd.DataFrame(rows).sort_values(["V", "Puntos"], ascending=False, na_position="last").reset_index(drop=True)
     df.index += 1
@@ -106,7 +165,7 @@ def _ladder(bat, pts):
         st_g = _standings(bat, pts, g, jug)
         for _, r in st_g.iterrows():
             rows.append({"Jugador": r["Jugador"], "Mafia": MAFIA_DE.get(r["Jugador"].lower(), "?"), "Grupo": g,
-                         "Jugadas": r["Jugadas"], "V": r["V"], "D": r["D"],
+                         "Jugadas": r["Jugadas"], "V": r["V"], "D": r["D"], "WR%": r["WR%"],
                          "Puntos": 0 if pd.isna(r["Puntos"]) else int(r["Puntos"])})
     df = pd.DataFrame(rows).sort_values(["Puntos", "V", "D"], ascending=[False, False, True]).reset_index(drop=True)
     df.index += 1
@@ -163,7 +222,7 @@ def show():
         st.markdown(_matriz_html(lad), unsafe_allow_html=True)
 
         st.subheader("🪜 Ladder de todos los jugadores")
-        st.dataframe(lad, use_container_width=True)
+        st.dataframe(_con_foto(lad), use_container_width=True, column_config=_cfg(), row_height=44)
 
         st.subheader("📊 Posiciones por grupo")
         st.caption("V/D se calculan con las batallas registradas; Puntos es el puntaje anotado por el organizador.")
@@ -172,7 +231,7 @@ def show():
             for col, (nombre, (color, jug)) in zip(cols, fila):
                 with col:
                     st.markdown(f"**{nombre}**")
-                    st.dataframe(_standings(bat, pts, nombre, jug), use_container_width=True)
+                    st.dataframe(_con_foto(_standings(bat, pts, nombre, jug)), use_container_width=True, column_config=_cfg(), row_height=44)
 
     with tab_bat:
         st.subheader("⚔️ Batallas de la fase de grupos")
