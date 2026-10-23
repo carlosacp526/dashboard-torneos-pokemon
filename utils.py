@@ -231,18 +231,21 @@ def generar_tabla_temporada(df_base, lt):
     tabla = df_fase[['Participante','Victorias','score_completo','Juegos']].copy()
     tabla['PUNTOS'] = tabla['Victorias']
     tabla = tabla.rename(columns={'Participante':'AKA','score_completo':'SCORE','Juegos':'JORNADAS'})
+    if 'Jornadas_term' in df_fase.columns:
+        tabla['JORNADAS'] = df_fase['Jornadas_term'].astype(int)
     tabla['SCORE'] = tabla['SCORE'].round(2)
     tabla = tabla.sort_values(['Victorias','SCORE'], ascending=[False,False]).reset_index(drop=True)
     tabla['RANK'] = range(1, len(tabla)+1)
     total = len(tabla)
     tabla['ZONA'] = tabla['RANK'].apply(lambda x: asignar_zona(x, total, lt))
-    if lt in ('PJST1','PJST2','PJST3','PJST4','PJST5','PJST6',
-              'PEST1','PEST2',"PEST3",'PSST1','PSST2','PSST3','PSST4','PSST5','PSST6',
-              'PMST1','PMST2','PMST3'):
-        tabla["JORNADAS"] = (tabla["JORNADAS"] / 3).apply(int)
-    if lt in ('PMST4','PMST5','PMST6','PMST7'): tabla["JORNADAS"] = 5
-    if lt == 'PLST1': tabla["JORNADAS"] = [7,7,6,6,5,5,5,5,5,5,5,5]
-    
+    if 'Jornadas_term' not in df_fase.columns:
+        if lt in ('PJST1','PJST2','PJST3','PJST4','PJST5','PJST6',
+                  'PEST1','PEST2',"PEST3",'PSST1','PSST2','PSST3','PSST4','PSST5','PSST6',
+                  'PMST1','PMST2','PMST3'):
+            tabla["JORNADAS"] = (tabla["JORNADAS"] / 3).apply(int)
+        if lt in ('PMST4','PMST5','PMST6','PMST7'): tabla["JORNADAS"] = 5
+        if lt == 'PLST1': tabla["JORNADAS"] = [7,7,6,6,5,5,5,5,5,5,5,5]
+
     return tabla[['RANK','AKA','PUNTOS','SCORE','ZONA','JORNADAS','Victorias']].copy()
 
 def generar_tabla_torneo(df_base, torneo_num):
@@ -434,6 +437,22 @@ def obtener_banner_torneo(num_torneo):
 
 @st.cache_data(ttl=3600)
 def build_base_liga(df):
+    # Jornadas terminadas por jugador: las que no tienen ninguna batalla suya pendiente (Walkover == -1).
+    _l = df[df.league == "LIGA"].copy()
+    _l["Liga_Temporada"] = _l["round"].apply(
+        lambda x: str(x).split(" ")[0]+str(x).split(" ")[1]
+        if pd.notna(x) and len(str(x).split(" ")) > 1 else ""
+    )
+    _l = _l[_l["Liga_Temporada"] != ""]
+    _larg = pd.concat([
+        _l[["Liga_Temporada","N_Torneo","player1","Walkover"]].rename(columns={"player1":"Participante"}),
+        _l[["Liga_Temporada","N_Torneo","player2","Walkover"]].rename(columns={"player2":"Participante"})])
+    _larg["pend"] = _larg["Walkover"] < 0
+    _jt = (_larg.groupby(["Liga_Temporada","Participante","N_Torneo"])["pend"].any()
+                .reset_index())
+    _jt = (_jt[~_jt["pend"]].groupby(["Liga_Temporada","Participante"]).size()
+              .reset_index(name="Jornadas_term"))
+
     df = df[df.Walkover>=0].copy()
     df_liga = df[df.league == "LIGA"].copy()
     df_liga["Liga_Temporada"] = df_liga["round"].apply(
@@ -473,6 +492,8 @@ def build_base_liga(df):
     base["pokes_sobrevivientes"] = base["pokes_sobrevivientes"].fillna(0)
     base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
     base = base.drop(columns=["Partidas_P1","Partidas_P2"])
+    base = pd.merge(base, _jt, how="left", on=["Liga_Temporada","Participante"])
+    base["Jornadas_term"] = base["Jornadas_term"].fillna(0).astype(int)
     return score_final(base), df_liga
 
 @st.cache_data(ttl=3600)
