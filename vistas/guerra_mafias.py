@@ -13,6 +13,16 @@ MAFIAS = {
     "Los roba gimmi ghouls": ("#B07CF0", ["Chris fps", "Terry", "Aldo", "Wlaimer", "Polar", "Dany", "Leo furro", "Nesha"]),
 }
 
+# Nombre en la lista de la mafia -> nombre usado en los grupos.
+ALIAS_MAFIA = {
+    "Leo gay": "Leo", "Leo furro": "Leo F", "David Ramirez": "David", "pirica": "Pirica", "adpg alt": "Mouka",
+    "Chris fps": "Chris", "Dany": "Dany P", "Nesha": "Nesha H",
+}
+MAFIA_DE = {}
+for _m, (_c, _js) in MAFIAS.items():
+    for _j in _js:
+        MAFIA_DE[ALIAS_MAFIA.get(_j, _j).strip().lower()] = _m
+
 # Grupos de la fase de grupos (4 jugadores c/u), en el orden del afiche.
 GRUPOS = {
     "Grupo 1": ("#E74C3C", ["Uriel", "Arnau", "Gerr", "Aldo"]),
@@ -25,24 +35,20 @@ GRUPOS = {
     "Grupo 8": ("#6C5CE7", ["Willy", "Mouka", "Ricomam", "Nesha H"]),
 }
 
-# El Excel de batallas usa los nombres de la grilla de cada grupo; el afiche usa otros
-# para los mismos cupos. Se mapean por posición dentro del grupo.
+# El Excel mezcla nombres de Showdown, de la grilla y del afiche; todo se lleva al nombre del afiche.
 ALIAS_EXCEL = {
-    "Equipo 1": {"Sr Wolf": "Aldo"},
-    "Equipo 2": {"Clauz": "Star"},
-    "Equipo 3": {"Fran": "Mochila"},
-    "Equipo 4": {"Nube": "Leo F"},
-    "Equipo 5": {"Necrozzz": "Pirica"},
-    "Equipo 7": {"Jesus": "Leo"},
-    "Equipo 8": {"Bamdara": "Nesha H"},
+    "ger": "Gerr", "sr wolf": "Aldo", "davarv": "David", "clauz": "Star", "skll02": "Lee",
+    "gatitagolosa123": "Kroko", "fran": "Mochila", "chris fps": "Chris",
+    "shinkahma": "Adri", "hydreigon_chelas": "Josar", "peruano tactico": "Alvaro", "saga": "Leo F", "nube": "Leo F",
+    "necroz": "Pirica", "necrozzz": "Pirica", "draco axel": "Draco",
+    "drixxard": "Pou", "elin beacil": "Elin", "okari958": "Israel", "mafiapolar6242": "Polar",
+    "aikauwu": "Aika", "jesus": "Leo", "porygon z": "Zanty", "zanty": "Zanty",
+    "adpg": "Mouka", "bamdara": "Nesha H",
 }
-IMG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "imagenes_mafias")
 
 
-def _img(nombre):
-    ruta = os.path.join(IMG_DIR, nombre)
-    if os.path.exists(ruta):
-        st.image(ruta, use_container_width=True)
+def _norm(x):
+    return ALIAS_EXCEL.get(str(x).strip().lower(), x) if pd.notna(x) else x
 
 
 @st.cache_data(ttl=3600)
@@ -55,12 +61,9 @@ def _cargar():
         df["Equipo"] = df["Equipo"].astype(str)
     bat["Grupo"] = bat["Equipo"].str.replace("Equipo", "Grupo")
     pts["Grupo"] = pts["Equipo"].str.replace("Equipo", "Grupo")
-    for eq, mp in ALIAS_EXCEL.items():
-        for col in ("player1", "player2", "winner"):
-            m = bat["Equipo"] == eq
-            bat.loc[m, col] = bat.loc[m, col].replace(mp)
-        m = pts["Equipo"] == eq
-        pts.loc[m, "Jugador"] = pts.loc[m, "Jugador"].replace(mp)
+    for col in ("player1", "player2", "winner"):
+        bat[col] = bat[col].map(_norm)
+    pts["Jugador"] = pts["Jugador"].map(_norm)
     return bat, pts
 
 
@@ -85,6 +88,35 @@ def _standings(bat, pts, grupo, jugadores):
     df = pd.DataFrame(rows).sort_values(["V", "Puntos"], ascending=False, na_position="last").reset_index(drop=True)
     df.index += 1
     return df
+
+
+def _ladder(bat, pts):
+    """Una fila por jugador de los 8 grupos, ordenada por puntos."""
+    rows = []
+    for g, (_, jug) in GRUPOS.items():
+        st_g = _standings(bat, pts, g, jug)
+        for _, r in st_g.iterrows():
+            rows.append({"Jugador": r["Jugador"], "Mafia": MAFIA_DE.get(r["Jugador"].lower(), "?"), "Grupo": g,
+                         "Jugadas": r["Jugadas"], "V": r["V"], "D": r["D"],
+                         "Puntos": 0 if pd.isna(r["Puntos"]) else int(r["Puntos"])})
+    df = pd.DataFrame(rows).sort_values(["Puntos", "V", "D"], ascending=[False, False, True]).reset_index(drop=True)
+    df.index += 1
+    return df
+
+
+def _matriz_html(lad):
+    """Mafias x grupos con los puntos de cada mafia en cada grupo y el total."""
+    th = "padding:6px 10px;text-align:center;border:1px solid #8886"
+    h = f'<tr><th style="{th};text-align:left">mafias</th>' + "".join(f'<th style="{th}">{g.lower()}</th>' for g in GRUPOS) + f'<th style="{th}">total</th></tr>'
+    for m, (color, _) in MAFIAS.items():
+        sub = lad[lad["Mafia"] == m]
+        celdas = ""
+        for g in GRUPOS:
+            pt = sub[sub["Grupo"] == g]["Puntos"].sum()
+            celdas += f'<td style="{th}">{pt if pt else ""}</td>'
+        h += (f'<tr><td style="{th};text-align:left;font-weight:700;background:{color}55">{m}</td>{celdas}'
+              f'<td style="{th};font-weight:800">{int(sub["Puntos"].sum())}</td></tr>')
+    return f'<table style="border-collapse:collapse;width:100%">{h}</table>'
 
 
 def show():
@@ -117,6 +149,13 @@ def show():
         return
 
     with tab_res:
+        lad = _ladder(bat, pts)
+        st.subheader("🕴️ Puntos por mafia y grupo")
+        st.markdown(_matriz_html(lad), unsafe_allow_html=True)
+
+        st.subheader("🪜 Ladder de todos los jugadores")
+        st.dataframe(lad, use_container_width=True)
+
         st.subheader("📊 Posiciones por grupo")
         st.caption("V/D se calculan con las batallas registradas; Puntos es el puntaje anotado por el organizador.")
         for fila in (list(GRUPOS.items())[:2], list(GRUPOS.items())[2:4], list(GRUPOS.items())[4:6], list(GRUPOS.items())[6:]):
