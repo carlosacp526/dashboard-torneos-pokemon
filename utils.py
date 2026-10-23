@@ -233,6 +233,8 @@ def generar_tabla_temporada(df_base, lt):
     tabla = tabla.rename(columns={'Participante':'AKA','score_completo':'SCORE','Juegos':'JORNADAS'})
     if 'Jornadas_term' in df_fase.columns:
         tabla['JORNADAS'] = df_fase['Jornadas_term'].astype(int)
+    tabla['DIF SOB'] = df_fase['dif_sob'].astype(int) if 'dif_sob' in df_fase.columns else 0
+    tabla['SOB'] = df_fase['pokes_sobrevivientes'].astype(int)
     tabla['SCORE'] = tabla['SCORE'].round(2)
     tabla = tabla.sort_values(['Victorias','SCORE'], ascending=[False,False]).reset_index(drop=True)
     tabla['RANK'] = range(1, len(tabla)+1)
@@ -246,7 +248,7 @@ def generar_tabla_temporada(df_base, lt):
         if lt in ('PMST4','PMST5','PMST6','PMST7'): tabla["JORNADAS"] = 5
         if lt == 'PLST1': tabla["JORNADAS"] = [7,7,6,6,5,5,5,5,5,5,5,5]
 
-    return tabla[['RANK','AKA','PUNTOS','SCORE','ZONA','JORNADAS','Victorias']].copy()
+    return tabla[['RANK','AKA','PUNTOS','SCORE','ZONA','JORNADAS','DIF SOB','SOB','Victorias']].copy()
 
 def generar_tabla_torneo(df_base, torneo_num):
     if 'Torneo_Temp' not in df_base.columns: return None
@@ -492,6 +494,17 @@ def build_base_liga(df):
     base["pokes_sobrevivientes"] = base["pokes_sobrevivientes"].fillna(0)
     base["poke_vencidos"] = base["poke_vencidos"].fillna(0)
     base = base.drop(columns=["Partidas_P1","Partidas_P2"])
+    # Sobrevivientes del ganador en cada batalla: a favor (la ganó él) y en contra (la ganó el rival contra él)
+    _perd = df_liga["player2"].where(df_liga["winner"] == df_liga["player1"], df_liga["player1"])
+    _fav = (df_liga.groupby(["Liga_Temporada","winner"])["pokemons Sob"].sum().reset_index()
+                   .rename(columns={"winner":"Participante","pokemons Sob":"sob_ganadas"}))
+    _con = (pd.DataFrame({"Liga_Temporada": df_liga["Liga_Temporada"], "Participante": _perd,
+                          "sob_rival": df_liga["pokemons Sob"]})
+              .groupby(["Liga_Temporada","Participante"])["sob_rival"].sum().reset_index())
+    base = pd.merge(base, _fav, how="left", on=["Liga_Temporada","Participante"])
+    base = pd.merge(base, _con, how="left", on=["Liga_Temporada","Participante"])
+    base["dif_sob"] = (base["sob_ganadas"].fillna(0) - base["sob_rival"].fillna(0)).astype(int)
+    base = base.drop(columns=["sob_ganadas","sob_rival"])
     base = pd.merge(base, _jt, how="left", on=["Liga_Temporada","Participante"])
     base["Jornadas_term"] = base["Jornadas_term"].fillna(0).astype(int)
     return score_final(base), df_liga

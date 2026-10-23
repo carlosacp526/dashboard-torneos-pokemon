@@ -74,7 +74,7 @@ def show():
                                     if row['ZONA']=='Descenso': return ['background-color:#E74C3C;color:white;font-weight:bold']*len(row)
                                     return ['background-color:#34495E;color:white']*len(row)
 
-                                td = tabla[['RANK','AKA','PUNTOS','SCORE','ZONA','JORNADAS']].copy()
+                                td = tabla[['RANK','AKA','PUNTOS','SCORE','ZONA','JORNADAS','DIF SOB','SOB']].copy()
                                 st.dataframe(td.style.apply(highlight_ranks,axis=1),
                                              use_container_width=True, hide_index=True,
                                              height=min(600, len(tabla)*40+100))
