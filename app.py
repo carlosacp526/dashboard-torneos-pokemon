@@ -16,6 +16,7 @@ from vistas import mundial_info
 from vistas import replays
 from vistas import tcg
 from vistas import roleplay
+from vistas import guerra_mafias
 from vistas import tiermaker
 from vistas import headtohead
 from vistas import retencion
@@ -78,6 +79,7 @@ p_elo        = st.Page(elo.show,          title="⚡ Ranking Elo",            ur
 p_prediccion = st.Page(prediccion.show,   title="🤖 Predicción",             url_path="prediccion")
 p_tcg = st.Page(tcg.show,   title="🃏TCG",             url_path="tcg")
 p_roleplay = st.Page(roleplay.show,   title="🎭 Roleplay",             url_path="roleplay")
+p_mafias = st.Page(guerra_mafias.show, title="⚔️ Guerra de Mafias 3", url_path="guerra-mafias")
 p_pendientes = st.Page(pendientes.show, title="⏳ Pendientes", url_path="pendientes")
 p_tiermaker  = st.Page(tiermaker.show,  title="🏆 Tier Maker", url_path="tiermaker")
 p_headtohead = st.Page(headtohead.show, title="⚔️ Head-to-Head", url_path="headtohead")
@@ -112,6 +114,7 @@ st.session_state["_pages"] = {
     "prediccion": p_prediccion,
     "tcg": p_tcg,
     "roleplay": p_roleplay,
+    "guerra_mafias": p_mafias,
    "pendientes": p_pendientes,
    "tiermaker": p_tiermaker,
    "headtohead": p_headtohead,
@@ -136,7 +139,7 @@ pg = st.navigation({
     "🏆 Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
     # hoy Roleplay; el Torneo 100 se suma acá cuando esté la info.
-    "🌟 Torneos Especiales": [p_roleplay],
+    "🌟 Torneos Especiales": [p_roleplay, p_mafias],
     "⚡ Rankings & Calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
     "🛠️ Organizador": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting],
 })

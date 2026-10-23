@@ -66,6 +66,8 @@ GRUPOS = [
         "items": [
             ("roleplay", "🎭", "Roleplay",
              ["🎭 Torneo de draft por tiers", "📋 Equipos y Pokémon", "🏆 Formato VGC"]),
+            ("guerra_mafias", "⚔️", "Guerra de Mafias 3",
+             ["🕴️ 4 mafias de 8 jugadores", "👥 8 grupos de fase de grupos", "📊 Posiciones y batallas"]),
         ],
     },
     {
