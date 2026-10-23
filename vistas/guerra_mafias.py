@@ -154,66 +154,15 @@ def _matriz_html(lad):
     return f'<table style="border-collapse:collapse;width:100%">{h}</table>'
 
 
-PREMIO_PTS = 50
-FORMATOS_MUNDIAL = ["SINGLES", "DOBLES", "VGC"]
-
-
-def _premio(lad):
-    """Premio del equipo campeón: puntos para el Mundial de Poketubi (se cargan a mano en mundial_info.py)."""
-    st.subheader(f"🏆 Premio: {PREMIO_PTS} pts para el Mundial de Poketubi")
-    st.caption(f"Cada jugador de la mafia campeona suma {PREMIO_PTS} puntos al Mundial. "
-               "Se cargan a mano en `MONOTYPE1_LIGAS` de `vistas/mundial_info.py`.")
-    nombres = list(MAFIAS)
-    lider = lad.groupby("Mafia")["Puntos"].sum().idxmax() if lad is not None and lad["Puntos"].sum() else nombres[0]
-    mafia = st.selectbox("Mafia campeona", nombres, index=nombres.index(lider), key="gm_campeona",
-                         help="Por defecto muestra la que lidera la fase de grupos; cambia cuando se defina el campeón.")
-    fmts = st.multiselect("Formato(s) donde se cargan los puntos", FORMATOS_MUNDIAL, default=["SINGLES"], key="gm_fmts",
-                          help="Los puntos del Mundial se llevan por formato; los campeones deciden dónde ponerlos.")
-    miembros = [j for j, m in MAFIA_DE.items() if m == mafia]
-
-    st.markdown("**1) Para pegar en `MONOTYPE1_LIGAS` (mundial_info.py)**")
-    nl = chr(10)
-    if fmts:
-        lineas = [f'    "GUERRA_MAFIAS_3": {{   # {mafia}']
-        for f in fmts:
-            lineas.append(f'        "{f}": {{')
-            lineas += [f'            "{j}": {PREMIO_PTS},' for j in miembros]
-            lineas.append("        },")
-        lineas.append("    },")
-        st.code(nl.join(lineas), language="python")
-    else:
-        st.info("Elige al menos un formato.")
-
-    st.markdown("**2) Speech para los campeones**")
-    lista = ", ".join(miembros[:-1]) + f" y {miembros[-1]}"
-    formatos_txt = " / ".join(FORMATOS_MUNDIAL)
-    st.code(nl.join([
-        f"🏆 ¡{mafia.upper()} CAMPEONES DE LA GUERRA DE MAFIAS 3! 🏆",
-        "",
-        f"Felicidades {lista}. Ganaron la Guerra de Mafias 3 y eso tiene premio: "
-        f"cada uno de ustedes suma +{PREMIO_PTS} puntos para el Mundial de Poketubi.",
-        "",
-        f"Los puntos del Mundial se llevan por formato ({formatos_txt}), así que ustedes deciden "
-        f"en cuál se los ponemos: pueden dejarlos todos en un solo formato o repartirlos. "
-        f"Avísenme su elección y los cargo.",
-        "",
-        "Todo está explicado en el reglamento del Mundial, en la app de Poketubi: "
-        "📜 Reglamento → pestaña 🌎 Mundiales. ¡Gracias por jugar y nos vemos en el Mundial!",
-    ]), language=None)
-    try:
-        st.page_link(st.session_state["_pages"]["reglamento"], label="📜 Reglamento del Mundial (pestaña 🌎 Mundiales)")
-    except Exception:
-        pass
-
-
 def show():
     st.header("⚔️ Guerra de Mafias 3")
     st.caption("Torneo especial por equipos: 4 mafias de 8 jugadores. La fase de grupos se juega en 8 grupos de 4.")
 
     bat, pts = _cargar()
 
-    tab_mafias, tab_grupos, tab_res, tab_bat, tab_premio = st.tabs(
-        ["🕴️ Mafias", "👥 Grupos", "📊 Resultados", "⚔️ Batallas", "🏆 Premio Mundial"])
+    st.info("🏆 La mafia campeona gana **50 puntos** para el Mundial de Poketubi.")
+
+    tab_mafias, tab_grupos, tab_res, tab_bat = st.tabs(["🕴️ Mafias", "👥 Grupos", "📊 Resultados", "⚔️ Batallas"])
 
     with tab_mafias:
         cols = st.columns(4)
@@ -227,9 +176,6 @@ def show():
             for col, (nombre, (color, js)) in zip(cols, fila):
                 with col:
                     st.markdown(_card(nombre, color, [j for j, _m in js]), unsafe_allow_html=True)
-
-    with tab_premio:
-        _premio(_ladder(bat, pts) if bat is not None else None)
 
     if bat is None:
         for t in (tab_res, tab_bat):
