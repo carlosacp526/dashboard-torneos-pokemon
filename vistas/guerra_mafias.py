@@ -36,6 +36,13 @@ ALIAS_EXCEL = {
     "Equipo 7": {"Jesus": "Leo"},
     "Equipo 8": {"Bamdara": "Nesha H"},
 }
+IMG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "imagenes_mafias")
+
+
+def _img(nombre):
+    ruta = os.path.join(IMG_DIR, nombre)
+    if os.path.exists(ruta):
+        st.image(ruta, use_container_width=True)
 
 
 @st.cache_data(ttl=3600)
@@ -89,12 +96,14 @@ def show():
     tab_mafias, tab_grupos, tab_res, tab_bat = st.tabs(["🕴️ Mafias", "👥 Grupos", "📊 Resultados", "⚔️ Batallas"])
 
     with tab_mafias:
+        _img("mafias.png")
         cols = st.columns(4)
         for col, (nombre, (color, jug)) in zip(cols, MAFIAS.items()):
             with col:
                 st.markdown(_card(nombre, color, jug), unsafe_allow_html=True)
 
     with tab_grupos:
+        _img("grupos.png")
         for fila in (list(GRUPOS.items())[:4], list(GRUPOS.items())[4:]):
             cols = st.columns(4)
             for col, (nombre, (color, jug)) in zip(cols, fila):
