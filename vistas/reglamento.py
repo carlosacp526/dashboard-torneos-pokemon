@@ -461,15 +461,35 @@ def show():
               "20 USD al campeón · −10 pts por batalla no jugada")
 
         st.markdown('<div class="regl-section-label">Mundial 3 — Monotype_1 (actual)</div>', unsafe_allow_html=True)
+        def _tabla_pts(clave):
+            return " · ".join(f"{pos} = {pts}" for pos, pts in PUNTAJES.get(clave, {}).items())
+
         _step(7, "Cómo va",
-              "Cuenta desde el Torneo 68 en adelante, con tres rankings paralelos: Singles, Dobles y VGC. "
-              "El formato de cada torneo se detecta desde el historial. Los rankings en vivo están en la "
+              "Cuenta desde el Torneo 68 en adelante. A diferencia de los mundiales anteriores, que tenían "
+              "una sola tabla, este tiene tres rankings paralelos e independientes: Singles, Dobles y VGC. "
+              "El formato de cada torneo se detecta desde el historial, y los rankings en vivo están en la "
               "página 🌎 Mundial Pokémon.",
               "Torneos 68 en adelante · 3 rankings")
-        _step(8, "Puntajes",
-              "Se usan las mismas tablas de clasificación: Mundial, Regional (80+ jugadores), Special Event "
-              "(más de 45), Grande (más de 24), Mediano (hasta 24) y Pequeño (menos de 13), más las tablas de "
-              "Ligas (PLS, PGS, PMS, PSS, PES y PJS).",
+        _step(8, "Los tres rankings: Singles, Dobles y VGC",
+              "Cada torneo y cada liga puntúa en el ranking del formato en que se jugó. Un jugador solo suma "
+              "en el ranking de los formatos en los que participó, y puede estar en los tres a la vez: sus "
+              "puntos de Singles no se mezclan con los de Dobles ni con los de VGC. Dentro de cada ranking el "
+              "orden es por puntos totales, y la tabla muestra cuánto aportó cada torneo o liga. Un mismo "
+              "torneo puede repartir puntos en más de un formato.",
+              "Singles · Dobles · VGC")
+        _step(9, "Cuántos puntos da un torneo",
+              "Los puntos dependen del tamaño del torneo (cantidad de jugadores) y de la posición final. "
+              "Tamaños: Regional (80+ jugadores), Special Event (más de 45), Grande (más de 24), Mediano "
+              "(hasta 24) y Pequeño (menos de 13). "
+              f"Regional: {_tabla_pts('REGIONAL')}. Special Event: {_tabla_pts('SPECIAL')}. "
+              f"Grande: {_tabla_pts('GRANDE')}. Mediano: {_tabla_pts('MEDIANO')}. "
+              f"Pequeño: {_tabla_pts('PEQUEÑO')}.",
+              "Más jugadores = más puntos")
+        _step(10, "Cuántos puntos da una liga",
+              "Las ligas también suman al ranking de su formato, según tu posición final en la tabla de la "
+              "temporada: Campeón (1°), Top 3 (Top 4 en PLS y PGS) o Participante. "
+              f"PLS: {_tabla_pts('PLS')}. PGS: {_tabla_pts('PGS')}. PMS: {_tabla_pts('PMS')}. "
+              f"PSS: {_tabla_pts('PSS')}. PES: {_tabla_pts('PES')}. PJS: {_tabla_pts('PJS')}.",
               "Tabla oficial: mundial/PUNTAJES_MUNDIAL3.png")
 
         pm = PUNTAJES.get("MUNDIAL", {})
