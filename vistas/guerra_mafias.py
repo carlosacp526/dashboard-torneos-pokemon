@@ -51,6 +51,15 @@ def _norm(x):
     return ALIAS_EXCEL.get(str(x).strip().lower(), x) if pd.notna(x) else x
 
 
+IMG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "imagenes_mafias")
+
+
+def _img(nombre):
+    ruta = os.path.join(IMG_DIR, nombre)
+    if os.path.exists(ruta):
+        st.image(ruta, use_container_width=True)
+
+
 @st.cache_data(ttl=3600)
 def _cargar():
     if not os.path.exists(DATA_PATH):
