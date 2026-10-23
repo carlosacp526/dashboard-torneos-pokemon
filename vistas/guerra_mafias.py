@@ -39,7 +39,7 @@ ALIAS_EXCEL.update({
 })
 
 # Las fotos están guardadas con el nombre de Poketubi; estas son las excepciones.
-FOTO_EXTRA = {"Fran": ["Fran_Guarderia"], "Clauz": ["Star"]}
+FOTO_EXTRA = {"Clauz": ["Star"]}
 
 
 def _norm(x):
