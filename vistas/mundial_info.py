@@ -1004,7 +1004,10 @@ def show():
     with tab_monotype:
         st.header("🔵 Mundial Pokémon — Monotype_1  (Actual)")
         st.info("Mundial vigente con **3 rankings paralelos** (SINGLES · DOBLES · VGC). "
-                "El formato de cada torneo se detecta automáticamente desde el CSV.")
+                "El formato de cada torneo se detecta automáticamente desde el CSV.\n\n"
+                "- **SINGLES:** Monotype National Dex, 6 rondas suizas + cuartos de final.\n"
+                "- **DOBLES:** varios formatos de dobles, 5 rondas suizas + Top 4.\n"
+                "- **VGC:** regulación Champions (la vigente en ese momento), 5 rondas suizas + Top 4.")
 
         sub_rank_mono, sub_pts_mono = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
 

@@ -470,14 +470,19 @@ def show():
               "El formato de cada torneo se detecta desde el historial, y los rankings en vivo están en la "
               "página 🌎 Mundial Pokémon.",
               "Torneos 68 en adelante · 3 rankings")
-        _step(8, "Los tres rankings: Singles, Dobles y VGC",
+        _step(8, "Cómo se juega cada formato",
+              "Singles: Monotype National Dex, con 6 rondas suizas más cuartos de final. "
+              "Dobles: varios formatos de dobles, con 5 rondas suizas más Top 4. "
+              "VGC: regulación Champions (la vigente en ese momento), con 5 rondas suizas más Top 4.",
+              "Singles 6 suizas + cuartos · Dobles y VGC 5 suizas + Top 4")
+        _step(9, "Los tres rankings: Singles, Dobles y VGC",
               "Cada torneo y cada liga puntúa en el ranking del formato en que se jugó. Un jugador solo suma "
               "en el ranking de los formatos en los que participó, y puede estar en los tres a la vez: sus "
               "puntos de Singles no se mezclan con los de Dobles ni con los de VGC. Dentro de cada ranking el "
               "orden es por puntos totales, y la tabla muestra cuánto aportó cada torneo o liga. Un mismo "
               "torneo puede repartir puntos en más de un formato.",
               "Singles · Dobles · VGC")
-        _step(9, "Cuántos puntos da un torneo",
+        _step(10, "Cuántos puntos da un torneo",
               "Los puntos dependen del tamaño del torneo (cantidad de jugadores) y de la posición final. "
               "Tamaños: Regional (80+ jugadores), Special Event (más de 45), Grande (más de 24), Mediano "
               "(hasta 24) y Pequeño (menos de 13). "
@@ -485,7 +490,7 @@ def show():
               f"Grande: {_tabla_pts('GRANDE')}. Mediano: {_tabla_pts('MEDIANO')}. "
               f"Pequeño: {_tabla_pts('PEQUEÑO')}.",
               "Más jugadores = más puntos")
-        _step(10, "Cuántos puntos da una liga",
+        _step(11, "Cuántos puntos da una liga",
               "Las ligas también suman al ranking de su formato, según tu posición final en la tabla de la "
               "temporada: Campeón (1°), Top 3 (Top 4 en PLS y PGS) o Participante. "
               f"PLS: {_tabla_pts('PLS')}. PGS: {_tabla_pts('PGS')}. PMS: {_tabla_pts('PMS')}. "
