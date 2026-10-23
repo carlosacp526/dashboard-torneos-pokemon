@@ -430,59 +430,29 @@ def show():
                  "camino definen quién clasifica. Las tablas de puntos están en la pestaña "
                  "**📏 Tamaños de Torneo** y en la página **🌎 Mundial Pokémon**.")
 
-        st.markdown('<div class="regl-section-label">Mundial 1 — Origins</div>', unsafe_allow_html=True)
-        _step(1, "Qué cuenta para clasificar",
-              "Torneos 1 al 26 y las ligas PJS (T1, T2, T3 y T4), PSS (T1, T2, T3 y T4), "
-              "PMS (T1, T2, T3, T4 y T5) y PES (T1).",
-              "Torneos 1–26")
-        _step(2, "Cómo se juega",
-              "6 rondas suizas en distintos formatos: Singles y Dobles (random y equipos libres en OU, DOU, "
-              "Nat Dex) y VGC del reglamento vigente. Cada ronda se juega en una semana distinta y "
-              "cada ronda son 3 batallas contra el oponente. Hay que enviar los replays respectivos.",
-              "6 rondas suizas · 3 batallas por ronda")
-        _step(3, "Premios",
-              "Los puntos se suman para el mundial siguiente: 300 puntos al campeón, 150 al Top 4 y 100 "
-              "por participar (rondas completas). Premio de 10 USD para el campeón.",
-              "10 USD al campeón")
-
-        st.markdown('<div class="regl-section-label">Mundial 2 — Generations</div>', unsafe_allow_html=True)
-        _step(4, "Qué cuenta para clasificar",
-              "Torneos 27 al 67 y las ligas PJS (T5), PSS (T5), PMS (T6), PES (T2) y PLS (T1). "
-              "Reúne a los jugadores de nivel alto en distintas generaciones.",
-              "Torneos 27–67")
-        _step(5, "Cómo se juega",
-              "6 rondas suizas y Top 8 en el mismo formato: Nat Dex. Cada ronda dura una semana o semana y "
-              "media y se toma una generación de forma progresiva. Cada ronda es 1 batalla contra el "
-              "oponente. Hay que enviar los replays respectivos y respetar las fechas.",
-              "6 rondas suizas + Top 8 · Nat Dex")
-        _step(6, "Premios y penalidad",
-              "Mismos puntos para el mundial siguiente (300 / 150 / 100). Premio de 20 USD para el "
-              "campeón. Por cada batalla no jugada se descuentan 10 puntos.",
-              "20 USD al campeón · −10 pts por batalla no jugada")
-
         st.markdown('<div class="regl-section-label">Mundial 3 — Monotype_1 (actual)</div>', unsafe_allow_html=True)
         def _tabla_pts(clave):
             return " · ".join(f"{pos} = {pts}" for pos, pts in PUNTAJES.get(clave, {}).items())
 
-        _step(7, "Cómo va",
+        _step(1, "Cómo va",
               "Cuenta desde el Torneo 68 en adelante. A diferencia de los mundiales anteriores, que tenían "
               "una sola tabla, este tiene tres rankings paralelos e independientes: Singles, Dobles y VGC. "
               "El formato de cada torneo se detecta desde el historial, y los rankings en vivo están en la "
               "página 🌎 Mundial Pokémon.",
               "Torneos 68 en adelante · 3 rankings")
-        _step(8, "Cómo se juega cada formato",
+        _step(2, "Cómo se juega cada formato",
               "Singles: Monotype National Dex, con 6 rondas suizas más cuartos de final. "
               "Dobles: varios formatos de dobles, con 5 rondas suizas más Top 4. "
               "VGC: regulación Champions (la vigente en ese momento), con 5 rondas suizas más Top 4.",
               "Singles 6 suizas + cuartos · Dobles y VGC 5 suizas + Top 4")
-        _step(9, "Los tres rankings: Singles, Dobles y VGC",
+        _step(3, "Los tres rankings: Singles, Dobles y VGC",
               "Cada torneo y cada liga puntúa en el ranking del formato en que se jugó. Un jugador solo suma "
               "en el ranking de los formatos en los que participó, y puede estar en los tres a la vez: sus "
               "puntos de Singles no se mezclan con los de Dobles ni con los de VGC. Dentro de cada ranking el "
               "orden es por puntos totales, y la tabla muestra cuánto aportó cada torneo o liga. Un mismo "
               "torneo puede repartir puntos en más de un formato.",
               "Singles · Dobles · VGC")
-        _step(10, "Cuántos puntos da un torneo",
+        _step(4, "Cuántos puntos da un torneo",
               "Los puntos dependen del tamaño del torneo (cantidad de jugadores) y de la posición final. "
               "Tamaños: Regional (80+ jugadores), Special Event (más de 45), Grande (más de 24), Mediano "
               "(hasta 24) y Pequeño (menos de 13). "
@@ -490,12 +460,42 @@ def show():
               f"Grande: {_tabla_pts('GRANDE')}. Mediano: {_tabla_pts('MEDIANO')}. "
               f"Pequeño: {_tabla_pts('PEQUEÑO')}.",
               "Más jugadores = más puntos")
-        _step(11, "Cuántos puntos da una liga",
+        _step(5, "Cuántos puntos da una liga",
               "Las ligas también suman al ranking de su formato, según tu posición final en la tabla de la "
               "temporada: Campeón (1°), Top 3 (Top 4 en PLS y PGS) o Participante. "
               f"PLS: {_tabla_pts('PLS')}. PGS: {_tabla_pts('PGS')}. PMS: {_tabla_pts('PMS')}. "
               f"PSS: {_tabla_pts('PSS')}. PES: {_tabla_pts('PES')}. PJS: {_tabla_pts('PJS')}.",
               "Tabla oficial: mundial/PUNTAJES_MUNDIAL3.png")
+
+        st.markdown('<div class="regl-section-label">Mundial 1 — Origins</div>', unsafe_allow_html=True)
+        _step(6, "Qué cuenta para clasificar",
+              "Torneos 1 al 26 y las ligas PJS (T1, T2, T3 y T4), PSS (T1, T2, T3 y T4), "
+              "PMS (T1, T2, T3, T4 y T5) y PES (T1).",
+              "Torneos 1–26")
+        _step(7, "Cómo se juega",
+              "6 rondas suizas en distintos formatos: Singles y Dobles (random y equipos libres en OU, DOU, "
+              "Nat Dex) y VGC del reglamento vigente. Cada ronda se juega en una semana distinta y "
+              "cada ronda son 3 batallas contra el oponente. Hay que enviar los replays respectivos.",
+              "6 rondas suizas · 3 batallas por ronda")
+        _step(8, "Premios",
+              "Los puntos se suman para el mundial siguiente: 300 puntos al campeón, 150 al Top 4 y 100 "
+              "por participar (rondas completas). Premio de 10 USD para el campeón.",
+              "10 USD al campeón")
+
+        st.markdown('<div class="regl-section-label">Mundial 2 — Generations</div>', unsafe_allow_html=True)
+        _step(9, "Qué cuenta para clasificar",
+              "Torneos 27 al 67 y las ligas PJS (T5), PSS (T5), PMS (T6), PES (T2) y PLS (T1). "
+              "Reúne a los jugadores de nivel alto en distintas generaciones.",
+              "Torneos 27–67")
+        _step(10, "Cómo se juega",
+              "6 rondas suizas y Top 8 en el mismo formato: Nat Dex. Cada ronda dura una semana o semana y "
+              "media y se toma una generación de forma progresiva. Cada ronda es 1 batalla contra el "
+              "oponente. Hay que enviar los replays respectivos y respetar las fechas.",
+              "6 rondas suizas + Top 8 · Nat Dex")
+        _step(11, "Premios y penalidad",
+              "Mismos puntos para el mundial siguiente (300 / 150 / 100). Premio de 20 USD para el "
+              "campeón. Por cada batalla no jugada se descuentan 10 puntos.",
+              "20 USD al campeón · −10 pts por batalla no jugada")
 
         pm = PUNTAJES.get("MUNDIAL", {})
         st.info("Puntos del evento Mundial: " + " · ".join(f"{pos} = {pts} pts" for pos, pts in pm.items())
