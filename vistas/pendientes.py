@@ -349,7 +349,7 @@ def show():
     with st.expander("⚙️ Configuración Evolution API", expanded=False):
         st.markdown("""
 **Cómo obtener estos datos:**
-1. Instalá Evolution API en tu servidor o usá [evoai.cloud](https://evoai.cloud)
+1. Instala Evolution API en tu servidor o usa [evoai.cloud](https://evoai.cloud)
 2. Creá una instancia y escaneá el QR con WhatsApp
 3. Copiá la URL base, el nombre de instancia y la API key
 """)
@@ -687,7 +687,7 @@ def show():
 
         with st.expander("📜 Términos y condiciones — Consentimiento de WhatsApp", expanded=False):
             st.markdown("""
-Al registrar tu número de WhatsApp para participar en Poketubi, aceptás lo siguiente:
+Al registrar tu número de WhatsApp para participar en Poketubi, aceptas lo siguiente:
 
 1. **Mensajes automatizados.** Vas a recibir recordatorios automáticos por WhatsApp sobre tus
    batallas pendientes (rival, fecha límite, formato). Este es el medio oficial de aviso de la liga.
@@ -696,11 +696,11 @@ Al registrar tu número de WhatsApp para participar en Poketubi, aceptás lo sig
    parte del mismo grupo/torneo y WhatsApp es el canal oficial para coordinar día y hora de la batalla.
    Tu número **no** se comparte con nadie fuera de tus rivales de turno ni se usa con fines distintos
    a la coordinación de partidas.
-3. **Cómo optar por no participar.** Si preferís no recibir estos mensajes ni compartir tu número,
-   avisá al staff: podés coordinar tus batallas por otro medio, pero no vas a recibir los recordatorios
-   automáticos y sos responsable de estar al tanto de tus fechas límite igual.
+3. **Cómo optar por no participar.** Si prefieres no recibir estos mensajes ni compartir tu número,
+   avisa al staff: puedes coordinar tus batallas por otro medio, pero no recibirás los recordatorios
+   automáticos y eres responsable de estar al tanto de tus fechas límite igual.
 
-Al anotarte con tu número en la planilla de la liga, confirmás que leíste y aceptás estos términos.
+Al anotarte con tu número en la planilla de la liga, confirmas que leíste y aceptas estos términos.
             """)
 
         # ── Acceso protegido por contraseña (se compara por hash, nunca en
@@ -744,7 +744,7 @@ Al anotarte con tu número en la planilla de la liga, confirmás que leíste y a
 
         if not celulares:
             st.warning(f"⚠️ No se encontró **{EXCEL_CELULARES}**. "
-                       "Subí el archivo Excel con columnas: Jugador, Telefono, Pais, Codigo.")
+                       "Sube el archivo Excel con columnas: Jugador, Telefono, Pais, Codigo.")
             st.stop()
 
         # Para WhatsApp, una batalla con Match_replays ya cargado (link no

@@ -339,11 +339,11 @@ def _simular_torneo_hibrido(base_nt, prob_df, avg_pokes, rondas, model, latest_s
                              n_sims=1000, seed=42):
     """
     Caso que _simular_torneo_bracket no puede resolver: la fase de grupos/ronda
-    suiza todavia tiene cruces pendientes, asi que TODAS las series de la
-    primera ronda de eliminacion directa siguen marcadas "Pendiente" contra
+    suiza todavía tiene cruces pendientes, así que TODAS las series de la
+    primera ronda de eliminación directa siguen marcadas "Pendiente" contra
     "Pendiente" (el organizador ya precargo el esqueleto del bracket, pero
-    todavia no se sabe quien clasifica) — no hay ningun jugador real anclado
-    en ninguna rama, asi que no hay nada de donde propagar un ganador.
+    todavía no se sabe quien clasifica) — no hay ningun jugador real anclado
+    en ninguna rama, así que no hay nada de donde propagar un ganador.
 
     En vez de rendirse, esta funcion simula el TORNEO COMPLETO de punta a
     punta, n_sims veces:
@@ -358,11 +358,11 @@ def _simular_torneo_hibrido(base_nt, prob_df, avg_pokes, rondas, model, latest_s
          deportivo estandar que ya usa vistas/seeding.py
          (_standard_seed_order: seed 1 contra el peor seed disponible, los
          favoritos no se cruzan antes de semifinal/final).
-      4. Simula el bracket de eliminacion directa completo desde esa primera
+      4. Simula el bracket de eliminación directa completo desde esa primera
          ronda recien sembrada hasta la final.
 
     Como se repite de punta a punta en cada una de las n_sims corridas, la
-    incertidumbre de QUIEN clasifica de la fase de grupos tambien queda
+    incertidumbre de QUIEN clasifica de la fase de grupos también queda
     reflejada en las probabilidades finales de podio, no solo la incertidumbre
     del bracket en si.
     """
@@ -702,12 +702,12 @@ def simulate_bracket_odds(base_df, matches, avg_pokes, modo, codigo, n_sims=1000
     return pd.DataFrame(filas).sort_values("Rank promedio").reset_index(drop=True)
 
 
-# ════════════════════ LIGA SUIZA: jornadas todavia sin emparejar ═══════════
+# ════════════════════ LIGA SUIZA: jornadas todavía sin emparejar ═══════════
 # Algunas ligas se juegan a rondas suizas (ej. PMST7 a 5 jornadas): las
 # primeras jornadas tienen cruces fijos, pero las ultimas dependen de como
-# termine la tabla en ese punto, asi que quedan precargadas como "Pendiente"
+# termine la tabla en ese punto, así que quedan precargadas como "Pendiente"
 # vs "Pendiente" hasta que se resuelvan las anteriores — mismo principio que
-# el bracket de Torneo sin arrancar, pero el emparejamiento en si tambien hay
+# el bracket de Torneo sin arrancar, pero el emparejamiento en si también hay
 # que simularlo (no alcanza con propagar un ganador a un cupo fijo).
 
 def _parse_jornadas_liga(df_liga_raw, lt):
@@ -718,7 +718,7 @@ def _parse_jornadas_liga(df_liga_raw, lt):
     Devuelve lista de dicts en orden: {"nombre", "numero", "sin_emparejar", "filas"}.
     sin_emparejar=True cuando TODAS las filas de esa jornada tienen los dos
     lados como placeholder ("Pendiente") — el emparejamiento suizo de esa
-    jornada todavia no esta definido.
+    jornada todavía no está definido.
     """
     if df_liga_raw.empty or "round" not in df_liga_raw.columns:
         return []
@@ -779,7 +779,7 @@ def _simular_liga_suiza_hibrida(base_lt, prob_df_conocido, jornadas_sin_empareja
                                  n_sims=1000, seed=42):
     """
     Simula la temporada completa de punta a punta cuando quedan jornadas
-    suizas todavia sin emparejar al final (ver _parse_jornadas_liga), n_sims
+    suizas todavía sin emparejar al final (ver _parse_jornadas_liga), n_sims
     veces:
       1. Resuelve los cruces pendientes CON RIVAL YA CONOCIDO (misma logica
          que simulate_bracket_odds).
@@ -950,7 +950,7 @@ def show():
     valid = {k: v for k, v in results.items() if "error" not in v}
     best_name = max(valid, key=lambda k: valid[k].get("val_auc", 0)) if valid else list(trained.keys())[0]
 
-    modo = st.radio("¿Qué querés simular?", ["📅 Liga", "🏆 Torneo"], horizontal=True)
+    modo = st.radio("¿Qué quieres simular?", ["📅 Liga", "🏆 Torneo"], horizontal=True)
 
     if modo == "📅 Liga":
         _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name)
@@ -982,7 +982,7 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
 
     # TODAS las filas de LIGA (jugadas + pendientes, con o sin rival ya
     # definido) — necesarias para reconstruir jornadas suizas sin emparejar
-    # (ver _parse_jornadas_liga) y para que esas ligas tambien cuenten como
+    # (ver _parse_jornadas_liga) y para que esas ligas también cuenten como
     # "en curso" aunque _sin_placeholders ya les haya vaciado df_pend_all
     # (ej. una liga donde SOLO quedan jornadas 100% "Pendiente" vs "Pendiente").
     df_liga_raw_todas = df_raw[df_raw.get("league") == "LIGA"].copy() if "league" in df_raw.columns else df_raw.iloc[0:0]
@@ -1121,7 +1121,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
 
     # "En curso" = tiene cruces pendientes, sin importar si ya tiene o no
     # partidas jugadas — un torneo recien cargado (bracket completo armado
-    # pero ni una sola partida jugada todavia) NO aparece en torneos_disp
+    # pero ni una sola partida jugada todavía) NO aparece en torneos_disp
     # (build_base_torneo solo agrega partidas ya jugadas, Walkover >= 0), pero
     # sigue siendo un torneo real que se puede simular de punta a punta con
     # _simular_torneo_hibrido (ver mas abajo, base_nt se arma en cero si hace falta).
@@ -1154,12 +1154,12 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
 
     # Jugadores con partidas pendientes pero SIN ninguna fila en base_nt: pasa
     # con un torneo recien cargado (bracket armado, CERO partidas jugadas
-    # todavia — build_base_torneo no le arma fila a nadie porque solo mira
-    # partidas con Walkover >= 0) pero TAMBIEN con un torneo donde algunos
+    # todavía — build_base_torneo no le arma fila a nadie porque solo mira
+    # partidas con Walkover >= 0) pero TAMBIÉN con un torneo donde algunos
     # cruces ya se decidieron por Walkover==1 (ausencia, no partida jugada)
     # y el resto de la fase de grupos sigue pendiente: ahi base_nt queda
     # PARCIALMENTE poblado (solo con los jugadores de esos walkovers), no
-    # vacio del todo, asi que hace falta agregar en 0-0 a los que todavia no
+    # vacio del todo, así que hace falta agregar en 0-0 a los que todavía no
     # tienen fila, no solo rellenar cuando base_nt esta completamente vacio.
     if not pend_nt.empty:
         jugadores_pend = pd.unique(pend_nt[["player1", "player2"]].values.ravel("K"))
@@ -1196,9 +1196,9 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
         if {"league", "N_Torneo"}.issubset(df_raw.columns) else df_raw.iloc[0:0]
     rondas = _parse_bracket(df_torneo_full)
 
-    # El bracket "no arranco todavia" cuando NINGUNA serie de su primera ronda
+    # El bracket "no arrancó todavía" cuando NINGUNA serie de su primera ronda
     # tiene un jugador real anclado (las dos posiciones son "Pendiente") — pasa
-    # cuando la fase de grupos/ronda suiza anterior todavia no termino, asi que
+    # cuando la fase de grupos/ronda suiza anterior todavía no terminó, así que
     # nadie clasifico aun. Ahi _simular_torneo_bracket no tiene de donde
     # arrancar a propagar ganadores; hace falta primero simular quien clasifica
     # (ver _simular_torneo_hibrido).
@@ -1268,7 +1268,7 @@ def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombr
 
 def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_feat,
                              n_sims, nombre_torneo, nt, mod_sel, pend_nt, df_torneo_full=None):
-    """Fase de grupos/suiza todavia en curso: TODO el bracket sigue marcado
+    """Fase de grupos/suiza todavía en curso: TODO el bracket sigue marcado
     'Pendiente' (ver bracket_sin_arrancar en _show_torneo). En vez de rendirse,
     se simula el torneo completo de punta a punta con _simular_torneo_hibrido:
     primero quien clasifica de la fase de grupos, despues el bracket sembrado
@@ -1289,9 +1289,9 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
         n_bye = n_series_r2 * 2 - n_series_r1
         n_clasificados = n_bye + n_series_r1 * 2
         st.info(
-            f"La fase de grupos de este torneo todavia no termino. Se detecto un bracket con **byes por "
-            f"grupo**: {rondas[0]['nombre']} tiene {n_series_r1} series pero {rondas[1]['nombre']} tambien "
-            f"tiene {n_series_r2} — no es el doble, asi que la mitad de los cupos de {rondas[0]['nombre']} ya "
+            f"La fase de grupos de este torneo todavía no terminó. Se detectó un bracket con **byes por "
+            f"grupo**: {rondas[0]['nombre']} tiene {n_series_r1} series pero {rondas[1]['nombre']} también "
+            f"tiene {n_series_r2} — no es el doble, así que la mitad de los cupos de {rondas[0]['nombre']} ya "
             f"estan resueltos de antemano. Se infirieron **{len(grupos)} grupos** (a partir de quien jugo "
             f"contra quien en la fase de grupos): el **1° de cada grupo pasa directo a {rondas[1]['nombre']}** "
             f"({n_bye} bye{'s' if n_bye != 1 else ''}), y el **2°/3° de cada grupo juega {rondas[0]['nombre']}** "
@@ -1314,8 +1314,8 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
             if formato_bye else ""
         )
         st.info(
-            f"La fase de grupos/ronda suiza de este torneo todavia no termino, asi que el bracket de "
-            f"eliminacion directa ({rondas[0]['nombre']} en adelante) todavia esta completo 'Pendiente' - "
+            f"La fase de grupos/ronda suiza de este torneo todavía no terminó, así que el bracket de "
+            f"eliminación directa ({rondas[0]['nombre']} en adelante) todavía está completo 'Pendiente' - "
             f"nadie clasifico aun. Para estimar campeon/podio de todas formas, esta simulacion primero "
             f"termina de simular la fase de grupos, clasifica a los **{n_clasificados} mejores** (el tamano "
             f"real del bracket detectado en los datos: {n_series_r1} series en {rondas[0]['nombre']}), los "
@@ -1362,7 +1362,7 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
     st.download_button("📥 Descargar odds (CSV)", odds_df.to_csv(index=False).encode("utf-8"),
                         f"torneo_hibrido_odds_{nt}.csv", "text/csv")
 
-    with st.expander("🌳 Ver estructura del bracket detectada (todavia sin clasificados reales)"):
+    with st.expander("🌳 Ver estructura del bracket detectada (todavía sin clasificados reales)"):
         for ronda in rondas:
             st.markdown(f"**{ronda['nombre']}** ({len(ronda['series'])} series)")
         st.caption("Todas las series arrancan en 'Pendiente' porque la fase de grupos/suiza sigue en curso.")

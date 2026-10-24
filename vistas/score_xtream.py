@@ -448,7 +448,7 @@ def show():
         return
     if meta.get("desactualizado"):
         st.info(f"Mostrando el cálculo del {meta.get('calculado_el', '—')}. Hay datos más recientes y se están "
-                "recalculando en segundo plano: recargá la página en un par de minutos.")
+                "recalculando en segundo plano: recarga la página en un par de minutos.")
 
     tabla = tabla.copy()
     tabla["Categoría"] = tabla["Score_Xtream"].map(categoria_de)

@@ -299,7 +299,7 @@ def show():
         # Escalera completa de 5 categorias oficiales de PUNTAJES_MUNDIAL3.png
         # (Torneo: Pequeño/Mediano/Grande + Regional/Special Event) - cada
         # torneo cae en la categoria mas alta cuyo umbral supera, asi que
-        # Regional/Special "absorben" los torneos grandes que tambien
+        # Regional/Special "absorben" los torneos grandes que también
         # cumplirian el umbral de Grande por separado.
         def _categoria_torneo(n):
             if n >= 80: return 'Regional (>= 80)'
@@ -952,7 +952,7 @@ def show():
                 tabla_pt = tabla_pt.rename(columns={'País_flag': 'País'})
                 st.dataframe(tabla_pt, use_container_width=True, hide_index=True)
     else:
-        st.info("Subí **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
+        st.info("Sube **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
 
 
     st.markdown("---")

@@ -623,7 +623,7 @@ def _sec_participantes(torneo, parts):
                 st.success("¡Inscripto!")
                 st.rerun()
             else:
-                st.warning("Elegí o escribí un nombre que no esté ya inscripto.")
+                st.warning("Elige o escribe un nombre que no esté ya inscripto.")
 
 
 # ----------------------------------------------------------------------------- organizador
@@ -675,7 +675,7 @@ def _org_participantes(torneo, parts):
     ya = {p["nombre"].lower() for p in parts}
     disp = [j for j in _directorio() if j.lower() not in ya]
     c1, c2 = st.columns([4, 1])
-    sel = c1.multiselect(f"Jugadores existentes ({len(disp)} disponibles) — escribí para buscar", disp,
+    sel = c1.multiselect(f"Jugadores existentes ({len(disp)} disponibles) — escribe para buscar", disp,
                          key=f"tb_hist_{tid}_{nonce}")
     with c2:
         st.write("")

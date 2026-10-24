@@ -66,7 +66,7 @@ def _calcular_rachas_actuales(df_raw):
 def _mostrar_vivo(df_raw):
     st.caption(
         "Racha **actual** de cada jugador: se corta apenas cambia el resultado, así que refleja el estado de "
-        "forma vigente. Para las mejores rachas de toda la historia (o de un año o competencia) mirá la "
+        "forma vigente. Para las mejores rachas de toda la historia (o de un año o competencia) mira la "
         "pestaña **📜 Históricas**."
     )
 

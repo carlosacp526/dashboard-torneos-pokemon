@@ -366,7 +366,7 @@ def show():
         st.info("""
 **Para generar el modelo:**
 1. Corré localmente: `python entrenar_modelo.py`
-2. Subí el archivo `modelo_prediccion.pkl` generado al repositorio (misma carpeta que `app.py`)
+2. Sube el archivo `modelo_prediccion.pkl` generado al repositorio (misma carpeta que `app.py`)
 3. Hacé redeploy en Streamlit Cloud
         """)
         return

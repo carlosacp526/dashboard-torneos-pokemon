@@ -455,7 +455,7 @@ def show():
         _step(4, "Cuántos puntos da un torneo",
               "Los puntos dependen del tamaño del torneo (cantidad de jugadores) y de la posición final. "
               "Tamaños: Regional (80+ jugadores), Special Event (más de 45), Grande (más de 24), Mediano "
-              "(hasta 24) y Pequeño (menos de 13). "
+              "(de 13 a 24) y Pequeño (menos de 13). "
               f"Regional: {_tabla_pts('REGIONAL')}. Special Event: {_tabla_pts('SPECIAL')}. "
               f"Grande: {_tabla_pts('GRANDE')}. Mediano: {_tabla_pts('MEDIANO')}. "
               f"Pequeño: {_tabla_pts('PEQUEÑO')}.",
@@ -506,7 +506,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     with tab_tyc:
         st.markdown("### 📜 Términos y condiciones — Comunicación por WhatsApp")
-        st.write("Al registrar tu número de WhatsApp para participar en Poketubi, aceptás lo siguiente:")
+        st.write("Al registrar tu número de WhatsApp para participar en Poketubi, aceptas lo siguiente:")
 
         _step(1, "Mensajes automatizados",
               "Vas a recibir recordatorios automáticos por WhatsApp sobre tus batallas pendientes "
@@ -518,12 +518,12 @@ def show():
               "comparte con nadie fuera de tus rivales de turno ni se usa con fines distintos a la "
               "coordinación de partidas.")
         _step(3, "Cómo optar por no participar",
-              "Si preferís no recibir estos mensajes ni compartir tu número, avisá al staff: podés "
-              "coordinar tus batallas por otro medio, pero no vas a recibir los recordatorios "
-              "automáticos y sos responsable de estar al tanto de tus fechas límite igual.")
+              "Si prefieres no recibir estos mensajes ni compartir tu número, avisa al staff: podés "
+              "coordinar tus batallas por otro medio, pero no recibirás los recordatorios "
+              "automáticos y eres responsable de estar al tanto de tus fechas límite igual.")
 
-        st.success("Al anotarte con tu número en la planilla de la liga, confirmás que leíste y "
-                  "aceptás estos términos.")
+        st.success("Al anotarte con tu número en la planilla de la liga, confirmas que leíste y "
+                  "aceptas estos términos.")
 
     st.markdown("---")
     volver_inicio()

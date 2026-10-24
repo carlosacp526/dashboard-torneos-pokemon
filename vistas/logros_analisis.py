@@ -350,7 +350,7 @@ def show():
 
     if matriz.attrs.get("desactualizada"):
         st.info(f"Mostrando los logros calculados el {matriz.attrs.get('calculada_el', '—')}. Hay datos más "
-                "recientes y se están recalculando en segundo plano: recargá la página en un par de minutos.")
+                "recientes y se están recalculando en segundo plano: recarga la página en un par de minutos.")
 
     logros_df = pd.DataFrame(LOGROS).set_index("id")
     total_jugadores = len(matriz)

@@ -47,10 +47,13 @@ def show():
                     continue
 
                 nombres_temp = [f"Temporada {t.replace(liga,'').lstrip('T')}" for t in temporadas_liga]
-                tabs_temp = st.tabs(nombres_temp)
+                # Solo se dibuja la temporada elegida (antes st.tabs dibujaba todas en cada carga).
+                sel_nombre = st.radio("Temporada", nombres_temp, index=len(nombres_temp) - 1,
+                                      horizontal=True, key=f"lig_temp_{liga}")
+                idx_sel = nombres_temp.index(sel_nombre)
 
-                for idx_t, temporada in enumerate(temporadas_liga):
-                    with tabs_temp[idx_t]:
+                for idx_t, temporada in [(idx_sel, temporadas_liga[idx_sel])]:
+                    with st.container():
                         tab_gen, tab_jorn, tab_evo, tab_fmt = st.tabs(
                             ["📋 Tabla General","📅 Por Jornada","📈 Evolución y MVPs","🎯 Formatos y Enfrentamientos"])
 

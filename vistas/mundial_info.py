@@ -911,6 +911,14 @@ MONOTYPE1_POSICIONES = {
             }}
         }
 MONOTYPE1_LIGAS = {
+        "GUERRA DE MAFIAS 3": {
+        "SINGLES": {
+            "Arnau": 50, "Clauz": 50, "Chescor": 50, "Hydreigon_Chelas": 50,
+            "Draco axel": 50, "Elin beacil": 50, "Aikauwu": 50, "Adpg": 50,
+        },
+        "DOBLES": {},
+        "VGC": {},
+    },
     "PJS": {
         "SINGLES": {
             "Saga": "Participante",       # Jugador1 en SINGLES
