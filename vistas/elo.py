@@ -48,6 +48,33 @@ class PSElo:
         data_filas.loc[i, "Rating_B"]      = opponent_rating
         data_filas.loc[i, "Rating_B_NEW"]  = new_rating_b
 
+_PS = PSElo(1000)
+
+def _simular_elo(elo, inicial):
+    """Recorre las batallas en orden y devuelve (data_elo, data_filas).
+    Misma fórmula que PSElo.update_rating, pero con un dict de ratings y listas en vez de
+    filtrar/escribir el DataFrame batalla por batalla (esto era el cuello de botella de la página)."""
+    ratings = {p: inicial for p in pd.concat([elo['Ganador'], elo['Perdedor']]).unique()}
+    n = len(elo)
+    ja, ra_l, ra_n, jb, rb_l, rb_n = [], [], [], [], [], []
+    for g, p in zip(elo['Ganador'].tolist(), elo['Perdedor'].tolist()):
+        ra, rb = ratings[g], ratings[p]
+        k = _PS.get_k_factor(ra, 1)
+        exp_a = _PS.calculate_expected_score(ra, rb)
+        na = max(1000, round(ra + k * (1 - exp_a)))
+        nb = max(1000, round(rb + k * (0 - (1 - exp_a))))
+        ratings[g], ratings[p] = na, nb
+        ja.append(g); ra_l.append(ra); ra_n.append(na)
+        jb.append(p); rb_l.append(rb); rb_n.append(nb)
+    data_elo = pd.DataFrame({'Participantes': list(ratings), 'Elo': list(ratings.values())})
+    data_elo['Elo'] = data_elo['Elo'].astype(type(inicial))
+    data_filas = pd.DataFrame({
+        'Jugador_A': ja, 'Rating_A': pd.Series(ra_l, dtype=float), 'Rating_A_NEW': pd.Series(ra_n, dtype=float),
+        'Jugador_B': jb, 'Rating_B': pd.Series(rb_l, dtype=float), 'Rating_B_NEW': pd.Series(rb_n, dtype=float),
+        'Fecha': elo['date'].values,
+    })
+    return data_elo, data_filas
+
 ROUND_ORDER = {
     'ronda suiza 1': 10, 'ronda suiza 2': 11, 'ronda suiza 3': 12,
     'ronda suiza 4': 13, 'ronda suiza 5': 14, 'ronda suiza 6': 15,
@@ -118,28 +145,7 @@ def calcular_elo(df_raw):
     elo = elo[elo['Ganador'] != elo['Perdedor']]
     elo = elo.sort_values(['date','_nt','_ro'], ascending=True).reset_index(drop=True)
 
-    # Inicializar ELOs
-    todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
-    data_elo = pd.DataFrame({'Participantes': todos, 'Elo': 1000})
-
-    # Inicializar data_filas
-    data_filas = pd.DataFrame({
-        'Jugador_A': [''] * len(elo),
-        'Rating_A': [0.0] * len(elo),
-        'Rating_A_NEW': [0.0] * len(elo),
-        'Jugador_B': [''] * len(elo),
-        'Rating_B': [0.0] * len(elo),
-        'Rating_B_NEW': [0.0] * len(elo),
-        'Fecha': elo['date'].values,
-    })
-
-    for i in range(len(elo)):
-        ganador = elo.loc[i, 'Ganador']
-        perdedor = elo.loc[i, 'Perdedor']
-        rating_a = data_elo.loc[data_elo['Participantes'] == ganador, 'Elo'].values[0]
-        rating_b = data_elo.loc[data_elo['Participantes'] == perdedor, 'Elo'].values[0]
-        player = PSElo(rating_a)
-        player.update_rating(ganador, perdedor, rating_a, rating_b, 1, data_elo, data_filas, i)
+    data_elo, data_filas = _simular_elo(elo, 1000)
 
     # Agregar última fecha activa
     per = elo[['Perdedor', 'date']].rename(columns={'Perdedor': 'Jugador', 'date': 'Fecha'})
@@ -174,19 +180,7 @@ def calcular_elo_formato(df_raw, formato):
     elo = elo[elo['Ganador'] != elo['Perdedor']]
     elo = elo.sort_values(['date','_nt','_ro'], ascending=True).reset_index(drop=True)
     if elo.empty: return pd.DataFrame(), pd.DataFrame()
-    todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
-    data_elo = pd.DataFrame({'Participantes': todos, 'Elo': 1000})
-    data_filas = pd.DataFrame({
-        'Jugador_A': ['']*len(elo), 'Rating_A': [0.0]*len(elo),
-        'Rating_A_NEW': [0.0]*len(elo), 'Jugador_B': ['']*len(elo),
-        'Rating_B': [0.0]*len(elo), 'Rating_B_NEW': [0.0]*len(elo),
-        'Fecha': elo['date'].values,
-    })
-    for i in range(len(elo)):
-        g = elo.loc[i,'Ganador']; p = elo.loc[i,'Perdedor']
-        ra = data_elo.loc[data_elo['Participantes']==g,'Elo'].values[0]
-        rb = data_elo.loc[data_elo['Participantes']==p,'Elo'].values[0]
-        PSElo(ra).update_rating(g, p, ra, rb, 1, data_elo, data_filas, i)
+    data_elo, data_filas = _simular_elo(elo, 1000)
     per = elo[['Perdedor','date']].rename(columns={'Perdedor':'Jugador','date':'Fecha'})
     gan = elo[['Ganador','date']].rename(columns={'Ganador':'Jugador','date':'Fecha'})
     dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
@@ -216,19 +210,7 @@ def calcular_elo_tier(df_raw, tier):
     elo = elo[elo['Ganador'] != elo['Perdedor']]
     elo = elo.sort_values(['date','_nt','_ro'], ascending=True).reset_index(drop=True)
     if elo.empty: return pd.DataFrame(), pd.DataFrame()
-    todos = pd.concat([elo['Ganador'], elo['Perdedor']]).unique()
-    data_elo = pd.DataFrame({'Participantes': todos, 'Elo': 1000.0})
-    data_filas = pd.DataFrame({
-        'Jugador_A': ['']*len(elo), 'Rating_A': [0.0]*len(elo),
-        'Rating_A_NEW': [0.0]*len(elo), 'Jugador_B': ['']*len(elo),
-        'Rating_B': [0.0]*len(elo), 'Rating_B_NEW': [0.0]*len(elo),
-        'Fecha': elo['date'].values,
-    })
-    for i in range(len(elo)):
-        g = elo.loc[i,'Ganador']; p = elo.loc[i,'Perdedor']
-        ra = data_elo.loc[data_elo['Participantes']==g,'Elo'].values[0]
-        rb = data_elo.loc[data_elo['Participantes']==p,'Elo'].values[0]
-        PSElo(ra).update_rating(g, p, ra, rb, 1, data_elo, data_filas, i)
+    data_elo, data_filas = _simular_elo(elo, 1000.0)
     per = elo[['Perdedor','date']].rename(columns={'Perdedor':'Jugador','date':'Fecha'})
     gan = elo[['Ganador','date']].rename(columns={'Ganador':'Jugador','date':'Fecha'})
     dfechas = pd.concat([per,gan]).groupby('Jugador')['Fecha'].max().reset_index()
