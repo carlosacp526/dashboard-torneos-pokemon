@@ -2,5 +2,6 @@
 toolbarMode = "minimal"
 
 [theme]
+base = "dark"
 primaryColor = "#8B5CF6"
 baseRadius = "small"
