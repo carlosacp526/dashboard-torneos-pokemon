@@ -378,9 +378,45 @@ def show():
     st.markdown("---")
 
     tabs = st.tabs([
-        "📋 Catálogo Completo", "🗂️ Por Categoría", "🎖️ Por Rareza", "🔥 Dificultad",
+        "📋 Catálogo Completo", "🔍 Buscar por logro", "🗂️ Por Categoría", "🎖️ Por Rareza", "🔥 Dificultad",
         "🚫 Nunca obtenidos", "🏆 Ranking de Jugadores", "📐 Distribución", "🔎 Detalle por Jugador",
     ])
+    tab_buscar = tabs[1]
+    tabs = [tabs[0]] + list(tabs[2:])        # el resto de las pestañas conserva sus índices de siempre
+
+    # ═══════════════════════ Buscar por logro ═══════════════════════
+    with tab_buscar:
+        st.markdown("### ¿Quiénes tienen un logro?")
+        st.caption("Elige un logro (puedes escribir parte del nombre para filtrar la lista) y verás todos los "
+                   "jugadores que ya lo desbloquearon.")
+        opciones = logros_df.reset_index().sort_values("num")
+        etiquetas = {r["id"]: f"#{int(r['num'])} · {r['name']} — {r['rareza']}" for _, r in opciones.iterrows()}
+        lid_sel = st.selectbox("Logro", [""] + list(etiquetas), index=0, key="buscar_logro_sel",
+                               format_func=lambda x: "Elige un logro…" if x == "" else etiquetas[x])
+        if lid_sel:
+            lg = logros_df.loc[lid_sel]
+            tienen = matriz.index[matriz[lid_sel].astype(bool)] if lid_sel in matriz.columns else matriz.index[:0]
+            st.markdown(f"#### {lg['name']}")
+            st.write(lg["desc"])
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Categoría", lg["cat"])
+            m2.metric("Rareza", lg["rareza"])
+            m3.metric("XP", f"{int(lg['xp']):,}")
+            m4.metric("Jugadores que lo tienen", f"{len(tienen)} de {total_jugadores}",
+                      f"{len(tienen) / total_jugadores * 100:.1f}%", delta_color="off")
+            if len(tienen) == 0:
+                st.info("Nadie ha desbloqueado este logro todavía.")
+            else:
+                tabla_j = pd.DataFrame({
+                    "Jugador": tienen,
+                    "Logros totales": logros_por_jugador.reindex(tienen).astype(int).values,
+                    "XP total": xp_por_jugador.reindex(tienen).astype(int).values,
+                }).sort_values(["XP total", "Jugador"], ascending=[False, True]).reset_index(drop=True)
+                tabla_j.insert(0, "#", range(1, len(tabla_j) + 1))
+                st.dataframe(tabla_j, use_container_width=True, hide_index=True,
+                             height=min(600, 40 + 35 * len(tabla_j)))
+                st.download_button("Descargar lista (CSV)", tabla_j.to_csv(index=False).encode("utf-8"),
+                                   f"jugadores_logro_{lid_sel}.csv", "text/csv", key="buscar_logro_csv")
 
     # ═══════════════════════ Catálogo completo ═══════════════════════
     with tabs[0]:
