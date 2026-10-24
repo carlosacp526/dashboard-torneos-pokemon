@@ -774,6 +774,19 @@ def _emparejar_suizo(orden_jugadores, pares_jugados):
     return parejas
 
 
+def _orden_por_score(victorias, juegos, sob, venc):
+    """Índices de los participantes ordenados como score_final + sort(Victorias, score_completo).
+    Misma fórmula que utils.score_final pero en numpy: dentro de la simulación se llama miles de
+    veces y armar un DataFrame cada vez era el cuello de botella de la página."""
+    v = np.asarray(victorias, dtype=float); j = np.asarray(juegos, dtype=float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        pv = v / j; pd_ = (j - v) / j; tot = j * 6.0
+        sobp = np.asarray(sob, dtype=float) / tot; pk = np.asarray(venc, dtype=float) / tot
+        desempeno = pk * 0.7 + pv * 0.1 + 0.1 + 0.1 * sobp
+        sc = np.round(100 * ((pv - pd_) * 4 / 4 * 0.25 + pk * 0.35 + desempeno * 0.25 + 0.05 + 0.1 * sobp), 2)
+    return np.lexsort((-sc, -v))
+
+
 def _simular_liga_suiza_hibrida(base_lt, prob_df_conocido, jornadas_sin_emparejar, avg_pokes,
                                  lt, model, latest_stats, top_feat, pares_ya_jugados,
                                  n_sims=1000, seed=42):
@@ -838,13 +851,7 @@ def _simular_liga_suiza_hibrida(base_lt, prob_df_conocido, jornadas_sin_empareja
         pares_simulacion = set(pares_ya_jugados)
 
         for _jornada in jornadas_sin_emparejar:
-            sim = pd.DataFrame({
-                "Participante": participantes, "Victorias": victorias, "Juegos": juegos,
-                "Derrotas": juegos - victorias, "pokes_sobrevivientes": sob, "poke_vencidos": venc,
-            })
-            scored = score_final(sim).sort_values(
-                ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
-            orden = scored["Participante"].tolist()
+            orden = [participantes[k] for k in _orden_por_score(victorias, juegos, sob, venc)]
             for a, b in _emparejar_suizo(orden, pares_simulacion):
                 ia, ib = idx[a], idx[b]
                 p = prob_p1_series(a, b)
@@ -856,17 +863,12 @@ def _simular_liga_suiza_hibrida(base_lt, prob_df_conocido, jornadas_sin_empareja
                 sob[li] += sl; venc[li] += vl
                 pares_simulacion.add(frozenset((a, b)))
 
-        sim = pd.DataFrame({
-            "Participante": participantes, "Victorias": victorias, "Juegos": juegos,
-            "Derrotas": juegos - victorias, "pokes_sobrevivientes": sob, "poke_vencidos": venc,
-        })
-        scored = score_final(sim).sort_values(
-            ["Victorias", "score_completo"], ascending=[False, False]).reset_index(drop=True)
-        total = len(scored)
-        for pos, row in enumerate(scored.itertuples(), start=1):
+        orden_idx = _orden_por_score(victorias, juegos, sob, venc)
+        total = len(orden_idx)
+        for pos, k in enumerate(orden_idx, start=1):
             zona = zona_fn(pos, total)
-            zona_counts[row.Participante][zona] += 1
-            rank_sum[idx[row.Participante]] += pos
+            zona_counts[participantes[k]][zona] += 1
+            rank_sum[k] += pos
 
     filas = []
     for p in participantes:
