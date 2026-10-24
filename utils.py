@@ -363,7 +363,7 @@ def precalcular_logros_ligas(_df_raw):
       mvps        {jugador: cantidad de MVPs de jornada}
       mvp_consec  MVP en 2 jornadas seguidas de la misma temporada
       lider       1° de la tabla acumulada tras la jornada 2 o posterior
-      escalada    subió 4+ posiciones en una sola jornada
+      escalada    subió 2+ posiciones en una sola jornada
       remontada   fuera del top 3 a mitad de una temporada TERMINADA y la cerró en el top 3
       perfecta    ganó todas sus batallas (3+) de una jornada, sin ningún Walk Over
       top5        no salió del top 5 en ninguna jornada de una temporada TERMINADA de 5+ jornadas
@@ -405,7 +405,7 @@ def precalcular_logros_ligas(_df_raw):
             r = g.sort_values("Jornada").set_index("Jornada")["RANK"]
             if ((r.index >= 2) & (r == 1)).any():
                 out["lider"].add(key(a))
-            if (r.diff().dropna() <= -4).any():
+            if (r.diff().dropna() <= -2).any():
                 out["escalada"].add(key(a))
             if not en_curso and mitad in r.index and r[mitad] > 3 and r.iloc[-1] <= 3:
                 out["remontada"].add(key(a))

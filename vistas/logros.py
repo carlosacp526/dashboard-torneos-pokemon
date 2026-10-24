@@ -130,7 +130,7 @@ LOGROS = [
     {"id":"TO04","num":56,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌊","xp":200,  "name":"Maestro de Hoenn",      "desc":"Participa en torneo Gen3 (T34, T70 ,T68)"},
     {"id":"TO05","num":57,"cat":"Torneo",       "rareza":"Bronce",    "icon":"❄️","xp":200,  "name":"Maestro de Sinnoh",     "desc":"Participa en torneo Gen4 (T38, T68, T79)"},
     {"id":"TO06","num":58,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌆","xp":200,  "name":"Maestro de Unova",      "desc":"Participa en torneo Gen5 (T44, T68, T87)"},
-    {"id":"TO07","num":59,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🗼","xp":200,  "name":"Maestro de Kalos",      "desc":"Participa en torneo Gen6 (T50, T68)"},
+    {"id":"TO07","num":59,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🗼","xp":200,  "name":"Maestro de Kalos",      "desc":"Participa en torneo Gen6 (T50, T68, T92)"},
     {"id":"TO08","num":60,"cat":"Torneo",       "rareza":"Bronce",    "icon":"🌺","xp":200,  "name":"Maestro de Alola",      "desc":"Participa en torneo Gen7 (T57, T68)"},
     {"id":"TO09","num":61,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Galar",      "desc":"Participa en torneo Gen8 (T60, T68)"},
     {"id":"TO10","num":62,"cat":"Torneo",       "rareza":"Bronce",    "icon":"⚽","xp":200,  "name":"Maestro de Paldea",     "desc":"Participa en torneo Gen9 (T66, T68)"},
@@ -195,7 +195,7 @@ LOGROS = [
 {"id":"TI01","num":101,"cat":"Torneo","rareza":"Bronce","icon":"🔥","xp":200,"name":"Maestro Fuego",    "desc":"Participa en torneo Monotype Fuego (T76)"},
 {"id":"TI02","num":102,"cat":"Torneo","rareza":"Bronce","icon":"💧","xp":200,"name":"Maestro Agua",     "desc":"Participa en torneo Monotype Agua (T69)"},
 {"id":"TI03","num":103,"cat":"Torneo","rareza":"Bronce","icon":"🌿","xp":200,"name":"Maestro Planta",   "desc":"Participa en torneo Monotype Planta (T83)"},
-{"id":"TI04","num":104,"cat":"Torneo","rareza":"Bronce","icon":"⚡","xp":200,"name":"Maestro Eléctrico","desc":"Participa en torneo Monotype Eléctrico (T??)"},
+{"id":"TI04","num":104,"cat":"Torneo","rareza":"Bronce","icon":"⚡","xp":200,"name":"Maestro Eléctrico","desc":"Participa en torneo Monotype Eléctrico (T95)"},
 {"id":"TI05","num":105,"cat":"Torneo","rareza":"Bronce","icon":"🧊","xp":200,"name":"Maestro Hielo",    "desc":"Participa en torneo Monotype Hielo (T??)"},
 {"id":"TI06","num":106,"cat":"Torneo","rareza":"Bronce","icon":"👊","xp":200,"name":"Maestro Lucha",    "desc":"Participa en torneo Monotype Lucha (T??)"},
 {"id":"TI07","num":107,"cat":"Torneo","rareza":"Bronce","icon":"☠️","xp":200,"name":"Maestro Veneno",   "desc":"Participa en torneo Monotype Veneno (T??)"},
@@ -316,10 +316,21 @@ LOGROS = [
 # tuvo todas sus batallas de la jornada como Walk Over a favor no cuenta. Todos son históricos (no se pierden). ──
 {"id":"LI13","num":219,"cat":"Ligas","rareza":"Bronce","icon":"🌟","xp":150, "name":"MVP de la Jornada",       "desc":"Es el MVP (mayor score) de una jornada de liga"},
 {"id":"LI14","num":220,"cat":"Ligas","rareza":"Bronce","icon":"👑","xp":100, "name":"Líder Provisional",       "desc":"Lidera la tabla acumulada de una liga tras la jornada 2 o posterior"},
-{"id":"LI15","num":221,"cat":"Ligas","rareza":"Bronce","icon":"⬆️","xp":100, "name":"Escalador",               "desc":"Sube 4 o más posiciones en la tabla de una liga en una sola jornada"},
+{"id":"LI15","num":221,"cat":"Ligas","rareza":"Bronce","icon":"⬆️","xp":100, "name":"Escalador",               "desc":"Sube 2 o más posiciones en la tabla de una liga en una sola jornada"},
 {"id":"LI16","num":222,"cat":"Ligas","rareza":"Oro",   "icon":"⭐","xp":700, "name":"MVP Recurrente",          "desc":"Acumula 5 MVPs de jornada de liga"},
 {"id":"LI17","num":223,"cat":"Ligas","rareza":"Oro",   "icon":"✌️","xp":700, "name":"Doble MVP",               "desc":"Es MVP en 2 jornadas seguidas de la misma temporada de liga"},
 {"id":"LI18","num":224,"cat":"Ligas","rareza":"Oro",   "icon":"🔥","xp":800, "name":"Remontada de Temporada",  "desc":"Estaba fuera del top 3 a mitad de una temporada de liga y la terminó en el top 3"},
+
+# ── Plata y Legendarios nuevos: formato, rachas largas, rivales recurrentes, constancia anual, dinastías ──
+{"id":"VI25","num":225,"cat":"Victorias",    "rareza":"Plata",      "icon":"🎯","xp":350,  "name":"Especialista de Formato","desc":"Gana 25 partidas en un mismo formato (Singles, Dobles o VGC)"},
+{"id":"VI26","num":226,"cat":"Victorias",    "rareza":"Plata",      "icon":"🔥","xp":450,  "name":"Racha de Ocho",          "desc":"Gana 8 partidas consecutivas"},
+{"id":"SP24","num":227,"cat":"Especial",     "rareza":"Plata",      "icon":"🤝","xp":300,  "name":"Rival de Siempre",       "desc":"Enfrenta al mismo rival en 3 torneos distintos"},
+{"id":"SP25","num":228,"cat":"Especial",     "rareza":"Plata",      "icon":"📅","xp":300,  "name":"Año Activo",             "desc":"Juega en 6 meses distintos de un mismo año"},
+{"id":"VI27","num":229,"cat":"Victorias",    "rareza":"Legendario", "icon":"⚡","xp":1600, "name":"Racha de Diez",          "desc":"Gana 10 partidas consecutivas"},
+{"id":"VI28","num":230,"cat":"Victorias",    "rareza":"Legendario", "icon":"⚔️","xp":1800, "name":"Doble Centurión",        "desc":"Gana 200 partidas en total"},
+{"id":"VI29","num":231,"cat":"Victorias",    "rareza":"Legendario", "icon":"👑","xp":2000, "name":"Dinastía",               "desc":"Gana dos torneos consecutivos (N y N+1)"},
+{"id":"PA13","num":232,"cat":"Participación","rareza":"Legendario", "icon":"🏟️","xp":1600, "name":"Veterano de Torneos",    "desc":"Participa en 50 torneos finalizados"},
+{"id":"TO34","num":233,"cat":"Torneo",       "rareza":"Legendario", "icon":"🎨","xp":1600, "name":"Campeón Monotype",       "desc":"Gana un torneo Monotype"},
 
 ]
 
@@ -332,7 +343,7 @@ CATEGORIAS_ORDEN = ["Participación","Victorias","Ranking","Estrategia","Torneo"
 # vez de mantener una copia duplicada que se desactualiza sola.
 TORNEOS_GEN = {
     "TO02": {27,58,68}, "TO03": {29,65,68}, "TO04": {34,70,68},
-    "TO05": {38,68,79}, "TO06": {44,68,87}, "TO07": {50,68},
+    "TO05": {38,68,79}, "TO06": {44,68,87}, "TO07": {50,68,92},
     "TO08": {57,68},    "TO09": {60,68},    "TO10": {66,68}
 }
 GENERACIONES_NOMBRES = {
@@ -896,7 +907,7 @@ def evaluar_logros(
         "TI01": {76},  # Fuego
         "TI02": {69},  # Agua
         "TI03": {83},  # Planta
-        "TI04": set(),  # Eléctrico — aún no jugado
+        "TI04": {95},  # Eléctrico
         "TI05": set(),  # Hielo — aún no jugado
         "TI06": set(),  # Lucha — aún no jugado
         "TI07": set(),  # Veneno — aún no jugado
@@ -1783,6 +1794,34 @@ def evaluar_logros(
         return mejor >= min_meses
     r["SP22"] = _racha_presencia()
 
+    # ── Plata y Legendarios nuevos (van antes de Progresión para que cuenten en XP y totales) ──
+    _pm_v = pm[pm['Walkover'] != -1] if 'Walkover' in pm.columns else pm
+    _gano_v = (_pm_v['winner'].astype(str).str.strip().str.lower() == pq) if 'winner' in _pm_v.columns else pd.Series(False, index=_pm_v.index)
+    _vic_formato_max = int(_pm_v[_gano_v].groupby('Formato').size().max()) if ('Formato' in _pm_v.columns and _gano_v.any()) else 0
+    _t_v = pm[pm['league'] == 'TORNEO'] if 'league' in pm.columns else pm.iloc[0:0]
+    if not _t_v.empty and 'N_Torneo' in _t_v.columns:
+        _es_p1 = _t_v['player1'].astype(str).str.strip().str.lower() == pq
+        _rv = _t_v['player2'].where(_es_p1, _t_v['player1']).astype(str).str.strip().str.lower()
+        _rival_torneos_max = int(_t_v.assign(_rv=_rv).groupby('_rv')['N_Torneo'].nunique().max())
+    else:
+        _rival_torneos_max = 0
+    _fechas_v = pm['date'].dropna() if 'date' in pm.columns else pd.Series(dtype='datetime64[ns]')
+    _meses_anio_max = int(pd.DataFrame({'y': _fechas_v.dt.year, 'm': _fechas_v.dt.month}).groupby('y')['m'].nunique().max()) if len(_fechas_v) else 0
+    _camp_nums = {int(c.get('Torneo', -1)) for c in campeonatos_torneo_final}
+    _torneos_mono = set()
+    if df_raw is not None and 'Tier' in df_raw.columns and 'N_Torneo' in df_raw.columns and 'league' in df_raw.columns:
+        _dm = df_raw[(df_raw['league'] == 'TORNEO') & df_raw['Tier'].astype(str).str.upper().str.contains('MONOTYPE', na=False)]
+        _torneos_mono = set(_dm['N_Torneo'].dropna().astype(int))
+    r["VI25"] = _vic_formato_max >= 25
+    r["VI26"] = racha_max >= 8
+    r["SP24"] = _rival_torneos_max >= 3
+    r["SP25"] = _meses_anio_max >= 6
+    r["VI27"] = racha_max >= 10
+    r["VI28"] = victorias >= 200
+    r["VI29"] = any((t + 1) in _camp_nums for t in _camp_nums)
+    r["PA13"] = torneos_part_final >= 50
+    r["TO34"] = bool(_torneos_mono & _camp_nums)
+
     # PROGRESIÓN — depende del conteo anterior
     xp_total = sum(l['xp'] for l in LOGROS if r.get(l['id'], False))
     desbloq_bronce = sum(1 for l in LOGROS if l['rareza']=='Bronce' and r.get(l['id'],False))
@@ -2230,7 +2269,7 @@ def evaluar_logros(
     _d("LI12", texto="Jugó primero en una categoría de Liga y luego en una superior" if r["LI12"] else None)
     _d("LI13", _n_mvps, 1, f"{_n_mvps} MVP(s) de jornada de liga")
     _d("LI14", texto="Lideró la tabla acumulada de una liga tras la jornada 2 o posterior" if r["LI14"] else None)
-    _d("LI15", texto="Subió 4+ posiciones en la tabla de una liga en una sola jornada" if r["LI15"] else None)
+    _d("LI15", texto="Subió 2+ posiciones en la tabla de una liga en una sola jornada" if r["LI15"] else None)
     _d("LI16", _n_mvps, 5, f"{_n_mvps} MVP(s) de jornada de liga")
     _d("LI17", texto="MVP en 2 jornadas seguidas de la misma temporada" if r["LI17"] else None)
     _d("LI18", texto="Fuera del top 3 a mitad de temporada y terminó en el top 3" if r["LI18"] else None)
@@ -2264,6 +2303,15 @@ def evaluar_logros(
     _d("TO29", texto="Ganó una batalla en fase eliminatoria" if r["TO29"] else None)
     _d("TO30", texto="Jugó una batalla en ronda suiza" if r["TO30"] else None)
     _d("TO31", texto="2+ torneos del mismo formato en un mismo mes" if r["TO31"] else None)
+    _d("VI25", _vic_formato_max, 25, f"Mayor cantidad de victorias en un solo formato: {_vic_formato_max}")
+    _d("VI26", racha_max, 8, f"Racha máxima: {racha_max} victoria(s) seguida(s)")
+    _d("VI27", racha_max, 10, f"Racha máxima: {racha_max} victoria(s) seguida(s)")
+    _d("VI28", victorias, 200, f"{victorias} victoria(s) totales")
+    _d("VI29", texto="Ganó dos torneos con números consecutivos" if r["VI29"] else None)
+    _d("SP24", _rival_torneos_max, 3, f"Mismo rival en {_rival_torneos_max} torneo(s) distintos")
+    _d("SP25", _meses_anio_max, 6, f"Máximo de meses distintos jugados en un año: {_meses_anio_max}")
+    _d("PA13", torneos_part_final, 50, f"{torneos_part_final} torneo(s) finalizado(s) jugado(s)")
+    _d("TO34", texto="Ganó un torneo Monotype" if r["TO34"] else None)
     _d("TO32", texto="Perdió una serie de torneo por el margen mínimo" if r["TO32"] else None)
     _d("TO33", texto="Jugó en ronda de perdedores de un torneo" if r["TO33"] else None)
 

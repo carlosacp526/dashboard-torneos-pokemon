@@ -122,6 +122,29 @@ def glifo_top5(d, p):
     _texto_centrado(d, (80, 107), "5", _font(26), s)
 
 
+def _glifo_cifra(d, p, cifra, rotulo):
+    tam = 30 if len(cifra) <= 2 else 22
+    _texto_centrado(d, (80, 94), cifra, _font(tam), p["shine"])
+    _texto_centrado(d, (80, 114), rotulo, _font(8), p["shine"])
+
+
+def glifo_dos_coronas(d, p):
+    s = p["shine"]
+    for dx in (-9, 9):
+        cx = 80 + dx
+        k = 0.8
+        d.polygon([(cx - 14 * k, 108), (cx - 14 * k, 92), (cx - 7 * k, 100), (cx, 88), (cx + 7 * k, 100),
+                   (cx + 14 * k, 92), (cx + 14 * k, 108)], fill=s)
+        d.rectangle([cx - 14 * k, 110, cx + 14 * k, 114], fill=s)
+
+
+def glifo_mono(d, p):
+    s = p["shine"]
+    _estrella(d, 80, 93, 10, s)
+    _texto_centrado(d, (80, 114), "MONO", _font(10), s)
+
+
+
 # id del logro -> función que dibuja su glifo
 GLIFOS = {
     "LI13": glifo_estrella,        # MVP de la Jornada
@@ -132,6 +155,15 @@ GLIFOS = {
     "LI18": glifo_remontada,       # Remontada de Temporada
     "LI19": glifo_check,           # Jornada Perfecta
     "LI20": glifo_top5,            # Top 5 Constante
+    "VI25": lambda d, p: _glifo_cifra(d, p, "25", "FORMATO"),
+    "VI26": lambda d, p: _glifo_cifra(d, p, "8", "RACHA"),
+    "SP24": lambda d, p: _glifo_cifra(d, p, "VS", "x3"),
+    "SP25": lambda d, p: _glifo_cifra(d, p, "6", "MESES"),
+    "VI27": lambda d, p: _glifo_cifra(d, p, "10", "RACHA"),
+    "VI28": lambda d, p: _glifo_cifra(d, p, "200", "GANADAS"),
+    "VI29": glifo_dos_coronas,
+    "PA13": lambda d, p: _glifo_cifra(d, p, "50", "TORNEOS"),
+    "TO34": glifo_mono,
 }
 
 
