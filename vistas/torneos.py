@@ -35,12 +35,18 @@ def show():
             grupo = [t for t in torneos_disponibles if i+1 <= t <= i+10]
             if grupo: grupos.append((f"Torneos {i+1}-{min(i+10,max_t)}", grupo))
 
-        tabs_grupos = st.tabs([n for n,_ in grupos])
-        for idx_g, (nombre_g, torneos_g) in enumerate(grupos):
-            with tabs_grupos[idx_g]:
-                tabs_t = st.tabs([f"Torneo {t}" for t in torneos_g])
+        # Solo se dibuja el torneo elegido (antes st.tabs dibujaba los 90+ en cada carga).
+        nombres_g = [n for n, _ in grupos]
+        sel_g = st.radio("Grupo de torneos", nombres_g, index=len(nombres_g) - 1,
+                         horizontal=True, key="tor_grupo")
+        torneos_sel = dict(grupos)[sel_g]
+        sel_t = st.radio("Torneo", [f"Torneo {t}" for t in torneos_sel], index=len(torneos_sel) - 1,
+                         horizontal=True, key=f"tor_sel_{sel_g}")
+        nt_sel = torneos_sel[[f"Torneo {t}" for t in torneos_sel].index(sel_t)]
+        for idx_g, (nombre_g, torneos_g) in [(0, (sel_g, [nt_sel]))]:
+            with st.container():
                 for idx_t2, nt in enumerate(torneos_g):
-                    with tabs_t[idx_t2]:
+                    with st.container():
                         tabla = generar_tabla_torneo(base_torneo_final, nt)
                         if tabla is None or tabla.empty:
                             st.info(f"No hay datos para Torneo {nt}")

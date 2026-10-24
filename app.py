@@ -54,6 +54,12 @@ def _precalentar_scouting():
             logros_analisis.calcular_logros_comunidad(load_data(), logros_version=logros_analisis._version_logros())
         except Exception:
             pass
+        try:
+            from utils import load_data
+            # huella táctica de Estilo y Comportamiento: ~18 s recorriendo a cada jugador, cacheada 6 h.
+            estilo.build_huella_tactica(load_data())
+        except Exception:
+            pass
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
