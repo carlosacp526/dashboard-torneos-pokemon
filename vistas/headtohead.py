@@ -13,7 +13,7 @@ def _pertenece(nombre_col, jugador):
 
 
 def show():
-    st.title("⚔️ Head-to-Head")
+    st.title("Head-to-Head")
     st.caption("Comparación directa entre dos jugadores: historial de enfrentamientos y evolución de Elo en paralelo.")
     st.markdown("---")
 
@@ -59,7 +59,7 @@ def show():
         victorias_b = int(_pertenece(directos['winner'], jugador_b).sum())
         total = len(directos)
 
-        st.subheader(f"📊 Récord directo — {jugador_a} vs {jugador_b}")
+        st.subheader(f"Récord directo — {jugador_a} vs {jugador_b}")
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Enfrentamientos", total)
         m2.metric(f"Victorias {jugador_a}", victorias_a,
@@ -88,7 +88,7 @@ def show():
 
         # ── Desglose por Formato ──────────────────────────────────────
         if 'Formato' in directos.columns and directos['Formato'].notna().any():
-            st.subheader("🎯 Por Formato")
+            st.subheader("Por Formato")
             filas_fmt = []
             for fmt in sorted(directos['Formato'].dropna().unique()):
                 sub = directos[directos['Formato'] == fmt]
@@ -98,7 +98,7 @@ def show():
             st.dataframe(pd.DataFrame(filas_fmt), use_container_width=True, hide_index=True)
 
         # ── Historial de partidas ──────────────────────────────────────
-        st.subheader("📋 Historial de enfrentamientos")
+        st.subheader("Historial de enfrentamientos")
         hist = directos.copy()
         hist['Ganador'] = hist['winner']
         cols_hist = ['date', 'league', 'Ligas_categoria', 'N_Torneo', 'Formato', 'Tier', 'round', 'Ganador']
@@ -119,7 +119,7 @@ def show():
     st.markdown("---")
 
     # ── Evolución de Elo en paralelo ──────────────────────────────────
-    st.subheader("⚡ Evolución de Elo — en paralelo")
+    st.subheader("Evolución de Elo — en paralelo")
     with st.spinner("Calculando Elo..."):
         data_elo, data_filas, _ = calcular_elo(df_raw)
 

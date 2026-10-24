@@ -529,7 +529,7 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
 # ────────────────────────────────────────────────────────────────────────
 
 def show():
-    st.title("🏆 Tier Maker de Jugadores")
+    st.title("Tier Maker de Jugadores")
     st.caption(
         "Arrastrá a cada jugador al tier que le corresponda. Filtrá el pool por "
         "formato, tier jugado, partidas mínimas o winrate antes de acomodarlos, "

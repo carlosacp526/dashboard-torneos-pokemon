@@ -68,7 +68,7 @@ def score_bar(score, max_score=100):
 
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
-    st.header(f"🎭 Torneo Roleplay — Torneo {TORNEO_NUM}")
+    st.header(f"Torneo Roleplay — Torneo {TORNEO_NUM}")
     st.caption("Torneo especial con teams asignados por personaje. Formato: Nacional Dex Doubles.")
 
     # Cargar datos
@@ -92,7 +92,7 @@ def show():
     # TAB 1: TEAMS POR JUGADOR
     # ════════════════════════════════════════════════════════════════════════════
     with tab_teams:
-        st.subheader("👥 Teams asignados por jugador")
+        st.subheader("Teams asignados por jugador")
 
         # Filtro
         jugadores_lista = sorted(df_teams['Jugador'].dropna().unique().tolist())
@@ -196,7 +196,7 @@ def show():
     # TAB 2: EQUIPOS Y TIERS
     # ════════════════════════════════════════════════════════════════════════════
     with tab_equipos:
-        st.subheader("🏆 Ranking de Equipos por Tier")
+        st.subheader("Ranking de Equipos por Tier")
 
         # Filtros
         col_f1, col_f2 = st.columns(2)
@@ -270,7 +270,7 @@ def show():
     # TAB 3: POKÉMON
     # ════════════════════════════════════════════════════════════════════════════
     with tab_pokemon:
-        st.subheader("🎮 Ranking de Pokémon")
+        st.subheader("Ranking de Pokémon")
 
         col_p1, col_p2 = st.columns(2)
         with col_p1:
@@ -325,7 +325,7 @@ def show():
     # TAB 4: RESULTADOS DEL TORNEO
     # ════════════════════════════════════════════════════════════════════════════
     with tab_resultados:
-        st.subheader(f"📊 Resultados — Torneo {TORNEO_NUM}")
+        st.subheader(f"Resultados — Torneo {TORNEO_NUM}")
 
         if df_torneo.empty:
             st.info(f"Aún no hay resultados cargados para el Torneo {TORNEO_NUM} en el CSV principal.")

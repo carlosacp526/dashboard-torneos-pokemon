@@ -394,7 +394,7 @@ def show():
     df_raw = load_data()
 
     st.markdown('<div id="scouting"></div>', unsafe_allow_html=True)
-    st.header("📝 Reporte de Scouting")
+    st.header("Reporte de Scouting")
     st.caption(
         "Un resumen redactado del nivel, estilo y rivalidades de cada jugador **activo** (con partidas en los "
         "últimos 6 meses) que tenga **batallas pendientes**, generado a partir de las mismas métricas del resto de la app — Elo, rachas, títulos, "

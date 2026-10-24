@@ -600,7 +600,7 @@ def generar_carta(stats, pokemon_nombre="", foto_jugador_path=None, fondo_path=N
 # ════════════════════════════════════════════════════════════════
 
 def show():
-    st.title("🃏 Carta TCG — Poketubi")
+    st.title("Carta TCG — Poketubi")
     st.markdown("---")
 
     df_raw = load_data()
@@ -614,7 +614,7 @@ def show():
     jugadores_unicos = [j for j in jugadores_unicos if pd.notna(j) and str(j).strip()]
 
     # ── Controles ─────────────────────────────────────────────────
-    st.subheader("⚙️ Configurar carta")
+    st.subheader("Configurar carta")
     col1, col2 = st.columns(2)
 
     with col1:

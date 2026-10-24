@@ -133,7 +133,7 @@ def build_tier_recomendaciones(df_raw):
 
 
 def show():
-    st.header("🎯 Recomendador de Tier")
+    st.header("Recomendador de Tier")
     st.caption(
         "Qué Tier conviene usar en la próxima jornada de liga o en un torneo próximo, combinando "
         "participación reciente, tendencia, competitividad (qué tan pareja es la comunidad de ese tier) y "
@@ -189,7 +189,7 @@ def show():
     top10 = ranked.head(10)
 
     st.markdown("---")
-    st.subheader(f"🏆 Top recomendaciones — {contexto}")
+    st.subheader(f"Top recomendaciones — {contexto}")
     fig = px.bar(top10.sort_values(col_score), x=col_score, y="Tier", orientation="h",
                  color=col_score, color_continuous_scale="Viridis",
                  title=f"Top 10 Tiers recomendados — {contexto}")

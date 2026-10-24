@@ -44,11 +44,11 @@ def _render_ranking_csv(path_csv, path_png, top_n=16, label_mundial=""):
             clasificados = ranking[ranking["Rank"] < top_n + 1]
             resto        = ranking[ranking["Rank"] >= top_n + 1]
 
-            st.subheader(f"🏆 CLASIFICADOS TOP {top_n}")
+            st.subheader(f"CLASIFICADOS TOP {top_n}")
             st.dataframe(clasificados.style.apply(_highlight_top3, axis=1),
                          use_container_width=True, hide_index=True)
 
-            st.subheader("📊 RANKING COMPLETO")
+            st.subheader("RANKING COMPLETO")
             p1 = resto.iloc[0:28].reset_index(drop=True)
             p2 = resto.iloc[28:56].reset_index(drop=True)
             p3 = resto.iloc[56:].reset_index(drop=True)
@@ -329,7 +329,7 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix=
             m2.metric("🏆 Puntaje máximo",       int(pivot["Total"].max()) if not pivot.empty else 0)
             m3.metric("📊 Total de puntos",      int(pivot["Total"].sum()) if not pivot.empty else 0)
 
-            st.subheader(f"🏆 Ranking Monotype_1 — {fmt}")
+            st.subheader(f"Ranking Monotype_1 — {fmt}")
             st.caption("Cada columna muestra el aporte del torneo/liga al total del jugador.")
             if not pivot.empty:
                 st.dataframe(pivot.style.apply(_highlight_top3, axis=1),
@@ -995,7 +995,7 @@ def show():
     df     = normalize_columns(df_raw.copy())
     df     = ensure_fields(df)
 
-    st.title("🌎 Mundial Pokémon")
+    st.title("Mundial Pokémon")
     st.markdown("---")
 
     # Navegación por tabs superiores
@@ -1010,7 +1010,7 @@ def show():
     # TAB 1 — MONOTYPE_1 (MUNDIAL ACTUAL)
     # ══════════════════════════════════════════════════════════════
     with tab_monotype:
-        st.header("🔵 Mundial Pokémon — Monotype_1  (Actual)")
+        st.header("Mundial Pokémon — Monotype_1 (Actual)")
         st.info("Mundial vigente con **3 rankings paralelos** (SINGLES · DOBLES · VGC). "
                 "El formato de cada torneo se detecta automáticamente desde el CSV.\n\n"
                 "- **SINGLES:** Monotype National Dex, 6 rondas suizas + cuartos de final.\n"
@@ -1035,7 +1035,7 @@ def show():
     # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
     # ══════════════════════════════════════════════════════════════
     with tab_generac:
-        st.header("🟢 Mundial Pokémon — Generaciones  (Cerrado)")
+        st.header("Mundial Pokémon — Generaciones (Cerrado)")
 
         sub_rank, sub_ladder, sub_poke = st.tabs([
             "🏆 Ranking del Mundial",
@@ -1050,7 +1050,7 @@ def show():
 
         # ── Sub-tab: Ladder Torneo 68 ───────────────────────────
         with sub_ladder:
-            st.subheader("🏟️ Ladder — Torneo 68 (Mundial Generaciones)")
+            st.subheader("Ladder — Torneo 68 (Mundial Generaciones)")
             df_t68 = df[df["N_Torneo"] == 68].copy() if "N_Torneo" in df.columns else pd.DataFrame()
 
             if df_t68.empty:
@@ -1116,7 +1116,7 @@ def show():
 
         # ── Sub-tab: Pokémon por Torneo Generacional ─────────────
         with sub_poke:
-            st.subheader("🎮 Pokémon más usados por Torneo Generacional")
+            st.subheader("Pokémon más usados por Torneo Generacional")
             TORNEOS_GEN = [
                 "Torneo Gen 1 — Kanto",   "Torneo Gen 2 — Johto",
                 "Torneo Gen 3 — Hoenn",   "Torneo Gen 4 — Sinnoh",
@@ -1146,7 +1146,7 @@ def show():
     # TAB 3 — ORIGINS (PRIMER MUNDIAL)
     # ══════════════════════════════════════════════════════════════
     with tab_origins:
-        st.header("🟠 Mundial Pokémon — Origins  (Primer mundial)")
+        st.header("Mundial Pokémon — Origins (Primer mundial)")
         _render_ranking_csv("score_mundial2.csv", "mundial/PUNTAJES_MUNDIAL2.png",
                             top_n=16, label_mundial="Origins")
 
@@ -1154,7 +1154,7 @@ def show():
     # TAB 4 — PUNTAJES DE CLASIFICACIÓN (CALCULADOR DINÁMICO)
     # ══════════════════════════════════════════════════════════════
     with tab_puntajes:
-        st.header("🎯 Puntajes de Clasificación Mundial")
+        st.header("Puntajes de Clasificación Mundial")
         st.caption("Cálculo de puntos por torneo y liga según el molde oficial")
 
         mundial_sel = st.radio(

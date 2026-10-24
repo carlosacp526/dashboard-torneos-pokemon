@@ -350,7 +350,7 @@ COLORES_GRUPO = {"Rendimiento": "#E74C3C", "Palmarés": "#F1C40F", "Mundial": "#
 
 def _tab_categorias(tabla):
     """Análisis por categoría (cortes fijos sobre el Score_Xtream)."""
-    st.subheader("🧩 Categorías de jugadores")
+    st.subheader("Categorías de jugadores")
     st.caption("Cinco categorías con cortes fijos sobre el Score_Xtream: el puesto en la escala no cambia aunque cambie la "
                "población, solo si cambia el puntaje del jugador.")
     min_p = st.slider("Mínimo de partidas reales", 0, 100, 10, key="sx_cat_min",
@@ -436,7 +436,7 @@ def _tab_categorias(tabla):
 
 
 def show():
-    st.header("⚡ Score Xtream")
+    st.header("Score Xtream")
     st.caption(
         "Un puntaje de 0 a 1000 que resume a cada jugador: cómo rinde en batalla, qué ha ganado, cuánto juega, "
         "sus replays, sus logros y su fair play. Se calcula en segundo plano, así que la página abre al instante."

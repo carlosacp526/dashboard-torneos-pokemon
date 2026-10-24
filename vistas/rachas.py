@@ -264,7 +264,7 @@ def _mostrar_historicas(df_raw):
 def show():
     df_raw = load_data()
     st.markdown('<div id="rachas"></div>', unsafe_allow_html=True)
-    st.header("🔥 Rachas")
+    st.header("Rachas")
     tab_vivo, tab_hist = st.tabs(["🔥 En vivo", "📜 Históricas"])
     with tab_vivo:
         _mostrar_vivo(df_raw)

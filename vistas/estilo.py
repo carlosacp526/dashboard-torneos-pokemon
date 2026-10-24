@@ -199,7 +199,7 @@ def _radar_trace(vals, name, color, fill=True):
 
 # ════════════════════════════════════════════════════════════════════════════
 def show():
-    st.header("🎭 Estilo y Comportamiento del Jugador")
+    st.header("Estilo y Comportamiento del Jugador")
     st.caption(
         f"Huella de estilo en 5 ejes, calculada a partir de Pokémon vivos/vencidos, walkovers y "
         f"consistencia mensual. Solo se calcula para jugadores con al menos {MIN_PARTIDAS_ESTILO} partidas."
@@ -328,7 +328,7 @@ def show():
                             "estilos_jugadores.csv", "text/csv")
 
     with tab4:
-        st.subheader("⏰ Ranking de Confiabilidad (menos walkovers causados)")
+        st.subheader("Ranking de Confiabilidad (menos walkovers causados)")
         fair = fp[['jugador', 'confiabilidad', 'partidas_totales']].sort_values('confiabilidad', ascending=False)
         fair = fair.rename(columns={'jugador': 'Jugador', 'confiabilidad': 'Confiabilidad', 'partidas_totales': 'Partidas'})
         st.dataframe(fair, use_container_width=True, hide_index=True, height=450)

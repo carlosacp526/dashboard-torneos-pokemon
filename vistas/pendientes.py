@@ -342,7 +342,7 @@ def enviar_whatsapp(numero: str, mensaje: str,
             return {"ok": False, "status": 500, "body": str(e)}
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
-    st.header("⏳ Batallas Pendientes + WhatsApp")
+    st.header("Batallas Pendientes + WhatsApp")
     st.caption("Visualizá todas las batallas pendientes y enviá recordatorios automáticos por WhatsApp.")
 
     # ── Configuración Evolution API (sidebar o expander) ──────────────────────
@@ -683,7 +683,7 @@ def show():
 
     # ── WHATSAPP ──────────────────────────────────────────────────────────────
     with tab_wa:
-        st.subheader("📱 Enviar recordatorios por WhatsApp")
+        st.subheader("Enviar recordatorios por WhatsApp")
 
         with st.expander("📜 Términos y condiciones — Consentimiento de WhatsApp", expanded=False):
             st.markdown("""

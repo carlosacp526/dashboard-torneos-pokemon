@@ -337,7 +337,7 @@ def _color_pct(val):
 
 
 def show():
-    st.header("🧭 Análisis de Logros")
+    st.header("Análisis de Logros")
     st.caption("Vista agregada del sistema de logros a nivel de toda la comunidad: cobertura, "
                "dificultad real de cada medalla, y quiénes lideran la tabla — no un jugador puntual.")
 
@@ -365,7 +365,7 @@ def show():
     total_logros = len(LOGROS)
 
     # ═══════════════════════ KPIs generales ═══════════════════════
-    st.subheader("📊 Panorama general")
+    st.subheader("Panorama general")
     k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric("👥 Jugadores evaluados", total_jugadores)
     k2.metric("🏅 Con al menos 1 logro", jugadores_con_logro,

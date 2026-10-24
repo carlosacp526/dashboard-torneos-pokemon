@@ -1223,7 +1223,7 @@ def _generar_png_ranking(ranking_top: pd.DataFrame) -> bytes:
 
 
 def show():
-    st.title("🎮 User Rate - Pkmn")
+    st.title("User Rate - Pkmn")
     st.markdown("---")
 
     # ── Cargar datos ────────────────────────────────────────────
@@ -1271,7 +1271,7 @@ def show():
                     st.error(f"No se pudo leer el archivo subido: {e}")
 
     # ── Filtros ─────────────────────────────────────────────────
-    st.subheader("🔍 Filtros")
+    st.subheader("Filtros")
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
     col5, col6 = st.columns(2)
@@ -1396,7 +1396,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     # LADDER DE USO
     # ══════════════════════════════════════════════════════════════
-    st.subheader(f"🏆 Top {top_n} Pokémon más usados — {aka_label}")
+    st.subheader(f"Top {top_n} Pokémon más usados — {aka_label}")
 
     h0, h1, h2, h3, h4, h5 = st.columns([0.5, 1, 1, 0.7, 0.7, 0.7])
     h0.markdown("<span style='font-size:20px; font-weight:bold'>#</span>", unsafe_allow_html=True)
@@ -1447,7 +1447,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     # DETALLE POR POKÉMON (movimientos, habilidad, item, teratipo)
     # ══════════════════════════════════════════════════════════════
-    st.subheader("📊 Detalle por Pokémon")
+    st.subheader("Detalle por Pokémon")
     especies_disp = ranking["Pokémon"].tolist()
     if especies_disp:
         especie_sel = st.selectbox("Selecciona un Pokémon", especies_disp)
@@ -1486,7 +1486,7 @@ def show():
     # ══════════════════════════════════════════════════════════════
     # VISOR DE REPLAYS
     # ══════════════════════════════════════════════════════════════
-    # st.subheader("📺 Ver Replays")
+    # st.subheader("Ver Replays")
 
     # cols_replay = [c for c in ["player1", "player2", "winner", "N_Torneo",
     #                             "Formato", "Tier", "Match_replays"]

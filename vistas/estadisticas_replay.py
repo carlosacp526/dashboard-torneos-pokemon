@@ -17,7 +17,7 @@ def _lbl(nombre, glob_val, sufijo=""):
 
 
 def show():
-    st.subheader("🕹️ Estadísticas de Replay por Jugador")
+    st.subheader("Estadísticas de Replay por Jugador")
     st.caption(
         "Calculado a partir de los replays de Showdown disponibles para el "
         "jugador elegido (no todas las partidas tienen replay guardado, así "

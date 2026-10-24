@@ -487,7 +487,7 @@ def _build_ausentes(grid, mat):
 
 # ════════════════════════════════════════════════════════════════════════════
 def show():
-    st.header("🔁 Participación y Retención")
+    st.header("Participación y Retención")
     st.caption(
         "Recencia, Roll Rate, Vintage/Cosechas, ratio de fuga, predicción con XGBoost y un watchlist "
         "de alertas — basado en actividad mensual real (partidas jugadas o con walkover) más las "
@@ -520,7 +520,7 @@ def show():
 
     # ── Recencia ──────────────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("🕓 Recencia")
+    st.subheader("Recencia")
     recencia, mes_ref = compute_recencia(panel)
     if recencia.empty:
         st.info("Sin datos de recencia.")
@@ -558,7 +558,7 @@ def show():
 
     # ── Jugadores por mes ─────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("📅 Jugadores por Mes")
+    st.subheader("Jugadores por Mes")
     actividad = compute_monthly_activity(panel_calc)
     if actividad.empty:
         st.info("Sin datos suficientes.")
@@ -573,7 +573,7 @@ def show():
 
     # ── Roll Rate ─────────────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("🎯 Roll Rate — ¿qué tan reversible es cada estado?")
+    st.subheader("Roll Rate — ¿qué tan reversible es cada estado?")
     st.caption(
         "Adaptado del *roll rate* que usan bancos y suscripciones para medir mora: en vez de deuda, "
         "aquí el 'estado' es la recencia (Activo → Reciente → En riesgo → Inactivo). La matriz muestra, "
@@ -618,7 +618,7 @@ def show():
 
     # ── Vintage / Cosechas ───────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("📈 Vintage / Cosechas — retención por generación de jugadores")
+    st.subheader("Vintage / Cosechas — retención por generación de jugadores")
     st.caption(
         "Cada 'cosecha' es el grupo de jugadores que debutó el mismo mes. El eje X es su antigüedad "
         "(meses desde su primera partida, no el calendario), y el eje Y qué % de esa cosecha sigue "
@@ -652,7 +652,7 @@ def show():
 
     # ── Ratio de fuga ─────────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("📉 Ratio de Fuga (regla simple, 1 mes)")
+    st.subheader("Ratio de Fuga (regla simple, 1 mes)")
     st.caption(
         "De los jugadores activos en un mes, qué % NO vuelve a aparecer al mes siguiente. Es la versión "
         "'cruda' mes a mes (sin el horizonte de 2 meses que usa el modelo) — útil como pulso rápido, "
@@ -679,7 +679,7 @@ def show():
 
     # ── Predicción de fuga (XGBoost) ────────────────────────────────────────
     st.markdown("---")
-    st.subheader("🤖 Predicción de Fuga Confirmada (XGBoost)")
+    st.subheader("Predicción de Fuga Confirmada (XGBoost)")
     st.caption(
         f"Modelo entrenado con el historial mensual de cada jugador (antigüedad, actividad reciente, "
         f"winrate, racha, tendencia, % de walkovers, consistencia) para estimar la probabilidad de que "
@@ -742,7 +742,7 @@ def show():
 
     # ── Watchlist — KPI compuesto de alerta temprana ─────────────────────────
     st.markdown("---")
-    st.subheader("🚨 Watchlist — Jugadores próximos a irse")
+    st.subheader("Watchlist — Jugadores próximos a irse")
     st.caption(
         "Combina el modelo (jugadores activos con alta probabilidad de fuga) con los ya ausentes "
         "(Reciente/En riesgo, priorizados por qué tan reversible es su estado según Roll Rate), "

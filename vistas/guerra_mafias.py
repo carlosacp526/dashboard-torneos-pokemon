@@ -155,7 +155,7 @@ def _matriz_html(lad):
 
 
 def show():
-    st.header("⚔️ Guerra de Mafias 3")
+    st.header("Guerra de Mafias 3")
     st.caption("Torneo especial por equipos: 4 mafias de 8 jugadores. La fase de grupos se juega en 8 grupos de 4.")
 
     bat, pts = _cargar()
@@ -185,13 +185,13 @@ def show():
 
     with tab_res:
         lad = _ladder(bat, pts)
-        st.subheader("🕴️ Puntos por mafia y grupo")
+        st.subheader("Puntos por mafia y grupo")
         st.markdown(_matriz_html(lad), unsafe_allow_html=True)
 
-        st.subheader("🪜 Ladder de todos los jugadores")
+        st.subheader("Ladder de todos los jugadores")
         st.dataframe(_con_foto(lad), use_container_width=True, column_config=_cfg(), row_height=44)
 
-        st.subheader("📊 Posiciones por grupo")
+        st.subheader("Posiciones por grupo")
         st.caption("V/D se calculan con las batallas registradas; Puntos es el puntaje anotado por el organizador.")
         items = list(GRUPOS.items())
         for i in range(0, len(items), 2):
@@ -203,7 +203,7 @@ def show():
                                  use_container_width=True, column_config=_cfg(), row_height=44)
 
     with tab_bat:
-        st.subheader("⚔️ Batallas de la fase de grupos")
+        st.subheader("Batallas de la fase de grupos")
         sel = st.selectbox("Grupo", ["Todos"] + list(GRUPOS), key="gm_grupo")
         v = bat if sel == "Todos" else bat[bat["Grupo"] == sel]
         v = v[["Grupo", "player1", "player2", "winner", "date", "Formato_esp", "Match_replays"]]

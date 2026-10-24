@@ -235,7 +235,7 @@ def plot_player_focus(long_df: pd.DataFrame, jugador: str, min_partidas=1):
 
 # ════════════════════════════════════════════════════════════════════════════
 def show():
-    st.header("🕸️ Analítica Social — Rivalidades del Servidor")
+    st.header("Analítica Social — Rivalidades del Servidor")
     st.caption(
         "Quién juega contra quién, quién es la némesis de cada jugador y qué tan sorprendentes "
         "han sido los resultados de la comunidad, todo construido sobre el historial real de partidas."

@@ -345,7 +345,7 @@ def show():
     activos['RANK'] = range(1, len(activos) + 1)
 
     # ── TOP 10 en vivo ──────────────────────────────────────────────
-    st.header("📈 Ranking Elo en Vivo")
+    st.header("Ranking Elo en Vivo")
     st.caption("Calculado en tiempo real a partir de todas las partidas registradas")
 
     top10 = activos.head(10).reset_index(drop=True)
@@ -368,7 +368,7 @@ def show():
     st.markdown("---")
 
     # Tabla top 10
-    st.subheader("🏆 Top 10 Activos")
+    st.subheader("Top 10 Activos")
     cols_show = ['RANK','Participantes','Pais','Elo','Actividad']
     st.markdown("""
     <style>
@@ -419,7 +419,7 @@ def show():
     st.markdown("---")
 
     # ── Ranking Elo Mensual y Anual (acumulado) ──────────────────────
-    st.header("📅 Ranking Elo Mensual y Anual")
+    st.header("Ranking Elo Mensual y Anual")
     st.caption("Ranking completo (Elo + RANK) de todos los jugadores, congelado al final de un mes/año elegido. "
                "El Elo se mantiene acumulado desde su última partida aunque no hayan jugado ese mes.")
 
@@ -511,7 +511,7 @@ def show():
                 rank_mes = _aplicar_filtro(rank_mes, filtro_m, activos)
                 st.caption("Mes histórico: RANK calculado consecutivamente (1,2,3...) entre jugadores con Elo en esa fecha.")
 
-            st.subheader(f"🏆 Ranking Elo acumulado — {mes_sel}")
+            st.subheader(f"Ranking Elo acumulado — {mes_sel}")
             buscar_m = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_mes")
             tabla_m = (rank_mes[rank_mes['Participantes'].str.contains(buscar_m, case=False, na=False)]
                        if buscar_m else rank_mes)
@@ -534,7 +534,7 @@ def show():
                 rank_anio = _aplicar_filtro(rank_anio, filtro_a, activos)
                 st.caption("Año histórico: RANK calculado consecutivamente (1,2,3...) entre jugadores con Elo en esa fecha.")
 
-            st.subheader(f"🏆 Ranking Elo acumulado — {anio_sel}")
+            st.subheader(f"Ranking Elo acumulado — {anio_sel}")
             buscar_a = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_anio")
             tabla_a = (rank_anio[rank_anio['Participantes'].str.contains(buscar_a, case=False, na=False)]
                        if buscar_a else rank_anio)
@@ -586,7 +586,7 @@ def show():
                         rank_torneo = rank_torneo.sort_values('Elo', ascending=False).reset_index(drop=True)
                         rank_torneo['RANK'] = range(1, len(rank_torneo) + 1)
 
-                st.subheader(f"🏆 Ranking Elo acumulado — hasta Torneo #{int(torneo_sel)}")
+                st.subheader(f"Ranking Elo acumulado — hasta Torneo #{int(torneo_sel)}")
                 buscar_t = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_torneo")
                 tabla_t = (rank_torneo[rank_torneo['Participantes'].str.contains(buscar_t, case=False, na=False)]
                            if buscar_t else rank_torneo)
@@ -599,7 +599,7 @@ def show():
     st.markdown("---")
 
     # ── Elo por Formato ─────────────────────────────────────────────
-    st.header("🎮 Ranking Elo por Formato")
+    st.header("Ranking Elo por Formato")
     st.caption("Elo calculado de forma independiente para cada formato.")
 
     df_raw_fmt = load_data()
@@ -663,7 +663,7 @@ def show():
     st.markdown("---")
 
     # ── Elo por Tier ─────────────────────────────────────────────────
-    st.header("🏷️ Ranking Elo por Tier")
+    st.header("Ranking Elo por Tier")
     st.caption("Elo calculado de forma independiente para cada Tier.")
 
     df_raw_tier  = load_data()
@@ -725,7 +725,7 @@ def show():
                     st.plotly_chart(fig_cmp_t, use_container_width=True)
 
     st.markdown("---")
-    st.header("🔍 Evolución Elo por Jugador")
+    st.header("Evolución Elo por Jugador")
 
     all_players = sorted(data_elo['Participantes'].unique().tolist())
     col_search, col_exact = st.columns([3,1])
@@ -790,7 +790,7 @@ def show():
             st.markdown("---")
 
             # Medidas resumen
-            st.subheader("📊 Estadísticas de Elo")
+            st.subheader("Estadísticas de Elo")
             desc = hist['Rating_A_NEW'].describe()
             cs1,cs2,cs3,cs4,cs5 = st.columns(5)
             cs1.metric("Elo Actual",  int(hist['Rating_A_NEW'].iloc[-1]))

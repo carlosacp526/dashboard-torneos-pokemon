@@ -353,7 +353,7 @@ def _bar_comparativa(label, val1, val2, nombre1, nombre2, fmt=None):
 
 
 def show():
-    st.header("⚔️ Predicción de Combates")
+    st.header("Predicción de Combates")
     st.caption("Modelos ML basados en estadísticas históricas acumuladas por jugador")
 
     df_raw = load_data()

@@ -321,7 +321,7 @@ def calcular_todas_las_ligas(_df_raw):
 
 # ════════════════════════════════════════════════════════════════════════════════
 def show():
-    st.header("🔬 Control de Calidad de Ligas")
+    st.header("Control de Calidad de Ligas")
     st.caption(
         "Indicadores normalizados de competitividad — funcionan correctamente "
         "independientemente de si la liga tiene 3, 5 o 7 partidas por jornada."

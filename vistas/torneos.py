@@ -23,7 +23,7 @@ def show():
 
     # ── Tablas de Torneos ───────────────────────────────────────────
     st.markdown('<div id="tablas-torneos"></div>', unsafe_allow_html=True)
-    st.header("🏆 Tablas de Posiciones por Torneo")
+    st.header("Tablas de Posiciones por Torneo")
 
     if base_torneo_final.empty:
         st.error("No hay datos de torneos disponibles")

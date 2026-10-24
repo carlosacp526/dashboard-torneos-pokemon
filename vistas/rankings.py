@@ -39,7 +39,7 @@ def show():
 
     # ── Salón de la Fama ────────────────────────────────────────────
     st.markdown('<div id="campeones"></div>', unsafe_allow_html=True)
-    st.header("🏆 Salón de la Fama - Campeones")
+    st.header("Salón de la Fama - Campeones")
 
     estilo = st.radio("Estilo", ["🕹️ Pixel", "🖼️ Clásico"], horizontal=True, key="campeones_estilo",
                       help="Pixel: tarjetas automáticas desde los datos (se actualizan solas). Clásico: las imágenes curadas por temporada.")
@@ -73,7 +73,7 @@ def show():
 
     # ── Ranking Elo ─────────────────────────────────────────────────
     st.markdown('<div id="ranking-elo"></div>', unsafe_allow_html=True)
-    st.header("📈 Ranking Elo")
+    st.header("Ranking Elo")
 
     meses_elo = [
         ("elo/Septiembre26.png", "Septiembre 26"),
@@ -100,7 +100,7 @@ def show():
     tab_elo = st.tabs([label for _, label in meses_elo])
     for tab, (img, label) in zip(tab_elo, meses_elo):
         with tab:
-            st.subheader(f"🥇 {label}")
+            st.subheader(f"{label}")
             if os.path.exists(img):
                 st.image(img, width=900)
                 st.caption(f"Rank Elo {label}")

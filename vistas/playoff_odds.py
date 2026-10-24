@@ -915,7 +915,7 @@ def _mostrar_expander_cruces(prob_df):
 
 def _mostrar_resultado(odds_df, zonas, colores, titulo, n_sims, nombre_archivo):
     st.markdown("---")
-    st.subheader(f"📊 {titulo}")
+    st.subheader(f"{titulo}")
     zonas_presentes = [z for z in zonas if odds_df[z].sum() > 0]
     fig = px.bar(odds_df.sort_values("Rank promedio"), x="Jugador", y=zonas_presentes,
                  color_discrete_map=colores,
@@ -929,7 +929,7 @@ def _mostrar_resultado(odds_df, zonas, colores, titulo, n_sims, nombre_archivo):
 
 
 def show():
-    st.header("🎲 Playoff Odds — ¿Quién podría ganar?")
+    st.header("Playoff Odds — ¿Quién podría ganar?")
     st.caption(
         "Simulación Monte Carlo de las batallas todavía pendientes, usando las probabilidades del modelo de "
         "predicción de combates para estimar quién es probable que termine arriba — en Liga, en qué zona de "
@@ -1232,7 +1232,7 @@ def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombr
 
     colores = {col: c for col, c in zip(etapas_cols, ["#FFD700", "#C0C0C0", "#CD7F32", "#87CEEB", "#5DADE2", "#7F8C8D", "#566573"])}
     st.markdown("---")
-    st.subheader(f"📊 Probabilidad de podio — {nombre_torneo}")
+    st.subheader(f"Probabilidad de podio — {nombre_torneo}")
     fig = px.bar(odds_df, x="Jugador", y=etapas_cols, color_discrete_map=colores,
                  title=f"Etapa máxima alcanzada — {n_sims} torneos simulados")
     fig.update_layout(barmode="stack", xaxis_tickangle=-45, legend_title="Etapa", yaxis_title="Probabilidad %")
@@ -1343,7 +1343,7 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
     ganador = odds_df.iloc[0]
     st.success(f"🏆 Favorito a Campeón: **{ganador['Jugador']}** ({ganador['Campeón']:.1f}% de las simulaciones).")
 
-    st.subheader(f"📊 Probabilidad de clasificar a eliminatoria — {nombre_torneo}")
+    st.subheader(f"Probabilidad de clasificar a eliminatoria — {nombre_torneo}")
     clasif_df = odds_df[["Jugador", "Clasifica a eliminatoria"]].sort_values(
         "Clasifica a eliminatoria", ascending=False)
     fig_clasif = px.bar(clasif_df, x="Jugador", y="Clasifica a eliminatoria",
@@ -1352,7 +1352,7 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
     st.plotly_chart(fig_clasif, use_container_width=True)
 
     st.markdown("---")
-    st.subheader(f"📊 Probabilidad de podio — {nombre_torneo}")
+    st.subheader(f"Probabilidad de podio — {nombre_torneo}")
     colores_base = ["#FFD700", "#C0C0C0", "#CD7F32", "#87CEEB", "#5DADE2", "#7F8C8D", "#566573"]
     colores = {col: colores_base[i % len(colores_base)] for i, col in enumerate(etapas_cols[:-1])}
     colores["No clasifica"] = "#3B3B3B"

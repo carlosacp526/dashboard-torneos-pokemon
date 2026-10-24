@@ -19,7 +19,7 @@ def show():
 
     # ── Tablas de Ligas ─────────────────────────────────────────────
     st.markdown('<div id="tablas-ligas"></div>', unsafe_allow_html=True)
-    st.header("📊 Tablas de Posiciones por Liga y Temporada")
+    st.header("Tablas de Posiciones por Liga y Temporada")
 
     if base2.empty:
         st.error("No hay datos de ligas disponibles")

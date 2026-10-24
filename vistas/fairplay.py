@@ -26,7 +26,7 @@ def show():
     df = ensure_fields(df)
 
     st.markdown('<div id="fairplay"></div>', unsafe_allow_html=True)
-    st.header("⚖️ Fair Play — Walkovers")
+    st.header("Fair Play — Walkovers")
     st.caption("Qué tan seguido se juegan las partidas vs. se pierden por inasistencia (Walkover), "
                "y quién concentra más ausencias. Complementa el indicador 'Asistencia' de 🔬 Calidad de Ligas "
                "con una vista dedicada, cruzando Ligas y Torneos.")
@@ -51,7 +51,7 @@ def show():
     st.markdown("---")
 
     # ── Tendencia mensual de WO% ─────────────────────────────────────
-    st.subheader("📈 Tendencia de Walkovers por mes")
+    st.subheader("Tendencia de Walkovers por mes")
     j = jugadas.dropna(subset=['date']).copy()
     j['Mes'] = j['date'].dt.to_period('M').dt.to_timestamp()
     dims = {"General": None, "Tipo de evento": "league"}
@@ -80,7 +80,7 @@ def show():
     st.markdown("---")
 
     # ── WO% por Tier, Formato y País (barras) ─────────────────────────
-    st.subheader("📊 % Walkover por Tier, Formato y País")
+    st.subheader("% Walkover por Tier, Formato y País")
     min_partidas = st.slider("Mínimo de partidas para mostrar", 1, 100, 20, key="fp_min_part",
                              help="Evita que un Tier o país con muy pocas partidas dé un % engañoso.")
 
@@ -142,7 +142,7 @@ def show():
     st.markdown("---")
 
     # ── WO% por tipo de evento ────────────────────────────────────────
-    st.subheader("📊 % Walkover por tipo de evento")
+    st.subheader("% Walkover por tipo de evento")
     if 'league' in jugadas.columns:
         por_liga = jugadas.groupby('league').agg(
             Total=('Walkover', 'size'), WO=('Walkover', lambda s: (s == 1).sum())
@@ -158,7 +158,7 @@ def show():
     st.markdown("---")
 
     # ── Ranking de jugadores con más walkovers ────────────────────────
-    st.subheader("🚫 Jugadores con más Walkovers en contra")
+    st.subheader("Jugadores con más Walkovers en contra")
     st.caption("Cuenta las veces que el jugador fue el lado que **no se presentó** "
                "(perdedor de una partida marcada como Walkover).")
     wo_rows = jugadas[jugadas['Walkover'] == 1].copy()
@@ -182,7 +182,7 @@ def show():
     st.markdown("---")
 
     # ── Tabla por Liga/Temporada (Ligas_categoria) ─────────────────────
-    st.subheader("📋 Detalle por Liga/Temporada")
+    st.subheader("Detalle por Liga/Temporada")
     if 'Ligas_categoria' in df.columns:
         liga_rows = jugadas[jugadas['league'] == 'LIGA'].dropna(subset=['Ligas_categoria'])
         if not liga_rows.empty:

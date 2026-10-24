@@ -115,7 +115,7 @@ def show():
     leagues = df['league'].fillna('Sin liga').unique().tolist()
 
     # ══ PARTE 1 — La comunidad hoy ══
-    st.header("📌 La comunidad hoy")
+    st.header("La comunidad hoy")
     st.caption("Los números generales y lo último que pasó en el historial.")
 
     # ── Estadísticas generales ──────────────────────────────────────
@@ -134,7 +134,7 @@ def show():
     # ── Feed de Actividad Reciente ────────────────────────────────────
     st.markdown('<div id="feed-actividad"></div>', unsafe_allow_html=True)
     st.markdown("---")
-    st.subheader("🕐 Feed de Actividad Reciente")
+    st.subheader("Feed de Actividad Reciente")
     st.caption("Últimos resultados registrados en el historial — qué se jugó y cuándo, de un vistazo.")
 
     recientes = df[completed_mask].dropna(subset=['date']).sort_values('date', ascending=False).copy()
@@ -201,7 +201,7 @@ def show():
     # uniforme, con un panel de KPIs siempre visible arriba de las pestañas.
     st.markdown('<div id="panorama-competencias"></div>', unsafe_allow_html=True)
     st.markdown("---")
-    st.header("🗂️ Panorama de Competencias")
+    st.header("Panorama de Competencias")
     st.caption("La historia de la comunidad en cuatro pasos: **1)** qué hemos jugado, **2)** qué tan grandes han sido "
                "los torneos, **3)** quiénes han ganado y **4)** quiénes llegan a las finales — misma categorización "
                "oficial de PUNTAJES_MUNDIAL3.png.")
@@ -684,12 +684,12 @@ def show():
 
     # ══ PARTE 3 — Cuándo y qué se juega ══
     st.markdown("---")
-    st.header("📅 Cuándo y qué se juega")
+    st.header("Cuándo y qué se juega")
     st.caption("Cómo ha evolucionado la actividad mes a mes y año a año, y en qué tiers, formatos y eventos se concentran las partidas.")
 
     # ── Evolución temporal ──────────────────────────────────────────
     st.markdown('<div id="evolucion"></div>', unsafe_allow_html=True)
-    st.subheader("📈 Evolución temporal de partidas")
+    st.subheader("Evolución temporal de partidas")
 
     if 'date' in df.columns:
         tab1, tab2 = st.tabs(["📅 Por Mes", "📆 Por Año"])
@@ -713,7 +713,7 @@ def show():
 
     # ── Distribución ────────────────────────────────────────────────
     st.markdown('<div id="distribucion"></div>', unsafe_allow_html=True)
-    st.subheader("🎯 Distribución de partidas")
+    st.subheader("Distribución de partidas")
     tab1, tab2, tab3 = st.tabs(["📊 Por Tier","🎮 Por Formato","🏅 Eventos Populares"])
 
     with tab1:
@@ -747,12 +747,12 @@ def show():
 
     # ══ PARTE 4 — Quiénes juegan ══
     st.markdown("---")
-    st.header("👥 Quiénes juegan")
+    st.header("Quiénes juegan")
     st.caption("De dónde son los jugadores y cómo rinden: primero en general, luego por evento y por tier.")
 
     # ── Jugadores por País ──────────────────────────────────────────
     st.markdown('<div id="paises"></div>', unsafe_allow_html=True)
-    st.subheader("🌍 Jugadores por País")
+    st.subheader("Jugadores por País")
 
     cel_path = None
     for candidate in ["celulares.xlsx",
@@ -815,7 +815,7 @@ def show():
 
         # ── Winrate por País (filtrable por Tier) ────────────────────
         st.markdown("---")
-        st.subheader("🏆 Winrate por País")
+        st.subheader("Winrate por País")
 
         tiers_disponibles = (sorted(df['Tier'].dropna().astype(str).str.strip().unique().tolist())
                               if 'Tier' in df.columns else [])
@@ -883,7 +883,7 @@ def show():
         # puede filtrar por tier.
         st.markdown("---")
         st.markdown('<div id="torneo-paises"></div>', unsafe_allow_html=True)
-        st.subheader("🌍🏆 Torneo de Países")
+        st.subheader("Torneo de Países")
         st.caption("Suma el desempeño de todos los jugadores de cada país, como si compitieran en equipo "
                    "por una 'selección nacional'. Ranking principal por victorias totales.")
 
@@ -961,7 +961,7 @@ def show():
     # más abajo en "Clasificación por Evento" y "Clasificación por Tiers", en vez
     # de pedirlo por separado en cada sección.
     st.markdown('<div id="winrate-general"></div>', unsafe_allow_html=True)
-    st.subheader("🏆 Winrate General por Jugador")
+    st.subheader("Winrate General por Jugador")
     st.caption("Todo el historial, sin filtrar por evento ni tier. El mínimo de partidas de acá aplica también a las secciones de abajo.")
 
     stats_global = compute_player_score(df)

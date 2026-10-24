@@ -37,7 +37,7 @@ def _next_pow2(n):
 
 
 def show():
-    st.header("🌱 Seeding de Torneo")
+    st.header("Seeding de Torneo")
     st.caption(
         "Elegí los participantes de un torneo próximo: se rankean por Elo actual y se ubican en el bracket "
         "con seeding estándar para que los favoritos no se crucen hasta las rondas finales, junto con la "
@@ -91,7 +91,7 @@ def show():
     ranking["Seed"] = range(1, len(ranking) + 1)
 
     st.markdown("---")
-    st.subheader("🏅 Ranking de entrada")
+    st.subheader("Ranking de entrada")
     st.dataframe(
         ranking[["Seed", "Participantes", "Elo"]].rename(columns={"Participantes": "Jugador"}),
         use_container_width=True, hide_index=True,
@@ -128,7 +128,7 @@ def show():
         modelo = trained.get(best_name)
 
     st.markdown("---")
-    st.subheader("🥊 Cruces de Primera Ronda")
+    st.subheader("Cruces de Primera Ronda")
     filas = []
     for i in range(0, n_slots, 2):
         s1, s2 = orden[i], orden[i + 1]
