@@ -204,7 +204,7 @@ LOGROS = [
 {"id":"TI10","num":110,"cat":"Torneo","rareza":"Bronce","icon":"🔮","xp":200,"name":"Maestro Psíquico", "desc":"Participa en torneo Monotype Psíquico (T??)"},
 {"id":"TI11","num":111,"cat":"Torneo","rareza":"Bronce","icon":"🐛","xp":200,"name":"Maestro Bicho",    "desc":"Participa en torneo Monotype Bicho (T??)"},
 {"id":"TI12","num":112,"cat":"Torneo","rareza":"Bronce","icon":"🪨","xp":200,"name":"Maestro Roca",     "desc":"Participa en torneo Monotype Roca (T??)"},
-{"id":"TI13","num":113,"cat":"Torneo","rareza":"Bronce","icon":"👻","xp":200,"name":"Maestro Fantasma", "desc":"Participa en torneo Monotype Fantasma (T9, T15, T23)"},
+{"id":"TI13","num":113,"cat":"Torneo","rareza":"Bronce","icon":"👻","xp":200,"name":"Maestro Fantasma", "desc":"Participa en torneo Monotype Fantasma (T9, T15, T23, T90)"},
 {"id":"TI14","num":114,"cat":"Torneo","rareza":"Bronce","icon":"🐉","xp":200,"name":"Maestro Dragón",   "desc":"Participa en torneo Monotype Dragón (T??)"},
 {"id":"TI15","num":115,"cat":"Torneo","rareza":"Bronce","icon":"🌑","xp":200,"name":"Maestro Siniestro","desc":"Participa en torneo Monotype Siniestro (T??)"},
 {"id":"TI16","num":116,"cat":"Torneo","rareza":"Bronce","icon":"⚙️","xp":200,"name":"Maestro Acero",    "desc":"Participa en torneo Monotype Acero (T??)"},
@@ -905,7 +905,7 @@ def evaluar_logros(
         "TI10": set(),  # Psíquico — aún no jugado
         "TI11": set(),  # Bicho — aún no jugado
         "TI12": set(),  # Roca — aún no jugado
-        "TI13": {9, 15, 23},  # Fantasma
+        "TI13": {9, 15, 23, 90},  # Fantasma
         "TI14": set(),  # Dragón — aún no jugado
         "TI15": set(),  # Siniestro — aún no jugado
         "TI16": set(),  # Acero — aún no jugado
