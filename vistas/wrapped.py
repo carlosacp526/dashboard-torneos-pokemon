@@ -14,7 +14,7 @@ import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields
+from utils import load_data, normalize_columns, ensure_fields, buscar_imagen_jugador
 from vistas import replays
 from vistas.rachas import calcular_rachas_maximas
 
@@ -118,16 +118,43 @@ def calcular_resumen(df_raw, df, jugador, anio):
 # ── Tarjeta para compartir ─────────────────────────────────────────────────────────────────────────
 
 def _fuente(tam, negrita=False):
-    """Fuente con soporte de tildes: DejaVu (viene con matplotlib) o, si no está, la de Pillow."""
+    """Fuente con soporte de tildes. DejaVu va incluida en Produccion/fonts (matplotlib no está en requirements,
+    y sin ella Pillow cae a una fuente sin tildes que dibuja cuadros en Á, É, etc.)."""
+    nombre = "DejaVuSans-Bold.ttf" if negrita else "DejaVuSans.ttf"
+    candidatas = [os.path.join(ROOT, "fonts", nombre),
+                  f"/usr/share/fonts/truetype/dejavu/{nombre}",
+                  "C:/Windows/Fonts/" + ("arialbd.ttf" if negrita else "arial.ttf")]
     try:
         import matplotlib
-        nombre = "DejaVuSans-Bold.ttf" if negrita else "DejaVuSans.ttf"
-        return ImageFont.truetype(os.path.join(matplotlib.get_data_path(), "fonts", "ttf", nombre), tam)
+        candidatas.append(os.path.join(matplotlib.get_data_path(), "fonts", "ttf", nombre))
     except Exception:
+        pass
+    for ruta in candidatas:
         try:
-            return ImageFont.load_default(size=tam)
-        except TypeError:
-            return ImageFont.load_default()
+            return ImageFont.truetype(ruta, tam)
+        except OSError:
+            continue
+    try:
+        return ImageFont.load_default(size=tam)
+    except TypeError:
+        return ImageFont.load_default()
+
+
+def _foto_circular(nombre, diam):
+    """Foto del jugador recortada en círculo (RGBA), o None si no tiene foto."""
+    ruta = buscar_imagen_jugador(nombre, os.path.join(ROOT, "jugadores"))
+    if not ruta:
+        return None
+    try:
+        im = Image.open(ruta).convert("RGBA")
+        lado = min(im.size)
+        im = im.crop(((im.width - lado) // 2, 0, (im.width - lado) // 2 + lado, lado)).resize((diam, diam))
+        mascara = Image.new("L", (diam * 4, diam * 4), 0)
+        ImageDraw.Draw(mascara).ellipse([0, 0, diam * 4 - 1, diam * 4 - 1], fill=255)
+        im.putalpha(mascara.resize((diam, diam), Image.LANCZOS))
+        return im
+    except Exception:
+        return None
 
 
 def _texto_centrado(d, y, txt, fuente, color, ancho=1080):
@@ -136,21 +163,27 @@ def _texto_centrado(d, y, txt, fuente, color, ancho=1080):
 
 
 def generar_tarjeta_png(res):
-    W, H = 1080, 1350
+    W = 1080
+    foto = _foto_circular(res['jugador'], 220)
+    OFF = 250 if foto else 0          # espacio extra arriba para la foto
+    H = 1350 + OFF
     img = Image.new("RGB", (W, H), FONDO)
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, W, 10], fill=VIOLETA)
 
     _texto_centrado(d, 70, f"RESUMEN {res['anio'] or 'HISTÓRICO'}", _fuente(34, True), VIOLETA)
+    if foto:
+        d.ellipse([W / 2 - 118, 128, W / 2 + 118, 364], outline=VIOLETA, width=5)
+        img.paste(foto, (int(W / 2 - 110), 136), foto)
     nombre = res['jugador']
     tam = 96 if len(nombre) <= 12 else (72 if len(nombre) <= 18 else 54)
-    _texto_centrado(d, 120, nombre, _fuente(tam, True), TEXTO)
-    d.line([(140, 260), (W - 140, 260)], fill=(60, 60, 80), width=2)
+    _texto_centrado(d, 120 + OFF, nombre, _fuente(tam, True), TEXTO)
+    d.line([(140, 260 + OFF), (W - 140, 260 + OFF)], fill=(60, 60, 80), width=2)
 
     # Cifra principal
-    _texto_centrado(d, 290, str(res['victorias']), _fuente(190, True), TEXTO)
-    _texto_centrado(d, 500, "VICTORIAS", _fuente(32, True), APAGADO)
-    _texto_centrado(d, 548, f"{res['derrotas']} derrotas  ·  {res['winrate']:.1f}% de efectividad",
+    _texto_centrado(d, 290 + OFF, str(res['victorias']), _fuente(190, True), TEXTO)
+    _texto_centrado(d, 500 + OFF, "VICTORIAS", _fuente(32, True), APAGADO)
+    _texto_centrado(d, 548 + OFF, f"{res['derrotas']} derrotas  ·  {res['winrate']:.1f}% de efectividad",
                     _fuente(30), APAGADO)
 
     # Cuadrícula de datos
@@ -164,7 +197,7 @@ def generar_tarjeta_png(res):
         datos.append(("TORNEOS", str(res['torneos'])))
     if 'ligas' in res:
         datos.append(("LIGAS", str(res['ligas'])))
-    y0 = 640
+    y0 = 640 + OFF
     for i, (et, val) in enumerate(datos[:6]):
         x = 90 + (i % 2) * 450
         y = y0 + (i // 2) * 120
@@ -174,24 +207,24 @@ def generar_tarjeta_png(res):
 
     # Pokémon más usado
     if res.get('pokemon'):
-        d.line([(140, 1010), (W - 140, 1010)], fill=(60, 60, 80), width=2)
+        d.line([(140, 1010 + OFF), (W - 140, 1010 + OFF)], fill=(60, 60, 80), width=2)
         especie, usos = res['pokemon'][0]
-        d.text((90, 1040), "POKÉMON MÁS USADO", font=_fuente(22, True), fill=APAGADO)
-        d.text((90, 1075), especie, font=_fuente(50, True), fill=VIOLETA)
-        d.text((90, 1140), f"{usos} partidas", font=_fuente(28), fill=TEXTO)
+        d.text((90, 1040 + OFF), "POKÉMON MÁS USADO", font=_fuente(22, True), fill=APAGADO)
+        d.text((90, 1075 + OFF), especie, font=_fuente(50, True), fill=VIOLETA)
+        d.text((90, 1140 + OFF), f"{usos} partidas", font=_fuente(28), fill=TEXTO)
         otros = [p for p, _ in res['pokemon'][1:]]
         if otros:
-            d.text((90, 1190), "Después: " + ", ".join(otros), font=_fuente(24), fill=APAGADO)
+            d.text((90, 1190 + OFF), "Después: " + ", ".join(otros), font=_fuente(24), fill=APAGADO)
         ruta = replays._get_pokemon_img(especie)
         if ruta:
             try:
                 spr = Image.open(ruta).convert("RGBA")
                 spr.thumbnail((300, 300))
-                img.paste(spr, (W - 90 - spr.width, 1020), spr)
+                img.paste(spr, (W - 90 - spr.width, 1020 + OFF), spr)
             except Exception:
                 pass
 
-    _texto_centrado(d, 1285, "poketubi", _fuente(26, True), (90, 90, 110))
+    _texto_centrado(d, 1285 + OFF, "poketubi", _fuente(26, True), (90, 90, 110))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
