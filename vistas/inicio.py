@@ -25,6 +25,8 @@ GRUPOS = [
              ["📊 Clasificación Mundial", "🌡️ Ratios de uso x Gen", "🎯 Ladder Mundial Actual", "📈 Pendientes"]),
             ("replays", "🤖", "User Rate",
              ["📊 Ladder de Ratio de uso"]),
+            ("meta", "📈", "Evolución del Meta",
+             ["📈 Uso de Pokémon por tier a lo largo del tiempo", "🔼 Quién sube y quién baja", "🗓️ Por mes o por trimestre"]),
             ("social", "🕸️", "Analítica Social",
              ["🕸️ Grafo de rivalidades", "👑 Némesis y presas favoritas", "😲 Índice de Sorpresas"]),
             ("estilo", "🎭", "Estilo y Comportamiento",

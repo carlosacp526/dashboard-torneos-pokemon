@@ -58,6 +58,7 @@ p_social = _pagina("social", "Analítica Social", "hub", "social")
 p_estilo = _pagina("estilo", "Estilo y Comportamiento", "theater_comedy", "estilo")
 p_mundial = _pagina("mundial_info", "Mundial Pokémon", "public", "mundial")
 p_replays = _pagina("replays", "Uso de Pokémon", "sports_esports", "replays")
+p_meta = _pagina("meta", "Evolución del Meta", "show_chart", "meta")
 p_inicio = _pagina("inicio", "Inicio", "home", "inicio", default=True)
 p_analisis = _pagina("analisis", "Análisis General", "analytics", "analisis")
 p_jugadores = _pagina("jugadores", "Jugadores", "person", "jugadores")
@@ -92,6 +93,7 @@ st.session_state["_pages"] = {
     "analisis":   p_analisis,
     "jugadores":  p_jugadores,
     "wrapped":    p_wrapped,
+    "meta":       p_meta,
     "perfiles":   p_perfiles,
     "estadisticas_replay": p_estadisticas_replay,
     "mis_torneos": p_mis_torneos,
@@ -131,7 +133,7 @@ st.session_state["_pages"] = {
 # vez de tener 19 páginas sueltas bajo un único "Secciones".
 pg = st.navigation({
     "Inicio": [p_inicio],
-    "Análisis": [p_analisis, p_mundial, p_replays, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
+    "Análisis": [p_analisis, p_mundial, p_replays, p_meta, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
     "Jugadores": [p_jugadores, p_perfiles, p_wrapped, p_tcg, p_headtohead],
     "Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
