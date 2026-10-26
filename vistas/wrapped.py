@@ -8,15 +8,16 @@ el resto de la app) y los Pokémon, de los replays ya guardados en el caché (no
 import io
 import os
 import sys
+import zipfile
 
 import pandas as pd
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import load_data, normalize_columns, ensure_fields, buscar_imagen_jugador
-from vistas import replays
-from vistas.rachas import calcular_rachas_maximas
+from utils import load_data, normalize_columns, ensure_fields
+from vistas import wrapped_datos, wrapped_historias
+from vistas.wrapped_datos import calcular_resumen, partidas_jugador as _partidas_jugador
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VIOLETA = (139, 92, 246)
@@ -25,136 +26,12 @@ TEXTO = (237, 233, 246)
 APAGADO = (150, 150, 170)
 
 
-# ── Datos ──────────────────────────────────────────────────────────────────────────────────────────
-
-def _mtime_cache():
-    try:
-        return os.path.getmtime(replays.CACHE_FILE)
-    except OSError:
-        return 0
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def _cache_replays(mtime):
-    return replays._load_cache()
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def _alias_showdown(_df_raw, clave):
-    """{nombre del CSV -> usernames de Showdown}: se calcula una vez (~4 s) y sirve para todos los jugadores."""
-    return replays._construir_alias_showdown(_df_raw, cache_df=_cache_replays(clave[1]))
-
-
-def _norm(s):
-    return str(s).strip().lower()
-
-
-def _partidas_jugador(df, jugador, anio):
-    """Batallas jugadas (sin walkover) del jugador, con columnas Rival y gano."""
-    m = df[df['winner'].notna() & df['date'].notna()]
-    if 'Walkover' in m.columns:
-        m = m[m['Walkover'] == 0]
-    q = _norm(jugador)
-    p1 = m['player1'].astype(str).str.strip().str.lower() == q
-    p2 = m['player2'].astype(str).str.strip().str.lower() == q
-    m = m[p1 | p2].copy()
-    if anio:
-        m = m[m['date'].dt.year == int(anio)]
-    es_p1 = m['player1'].astype(str).str.strip().str.lower() == q
-    m['Rival'] = m['player2'].where(es_p1, m['player1']).astype(str).str.strip()
-    m['gano'] = m['winner'].astype(str).str.strip().str.lower() == q
-    return m
-
-
-def calcular_resumen(df_raw, df, jugador, anio):
-    m = _partidas_jugador(df, jugador, anio)
-    if m.empty:
-        return None
-    res = {
-        'jugador': jugador, 'anio': anio, 'partidas': len(m),
-        'victorias': int(m['gano'].sum()), 'derrotas': int((~m['gano']).sum()),
-    }
-    res['winrate'] = res['victorias'] / res['partidas'] * 100
-
-    # Rival más frecuente (y cómo le fue contra él)
-    por_rival = m.groupby('Rival')['gano'].agg(['size', 'sum']).sort_values(['size', 'sum'], ascending=False)
-    if not por_rival.empty:
-        r0 = por_rival.iloc[0]
-        res['rival'] = por_rival.index[0]
-        res['rival_partidas'] = int(r0['size'])
-        res['rival_ganadas'] = int(r0['sum'])
-
-    # Eventos
-    if 'N_Torneo' in m.columns and 'league' in m.columns:
-        res['torneos'] = int(m.loc[m['league'] == 'TORNEO', 'N_Torneo'].nunique())
-    if 'Ligas_categoria' in m.columns and 'league' in m.columns:
-        res['ligas'] = int(m.loc[m['league'] == 'LIGA', 'Ligas_categoria'].nunique())
-    for col, clave in (('Formato', 'formato'), ('Tier', 'tier')):
-        if col in m.columns and m[col].notna().any():
-            res[clave] = str(m[col].mode().iloc[0])
-
-    # Mejor racha ganadora (misma fuente que la página de Rachas)
-    rach = calcular_rachas_maximas(df_raw, anio=anio)
-    if not rach.empty:
-        fila = rach[rach['Jugador'].astype(str).str.strip().str.lower() == _norm(jugador)]
-        if not fila.empty:
-            res['racha'] = int(fila.iloc[0]['Racha Ganadora'])
-
-    # Pokémon más usados (según los replays disponibles)
-    try:
-        sub = df[df['date'].dt.year == int(anio)] if anio else df
-        r = replays.obtener_resumen_jugador(
-            jugador, sub, cache_df=_cache_replays(_mtime_cache()),
-            alias_map=_alias_showdown(df_raw, (len(df_raw), _mtime_cache())), permitir_fetch=False)
-        top = r.get('pokemon_top')
-        res['n_replays'] = int(r.get('n_replays', 0))
-        if top is not None and not top.empty:
-            res['pokemon'] = [(str(x['Pokémon']), int(x['Usos'])) for _, x in top.head(3).iterrows()]
-    except Exception:
-        pass
-    return res
-
+# ── Datos: ver wrapped_datos.py ────────────────────────────────────────────────────────────────────
 
 # ── Tarjeta para compartir ─────────────────────────────────────────────────────────────────────────
 
-def _fuente(tam, negrita=False):
-    """Fuente con soporte de tildes. DejaVu va incluida en Produccion/fonts (matplotlib no está en requirements,
-    y sin ella Pillow cae a una fuente sin tildes que dibuja cuadros en Á, É, etc.)."""
-    nombre = "DejaVuSans-Bold.ttf" if negrita else "DejaVuSans.ttf"
-    candidatas = [os.path.join(ROOT, "fonts", nombre),
-                  f"/usr/share/fonts/truetype/dejavu/{nombre}",
-                  "C:/Windows/Fonts/" + ("arialbd.ttf" if negrita else "arial.ttf")]
-    try:
-        import matplotlib
-        candidatas.append(os.path.join(matplotlib.get_data_path(), "fonts", "ttf", nombre))
-    except Exception:
-        pass
-    for ruta in candidatas:
-        try:
-            return ImageFont.truetype(ruta, tam)
-        except OSError:
-            continue
-    try:
-        return ImageFont.load_default(size=tam)
-    except TypeError:
-        return ImageFont.load_default()
-
-
-def _foto_circular(nombre, diam):
-    """Foto del jugador recortada en círculo (RGBA), o None si no tiene foto."""
-    ruta = buscar_imagen_jugador(nombre, os.path.join(ROOT, "jugadores"))
-    if not ruta:
-        return None
-    try:
-        im = Image.open(ruta).convert("RGBA")
-        lado = min(im.size)
-        im = im.crop(((im.width - lado) // 2, 0, (im.width - lado) // 2 + lado, lado)).resize((diam, diam))
-        mascara = Image.new("L", (diam * 4, diam * 4), 0)
-        ImageDraw.Draw(mascara).ellipse([0, 0, diam * 4 - 1, diam * 4 - 1], fill=255)
-        im.putalpha(mascara.resize((diam, diam), Image.LANCZOS))
-        return im
-    except Exception:
-        return None
+_fuente = wrapped_historias.fuente
+_foto_circular = wrapped_historias.foto_circular
 
 
 def _texto_centrado(d, y, txt, fuente, color, ancho=1080):
@@ -215,14 +92,9 @@ def generar_tarjeta_png(res):
         otros = [p for p, _ in res['pokemon'][1:]]
         if otros:
             d.text((90, 1190 + OFF), "Después: " + ", ".join(otros), font=_fuente(24), fill=APAGADO)
-        ruta = replays._get_pokemon_img(especie)
-        if ruta:
-            try:
-                spr = Image.open(ruta).convert("RGBA")
-                spr.thumbnail((300, 300))
-                img.paste(spr, (W - 90 - spr.width, 1020 + OFF), spr)
-            except Exception:
-                pass
+        spr = wrapped_historias.sprite(especie, 300)
+        if spr is not None:
+            img.paste(spr, (W - 90 - spr.width, 1020 + OFF), spr)
 
     _texto_centrado(d, 1285 + OFF, "poketubi", _fuente(26, True), (90, 90, 110))
     buf = io.BytesIO()
@@ -232,10 +104,16 @@ def generar_tarjeta_png(res):
 
 # ── Página ─────────────────────────────────────────────────────────────────────────────────────────
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _laminas(_res, clave):
+    return wrapped_historias.generar_laminas(_res)
+
+
 def show():
-    st.header("Resumen del año")
-    st.caption("Tu año en la comunidad en una tarjeta para compartir: victorias, mejor racha, rival más "
-               "frecuente y Pokémon más usado. Solo cuenta batallas jugadas, sin walkovers.")
+    st.header("Wrapped Poketubi")
+    st.caption("Tu año en la comunidad como historias para compartir: partidas, victorias, racha, rivales, Pokémon, "
+               "Elo y logros. Solo cuenta batallas jugadas (sin walkovers). Los percentiles comparan con los jugadores "
+               f"que tienen al menos {wrapped_datos.MIN_PARTIDAS} partidas en el mismo periodo.")
 
     df_raw = load_data()
     df = ensure_fields(normalize_columns(df_raw.copy()))
@@ -247,7 +125,7 @@ def show():
         jugador = st.selectbox("Jugador", [""] + jugadores, key="wrapped_jugador",
                                format_func=lambda x: "Elige un jugador…" if x == "" else x)
     if not jugador:
-        st.info("Elige un jugador para ver su resumen.")
+        st.info("Elige un jugador para ver su Wrapped.")
         return
 
     anios = sorted(_partidas_jugador(df, jugador, None)['date'].dt.year.dropna().astype(int).unique(),
@@ -259,7 +137,7 @@ def show():
         opcion = st.selectbox("Año", anios + ["Histórico"], key="wrapped_anio")
     anio = None if opcion == "Histórico" else int(opcion)
 
-    with st.spinner("Armando el resumen…"):
+    with st.spinner("Armando el Wrapped…"):
         res = calcular_resumen(df_raw, df, jugador, anio)
     if res is None:
         st.info("Sin batallas jugadas en ese año.")
@@ -273,19 +151,31 @@ def show():
         k4.metric("Rival más frecuente", res['rival'],
                   f"{res['rival_ganadas']}-{res['rival_partidas'] - res['rival_ganadas']} en {res['rival_partidas']} duelos",
                   delta_color="off")
-
-    if res.get('pokemon'):
-        st.markdown("**Pokémon más usados** (según los replays disponibles, "
-                    f"{res.get('n_replays', 0)} analizados)")
-        st.write("  ·  ".join(f"{p} ({u})" for p, u in res['pokemon']))
-    else:
+    if res.get('arquetipo'):
+        st.info(f"**{res['arquetipo']}** — {res['arquetipo_desc']}")
+    if not res.get('pokemon'):
         st.caption("No hay replays suficientes para calcular sus Pokémon más usados.")
 
     st.markdown("---")
-    st.subheader("Tarjeta para compartir")
-    png = generar_tarjeta_png(res)
-    col_img, _ = st.columns([1, 1])
+    st.subheader("Historias para compartir")
+    laminas = _laminas(res, (jugador, anio, len(df_raw)))
+    nombres = [n for n, _ in laminas]
+    col_img, col_ctl = st.columns([1, 1])
+    with col_ctl:
+        i = st.slider("Lámina", 1, len(laminas), 1, key="wrapped_lamina")
+        st.caption(f"{i} de {len(laminas)} · formato vertical 1080×1920 (TikTok, Reels, Stories y WhatsApp)")
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
+            for n, png in laminas:
+                z.writestr(f"{jugador}_{opcion}_{n}.png".replace(" ", "_"), png)
+        st.download_button("Descargar todas las láminas (ZIP)", buf.getvalue(),
+                           f"wrapped_{jugador}_{opcion}.zip".replace(" ", "_"), "application/zip", key="wrapped_zip")
+        st.download_button("Descargar esta lámina (PNG)", laminas[i - 1][1],
+                           f"{jugador}_{opcion}_{nombres[i - 1]}.png".replace(" ", "_"), "image/png", key="wrapped_png")
+        st.markdown("---")
+        st.markdown("**Tarjeta resumen** (una sola imagen, formato 4:5)")
+        tarjeta = generar_tarjeta_png(res)
+        st.download_button("Descargar tarjeta resumen (PNG)", tarjeta,
+                           f"resumen_{jugador}_{opcion}.png".replace(" ", "_"), "image/png", key="wrapped_dl")
     with col_img:
-        st.image(png, width="stretch")
-    st.download_button("Descargar tarjeta (PNG)", png,
-                       f"resumen_{jugador}_{opcion}.png".replace(" ", "_"), "image/png", key="wrapped_dl")
+        st.image(laminas[i - 1][1], width="stretch")
