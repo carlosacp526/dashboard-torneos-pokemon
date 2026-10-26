@@ -1,1744 +1,1824 @@
 feature,importance,rank,selected
-winrate_m18_g,0.015665133,1,1
-pokes_sob_mean_m36_p,0.011162955,2,1
-winrate_m36_g,0.0091475295,3,1
-wr_rep_1_m36_p,0.0071220165,4,1
-pokes_sob_mean_m12_p,0.00686178,5,1
-pokes_sob_mean_m36_g,0.0068476633,6,1
-pokes_sob_mean_m15_p,0.0060208635,7,1
-wr_rep_1_m36_g,0.0058079916,8,1
-rep_actual_mean_m24_g,0.0056782644,9,1
-wr_rep_1_m18_p,0.0054931114,10,1
-winrate_m7_p,0.0054166187,11,1
-pokes_venc_sum_m12_g,0.00518455,12,1
-pokes_sob_sum_m18_p,0.0051525044,13,1
-wr_rep_1_m24_g,0.00506281,14,1
-wr_tier_RANDOM SINGLES_m18_g,0.004603414,15,1
-pokes_sob_mean_m18_p,0.0045957924,16,0
-liga_pjs_mean_m9_p,0.0043960954,17,0
-pokes_sob_mean_m18_g,0.004347552,18,0
-wr_tier_VGC_m36_g,0.0041827247,19,0
-liga_pjs_mean_m12_p,0.0041663367,20,0
-rep_actual_mean_m24_p,0.004040087,21,0
-liga_pms_sum_m7_p,0.0039314386,22,0
-winrate_m5_p,0.0039151455,23,0
-cat_liga_mean_m36_g,0.0038537227,24,0
-wr_rep_3_m12_p,0.0037918391,25,0
-wr_tier_NAT DEX_m9_g,0.0037719745,26,0
-wr_rep_3_m1_p,0.0037240912,27,0
-cat_torneo_sum_m15_g,0.0037072457,28,0
-winrate_m15_g,0.003704704,29,0
-fase_rondas_mean_m3_p,0.0036312502,30,0
-fase_elim_mean_m9_g,0.003474565,31,0
-wr_rep_3_m9_p,0.0034734474,32,0
-pokes_venc_sum_m5_g,0.0034596636,33,0
-wr_tier_OU_m24_p,0.003457153,34,0
-cat_torneo_sum_m18_g,0.0034313097,35,0
-wr_ratio_m1_vs_m36_p,0.003430337,36,0
-nb_diff_m1_vs_m3_p,0.0034141326,37,0
-pokes_sob_mean_m12_g,0.003388286,38,0
-fmt_singles_mean_m24_g,0.0033338766,39,0
-nb_ratio_m1_vs_m36_g,0.0033079972,40,0
-fmt_singles_mean_m7_p,0.0032286856,41,0
-fase_elim_mean_m9_p,0.0032260236,42,0
-cat_liga_mean_m18_p,0.0032218255,43,0
-pokes_sob_sum_m36_p,0.003144591,44,0
-wr_tier_VGC_m36_p,0.0031263519,45,0
-fase_elim_sum_m18_p,0.0030943733,46,0
-liga_pjs_sum_m36_p,0.003087864,47,0
-wr_tier_DOU_m36_g,0.0030532018,48,0
-liga_pjs_mean_m24_p,0.0030501029,49,0
-liga_pjs_mean_m3_g,0.0030423596,50,0
-fmt_dobles_mean_m12_p,0.0030324706,51,0
-liga_pjs_mean_m24_g,0.003024776,52,0
-cat_liga_mean_m7_p,0.0029938149,53,0
-fmt_dobles_mean_m15_g,0.002993302,54,0
-pokes_venc_sum_m24_g,0.0029911904,55,0
-pokes_venc_sum_m15_g,0.0029771335,56,0
-rep_actual_mean_m15_g,0.0028832157,57,0
-pokes_sob_sum_m9_g,0.0028610213,58,0
-wr_rep_2_m36_p,0.0028477062,59,0
-fmt_dobles_sum_m7_p,0.0028375965,60,0
-fmt_singles_sum_m18_g,0.0028067902,61,0
-winrate_m24_g,0.002806407,62,0
-pokes_sob_sum_m24_p,0.002792517,63,0
-rep_actual_sum_m9_p,0.0027900762,64,0
-liga_pss_mean_m7_p,0.0027807637,65,0
-wr_tier_NAT DEX_m12_g,0.0027802866,66,0
-cat_torneo_mean_m36_g,0.0027632257,67,0
-pokes_sob_mean_m7_g,0.0027527765,68,0
-wr_tier_RANDOM SINGLES_m9_g,0.0027502559,69,0
-liga_pjs_mean_m3_p,0.0027344872,70,0
-cat_torneo_mean_m9_p,0.0027325528,71,0
-wr_tier_DOU_m5_g,0.0027286427,72,0
-fase_elim_mean_m15_p,0.0027229162,73,0
-wr_tier_NAT DEX_m36_p,0.00270848,74,0
-rep_actual_mean_m5_g,0.0026949334,75,0
-liga_pjs_sum_m3_p,0.0026881406,76,0
-wr_tier_OU_m12_g,0.002680462,77,0
-rep_actual_mean_m36_g,0.0026384706,78,0
-fmt_vgc_mean_m9_g,0.002609765,79,0
-cat_liga_mean_m18_g,0.002558665,80,0
-wr_diff_m12_vs_m24_p,0.0025570882,81,0
-winrate_m12_g,0.002550939,82,0
-liga_pss_mean_m24_g,0.002547838,83,0
-wr_rep_2_m7_g,0.0025445893,84,0
-nb_ratio_m5_vs_m12_p,0.002543928,85,0
-wr_rep_2_m12_g,0.00253016,86,0
-wr_rep_1_m3_g,0.0025251068,87,0
-nb_ratio_m1_vs_m36_p,0.0025105574,88,0
-wr_rep_2_m9_g,0.002503078,89,0
-pokes_sob_sum_m18_g,0.0024977531,90,0
-cat_ascenso_mean_m9_g,0.0024842191,91,0
-fmt_vgc_sum_m18_p,0.0024786412,92,0
-liga_pes_mean_m7_g,0.0024748193,93,0
-wr_tier_DOU_m15_p,0.002451838,94,0
-pokes_venc_sum_m9_p,0.0024406926,95,0
-liga_pls_mean_m15_p,0.0024270506,96,0
-pokes_sob_sum_m5_p,0.0024241158,97,0
-pokes_venc_mean_m36_p,0.0024066,98,0
-wr_tier_OU_m18_g,0.002393819,99,0
-wr_tier_DOU_m24_g,0.0023884894,100,0
-pokes_sob_mean_m5_g,0.0023774991,101,0
-wr_tier_NAT DEX_m9_p,0.0023730656,102,0
-rep_actual_mean_m18_g,0.0023595295,103,0
-wr_rep_2_m15_g,0.0023451739,104,0
-cat_liga_mean_m24_g,0.0023420816,105,0
-wr_diff_m1_vs_m12_p,0.002336546,106,0
-fase_rondas_mean_m5_p,0.0023352383,107,0
-wr_rep_4_m7_g,0.002333724,108,0
-fmt_singles_mean_m3_g,0.0023295567,109,0
-wr_rep_3_m7_g,0.0023294396,110,0
-wr_ratio_m12_vs_m24_p,0.002321733,111,0
-pokes_sob_mean_m24_p,0.0023191539,112,0
-fmt_singles_sum_m9_g,0.0023184286,113,0
-liga_pjs_mean_m1_g,0.0023164863,114,0
-fase_elim_sum_m7_g,0.0022979681,115,0
-fase_elim_sum_m18_g,0.0022896251,116,0
-cat_ascenso_mean_m18_g,0.00228323,117,0
-wr_tier_DOU_m9_g,0.0022786427,118,0
-wr_diff_m12_vs_m24_g,0.0022616691,119,0
-fmt_singles_mean_m9_g,0.0022566658,120,0
-wr_tier_UBERS_m3_p,0.0022347718,121,0
-fmt_vgc_mean_m15_g,0.0022140422,122,0
-fmt_vgc_sum_m18_g,0.0022133002,123,0
-fmt_vgc_mean_m18_p,0.0022124536,124,0
-pokes_venc_mean_m7_p,0.0022007283,125,0
-wr_rep_3_m7_p,0.002188068,126,0
-wr_tier_VGC_m7_g,0.002183562,127,0
-meses_activo_m36_p,0.0021804771,128,0
-fmt_dobles_mean_m5_g,0.0021796774,129,0
-wr_tier_DOBLES LC_m15_p,0.002169647,130,0
-winrate_m1_g,0.0021686028,131,0
-fmt_singles_sum_m5_g,0.002167957,132,0
-cat_liga_sum_m36_p,0.0021671567,133,0
-liga_pjs_sum_m24_p,0.0021529214,134,0
-fase_elim_mean_m15_g,0.0021378775,135,0
-cat_liga_mean_m24_p,0.002125837,136,0
-wr_diff_m24_vs_m36_p,0.0021158122,137,0
-cat_torneo_mean_m12_g,0.002115181,138,0
-fmt_singles_sum_m7_p,0.0021105914,139,0
-wr_tier_RANDOM DOUBLES_m3_p,0.0021036235,140,0
-fase_grupos_sum_m15_p,0.0020978234,141,0
-fmt_dobles_mean_m9_p,0.0020958914,142,0
-wr_rep_3_m9_g,0.002088608,143,0
-liga_pes_mean_m24_g,0.0020856273,144,0
-liga_pms_sum_m15_g,0.0020763765,145,0
-liga_pjs_mean_m36_g,0.0020727941,146,0
-fase_grupos_mean_m9_p,0.0020724626,147,0
-wr_rep_1_m5_g,0.0020684975,148,0
-wr_tier_RANDOM SINGLES_m24_g,0.0020581705,149,0
-wr_rep_1_m7_p,0.0020552948,150,0
-fase_elim_mean_m7_p,0.002051546,151,0
-rep_actual_mean_m9_g,0.0020511819,152,0
-pokes_sob_mean_m1_p,0.0020445548,153,0
-liga_pes_sum_m9_p,0.0020418866,154,0
-wr_tier_DOU_m7_g,0.0020367615,155,0
-wr_tier_NAT DEX_m3_p,0.0020348765,156,0
-rep_actual_mean_m12_g,0.0020321594,157,0
-liga_pjs_sum_m36_g,0.0020211586,158,0
-winrate_m12_p,0.002020246,159,0
-cat_torneo_sum_m9_g,0.0020100835,160,0
-fmt_singles_mean_m15_g,0.0020092751,161,0
-n_batallas_m24_p,0.0020037978,162,0
-meses_activo_m15_p,0.0019963223,163,0
-fase_rondas_sum_m15_p,0.0019939775,164,0
-nb_ratio_m24_vs_m36_g,0.0019921411,165,0
-fase_grupos_mean_m5_g,0.0019885493,166,0
-wr_tier_NAT DEX_m24_p,0.0019816922,167,0
-wr_tier_LC_m7_p,0.0019802758,168,0
-cat_liga_sum_m9_g,0.00197994,169,0
-wr_tier_RANDOM DOUBLES_m15_g,0.001954808,170,0
-pokes_sob_mean_m5_p,0.0019525725,171,0
-wr_rep_4_m1_p,0.0019503558,172,0
-rep_actual_sum_m18_p,0.0019460802,173,0
-wr_tier_OU_m36_p,0.001944751,174,0
-wr_tier_NAT DEX_m1_g,0.0019373202,175,0
-cat_torneo_mean_m9_g,0.0019215547,176,0
-liga_pss_sum_m5_g,0.0019215274,177,0
-liga_pss_mean_m9_g,0.0019110878,178,0
-liga_pes_mean_m3_g,0.0019090747,179,0
-wr_rep_3_m12_g,0.0018887302,180,0
-n_batallas_m24_g,0.0018841546,181,0
-wr_rep_2_m24_p,0.0018726499,182,0
-pokes_sob_sum_m36_g,0.0018695684,183,0
-cat_cypher_mean_m7_p,0.0018684835,184,0
-wr_tier_DOU_m12_g,0.0018655196,185,0
-fmt_vgc_mean_m1_g,0.0018640304,186,0
-cat_torneo_mean_m24_g,0.0018638484,187,0
-cat_torneo_sum_m9_p,0.0018630861,188,0
-fmt_singles_mean_m24_p,0.0018621756,189,0
-fmt_singles_mean_m3_p,0.001858948,190,0
-n_batallas_m18_p,0.0018566893,191,0
-pokes_venc_mean_m12_g,0.0018535937,192,0
-wr_tier_NAT DEX_m12_p,0.0018519484,193,0
-wr_ratio_m24_vs_m36_g,0.0018506472,194,0
-liga_pjs_mean_m36_p,0.0018502752,195,0
-wr_tier_UBERS_m36_g,0.0018370294,196,0
-fase_rondas_mean_m5_g,0.0018326604,197,0
-fmt_vgc_mean_m7_p,0.001832053,198,0
-wr_rep_2_m7_p,0.0018267271,199,0
-cat_torneo_mean_m5_g,0.00182105,200,0
-cat_torneo_sum_m36_g,0.0018206292,201,0
-cat_torneo_sum_m7_p,0.0018159952,202,0
-liga_pjs_mean_m12_g,0.0018063657,203,0
-wr_tier_NAT DEX_m7_g,0.0018031305,204,0
-pokes_venc_mean_m3_g,0.0017995978,205,0
-wr_rep_1_m3_p,0.0017986306,206,0
-nb_ratio_m3_vs_m12_g,0.00179849,207,0
-fmt_dobles_mean_m7_p,0.0017921729,208,0
-meses_activo_m36_g,0.001789361,209,0
-pokes_sob_mean_m9_g,0.0017873945,210,0
-wr_tier_RANDOM SINGLES_m15_g,0.0017832695,211,0
-liga_pes_sum_m7_g,0.0017741295,212,0
-wr_rep_1_m15_g,0.0017634761,213,0
-pokes_sob_mean_m9_p,0.0017561544,214,0
-liga_pms_sum_m7_g,0.00174348,215,0
-winrate_m18_p,0.0017434043,216,0
-fase_elim_mean_m36_p,0.0017400789,217,0
-cat_ascenso_mean_m3_g,0.0017239073,218,0
-wr_rep_3_m36_g,0.0017228851,219,0
-fmt_singles_sum_m1_g,0.0017090525,220,0
-pokes_venc_mean_m9_g,0.001708676,221,0
-wr_rep_2_m5_p,0.0017077494,222,0
-wr_tier_DOBLES LC_m3_p,0.0017076221,223,0
-cat_torneo_sum_m5_p,0.0017037357,224,0
-wr_tier_VGC_m7_p,0.0017012715,225,0
-wr_tier_BABY RANDOM SINGLES_m3_p,0.0016982488,226,0
-fmt_dobles_mean_m3_p,0.0016939527,227,0
-nb_ratio_m1_vs_m3_g,0.0016916863,228,0
-liga_pms_sum_m1_g,0.0016883331,229,0
-ma_ratio_m1_vs_m12_p,0.0016849551,230,0
-pokes_venc_mean_m3_p,0.001682,231,0
-liga_pes_mean_m7_p,0.0016767528,232,0
-fmt_singles_sum_m3_g,0.0016743515,233,0
-pokes_sob_mean_m15_g,0.0016698439,234,0
-n_batallas_m7_p,0.0016692595,235,0
-fmt_singles_mean_m18_p,0.0016670946,236,0
-cat_liga_mean_m7_g,0.0016620982,237,0
-wr_ratio_m1_vs_m12_p,0.0016599073,238,0
-wr_rep_2_m24_g,0.0016596117,239,0
-cat_cypher_mean_m15_p,0.0016574835,240,0
-nb_diff_m24_vs_m36_g,0.001653601,241,0
-fmt_vgc_mean_m9_p,0.0016480455,242,0
-pokes_venc_mean_m9_p,0.0016378021,243,0
-fmt_singles_sum_m1_p,0.0016372874,244,0
-wr_ratio_m24_vs_m36_p,0.0016372158,245,0
-liga_pss_sum_m36_p,0.0016356816,246,0
-meses_activo_m15_g,0.0016334064,247,0
-cat_torneo_sum_m1_p,0.0016329141,248,0
-liga_pms_sum_m18_g,0.0016325058,249,0
-cat_torneo_mean_m7_g,0.0016316323,250,0
-fmt_singles_mean_m36_p,0.0016293677,251,0
-wr_rep_3_m15_p,0.0016286331,252,0
-fmt_singles_sum_m12_p,0.0016247297,253,0
-n_batallas_m36_g,0.001618379,254,0
-fmt_vgc_sum_m7_g,0.001617225,255,0
-wr_tier_VGC_m24_p,0.0016078342,256,0
-fase_rondas_sum_m1_g,0.0016055588,257,0
-cat_cypher_sum_m36_p,0.0016049059,258,0
-nb_ratio_m1_vs_m12_p,0.0016032569,259,0
-fmt_vgc_mean_m3_p,0.0016012895,260,0
-pokes_sob_sum_m12_g,0.001594097,261,0
-wr_tier_NAT DEX_m15_p,0.0015865798,262,0
-fase_rondas_mean_m7_p,0.0015851328,263,0
-wr_tier_NAT DEX_m7_p,0.0015790308,264,0
-cat_cypher_sum_m9_g,0.0015763337,265,0
-cat_liga_sum_m18_p,0.0015722503,266,0
-wr_ratio_m1_vs_m3_p,0.0015704435,267,0
-n_batallas_m18_g,0.0015693551,268,0
-liga_pls_mean_m7_p,0.0015693095,269,0
-cat_torneo_mean_m1_p,0.0015688152,270,0
-fase_grupos_mean_m12_g,0.0015575335,271,0
-wr_rep_5_m5_p,0.0015539209,272,0
-wr_rep_1_m12_p,0.0015486203,273,0
-fase_rondas_mean_m12_p,0.0015482816,274,0
-fmt_dobles_mean_m36_p,0.0015449427,275,0
-fmt_dobles_mean_m9_g,0.0015447364,276,0
-pokes_venc_mean_m5_g,0.0015415606,277,0
-wr_diff_m5_vs_m12_p,0.0015340456,278,0
-wr_diff_m1_vs_m12_g,0.0015165011,279,0
-pokes_sob_sum_m24_g,0.0015162185,280,0
-fase_elim_sum_m3_p,0.001502276,281,0
-fase_elim_sum_m36_p,0.0015020106,282,0
-wr_tier_OU_m15_g,0.0015019687,283,0
-ma_ratio_m24_vs_m36_p,0.0014991878,284,0
-cat_torneo_mean_m18_g,0.0014985859,285,0
-fase_elim_mean_m1_p,0.0014956241,286,0
-liga_pms_sum_m24_g,0.0014941964,287,0
-wr_tier_DOBLES LC_m15_g,0.0014918242,288,0
-wr_tier_NAT DEX DOBLES_m5_g,0.0014887033,289,0
-cat_liga_mean_m36_p,0.0014857767,290,0
-liga_pjs_sum_m5_g,0.001485414,291,0
-meses_activo_m9_g,0.0014824782,292,0
-cat_ascenso_sum_m15_p,0.0014805925,293,0
-ma_ratio_m1_vs_m36_g,0.0014746825,294,0
-pokes_venc_mean_m1_g,0.0014686382,295,0
-liga_pes_mean_m24_p,0.0014628387,296,0
-nb_diff_m24_vs_m36_p,0.001461691,297,0
-fase_grupos_mean_m36_g,0.0014593189,298,0
-fmt_dobles_sum_m3_p,0.001458845,299,0
-fmt_vgc_mean_m12_g,0.0014582523,300,0
-wr_rep_1_m9_p,0.0014507299,301,0
-wr_rep_2_m1_g,0.001446007,302,0
-pokes_sob_mean_m24_g,0.0014456427,303,0
-ma_ratio_m3_vs_m12_p,0.0014439478,304,0
-fase_rondas_mean_m36_p,0.0014428134,305,0
-wr_tier_RANDOM DOUBLES_m12_p,0.0014384924,306,0
-pokes_sob_sum_m3_g,0.001436501,307,0
-wr_tier_BSS_m5_g,0.0014295063,308,0
-liga_pes_mean_m15_p,0.0014273113,309,0
-ma_ratio_m5_vs_m12_g,0.001423308,310,0
-wr_rep_1_m1_p,0.0014226062,311,0
-wr_diff_m1_vs_m36_p,0.0014210609,312,0
-pokes_venc_mean_m18_g,0.001420751,313,0
-wr_tier_NAT DEX DOBLES_m3_p,0.0014086305,314,0
-wr_rep_2_m36_g,0.0014064317,315,0
-wr_ratio_m3_vs_m5_g,0.0014051758,316,0
-fase_elim_mean_m24_p,0.0014049984,317,0
-fmt_dobles_sum_m15_p,0.0014049212,318,0
-fase_elim_mean_m3_g,0.0013987778,319,0
-fmt_vgc_mean_m12_p,0.0013962082,320,0
-liga_pls_mean_m12_p,0.0013946047,321,0
-wr_rep_3_m24_p,0.0013921787,322,0
-rep_actual_mean_m7_p,0.001389912,323,0
-wr_rep_3_m1_g,0.0013892917,324,0
-wr_diff_m1_vs_m3_g,0.0013831209,325,0
-nb_diff_m3_vs_m12_p,0.0013825111,326,0
-wr_tier_VGC_m12_p,0.0013756121,327,0
-pokes_sob_sum_m1_p,0.0013740768,328,0
-wr_tier_OU_m9_p,0.0013697244,329,0
-wr_ratio_m1_vs_m12_g,0.0013682509,330,0
-cat_torneo_sum_m5_g,0.0013657479,331,0
-wr_tier_DOBLES LC_m5_p,0.0013648322,332,0
-fase_rondas_mean_m36_g,0.0013634108,333,0
-pokes_venc_mean_m24_g,0.001362355,334,0
-fase_grupos_sum_m24_p,0.0013619208,335,0
-fmt_singles_mean_m1_g,0.0013612635,336,0
-liga_pls_mean_m3_g,0.0013471186,337,0
-fmt_vgc_mean_m36_g,0.0013446019,338,0
-fmt_dobles_sum_m3_g,0.0013414151,339,0
-pokes_venc_mean_m7_g,0.0013411186,340,0
-nb_ratio_m3_vs_m5_g,0.0013346015,341,0
-fase_rondas_sum_m9_g,0.0013336125,342,0
-wr_tier_NAT DEX_m18_g,0.0013335979,343,0
-cat_cypher_mean_m12_g,0.0013327351,344,0
-fmt_vgc_sum_m9_p,0.0013325675,345,0
-fmt_singles_mean_m1_p,0.0013231384,346,0
-wr_rep_2_m15_p,0.0013196956,347,0
-liga_pjs_mean_m18_g,0.0013180096,348,0
-cat_ascenso_mean_m7_p,0.0013136952,349,0
-wr_rep_1_m5_p,0.0013094966,350,0
-fase_grupos_mean_m15_p,0.0013054764,351,0
-liga_pes_mean_m5_p,0.0013018516,352,0
-fmt_dobles_mean_m1_g,0.0013008637,353,0
-wr_tier_VGC_m15_p,0.0012970155,354,0
-pokes_sob_mean_m1_g,0.0012918834,355,0
-fase_grupos_mean_m7_p,0.0012906534,356,0
-fase_elim_mean_m1_g,0.0012865305,357,0
-fmt_singles_mean_m18_g,0.001272647,358,0
-nb_diff_m3_vs_m5_g,0.0012710005,359,0
-fmt_vgc_mean_m5_p,0.0012687691,360,0
-wr_tier_RANDOM SINGLES_m1_g,0.0012668541,361,0
-wr_rep_3_m5_p,0.0012637492,362,0
-wr_tier_DOU_m5_p,0.0012625366,363,0
-wr_rep_4_m36_p,0.0012553255,364,0
-pokes_sob_sum_m15_g,0.0012513181,365,0
-wr_diff_m3_vs_m12_p,0.0012491368,366,0
-liga_pss_sum_m7_p,0.0012461097,367,0
-fmt_vgc_mean_m5_g,0.0012446828,368,0
-nb_ratio_m3_vs_m5_p,0.0012444349,369,0
-cat_cypher_mean_m7_g,0.0012431901,370,0
-wr_ratio_m5_vs_m12_g,0.001237185,371,0
-fase_elim_sum_m9_g,0.0012364378,372,0
-wr_tier_NAT DEX DOBLES_m7_p,0.0012277273,373,0
-rep_actual_mean_m3_g,0.001226054,374,0
-fmt_vgc_mean_m7_g,0.0012235965,375,0
-pokes_venc_sum_m9_g,0.0012213939,376,0
-wr_tier_NAT DEX DOBLES_m12_p,0.0012211184,377,0
-nb_ratio_m3_vs_m12_p,0.0012209244,378,0
-fase_rondas_sum_m3_p,0.0012204782,379,0
-fmt_vgc_sum_m36_p,0.0012178302,380,0
-liga_pes_mean_m15_g,0.0012136829,381,0
-liga_pss_mean_m5_p,0.0012123972,382,0
-liga_pss_mean_m18_g,0.0012117712,383,0
-cat_ascenso_sum_m12_g,0.0012113033,384,0
-fmt_dobles_sum_m9_g,0.0012095976,385,0
-cat_ascenso_mean_m36_g,0.0012084786,386,0
-wr_tier_OU_m5_p,0.00120697,387,0
-wr_tier_DOU_m36_p,0.0012063222,388,0
-fmt_dobles_sum_m1_p,0.0012033363,389,0
-liga_pss_mean_m15_g,0.0012019314,390,0
-n_batallas_m12_p,0.0011986956,391,0
-wr_ratio_m3_vs_m12_p,0.0011917613,392,0
-pokes_sob_sum_m1_g,0.0011892684,393,0
-fase_elim_mean_m5_g,0.0011844188,394,0
-wr_diff_m3_vs_m5_p,0.0011842765,395,0
-fmt_dobles_sum_m9_p,0.0011805714,396,0
-fase_grupos_sum_m18_p,0.0011763172,397,0
-wr_ratio_m5_vs_m12_p,0.0011739561,398,0
-wr_ratio_m12_vs_m24_g,0.00117287,399,0
-wr_rep_4_m18_g,0.0011682191,400,0
-fase_rondas_mean_m7_g,0.0011672812,401,0
-wr_tier_VGC_m3_g,0.0011525115,402,0
-fase_rondas_mean_m3_g,0.0011492715,403,0
-wr_rep_1_m9_g,0.0011472374,404,0
-n_batallas_m7_g,0.0011470433,405,0
-fmt_vgc_sum_m15_p,0.0011402802,406,0
-fase_rondas_sum_m7_g,0.0011395346,407,0
-winrate_m5_g,0.0011321186,408,0
-wr_tier_DOU_m3_g,0.0011291509,409,0
-fase_rondas_mean_m1_g,0.001128221,410,0
-wr_tier_RANDOM SINGLES_m5_p,0.001123099,411,0
-wr_tier_STADIUM OU GEN 1_m5_p,0.0011192681,412,0
-cat_liga_sum_m3_p,0.0011051096,413,0
-liga_pms_sum_m15_p,0.00110506,414,0
-wr_tier_DUBERS_m7_p,0.0011042419,415,0
-pokes_sob_sum_m3_p,0.0010965414,416,0
-fase_rondas_mean_m24_g,0.001088384,417,0
-liga_pjs_mean_m5_g,0.0010871723,418,0
-wr_tier_NAT DEX_m24_g,0.001084186,419,0
-fase_elim_mean_m7_g,0.0010791773,420,0
-pokes_venc_sum_m15_p,0.0010780792,421,0
-wr_tier_RANDOM DOUBLES_m1_p,0.0010780384,422,0
-fmt_singles_mean_m15_p,0.0010691251,423,0
-wr_tier_NAT DEX_m5_g,0.0010677286,424,0
-wr_tier_DOU_m9_p,0.0010663659,425,0
-winrate_m9_g,0.0010557686,426,0
-wr_diff_m3_vs_m5_g,0.0010440237,427,0
-cat_liga_sum_m7_p,0.0010380989,428,0
-wr_tier_RANDOM DOUBLES_m18_g,0.0010314971,429,0
-fase_grupos_sum_m5_p,0.0010307207,430,0
-wr_diff_m5_vs_m12_g,0.0010248334,431,0
-wr_tier_DOBLES LC_m7_g,0.00102336,432,0
-wr_diff_m24_vs_m36_g,0.0010224712,433,0
-cat_torneo_mean_m24_p,0.0010127147,434,0
-wr_tier_Free For all Randoms_m12_g,0.001008402,435,0
-fmt_singles_mean_m9_p,0.0010069851,436,0
-fmt_singles_mean_m12_p,0.0010055014,437,0
-wr_tier_RANDOM SINGLES_m7_p,0.0010051425,438,0
-fase_grupos_sum_m36_p,0.0010047773,439,0
-wr_rep_4_m9_g,0.0010026551,440,0
-fmt_vgc_mean_m15_p,0.001001446,441,0
-fmt_dobles_sum_m18_p,0.0009983751,442,0
-rep_actual_sum_m7_g,0.0009920888,443,0
-fase_grupos_mean_m12_p,0.0009896439,444,0
-nb_ratio_m1_vs_m3_p,0.000988495,445,0
-wr_diff_m3_vs_m12_g,0.0009802751,446,0
-cat_ascenso_mean_m36_p,0.0009752417,447,0
-fase_rondas_mean_m15_p,0.0009607288,448,0
-cat_ascenso_mean_m12_p,0.00095879455,449,0
-pokes_venc_sum_m3_p,0.00095734495,450,0
-fmt_dobles_mean_m5_p,0.0009546487,451,0
-pokes_venc_sum_m12_p,0.0009537813,452,0
-rep_actual_mean_m3_p,0.00095291523,453,0
-wr_tier_NAT DEX_m36_g,0.00094357383,454,0
-fase_rondas_sum_m9_p,0.00092928583,455,0
-wr_diff_m1_vs_m3_p,0.0009292118,456,0
-rep_actual_mean_m1_g,0.0009286141,457,0
-liga_pms_mean_m12_g,0.0009282524,458,0
-wr_tier_NAT DEX DOBLES_m18_p,0.0009282134,459,0
-wr_tier_DOU_m18_g,0.00092745066,460,0
-rep_actual_mean_m5_p,0.000922513,461,0
-liga_pss_sum_m15_g,0.0009215092,462,0
-n_batallas_m3_p,0.0009156871,463,0
-fase_elim_mean_m5_p,0.0009037729,464,0
-liga_pjs_mean_m9_g,0.0009023251,465,0
-wr_tier_RANDOM DOUBLES_m7_p,0.0008915457,466,0
-wr_tier_VGC_m3_p,0.00088791613,467,0
-cat_ascenso_mean_m5_g,0.00088336435,468,0
-wr_tier_NAT DEX_m3_g,0.0008814356,469,0
-fmt_vgc_mean_m1_p,0.00087982987,470,0
-fase_grupos_mean_m1_p,0.00087668403,471,0
-wr_rep_3_m3_p,0.0008738741,472,0
-fmt_singles_mean_m7_g,0.0008710806,473,0
-fase_elim_sum_m5_g,0.0008706317,474,0
-fase_elim_mean_m36_g,0.0008693542,475,0
-liga_pjs_mean_m7_p,0.0008680444,476,0
-liga_pss_mean_m9_p,0.000864318,477,0
-wr_tier_NAT DEX DOBLES_m36_p,0.00086422585,478,0
-wr_tier_DOBLES LC_m18_p,0.0008582035,479,0
-liga_pss_sum_m15_p,0.0008576765,480,0
-fmt_dobles_sum_m15_g,0.00084748067,481,0
-fase_grupos_mean_m3_g,0.00084353593,482,0
-wr_tier_OU_m12_p,0.0008419841,483,0
-winrate_m7_g,0.0008353539,484,0
-liga_pms_mean_m9_g,0.00082329416,485,0
-fmt_dobles_mean_m18_p,0.0008207363,486,0
-wr_rep_4_m15_p,0.00080762984,487,0
-wr_tier_RANDOM SINGLES_m3_p,0.0008075091,488,0
-fmt_singles_sum_m5_p,0.0008067568,489,0
-fmt_dobles_sum_m5_g,0.0008039324,490,0
-nb_ratio_m12_vs_m24_g,0.0007971951,491,0
-cat_torneo_mean_m7_p,0.00079575955,492,0
-fase_grupos_mean_m18_p,0.0007933934,493,0
-pokes_venc_mean_m5_p,0.0007770176,494,0
-cat_cypher_mean_m24_p,0.0007720107,495,0
-nb_ratio_m1_vs_m12_g,0.0007627551,496,0
-cat_liga_sum_m24_p,0.0007624928,497,0
-liga_pss_sum_m5_p,0.0007608319,498,0
-cat_torneo_mean_m36_p,0.000740718,499,0
-cat_ascenso_sum_m7_g,0.0007289086,500,0
-pokes_sob_mean_m3_g,0.0007217403,501,0
-winrate_m3_p,0.0007193149,502,0
-wr_tier_OU_m7_g,0.00071299024,503,0
-ma_ratio_m1_vs_m12_g,0.000699558,504,0
-fmt_singles_mean_m12_g,0.000696122,505,0
-winrate_m15_p,0.0006955053,506,0
-ma_ratio_m3_vs_m5_g,0.0006899429,507,0
-cat_ascenso_sum_m9_g,0.00067842513,508,0
-pokes_venc_sum_m1_p,0.00067395583,509,0
-liga_pss_mean_m15_p,0.0006687804,510,0
-fase_elim_sum_m5_p,0.0006676029,511,0
-liga_pss_sum_m12_g,0.000657369,512,0
-fmt_singles_mean_m36_g,0.00065506296,513,0
-wr_tier_RANDOM DOUBLES_m12_g,0.00065457495,514,0
-cat_liga_sum_m9_p,0.0006488095,515,0
-wr_tier_VGC_m1_g,0.00064688793,516,0
-wr_tier_Free For all Randoms_m9_g,0.00064572017,517,0
-cat_liga_sum_m18_g,0.00064335146,518,0
-pokes_venc_mean_m36_g,0.00064157846,519,0
-pokes_venc_sum_m3_g,0.0006386533,520,0
-cat_ascenso_sum_m36_g,0.00063807145,521,0
-wr_tier_OU_m3_p,0.00062917254,522,0
-pokes_venc_mean_m15_p,0.00061974744,523,0
-pokes_venc_sum_m1_g,0.00061656785,524,0
-nb_ratio_m5_vs_m12_g,0.00061409496,525,0
-fmt_vgc_sum_m36_g,0.00060909236,526,0
-n_batallas_m15_p,0.0005896205,527,0
-pokes_venc_mean_m12_p,0.0005879007,528,0
-pokes_venc_mean_m1_p,0.0005820702,529,0
-wr_ratio_m3_vs_m5_p,0.0005818626,530,0
-fase_grupos_mean_m3_p,0.00056676177,531,0
-wr_tier_VGC_m5_g,0.0005650133,532,0
-pokes_venc_sum_m18_g,0.00053608714,533,0
-wr_rep_2_m1_p,0.00052959454,534,0
-cat_torneo_sum_m24_g,0.00052860915,535,0
-nb_diff_m1_vs_m12_p,0.0005278391,536,0
-wr_tier_RANDOM DOUBLES_m5_g,0.00052606675,537,0
-wr_tier_OU_m18_p,0.0005227692,538,0
-cat_liga_mean_m1_g,0.0005224367,539,0
-fmt_dobles_sum_m24_g,0.00050270616,540,0
-wr_ratio_m1_vs_m36_g,0.0005017944,541,0
-wr_rep_2_m3_g,0.0005016549,542,0
-n_batallas_m9_p,0.00049545686,543,0
-cat_ascenso_mean_m12_g,0.0004953589,544,0
-fase_elim_sum_m24_g,0.0004943843,545,0
-pokes_sob_sum_m5_g,0.00048310982,546,0
-fmt_dobles_mean_m12_g,0.00047833915,547,0
-rep_actual_mean_m1_p,0.00047461168,548,0
-wr_ratio_m1_vs_m3_g,0.00046851818,549,0
-liga_pjs_mean_m18_p,0.00046255466,550,0
-n_batallas_m3_g,0.00045727656,551,0
-rep_actual_sum_m5_g,0.00043467403,552,0
-cat_torneo_sum_m12_g,0.00040022476,553,0
-wr_tier_VGC_m1_p,0.00039855397,554,0
-ctx_es_final_torneo,0.0003808616,555,0
-wr_rep_4_m24_g,0.00037494747,556,0
-wr_rep_2_m5_g,0.0003749194,557,0
-fmt_vgc_mean_m3_g,0.0003612304,558,0
-ctx_rep_bucket,0.0003603502,559,0
-fmt_dobles_mean_m1_p,0.00034864692,560,0
-cat_cypher_sum_m1_g,0.00034444718,561,0
-cat_liga_mean_m3_g,0.000340099,562,0
-fase_grupos_mean_m7_g,0.0003371034,563,0
-wr_tier_RANDOM DOUBLES_m3_g,0.00033684872,564,0
-rep_actual_sum_m3_g,0.00031830854,565,0
-fmt_dobles_mean_m7_g,0.0002787441,566,0
-meses_activo_m18_g,0.00026824218,567,0
-liga_pms_sum_m36_g,0.0002652902,568,0
-wr_rep_3_m5_g,0.00025822865,569,0
-rep_actual_mean_m9_p,0.00024078567,570,0
-fase_grupos_mean_m18_g,0.00022936497,571,0
-wr_tier_RANDOM SINGLES_m7_g,0.00022068147,572,0
-n_batallas_m1_p,0.00021308419,573,0
-pokes_sob_mean_m7_p,0.0002111525,574,0
-winrate_m3_g,0.00020856722,575,0
-fase_grupos_sum_m15_g,0.00020727653,576,0
-wr_tier_DOU_m3_p,0.00020582632,577,0
-wr_tier_DOU_m1_g,0.0001935702,578,0
-nb_diff_m1_vs_m3_g,0.00018696826,579,0
-wr_tier_RANDOM SINGLES_m5_g,0.00017896175,580,0
-n_batallas_m1_g,0.00017620248,581,0
-fmt_vgc_sum_m15_g,0.00012826709,582,0
-fase_grupos_sum_m24_g,0.00012465674,583,0
-wr_rep_4_m9_p,0.000120056095,584,0
-wr_tier_VGC_m15_g,0.00011706412,585,0
-fase_elim_sum_m1_p,0.0001152057,586,0
-winrate_m1_p,0.00011114475,587,0
-fase_grupos_sum_m36_g,8.2948405e-05,588,0
-rep_actual_sum_m3_p,8.004819e-05,589,0
-fmt_vgc_sum_m1_p,7.17553e-05,590,0
-cat_torneo_mean_m5_p,7.4253057e-06,591,0
-liga_pes_sum_m1_g,0.0,592,0
-liga_pes_mean_m1_g,0.0,593,0
-liga_pjs_sum_m1_g,0.0,594,0
-liga_pls_sum_m1_g,0.0,595,0
-liga_pls_mean_m1_g,0.0,596,0
-wr_tier_BABY RANDOM SINGLES_m1_g,0.0,597,0
-wr_tier_BSS_m1_g,0.0,598,0
-wr_tier_BSS CHAMPIONS_m1_g,0.0,599,0
-wr_tier_RANDOM SINGLES_m36_p,0.0,600,0
-wr_tier_STADIUM OU GEN 1_m36_p,0.0,601,0
-wr_tier_STADIUM OU GEN 2_m36_p,0.0,602,0
-wr_tier_TRADEMARKED_m36_p,0.0,603,0
-wr_tier_UBERS_m36_p,0.0,604,0
-liga_pms_mean_m1_g,0.0,605,0
-liga_pss_sum_m1_g,0.0,606,0
-liga_pss_mean_m1_g,0.0,607,0
-wr_tier_NAT DEX DUBERS_m36_p,0.0,608,0
-wr_tier_NAT DEX MONOTYPE_m36_p,0.0,609,0
-wr_tier_NAT DEX UBERS_m36_p,0.0,610,0
-wr_tier_NAT DEX UBERS UU_m36_p,0.0,611,0
-wr_tier_ORRE COLOSSEUM_m36_p,0.0,612,0
-wr_tier_RANDBATS CHAMPIONS_m36_p,0.0,613,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m36_p,0.0,614,0
-wr_tier_NAT DEX UBERS UU_m1_g,0.0,615,0
-rep_actual_sum_m18_g,0.0,616,0
-liga_pms_mean_m18_g,0.0,617,0
-liga_pss_sum_m18_g,0.0,618,0
-liga_pes_sum_m18_g,0.0,619,0
-liga_pes_mean_m18_g,0.0,620,0
-liga_pjs_sum_m18_g,0.0,621,0
-liga_pls_sum_m18_g,0.0,622,0
-liga_pls_mean_m18_g,0.0,623,0
-fase_grupos_sum_m18_g,0.0,624,0
-fase_jornadas_sum_m18_g,0.0,625,0
-fase_jornadas_mean_m18_g,0.0,626,0
-fase_rondas_sum_m18_g,0.0,627,0
-fase_rondas_mean_m18_g,0.0,628,0
-participo_liga_sum_m18_g,0.0,629,0
-participo_liga_mean_m18_g,0.0,630,0
-fmt_dobles_sum_m18_g,0.0,631,0
-fmt_dobles_mean_m18_g,0.0,632,0
-fmt_vgc_mean_m18_g,0.0,633,0
-cat_ascenso_sum_m18_g,0.0,634,0
-cat_cypher_sum_m18_g,0.0,635,0
-cat_cypher_mean_m18_g,0.0,636,0
-fase_elim_mean_m18_g,0.0,637,0
-wr_tier_STADIUM OU GEN 2_m15_g,0.0,638,0
-wr_tier_TRADEMARKED_m15_g,0.0,639,0
-wr_tier_UBERS_m15_g,0.0,640,0
-wr_tier_VGC 2010_m15_g,0.0,641,0
-wr_rep_3_m15_g,0.0,642,0
-wr_rep_4_m15_g,0.0,643,0
-wr_rep_5_m15_g,0.0,644,0
-wr_tier_UBERS_m18_g,0.0,645,0
-wr_tier_VGC_m18_g,0.0,646,0
-wr_tier_VGC 2010_m18_g,0.0,647,0
-wr_rep_1_m18_g,0.0,648,0
-wr_rep_2_m18_g,0.0,649,0
-wr_rep_3_m18_g,0.0,650,0
-wr_rep_5_m18_g,0.0,651,0
-liga_pms_mean_m15_g,0.0,652,0
-wr_tier_NAT DEX UBERS_m18_g,0.0,653,0
-wr_tier_NAT DEX UBERS UU_m18_g,0.0,654,0
-wr_tier_ORRE COLOSSEUM_m18_g,0.0,655,0
-wr_tier_RANDBATS CHAMPIONS_m18_g,0.0,656,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m18_g,0.0,657,0
-wr_tier_STADIUM OU GEN 1_m18_g,0.0,658,0
-wr_tier_STADIUM OU GEN 2_m18_g,0.0,659,0
-wr_tier_TRADEMARKED_m18_g,0.0,660,0
-wr_tier_LC_m18_g,0.0,661,0
-wr_tier_LEYENDAS Z-A OU_m18_g,0.0,662,0
-wr_tier_METRONOMO_m18_g,0.0,663,0
-wr_tier_MONOTYPE RANDOM BATTLE_m18_g,0.0,664,0
-wr_tier_MultiRandomBattle_m18_g,0.0,665,0
-wr_tier_NAT DEX DOBLES_m18_g,0.0,666,0
-wr_tier_NAT DEX DUBERS_m18_g,0.0,667,0
-wr_tier_NAT DEX MONOTYPE_m18_g,0.0,668,0
-wr_tier_BABY RANDOM SINGLES_m18_g,0.0,669,0
-wr_tier_BSS_m18_g,0.0,670,0
-wr_tier_BSS CHAMPIONS_m18_g,0.0,671,0
-wr_tier_CHAMPIONS_m18_g,0.0,672,0
-wr_tier_DOBLES LC_m18_g,0.0,673,0
-wr_tier_DUBERS_m18_g,0.0,674,0
-wr_tier_Free For all_m18_g,0.0,675,0
-wr_tier_Free For all Randoms_m18_g,0.0,676,0
-wr_tier_ORRE COLOSSEUM_m15_g,0.0,677,0
-meses_activo_m24_g,0.0,678,0
-fmt_singles_sum_m24_g,0.0,679,0
-fmt_dobles_mean_m24_g,0.0,680,0
-fmt_vgc_sum_m24_g,0.0,681,0
-fmt_vgc_mean_m24_g,0.0,682,0
-cat_liga_sum_m24_g,0.0,683,0
-cat_ascenso_sum_m24_g,0.0,684,0
-wr_tier_MONOTYPE RANDOM BATTLE_m15_g,0.0,685,0
-wr_tier_MultiRandomBattle_m15_g,0.0,686,0
-wr_tier_NAT DEX_m15_g,0.0,687,0
-wr_tier_NAT DEX DOBLES_m15_g,0.0,688,0
-wr_tier_NAT DEX DUBERS_m15_g,0.0,689,0
-wr_tier_NAT DEX MONOTYPE_m15_g,0.0,690,0
-wr_tier_NAT DEX UBERS_m15_g,0.0,691,0
-wr_tier_NAT DEX UBERS UU_m15_g,0.0,692,0
-wr_tier_CHAMPIONS_m15_g,0.0,693,0
-wr_tier_DOU_m15_g,0.0,694,0
-wr_tier_DUBERS_m15_g,0.0,695,0
-wr_tier_Free For all_m15_g,0.0,696,0
-wr_tier_Free For all Randoms_m15_g,0.0,697,0
-wr_tier_LC_m15_g,0.0,698,0
-wr_tier_LEYENDAS Z-A OU_m15_g,0.0,699,0
-wr_tier_METRONOMO_m15_g,0.0,700,0
-liga_pes_sum_m15_g,0.0,701,0
-liga_pjs_sum_m15_g,0.0,702,0
-liga_pjs_mean_m15_g,0.0,703,0
-liga_pls_sum_m15_g,0.0,704,0
-liga_pls_mean_m15_g,0.0,705,0
-wr_tier_BABY RANDOM SINGLES_m15_g,0.0,706,0
-wr_tier_BSS_m15_g,0.0,707,0
-wr_tier_BSS CHAMPIONS_m15_g,0.0,708,0
-wr_tier_Free For all_m24_g,0.0,709,0
-wr_tier_Free For all Randoms_m24_g,0.0,710,0
-wr_tier_LC_m24_g,0.0,711,0
-wr_tier_LEYENDAS Z-A OU_m24_g,0.0,712,0
-wr_tier_METRONOMO_m24_g,0.0,713,0
-wr_tier_MONOTYPE RANDOM BATTLE_m24_g,0.0,714,0
-wr_tier_MultiRandomBattle_m24_g,0.0,715,0
-wr_tier_NAT DEX DOBLES_m24_g,0.0,716,0
-liga_pls_sum_m24_g,0.0,717,0
-liga_pls_mean_m24_g,0.0,718,0
-wr_tier_BABY RANDOM SINGLES_m24_g,0.0,719,0
-wr_tier_BSS_m24_g,0.0,720,0
-wr_tier_BSS CHAMPIONS_m24_g,0.0,721,0
-wr_tier_CHAMPIONS_m24_g,0.0,722,0
-wr_tier_DOBLES LC_m24_g,0.0,723,0
-wr_tier_DUBERS_m24_g,0.0,724,0
-fase_rondas_sum_m24_g,0.0,725,0
-participo_liga_sum_m24_g,0.0,726,0
-participo_liga_mean_m24_g,0.0,727,0
-rep_actual_sum_m24_g,0.0,728,0
-liga_pms_mean_m24_g,0.0,729,0
-liga_pss_sum_m24_g,0.0,730,0
-liga_pes_sum_m24_g,0.0,731,0
-liga_pjs_sum_m24_g,0.0,732,0
-cat_ascenso_mean_m24_g,0.0,733,0
-cat_cypher_sum_m24_g,0.0,734,0
-cat_cypher_mean_m24_g,0.0,735,0
-fase_elim_mean_m24_g,0.0,736,0
-fase_grupos_mean_m24_g,0.0,737,0
-fase_jornadas_sum_m24_g,0.0,738,0
-fase_jornadas_mean_m24_g,0.0,739,0
-participo_liga_mean_m15_g,0.0,740,0
-rep_actual_sum_m15_g,0.0,741,0
-wr_tier_OU_m24_g,0.0,742,0
-wr_tier_RANDBATS CHAMPIONS_m24_g,0.0,743,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m24_g,0.0,744,0
-wr_tier_RANDOM DOUBLES_m24_g,0.0,745,0
-wr_tier_STADIUM OU GEN 1_m24_g,0.0,746,0
-wr_tier_STADIUM OU GEN 2_m24_g,0.0,747,0
-fase_grupos_mean_m15_g,0.0,748,0
-fase_jornadas_sum_m15_g,0.0,749,0
-fase_jornadas_mean_m15_g,0.0,750,0
-fase_rondas_sum_m15_g,0.0,751,0
-fase_rondas_mean_m15_g,0.0,752,0
-pokes_venc_mean_m15_g,0.0,753,0
-participo_liga_sum_m15_g,0.0,754,0
-cat_liga_sum_m15_g,0.0,755,0
-cat_liga_mean_m15_g,0.0,756,0
-cat_torneo_mean_m15_g,0.0,757,0
-cat_ascenso_sum_m15_g,0.0,758,0
-cat_ascenso_mean_m15_g,0.0,759,0
-cat_cypher_sum_m15_g,0.0,760,0
-cat_cypher_mean_m15_g,0.0,761,0
-fase_elim_sum_m15_g,0.0,762,0
-wr_tier_NAT DEX DUBERS_m24_g,0.0,763,0
-wr_tier_NAT DEX MONOTYPE_m24_g,0.0,764,0
-wr_tier_NAT DEX UBERS_m24_g,0.0,765,0
-wr_tier_NAT DEX UBERS UU_m24_g,0.0,766,0
-wr_tier_ORRE COLOSSEUM_m24_g,0.0,767,0
-n_batallas_m15_g,0.0,768,0
-fmt_singles_sum_m15_g,0.0,769,0
-liga_pss_sum_m36_g,0.0,770,0
-liga_pss_mean_m36_g,0.0,771,0
-liga_pes_sum_m36_g,0.0,772,0
-liga_pes_mean_m36_g,0.0,773,0
-liga_pls_sum_m36_g,0.0,774,0
-liga_pls_mean_m36_g,0.0,775,0
-wr_tier_BABY RANDOM SINGLES_m36_g,0.0,776,0
-wr_tier_BSS_m36_g,0.0,777,0
-fase_jornadas_mean_m36_g,0.0,778,0
-fase_rondas_sum_m36_g,0.0,779,0
-pokes_venc_sum_m36_g,0.0,780,0
-participo_liga_sum_m36_g,0.0,781,0
-participo_liga_mean_m36_g,0.0,782,0
-rep_actual_sum_m36_g,0.0,783,0
-liga_pms_mean_m36_g,0.0,784,0
-fmt_dobles_sum_m36_g,0.0,785,0
-fmt_dobles_mean_m36_g,0.0,786,0
-cat_liga_sum_m36_g,0.0,787,0
-cat_cypher_sum_m36_g,0.0,788,0
-cat_cypher_mean_m36_g,0.0,789,0
-fase_elim_sum_m36_g,0.0,790,0
-fase_jornadas_sum_m36_g,0.0,791,0
-wr_tier_TRADEMARKED_m24_g,0.0,792,0
-wr_tier_UBERS_m24_g,0.0,793,0
-wr_tier_VGC_m24_g,0.0,794,0
-wr_tier_VGC 2010_m24_g,0.0,795,0
-wr_rep_3_m24_g,0.0,796,0
-wr_rep_5_m24_g,0.0,797,0
-fmt_singles_sum_m36_g,0.0,798,0
-wr_tier_TRADEMARKED_m36_g,0.0,799,0
-wr_tier_VGC 2010_m36_g,0.0,800,0
-wr_rep_4_m36_g,0.0,801,0
-wr_rep_5_m36_g,0.0,802,0
-wr_tier_DUBERS_m12_g,0.0,803,0
-wr_tier_Free For all_m12_g,0.0,804,0
-wr_tier_LC_m12_g,0.0,805,0
-wr_tier_LEYENDAS Z-A OU_m12_g,0.0,806,0
-wr_tier_ORRE COLOSSEUM_m36_g,0.0,807,0
-wr_tier_OU_m36_g,0.0,808,0
-wr_tier_RANDBATS CHAMPIONS_m36_g,0.0,809,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m36_g,0.0,810,0
-wr_tier_RANDOM DOUBLES_m36_g,0.0,811,0
-wr_tier_RANDOM SINGLES_m36_g,0.0,812,0
-wr_tier_STADIUM OU GEN 1_m36_g,0.0,813,0
-wr_tier_STADIUM OU GEN 2_m36_g,0.0,814,0
-wr_tier_METRONOMO_m36_g,0.0,815,0
-wr_tier_MONOTYPE RANDOM BATTLE_m36_g,0.0,816,0
-wr_tier_MultiRandomBattle_m36_g,0.0,817,0
-wr_tier_NAT DEX DOBLES_m36_g,0.0,818,0
-wr_tier_NAT DEX DUBERS_m36_g,0.0,819,0
-wr_tier_NAT DEX MONOTYPE_m36_g,0.0,820,0
-wr_tier_NAT DEX UBERS_m36_g,0.0,821,0
-wr_tier_NAT DEX UBERS UU_m36_g,0.0,822,0
-wr_tier_BSS CHAMPIONS_m36_g,0.0,823,0
-wr_tier_CHAMPIONS_m36_g,0.0,824,0
-wr_tier_DOBLES LC_m36_g,0.0,825,0
-wr_tier_DUBERS_m36_g,0.0,826,0
-wr_tier_Free For all_m36_g,0.0,827,0
-wr_tier_Free For all Randoms_m36_g,0.0,828,0
-wr_tier_LC_m36_g,0.0,829,0
-wr_tier_LEYENDAS Z-A OU_m36_g,0.0,830,0
-wr_ratio_m3_vs_m12_g,0.0,831,0
-nb_diff_m3_vs_m12_g,0.0,832,0
-ma_ratio_m3_vs_m12_g,0.0,833,0
-nb_diff_m5_vs_m12_g,0.0,834,0
-nb_diff_m1_vs_m12_g,0.0,835,0
-nb_diff_m12_vs_m24_g,0.0,836,0
-ma_ratio_m12_vs_m24_g,0.0,837,0
-fase_elim_sum_m12_g,0.0,838,0
-wr_tier_VGC_m12_g,0.0,839,0
-wr_tier_VGC 2010_m12_g,0.0,840,0
-wr_rep_1_m12_g,0.0,841,0
-wr_rep_4_m12_g,0.0,842,0
-wr_rep_5_m12_g,0.0,843,0
-ma_ratio_m1_vs_m3_g,0.0,844,0
-wr_tier_ORRE COLOSSEUM_m12_g,0.0,845,0
-wr_tier_RANDBATS CHAMPIONS_m12_g,0.0,846,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m12_g,0.0,847,0
-wr_tier_RANDOM SINGLES_m12_g,0.0,848,0
-wr_tier_STADIUM OU GEN 1_m12_g,0.0,849,0
-wr_tier_STADIUM OU GEN 2_m12_g,0.0,850,0
-wr_tier_TRADEMARKED_m12_g,0.0,851,0
-wr_tier_UBERS_m12_g,0.0,852,0
-wr_tier_METRONOMO_m12_g,0.0,853,0
-wr_tier_MONOTYPE RANDOM BATTLE_m12_g,0.0,854,0
-wr_tier_MultiRandomBattle_m12_g,0.0,855,0
-wr_tier_NAT DEX DOBLES_m12_g,0.0,856,0
-wr_tier_NAT DEX DUBERS_m12_g,0.0,857,0
-wr_tier_NAT DEX MONOTYPE_m12_g,0.0,858,0
-wr_tier_NAT DEX UBERS_m12_g,0.0,859,0
-wr_tier_NAT DEX UBERS UU_m12_g,0.0,860,0
-log_n_batallas_m1_g,0.0,861,0
-log_n_batallas_m3_g,0.0,862,0
-log_n_batallas_m5_g,0.0,863,0
-log_n_batallas_m7_g,0.0,864,0
-log_n_batallas_m9_g,0.0,865,0
-log_n_batallas_m12_g,0.0,866,0
-log_n_batallas_m15_g,0.0,867,0
-log_n_batallas_m18_g,0.0,868,0
-wr_tier_BABY RANDOM SINGLES_m12_g,0.0,869,0
-wr_tier_BSS_m12_g,0.0,870,0
-wr_tier_BSS CHAMPIONS_m12_g,0.0,871,0
-wr_tier_CHAMPIONS_m12_g,0.0,872,0
-wr_tier_DOBLES LC_m12_g,0.0,873,0
-ma_ratio_m24_vs_m36_g,0.0,874,0
-wr_diff_m1_vs_m36_g,0.0,875,0
-nb_diff_m1_vs_m36_g,0.0,876,0
-rep_actual_sum_m12_g,0.0,877,0
-liga_pms_sum_m12_g,0.0,878,0
-liga_pss_mean_m12_g,0.0,879,0
-liga_pes_sum_m12_g,0.0,880,0
-liga_pes_mean_m12_g,0.0,881,0
-liga_pjs_sum_m12_g,0.0,882,0
-liga_pls_sum_m12_g,0.0,883,0
-liga_pls_mean_m12_g,0.0,884,0
-fase_elim_mean_m12_g,0.0,885,0
-fase_grupos_sum_m12_g,0.0,886,0
-fase_jornadas_sum_m12_g,0.0,887,0
-fase_jornadas_mean_m12_g,0.0,888,0
-fase_rondas_sum_m12_g,0.0,889,0
-fase_rondas_mean_m12_g,0.0,890,0
-participo_liga_sum_m12_g,0.0,891,0
-participo_liga_mean_m12_g,0.0,892,0
-meses_activo_m1_p,0.0,893,0
-cat_liga_sum_m1_p,0.0,894,0
-cat_liga_mean_m1_p,0.0,895,0
-cat_ascenso_sum_m1_p,0.0,896,0
-cat_ascenso_mean_m1_p,0.0,897,0
-cat_cypher_sum_m1_p,0.0,898,0
-log1p_wr_winrate_m9_g,0.0,899,0
-log1p_wr_winrate_m12_g,0.0,900,0
-log1p_wr_winrate_m15_g,0.0,901,0
-log1p_wr_winrate_m18_g,0.0,902,0
-log1p_wr_winrate_m24_g,0.0,903,0
-log1p_wr_winrate_m36_g,0.0,904,0
-log_meses_activo_m15_g,0.0,905,0
-log_meses_activo_m18_g,0.0,906,0
-log_meses_activo_m24_g,0.0,907,0
-log_meses_activo_m36_g,0.0,908,0
-log1p_wr_winrate_m1_g,0.0,909,0
-log1p_wr_winrate_m3_g,0.0,910,0
-log1p_wr_winrate_m5_g,0.0,911,0
-log1p_wr_winrate_m7_g,0.0,912,0
-log_n_batallas_m24_g,0.0,913,0
-log_n_batallas_m36_g,0.0,914,0
-log_meses_activo_m1_g,0.0,915,0
-log_meses_activo_m3_g,0.0,916,0
-log_meses_activo_m5_g,0.0,917,0
-log_meses_activo_m7_g,0.0,918,0
-log_meses_activo_m9_g,0.0,919,0
-log_meses_activo_m12_g,0.0,920,0
-wr_tier_CHAMPIONS_m1_p,0.0,921,0
-wr_tier_DOBLES LC_m1_p,0.0,922,0
-wr_tier_DOU_m1_p,0.0,923,0
-wr_tier_DUBERS_m1_p,0.0,924,0
-wr_tier_Free For all_m1_p,0.0,925,0
-wr_tier_Free For all Randoms_m1_p,0.0,926,0
-wr_tier_LC_m1_p,0.0,927,0
-wr_tier_LEYENDAS Z-A OU_m1_p,0.0,928,0
-liga_pes_mean_m1_p,0.0,929,0
-liga_pjs_sum_m1_p,0.0,930,0
-liga_pjs_mean_m1_p,0.0,931,0
-liga_pls_sum_m1_p,0.0,932,0
-liga_pls_mean_m1_p,0.0,933,0
-wr_tier_BABY RANDOM SINGLES_m1_p,0.0,934,0
-wr_tier_BSS_m1_p,0.0,935,0
-wr_tier_BSS CHAMPIONS_m1_p,0.0,936,0
-participo_liga_mean_m1_p,0.0,937,0
-rep_actual_sum_m1_p,0.0,938,0
-liga_pms_sum_m1_p,0.0,939,0
-liga_pms_mean_m1_p,0.0,940,0
-liga_pss_sum_m1_p,0.0,941,0
-liga_pss_mean_m1_p,0.0,942,0
-liga_pes_sum_m1_p,0.0,943,0
-cat_cypher_mean_m1_p,0.0,944,0
-fase_grupos_sum_m1_p,0.0,945,0
-fase_jornadas_sum_m1_p,0.0,946,0
-fase_jornadas_mean_m1_p,0.0,947,0
-fase_rondas_sum_m1_p,0.0,948,0
-fase_rondas_mean_m1_p,0.0,949,0
-participo_liga_sum_m1_p,0.0,950,0
-cat_cypher_sum_m12_g,0.0,951,0
-wr_tier_NAT DEX DOBLES_m1_p,0.0,952,0
-wr_tier_NAT DEX DUBERS_m1_p,0.0,953,0
-wr_tier_NAT DEX MONOTYPE_m1_p,0.0,954,0
-wr_tier_NAT DEX UBERS_m1_p,0.0,955,0
-wr_tier_NAT DEX UBERS UU_m1_p,0.0,956,0
-wr_tier_ORRE COLOSSEUM_m1_p,0.0,957,0
-wr_tier_OU_m1_p,0.0,958,0
-meses_activo_m12_g,0.0,959,0
-fmt_singles_sum_m12_g,0.0,960,0
-fmt_dobles_sum_m12_g,0.0,961,0
-fmt_vgc_sum_m12_g,0.0,962,0
-cat_liga_sum_m12_g,0.0,963,0
-cat_liga_mean_m12_g,0.0,964,0
-wr_tier_STADIUM OU GEN 1_m9_g,0.0,965,0
-wr_tier_STADIUM OU GEN 2_m9_g,0.0,966,0
-wr_tier_TRADEMARKED_m9_g,0.0,967,0
-wr_tier_UBERS_m9_g,0.0,968,0
-wr_tier_VGC_m9_g,0.0,969,0
-wr_tier_VGC 2010_m9_g,0.0,970,0
-wr_rep_5_m9_g,0.0,971,0
-n_batallas_m12_g,0.0,972,0
-wr_tier_METRONOMO_m1_p,0.0,973,0
-wr_tier_MONOTYPE RANDOM BATTLE_m1_p,0.0,974,0
-wr_tier_MultiRandomBattle_m1_p,0.0,975,0
-wr_tier_NAT DEX_m1_p,0.0,976,0
-wr_tier_OU_m9_g,0.0,977,0
-wr_tier_RANDBATS CHAMPIONS_m9_g,0.0,978,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m9_g,0.0,979,0
-wr_tier_RANDOM DOUBLES_m9_g,0.0,980,0
-pokes_sob_mean_m3_p,0.0,981,0
-participo_liga_sum_m3_p,0.0,982,0
-participo_liga_mean_m3_p,0.0,983,0
-liga_pms_sum_m3_p,0.0,984,0
-liga_pms_mean_m3_p,0.0,985,0
-liga_pss_sum_m3_p,0.0,986,0
-liga_pss_mean_m3_p,0.0,987,0
-cat_ascenso_sum_m3_p,0.0,988,0
-cat_ascenso_mean_m3_p,0.0,989,0
-cat_cypher_sum_m3_p,0.0,990,0
-cat_cypher_mean_m3_p,0.0,991,0
-fase_elim_mean_m3_p,0.0,992,0
-fase_grupos_sum_m3_p,0.0,993,0
-fase_jornadas_sum_m3_p,0.0,994,0
-fase_jornadas_mean_m3_p,0.0,995,0
-wr_tier_VGC 2010_m1_p,0.0,996,0
-wr_rep_5_m1_p,0.0,997,0
-meses_activo_m3_p,0.0,998,0
-fmt_singles_sum_m3_p,0.0,999,0
-fmt_vgc_sum_m3_p,0.0,1000,0
-cat_liga_mean_m3_p,0.0,1001,0
-cat_torneo_sum_m3_p,0.0,1002,0
-cat_torneo_mean_m3_p,0.0,1003,0
-wr_tier_RANDBATS CHAMPIONS_m1_p,0.0,1004,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m1_p,0.0,1005,0
-wr_tier_RANDOM SINGLES_m1_p,0.0,1006,0
-wr_tier_STADIUM OU GEN 1_m1_p,0.0,1007,0
-wr_tier_STADIUM OU GEN 2_m1_p,0.0,1008,0
-wr_tier_TRADEMARKED_m1_p,0.0,1009,0
-wr_tier_UBERS_m1_p,0.0,1010,0
-wr_tier_STADIUM OU GEN 2_m3_p,0.0,1011,0
-wr_tier_TRADEMARKED_m3_p,0.0,1012,0
-liga_pms_sum_m9_g,0.0,1013,0
-liga_pss_sum_m9_g,0.0,1014,0
-liga_pes_sum_m9_g,0.0,1015,0
-liga_pes_mean_m9_g,0.0,1016,0
-liga_pjs_sum_m9_g,0.0,1017,0
-liga_pls_sum_m9_g,0.0,1018,0
-wr_tier_NAT DEX DUBERS_m3_p,0.0,1019,0
-wr_tier_NAT DEX MONOTYPE_m3_p,0.0,1020,0
-wr_tier_NAT DEX UBERS_m3_p,0.0,1021,0
-wr_tier_NAT DEX UBERS UU_m3_p,0.0,1022,0
-wr_tier_ORRE COLOSSEUM_m3_p,0.0,1023,0
-wr_tier_RANDBATS CHAMPIONS_m3_p,0.0,1024,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m3_p,0.0,1025,0
-wr_tier_STADIUM OU GEN 1_m3_p,0.0,1026,0
-wr_tier_DUBERS_m3_p,0.0,1027,0
-wr_tier_Free For all_m3_p,0.0,1028,0
-wr_tier_Free For all Randoms_m3_p,0.0,1029,0
-wr_tier_LC_m3_p,0.0,1030,0
-wr_tier_LEYENDAS Z-A OU_m3_p,0.0,1031,0
-wr_tier_METRONOMO_m3_p,0.0,1032,0
-wr_tier_MONOTYPE RANDOM BATTLE_m3_p,0.0,1033,0
-wr_tier_MultiRandomBattle_m3_p,0.0,1034,0
-liga_pes_sum_m3_p,0.0,1035,0
-liga_pes_mean_m3_p,0.0,1036,0
-liga_pls_sum_m3_p,0.0,1037,0
-liga_pls_mean_m3_p,0.0,1038,0
+wr_rep_1_m18_g,0.011594635,1,1
+pokes_sob_mean_m15_p,0.010500237,2,1
+pokes_sob_mean_m36_g,0.00917995,3,1
+pokes_sob_mean_m36_p,0.00768744,4,1
+winrate_m36_p,0.0075738546,5,1
+winrate_m18_p,0.0074931523,6,1
+wr_rep_1_m36_g,0.0062641595,7,1
+pokes_sob_mean_m24_g,0.006166728,8,1
+liga_pjs_sum_m24_p,0.0055366694,9,1
+liga_pjs_sum_m36_g,0.00507272,10,1
+pokes_sob_mean_m7_p,0.005044436,11,1
+winrate_m18_g,0.0050415793,12,1
+liga_pls_sum_m12_g,0.0047824886,13,1
+fmt_singles_mean_m12_g,0.0044661737,14,1
+pokes_sob_sum_m9_p,0.0044441684,15,1
+wr_rep_1_m36_p,0.0043178652,16,0
+wr_tier_NAT DEX_m12_p,0.0043092594,17,0
+fase_rondas_mean_m9_p,0.0042219334,18,0
+rep_actual_mean_m24_g,0.0041052303,19,0
+liga_pjs_mean_m36_g,0.003969372,20,0
+cat_liga_mean_m3_g,0.003917503,21,0
+liga_pms_mean_m36_g,0.003917089,22,0
+rep_actual_mean_m9_g,0.0038084814,23,0
+liga_pss_sum_m36_g,0.0037125538,24,0
+cat_liga_sum_m12_g,0.003688234,25,0
+rep_actual_sum_m24_p,0.0036056782,26,0
+liga_pss_sum_m15_p,0.0035864948,27,0
+wr_tier_OU_m7_g,0.003497616,28,0
+fase_elim_mean_m24_p,0.0034842356,29,0
+winrate_m15_p,0.0034575677,30,0
+wr_tier_NAT DEX_m15_p,0.0034336492,31,0
+fmt_singles_mean_m9_g,0.0034311449,32,0
+wr_tier_NAT DEX DOBLES_m9_p,0.00335325,33,0
+fmt_vgc_mean_m1_g,0.003341414,34,0
+pokes_venc_mean_m3_g,0.0033193596,35,0
+liga_pms_mean_m7_g,0.0033094329,36,0
+pokes_venc_sum_m1_g,0.0032421662,37,0
+pokes_sob_mean_m18_g,0.0032315936,38,0
+pokes_venc_sum_m24_p,0.0031522177,39,0
+pokes_venc_sum_m15_g,0.003135108,40,0
+meses_activo_m18_g,0.0031050043,41,0
+pokes_venc_mean_m1_p,0.0030964657,42,0
+fase_grupos_mean_m24_g,0.003082516,43,0
+fmt_dobles_mean_m12_g,0.0030660278,44,0
+liga_pjs_mean_m24_p,0.0030599455,45,0
+pokes_venc_mean_m18_g,0.0030435682,46,0
+wr_tier_NAT DEX DOBLES_m9_g,0.0030250156,47,0
+rep_actual_sum_m1_p,0.003018047,48,0
+liga_pms_sum_m3_p,0.003011505,49,0
+winrate_m36_g,0.0029941844,50,0
+wr_rep_3_m15_g,0.0029878004,51,0
+fmt_vgc_mean_m7_p,0.0029689267,52,0
+wr_tier_NAT DEX_m7_g,0.0029557145,53,0
+wr_tier_DOU_m9_g,0.0029498888,54,0
+liga_pes_mean_m1_g,0.0029232912,55,0
+wr_tier_DOU_m15_p,0.002922479,56,0
+wr_tier_RANDOM SINGLES_m15_p,0.002920818,57,0
+pokes_venc_mean_m9_g,0.0028854546,58,0
+wr_diff_m1_vs_m36_p,0.0028802953,59,0
+ma_ratio_m24_vs_m36_g,0.002864847,60,0
+liga_pjs_mean_m24_g,0.0028640917,61,0
+fase_rondas_mean_m15_g,0.0028581393,62,0
+pokes_venc_sum_m36_p,0.002778397,63,0
+liga_pjs_sum_m12_p,0.0027393172,64,0
+liga_pes_sum_m7_p,0.0027034131,65,0
+fase_elim_mean_m7_p,0.0026939912,66,0
+wr_tier_VGC_m5_p,0.0026880512,67,0
+fase_rondas_mean_m12_g,0.0026729945,68,0
+wr_tier_NAT DEX_m1_g,0.002669722,69,0
+liga_pjs_mean_m12_g,0.002662834,70,0
+rep_actual_sum_m36_g,0.0026541112,71,0
+pokes_sob_mean_m12_g,0.002639736,72,0
+cat_torneo_mean_m9_g,0.0026342873,73,0
+wr_tier_NAT DEX_m18_g,0.002632691,74,0
+nb_diff_m1_vs_m3_p,0.0026320703,75,0
+pokes_sob_sum_m5_p,0.0026259127,76,0
+cat_liga_mean_m36_p,0.0026092166,77,0
+fmt_singles_mean_m24_g,0.0026043218,78,0
+rep_actual_mean_m36_g,0.0025619545,79,0
+wr_tier_OU_m5_p,0.002546547,80,0
+pokes_sob_sum_m5_g,0.0025446126,81,0
+wr_rep_1_m5_p,0.0025400822,82,0
+wr_ratio_m12_vs_m24_p,0.0025300598,83,0
+cat_liga_mean_m3_p,0.0025245738,84,0
+pokes_venc_mean_m7_g,0.0024863975,85,0
+cat_torneo_mean_m7_g,0.002486235,86,0
+wr_rep_4_m36_p,0.002472243,87,0
+fase_elim_mean_m5_g,0.0024558057,88,0
+fmt_vgc_mean_m18_g,0.0024487441,89,0
+fmt_dobles_sum_m9_p,0.0024400412,90,0
+nb_diff_m12_vs_m24_p,0.002437757,91,0
+nb_diff_m3_vs_m5_p,0.002432633,92,0
+liga_pjs_mean_m36_p,0.0024325335,93,0
+wr_tier_NAT DEX_m3_g,0.0024289154,94,0
+fmt_vgc_mean_m24_g,0.0024178836,95,0
+nb_ratio_m1_vs_m36_g,0.002409949,96,0
+cat_torneo_mean_m36_p,0.00239883,97,0
+wr_tier_VGC_m7_p,0.002391678,98,0
+wr_tier_UBERS_m36_g,0.0023901092,99,0
+fmt_dobles_mean_m15_g,0.0023853004,100,0
+nb_ratio_m24_vs_m36_g,0.0023789387,101,0
+fase_rondas_sum_m3_g,0.002377853,102,0
+wr_rep_3_m36_g,0.0023757806,103,0
+wr_tier_NAT DEX_m36_g,0.0023670336,104,0
+liga_pms_mean_m15_g,0.0023662779,105,0
+cat_torneo_sum_m24_g,0.0023481513,106,0
+cat_torneo_mean_m18_p,0.0023413477,107,0
+fmt_vgc_mean_m18_p,0.0023411007,108,0
+rep_actual_mean_m7_g,0.0023193858,109,0
+fmt_vgc_mean_m36_g,0.0023164833,110,0
+rep_actual_mean_m12_g,0.0023125254,111,0
+cat_liga_sum_m12_p,0.0023121017,112,0
+fmt_dobles_mean_m9_p,0.0023058855,113,0
+wr_tier_OU_m3_g,0.0023058164,114,0
+cat_ascenso_sum_m36_g,0.0023048378,115,0
+wr_tier_NAT DEX DOBLES_m7_p,0.0022857343,116,0
+wr_rep_2_m12_g,0.0022834067,117,0
+rep_actual_mean_m36_p,0.0022786572,118,0
+pokes_venc_mean_m5_g,0.0022415358,119,0
+cat_ascenso_mean_m5_p,0.0022337672,120,0
+wr_tier_OU_m15_p,0.0022301467,121,0
+fmt_singles_mean_m3_g,0.002227987,122,0
+wr_rep_2_m15_p,0.0022241783,123,0
+fase_rondas_mean_m5_g,0.00221193,124,0
+cat_torneo_sum_m7_g,0.0022110667,125,0
+fmt_singles_mean_m1_p,0.002209211,126,0
+meses_activo_m36_p,0.0021926456,127,0
+fase_elim_sum_m7_p,0.0021769903,128,0
+fmt_singles_sum_m7_g,0.0021687925,129,0
+liga_pss_sum_m18_g,0.0021546797,130,0
+wr_rep_4_m18_g,0.002150209,131,0
+wr_tier_DOBLES LC_m7_g,0.0021481102,132,0
+nb_ratio_m1_vs_m12_g,0.002146008,133,0
+cat_torneo_mean_m7_p,0.0021258567,134,0
+fmt_singles_mean_m9_p,0.0021243505,135,0
+wr_tier_NAT DEX_m15_g,0.00212363,136,0
+fmt_vgc_mean_m12_g,0.0021197197,137,0
+cat_liga_sum_m24_p,0.002102449,138,0
+fase_elim_mean_m18_g,0.0020945778,139,0
+fmt_singles_mean_m18_p,0.002093731,140,0
+cat_torneo_mean_m15_g,0.0020877959,141,0
+fmt_vgc_sum_m15_p,0.0020750442,142,0
+wr_diff_m5_vs_m12_p,0.0020691832,143,0
+pokes_sob_mean_m12_p,0.0020654001,144,0
+liga_pjs_mean_m3_p,0.002065273,145,0
+wr_tier_LC_m7_p,0.0020569072,146,0
+wr_tier_DOU_m36_p,0.002048955,147,0
+fase_rondas_mean_m18_g,0.0020392514,148,0
+fase_grupos_mean_m1_p,0.002038942,149,0
+wr_tier_RANDOM SINGLES_m3_g,0.0020282585,150,0
+wr_tier_OU_m12_p,0.0020207837,151,0
+fase_elim_mean_m24_g,0.0020166882,152,0
+cat_liga_mean_m1_g,0.002016275,153,0
+pokes_sob_sum_m18_g,0.0020066258,154,0
+wr_rep_1_m24_g,0.0020062553,155,0
+rep_actual_sum_m12_g,0.0020033263,156,0
+wr_tier_NAT DEX_m7_p,0.0020017244,157,0
+fmt_singles_mean_m15_p,0.0019940496,158,0
+pokes_venc_mean_m5_p,0.0019829967,159,0
+pokes_venc_sum_m1_p,0.0019713985,160,0
+wr_rep_5_m5_p,0.0019712383,161,0
+pokes_sob_mean_m7_g,0.0019696055,162,0
+pokes_sob_sum_m36_p,0.001967595,163,0
+pokes_venc_mean_m24_g,0.0019542775,164,0
+wr_rep_1_m9_g,0.0019528808,165,0
+pokes_venc_mean_m36_g,0.001950991,166,0
+cat_torneo_sum_m36_g,0.0019487181,167,0
+wr_tier_DOBLES LC_m7_p,0.0019482959,168,0
+cat_cypher_mean_m24_p,0.0019462081,169,0
+wr_tier_VGC_m1_p,0.0019419321,170,0
+fase_grupos_sum_m24_p,0.0019416529,171,0
+cat_torneo_mean_m9_p,0.0019383577,172,0
+ma_ratio_m5_vs_m12_g,0.0019377024,173,0
+cat_torneo_mean_m3_g,0.0019347799,174,0
+wr_diff_m24_vs_m36_g,0.0019271212,175,0
+nb_ratio_m1_vs_m36_p,0.0019236266,176,0
+cat_cypher_mean_m18_p,0.0019213267,177,0
+fase_elim_sum_m1_g,0.0019191441,178,0
+fase_elim_sum_m5_g,0.001915551,179,0
+wr_rep_2_m36_p,0.0019017311,180,0
+wr_rep_1_m5_g,0.0019013009,181,0
+nb_diff_m3_vs_m5_g,0.0018989715,182,0
+cat_torneo_mean_m24_p,0.0018960047,183,0
+wr_diff_m12_vs_m24_p,0.0018929592,184,0
+wr_rep_3_m3_p,0.0018842282,185,0
+liga_pms_mean_m18_g,0.0018833828,186,0
+cat_torneo_sum_m9_p,0.0018782908,187,0
+fmt_vgc_mean_m1_p,0.0018763389,188,0
+liga_pss_mean_m9_g,0.0018741582,189,0
+cat_liga_mean_m12_p,0.001868602,190,0
+fase_elim_mean_m1_g,0.0018662522,191,0
+fase_rondas_mean_m24_g,0.0018643164,192,0
+wr_tier_DOU_m12_g,0.0018632624,193,0
+wr_rep_3_m24_p,0.001862384,194,0
+fmt_dobles_sum_m18_p,0.0018577739,195,0
+liga_pls_mean_m24_g,0.0018536876,196,0
+fmt_vgc_mean_m15_p,0.0018512779,197,0
+wr_rep_5_m5_g,0.0018465364,198,0
+fmt_singles_sum_m3_g,0.0018430894,199,0
+cat_liga_mean_m36_g,0.0018378953,200,0
+wr_tier_OU_m18_p,0.0018308044,201,0
+pokes_sob_mean_m9_p,0.0018302214,202,0
+pokes_venc_mean_m12_p,0.0018273847,203,0
+wr_ratio_m24_vs_m36_g,0.0018224334,204,0
+rep_actual_sum_m36_p,0.0018208701,205,0
+wr_tier_NAT DEX_m9_p,0.0018206849,206,0
+wr_tier_NAT DEX_m1_p,0.0018183903,207,0
+pokes_sob_sum_m7_g,0.0018157219,208,0
+cat_torneo_sum_m12_g,0.0017951193,209,0
+pokes_venc_sum_m5_g,0.0017946423,210,0
+fase_elim_mean_m7_g,0.0017934629,211,0
+cat_ascenso_sum_m3_g,0.0017909368,212,0
+pokes_sob_sum_m12_p,0.0017889092,213,0
+wr_rep_2_m18_p,0.0017727509,214,0
+liga_pes_sum_m15_p,0.0017723999,215,0
+pokes_sob_mean_m5_g,0.0017714924,216,0
+fase_rondas_sum_m12_p,0.001769404,217,0
+fase_grupos_mean_m36_p,0.001769034,218,0
+wr_tier_RANDOM SINGLES_m7_p,0.0017521754,219,0
+wr_diff_m3_vs_m5_g,0.0017496144,220,0
+nb_ratio_m3_vs_m5_g,0.0017473489,221,0
+winrate_m7_p,0.001746351,222,0
+cat_ascenso_mean_m18_g,0.0017441275,223,0
+pokes_venc_mean_m7_p,0.0017324634,224,0
+wr_tier_RANDOM SINGLES_m24_g,0.001729777,225,0
+fase_elim_sum_m36_g,0.0017292204,226,0
+liga_pls_sum_m15_p,0.0017291164,227,0
+cat_liga_mean_m24_g,0.0017274687,228,0
+fmt_dobles_sum_m3_p,0.0017267846,229,0
+rep_actual_mean_m9_p,0.0017251865,230,0
+pokes_sob_sum_m24_g,0.001723793,231,0
+wr_ratio_m1_vs_m36_p,0.0017219447,232,0
+liga_pes_mean_m1_p,0.0017194892,233,0
+wr_rep_3_m3_g,0.0017188881,234,0
+fase_grupos_sum_m18_p,0.0017165634,235,0
+wr_tier_RANDOM DOUBLES_m5_g,0.001715605,236,0
+pokes_sob_mean_m15_g,0.0017119709,237,0
+wr_tier_RANDOM SINGLES_m7_g,0.0017098142,238,0
+wr_diff_m24_vs_m36_p,0.001708897,239,0
+cat_torneo_sum_m18_g,0.0017079855,240,0
+wr_tier_NAT DEX_m12_g,0.0017068748,241,0
+cat_cypher_sum_m15_g,0.001705527,242,0
+wr_ratio_m3_vs_m12_g,0.0016964545,243,0
+wr_tier_VGC_m15_g,0.0016878495,244,0
+rep_actual_mean_m5_p,0.0016868039,245,0
+wr_tier_VGC_m36_p,0.0016867555,246,0
+meses_activo_m24_p,0.0016643631,247,0
+n_batallas_m5_p,0.0016613177,248,0
+wr_tier_RANDOM SINGLES_m24_p,0.0016572943,249,0
+fmt_dobles_sum_m12_g,0.0016445423,250,0
+wr_tier_DUBERS_m3_p,0.0016410708,251,0
+cat_ascenso_sum_m15_g,0.0016396004,252,0
+fmt_singles_mean_m1_g,0.0016310196,253,0
+fmt_dobles_sum_m24_p,0.0016267323,254,0
+fase_elim_mean_m15_g,0.0016242012,255,0
+wr_tier_NAT DEX DOBLES_m36_p,0.0016238047,256,0
+fase_elim_mean_m9_g,0.0016185377,257,0
+fase_rondas_mean_m9_g,0.0016106031,258,0
+liga_pes_mean_m3_g,0.001602518,259,0
+n_batallas_m3_p,0.0016022203,260,0
+rep_actual_sum_m3_p,0.0015991875,261,0
+fmt_vgc_mean_m24_p,0.0015967803,262,0
+fmt_dobles_sum_m36_g,0.0015901242,263,0
+pokes_venc_mean_m18_p,0.0015890741,264,0
+wr_rep_1_m12_g,0.0015833937,265,0
+liga_pss_sum_m12_g,0.00158133,266,0
+cat_ascenso_mean_m36_g,0.0015659751,267,0
+wr_ratio_m1_vs_m12_p,0.0015641715,268,0
+wr_tier_RANDOM DOUBLES_m1_p,0.0015613757,269,0
+fase_grupos_sum_m7_g,0.0015613743,270,0
+wr_tier_RANDOM SINGLES_m18_g,0.0015590541,271,0
+fmt_dobles_sum_m36_p,0.0015582378,272,0
+fmt_singles_mean_m15_g,0.0015506329,273,0
+fase_elim_sum_m15_p,0.0015504913,274,0
+fmt_dobles_mean_m36_p,0.0015448699,275,0
+fmt_singles_sum_m5_p,0.0015375448,276,0
+wr_tier_DOU_m3_g,0.0015303629,277,0
+wr_tier_NAT DEX DOBLES_m3_p,0.0015235073,278,0
+wr_rep_1_m12_p,0.0015218373,279,0
+rep_actual_mean_m3_g,0.0015211015,280,0
+rep_actual_sum_m9_g,0.0015206818,281,0
+wr_rep_5_m36_p,0.0015189307,282,0
+liga_pss_mean_m7_p,0.0015181686,283,0
+liga_pes_sum_m24_g,0.0015172344,284,0
+wr_tier_NAT DEX DOBLES_m12_g,0.0015164718,285,0
+pokes_sob_sum_m36_g,0.0015133431,286,0
+fmt_dobles_sum_m18_g,0.0015098444,287,0
+fase_elim_mean_m18_p,0.0015078105,288,0
+ma_ratio_m5_vs_m12_p,0.0015058015,289,0
+pokes_sob_mean_m24_p,0.0015012587,290,0
+wr_tier_STADIUM OU GEN 2_m5_g,0.0014968833,291,0
+liga_pls_sum_m9_p,0.0014963035,292,0
+pokes_venc_sum_m9_p,0.0014950898,293,0
+cat_ascenso_mean_m15_g,0.0014920656,294,0
+wr_tier_DOU_m24_p,0.0014897063,295,0
+nb_diff_m1_vs_m3_g,0.0014892152,296,0
+liga_pms_sum_m9_g,0.001486577,297,0
+wr_ratio_m5_vs_m12_p,0.0014775206,298,0
+wr_tier_DOU_m3_p,0.0014766736,299,0
+wr_ratio_m1_vs_m3_p,0.0014694156,300,0
+wr_tier_UBERS_m3_p,0.0014676233,301,0
+fmt_singles_mean_m24_p,0.0014614604,302,0
+fmt_vgc_sum_m18_p,0.0014546184,303,0
+pokes_venc_mean_m15_g,0.0014519703,304,0
+fmt_dobles_sum_m24_g,0.0014509507,305,0
+winrate_m15_g,0.0014414291,306,0
+wr_diff_m1_vs_m12_p,0.0014373808,307,0
+fase_elim_sum_m3_g,0.0014300498,308,0
+wr_diff_m5_vs_m12_g,0.0014175194,309,0
+fase_rondas_mean_m7_p,0.0014150956,310,0
+liga_pjs_mean_m7_g,0.0014141729,311,0
+liga_pls_mean_m3_p,0.0014109897,312,0
+ctx_es_final_torneo,0.0014109039,313,0
+ma_ratio_m1_vs_m36_p,0.0014106804,314,0
+wr_tier_DUBERS_m36_p,0.0014100717,315,0
+fmt_dobles_mean_m9_g,0.0014064659,316,0
+wr_tier_RANDOM SINGLES_m9_g,0.0014059992,317,0
+cat_liga_mean_m1_p,0.0014054872,318,0
+liga_pss_sum_m5_g,0.0014048043,319,0
+pokes_venc_mean_m12_g,0.001404732,320,0
+fmt_dobles_sum_m7_p,0.0014030976,321,0
+wr_ratio_m24_vs_m36_p,0.0013985784,322,0
+wr_tier_VGC_m12_p,0.0013976818,323,0
+wr_ratio_m5_vs_m12_g,0.0013955605,324,0
+liga_pjs_sum_m5_g,0.0013890795,325,0
+fase_grupos_mean_m9_p,0.0013887631,326,0
+cat_ascenso_mean_m36_p,0.0013866476,327,0
+ma_ratio_m12_vs_m24_g,0.001386336,328,0
+fase_rondas_sum_m15_g,0.0013843656,329,0
+wr_tier_RANDOM SINGLES_m36_p,0.0013810378,330,0
+wr_tier_UBERS_m36_p,0.001380457,331,0
+fmt_singles_mean_m7_p,0.0013804235,332,0
+fmt_dobles_mean_m5_p,0.0013779858,333,0
+fmt_singles_mean_m7_g,0.0013776369,334,0
+wr_tier_OU_m24_g,0.0013680591,335,0
+cat_cypher_sum_m3_p,0.0013636607,336,0
+winrate_m3_g,0.001355408,337,0
+wr_rep_2_m3_g,0.0013515725,338,0
+liga_pss_mean_m15_g,0.0013486004,339,0
+winrate_m7_g,0.0013424485,340,0
+wr_tier_CHAMPIONS_m3_g,0.0013393649,341,0
+wr_ratio_m3_vs_m5_g,0.0013365918,342,0
+pokes_sob_mean_m5_p,0.0013349175,343,0
+cat_liga_sum_m5_g,0.0013341855,344,0
+fmt_vgc_mean_m3_p,0.0013328384,345,0
+nb_ratio_m3_vs_m12_g,0.0013322203,346,0
+fase_grupos_mean_m18_g,0.0013277183,347,0
+wr_tier_DOU_m18_g,0.001324781,348,0
+wr_tier_NAT DEX_m5_p,0.0013246463,349,0
+wr_diff_m3_vs_m12_p,0.0013177021,350,0
+cat_cypher_mean_m36_p,0.0013105052,351,0
+fmt_vgc_mean_m15_g,0.0013027778,352,0
+winrate_m5_p,0.0013027715,353,0
+liga_pjs_sum_m36_p,0.0013022019,354,0
+fase_rondas_sum_m9_g,0.0013016694,355,0
+pokes_sob_mean_m3_g,0.0012980452,356,0
+fase_rondas_mean_m3_p,0.0012962609,357,0
+wr_tier_VGC_m15_p,0.0012945334,358,0
+fmt_vgc_mean_m5_p,0.00128844,359,0
+wr_tier_DOU_m36_g,0.0012868418,360,0
+fase_rondas_sum_m5_p,0.001285798,361,0
+fase_elim_mean_m15_p,0.0012802497,362,0
+fase_elim_sum_m18_p,0.0012795901,363,0
+n_batallas_m18_p,0.0012742768,364,0
+wr_rep_1_m7_p,0.0012631039,365,0
+pokes_sob_mean_m3_p,0.0012590685,366,0
+pokes_sob_mean_m1_g,0.0012579331,367,0
+wr_tier_OU_m7_p,0.0012555583,368,0
+cat_torneo_mean_m12_p,0.0012529495,369,0
+cat_liga_sum_m18_p,0.0012524746,370,0
+pokes_venc_sum_m12_p,0.0012514511,371,0
+rep_actual_mean_m1_p,0.0012455597,372,0
+wr_diff_m3_vs_m5_p,0.001241564,373,0
+fmt_singles_mean_m3_p,0.0012411802,374,0
+fmt_vgc_sum_m24_p,0.0012398027,375,0
+fase_rondas_sum_m9_p,0.0012333231,376,0
+fmt_singles_mean_m12_p,0.0012325633,377,0
+liga_pms_mean_m12_g,0.0012258963,378,0
+wr_diff_m3_vs_m12_g,0.0012222375,379,0
+fmt_dobles_mean_m7_g,0.0012200348,380,0
+wr_tier_RANDOM SINGLES_m5_g,0.0012191201,381,0
+n_batallas_m7_p,0.0012077442,382,0
+wr_tier_ORRE COLOSSEUM_m5_p,0.001204048,383,0
+liga_pss_mean_m24_g,0.0012036071,384,0
+pokes_venc_sum_m18_g,0.0012035226,385,0
+pokes_sob_sum_m7_p,0.0012033471,386,0
+liga_pms_sum_m12_p,0.0012025918,387,0
+fmt_vgc_sum_m7_p,0.0012016807,388,0
+rep_actual_mean_m12_p,0.0012000126,389,0
+wr_tier_NAT DEX_m24_g,0.0011996973,390,0
+wr_rep_4_m3_p,0.001194781,391,0
+nb_ratio_m3_vs_m5_p,0.0011923695,392,0
+wr_tier_VGC_m1_g,0.0011890237,393,0
+fase_grupos_mean_m15_p,0.0011881791,394,0
+wr_tier_UBERS_m7_g,0.001184434,395,0
+pokes_sob_sum_m1_p,0.0011788966,396,0
+pokes_sob_mean_m1_p,0.0011772774,397,0
+liga_pss_mean_m15_p,0.0011760878,398,0
+nb_ratio_m1_vs_m3_p,0.0011716563,399,0
+wr_rep_1_m3_p,0.0011691959,400,0
+wr_tier_RANDOM SINGLES_m5_p,0.0011640021,401,0
+fase_rondas_mean_m36_g,0.0011638957,402,0
+liga_pes_sum_m18_p,0.0011611276,403,0
+cat_ascenso_sum_m18_g,0.0011604648,404,0
+wr_rep_1_m15_g,0.0011598908,405,0
+liga_pms_sum_m7_g,0.0011580475,406,0
+nb_ratio_m5_vs_m12_p,0.0011545162,407,0
+liga_pes_sum_m9_p,0.0011512047,408,0
+wr_rep_2_m18_g,0.0011509133,409,0
+wr_rep_2_m7_p,0.0011486647,410,0
+fmt_dobles_mean_m1_g,0.0011486139,411,0
+cat_torneo_mean_m15_p,0.0011468991,412,0
+fase_rondas_mean_m1_g,0.001146588,413,0
+n_batallas_m5_g,0.0011442959,414,0
+wr_tier_NAT DEX UBERS UU_m24_g,0.0011439371,415,0
+wr_ratio_m3_vs_m5_p,0.0011415773,416,0
+wr_diff_m12_vs_m24_g,0.0011415362,417,0
+fmt_vgc_mean_m36_p,0.0011408537,418,0
+liga_pss_mean_m7_g,0.0011368007,419,0
+nb_ratio_m12_vs_m24_p,0.0011364489,420,0
+liga_pes_mean_m3_p,0.0011364236,421,0
+fase_elim_sum_m9_p,0.0011351894,422,0
+wr_tier_BSS_m1_p,0.0011308226,423,0
+cat_torneo_sum_m15_p,0.0011260652,424,0
+pokes_venc_sum_m5_p,0.0011234536,425,0
+ma_ratio_m12_vs_m24_p,0.0011092887,426,0
+pokes_sob_mean_m9_g,0.0011081051,427,0
+wr_rep_2_m24_g,0.001103178,428,0
+wr_tier_DOU_m5_p,0.0011001586,429,0
+pokes_venc_mean_m36_p,0.0010988036,430,0
+winrate_m5_g,0.0010914927,431,0
+wr_rep_2_m1_p,0.0010904213,432,0
+cat_liga_mean_m24_p,0.0010846626,433,0
+fmt_vgc_sum_m5_p,0.0010834326,434,0
+wr_tier_DOBLES LC_m5_g,0.0010830794,435,0
+wr_rep_1_m7_g,0.0010813795,436,0
+cat_liga_sum_m7_p,0.0010773715,437,0
+fmt_dobles_sum_m5_p,0.0010678933,438,0
+wr_ratio_m3_vs_m12_p,0.0010666684,439,0
+fase_elim_sum_m1_p,0.0010654031,440,0
+pokes_sob_sum_m3_p,0.0010641892,441,0
+ma_ratio_m3_vs_m12_p,0.0010605905,442,0
+fase_rondas_mean_m15_p,0.0010566002,443,0
+liga_pjs_mean_m15_p,0.0010501483,444,0
+liga_pes_sum_m5_p,0.0010416347,445,0
+fase_elim_sum_m12_p,0.0010398332,446,0
+rep_actual_sum_m7_p,0.0010366982,447,0
+cat_ascenso_mean_m9_p,0.0010355193,448,0
+fmt_singles_mean_m5_p,0.0010289302,449,0
+wr_tier_DOU_m9_p,0.0010148791,450,0
+wr_tier_VGC_m12_g,0.0010087108,451,0
+wr_tier_DUBERS_m24_p,0.0010073221,452,0
+winrate_m9_g,0.0010066307,453,0
+liga_pss_mean_m3_g,0.0009989004,454,0
+fmt_singles_sum_m9_p,0.0009971443,455,0
+wr_rep_2_m36_g,0.0009951906,456,0
+fase_rondas_mean_m5_p,0.0009859337,457,0
+liga_pls_sum_m15_g,0.0009821212,458,0
+liga_pss_sum_m9_g,0.0009774369,459,0
+fase_grupos_mean_m12_p,0.0009722751,460,0
+wr_rep_3_m18_g,0.0009701286,461,0
+wr_rep_1_m1_g,0.00096988905,462,0
+ma_ratio_m1_vs_m36_g,0.0009666265,463,0
+wr_tier_DUBERS_m1_p,0.00095830136,464,0
+fase_grupos_mean_m5_p,0.0009525507,465,0
+cat_cypher_mean_m7_p,0.00094941264,466,0
+fase_elim_sum_m18_g,0.00094124425,467,0
+liga_pjs_mean_m3_g,0.000931759,468,0
+wr_tier_VGC_m3_p,0.0009270607,469,0
+fmt_dobles_sum_m5_g,0.00092651893,470,0
+wr_diff_m1_vs_m3_g,0.00091705093,471,0
+wr_rep_2_m12_p,0.00091443927,472,0
+pokes_sob_sum_m9_g,0.00091387297,473,0
+liga_pss_mean_m12_g,0.0009126772,474,0
+rep_actual_mean_m18_g,0.0008986737,475,0
+fase_grupos_sum_m15_g,0.0008955844,476,0
+cat_ascenso_mean_m12_p,0.000894939,477,0
+nb_ratio_m1_vs_m3_g,0.0008945234,478,0
+fmt_vgc_sum_m7_g,0.0008902622,479,0
+wr_rep_3_m24_g,0.0008893103,480,0
+ma_ratio_m3_vs_m5_p,0.0008851935,481,0
+fase_rondas_sum_m3_p,0.00088067167,482,0
+wr_ratio_m1_vs_m36_g,0.00087209465,483,0
+pokes_venc_mean_m3_p,0.00086846674,484,0
+wr_tier_DOU_m7_p,0.00086597964,485,0
+wr_tier_VGC_m7_g,0.00085965096,486,0
+liga_pes_mean_m18_p,0.0008586648,487,0
+wr_ratio_m1_vs_m3_g,0.0008508797,488,0
+fase_rondas_mean_m3_g,0.0008431616,489,0
+fase_elim_mean_m12_p,0.00083708594,490,0
+wr_tier_Free For all Randoms_m12_g,0.0008367265,491,0
+liga_pms_mean_m7_p,0.00083618244,492,0
+liga_pjs_sum_m9_p,0.00083539454,493,0
+fmt_vgc_mean_m5_g,0.00083510485,494,0
+nb_ratio_m12_vs_m24_g,0.0008350595,495,0
+wr_rep_3_m12_g,0.0008203142,496,0
+wr_ratio_m1_vs_m12_g,0.00081523793,497,0
+wr_tier_BSS_m7_g,0.00081514334,498,0
+fmt_vgc_mean_m3_g,0.0008146465,499,0
+wr_rep_3_m12_p,0.0008077344,500,0
+fmt_vgc_mean_m7_g,0.0008075604,501,0
+wr_tier_NAT DEX_m5_g,0.00080657564,502,0
+wr_tier_NAT DEX_m3_p,0.0008058134,503,0
+fmt_dobles_sum_m1_p,0.0007984794,504,0
+cat_cypher_mean_m5_g,0.00079264346,505,0
+fase_elim_sum_m36_p,0.00078177743,506,0
+liga_pms_sum_m36_g,0.00078087184,507,0
+wr_tier_NAT DEX DOBLES_m24_g,0.0007749645,508,0
+liga_pss_sum_m18_p,0.0007744802,509,0
+cat_torneo_mean_m1_p,0.0007741321,510,0
+fase_grupos_mean_m7_g,0.0007564873,511,0
+fase_rondas_sum_m15_p,0.0007557665,512,0
+fase_elim_mean_m36_g,0.0007480598,513,0
+fase_elim_sum_m3_p,0.0007470684,514,0
+wr_ratio_m12_vs_m24_g,0.0007412403,515,0
+cat_liga_sum_m3_p,0.0007410882,516,0
+wr_tier_NAT DEX DUBERS_m1_g,0.00073775195,517,0
+fmt_dobles_sum_m3_g,0.0007375246,518,0
+wr_tier_BSS_m1_g,0.00073543465,519,0
+wr_tier_VGC_m5_g,0.00073251536,520,0
+fmt_singles_mean_m18_g,0.0007306181,521,0
+fmt_dobles_mean_m12_p,0.0007268947,522,0
+liga_pes_sum_m12_p,0.00072496536,523,0
+wr_diff_m1_vs_m12_g,0.0007237134,524,0
+fmt_dobles_mean_m3_p,0.00072136614,525,0
+liga_pms_sum_m36_p,0.0007062337,526,0
+cat_ascenso_sum_m12_p,0.0006987988,527,0
+rep_actual_sum_m5_p,0.00069050933,528,0
+wr_tier_DOU_m24_g,0.00067338685,529,0
+ma_ratio_m1_vs_m12_g,0.0006665192,530,0
+wr_tier_NAT DEX DOBLES_m1_p,0.0006662559,531,0
+fmt_singles_sum_m1_g,0.00066598447,532,0
+wr_tier_BSS_m9_p,0.0006605456,533,0
+cat_cypher_mean_m7_g,0.00064844295,534,0
+cat_torneo_mean_m5_g,0.00064636086,535,0
+pokes_sob_sum_m1_g,0.00064122985,536,0
+liga_pms_sum_m12_g,0.0006398554,537,0
+fmt_singles_mean_m5_g,0.00063976116,538,0
+cat_liga_sum_m9_g,0.0006309322,539,0
+wr_rep_2_m5_g,0.0006238746,540,0
+liga_pes_sum_m9_g,0.00060634303,541,0
+cat_torneo_sum_m9_g,0.000598652,542,0
+fase_elim_mean_m9_p,0.0005755212,543,0
+fase_rondas_sum_m12_g,0.00057492434,544,0
+liga_pms_mean_m5_p,0.00057206023,545,0
+wr_tier_OU_m9_p,0.0005717979,546,0
+liga_pss_sum_m7_p,0.0005701386,547,0
+cat_torneo_sum_m12_p,0.0005688686,548,0
+rep_actual_mean_m15_p,0.0005648677,549,0
+ctx_rep_bucket,0.00054271694,550,0
+winrate_m24_p,0.00053264503,551,0
+pokes_sob_sum_m3_g,0.0005266102,552,0
+cat_torneo_sum_m3_p,0.00051576877,553,0
+wr_rep_3_m7_p,0.0005139632,554,0
+fmt_dobles_sum_m15_g,0.00050558196,555,0
+winrate_m1_g,0.0004890641,556,0
+fase_grupos_mean_m3_g,0.00047582647,557,0
+nb_ratio_m24_vs_m36_p,0.0004414335,558,0
+fmt_singles_sum_m15_p,0.00043753342,559,0
+n_batallas_m1_g,0.00035897896,560,0
+pokes_sob_sum_m18_p,0.00035755534,561,0
+winrate_m3_p,0.00033823168,562,0
+nb_diff_m24_vs_m36_p,0.00031854655,563,0
+fase_grupos_mean_m3_p,0.00028452254,564,0
+wr_tier_RANDOM SINGLES_m18_p,0.00028229356,565,0
+liga_pjs_sum_m1_p,0.00028162517,566,0
+winrate_m12_g,0.00026476628,567,0
+fase_elim_sum_m24_p,0.00025934042,568,0
+fase_grupos_mean_m36_g,0.0002542066,569,0
+cat_cypher_sum_m24_p,0.00024773114,570,0
+fase_grupos_mean_m1_g,0.00018640194,571,0
+rep_actual_sum_m5_g,0.00018222934,572,0
+wr_tier_RANDOM DOUBLES_m12_g,0.00017647354,573,0
+nb_ratio_m5_vs_m12_g,0.00015275077,574,0
+wr_tier_OU_m1_p,0.00013751572,575,0
+fase_grupos_mean_m9_g,7.600238e-05,576,0
+cat_cypher_mean_m3_p,5.4458596e-05,577,0
+rep_actual_mean_m18_p,3.2531625e-05,578,0
+fmt_vgc_sum_m1_g,2.422708e-05,579,0
+wr_tier_OU_m15_g,2.6395778e-06,580,0
+n_batallas_m12_g,0.0,581,0
+meses_activo_m12_g,0.0,582,0
+fmt_singles_sum_m12_g,0.0,583,0
+fmt_vgc_sum_m12_g,0.0,584,0
+cat_liga_mean_m12_g,0.0,585,0
+cat_torneo_mean_m12_g,0.0,586,0
+cat_ascenso_sum_m12_g,0.0,587,0
+cat_ascenso_mean_m12_g,0.0,588,0
+cat_cypher_sum_m12_g,0.0,589,0
+cat_cypher_mean_m12_g,0.0,590,0
+fase_elim_sum_m12_g,0.0,591,0
+fase_elim_mean_m12_g,0.0,592,0
+fase_grupos_sum_m12_g,0.0,593,0
+fase_grupos_mean_m12_g,0.0,594,0
+fase_jornadas_sum_m12_g,0.0,595,0
+fase_jornadas_mean_m12_g,0.0,596,0
+pokes_sob_sum_m12_g,0.0,597,0
+pokes_venc_sum_m12_g,0.0,598,0
+participo_liga_sum_m12_g,0.0,599,0
+participo_liga_mean_m12_g,0.0,600,0
+liga_pes_sum_m12_g,0.0,601,0
+liga_pes_mean_m12_g,0.0,602,0
+liga_pjs_sum_m12_g,0.0,603,0
+liga_pls_mean_m12_g,0.0,604,0
+wr_tier_BABY RANDOM SINGLES_m12_g,0.0,605,0
+wr_tier_BSS_m12_g,0.0,606,0
+wr_tier_BSS CHAMPIONS_m12_g,0.0,607,0
+wr_tier_CHAMPIONS_m12_g,0.0,608,0
+wr_tier_CHAMPIONS OU_m12_g,0.0,609,0
+wr_tier_DOBLES LC_m12_g,0.0,610,0
+wr_tier_DUBERS_m12_g,0.0,611,0
+wr_tier_DUU_m12_g,0.0,612,0
+wr_tier_Free For all_m12_g,0.0,613,0
+wr_tier_LC_m12_g,0.0,614,0
+wr_tier_LEYENDAS Z-A OU_m12_g,0.0,615,0
+wr_tier_METRONOMO_m12_g,0.0,616,0
+wr_tier_MONOTYPE RANDOM BATTLE_m12_g,0.0,617,0
+wr_tier_MultiRandomBattle_m12_g,0.0,618,0
+wr_tier_NAT DEX DUBERS_m12_g,0.0,619,0
+wr_tier_NAT DEX MONOTYPE_m12_g,0.0,620,0
+wr_tier_NAT DEX UBERS_m12_g,0.0,621,0
+wr_tier_NAT DEX UBERS UU_m12_g,0.0,622,0
+wr_tier_ORRE COLOSSEUM_m12_g,0.0,623,0
+wr_tier_OU_m12_g,0.0,624,0
+wr_tier_RANDBATS CHAMPIONS_m12_g,0.0,625,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m12_g,0.0,626,0
+wr_tier_RANDOM SINGLES_m12_g,0.0,627,0
+wr_tier_STADIUM OU GEN 1_m12_g,0.0,628,0
+wr_tier_STADIUM OU GEN 2_m12_g,0.0,629,0
+wr_tier_TRADEMARKED_m12_g,0.0,630,0
+wr_tier_UBERS_m12_g,0.0,631,0
+wr_tier_VGC 2010_m12_g,0.0,632,0
+wr_tier_VGC 2013_m12_g,0.0,633,0
+wr_tier_VGC 2014_m12_g,0.0,634,0
+wr_rep_4_m12_g,0.0,635,0
+wr_rep_5_m12_g,0.0,636,0
+n_batallas_m15_g,0.0,637,0
+meses_activo_m15_g,0.0,638,0
+fmt_singles_sum_m15_g,0.0,639,0
+fmt_vgc_sum_m15_g,0.0,640,0
+cat_liga_sum_m15_g,0.0,641,0
+cat_liga_mean_m15_g,0.0,642,0
+cat_torneo_sum_m15_g,0.0,643,0
+cat_cypher_mean_m15_g,0.0,644,0
+fase_elim_sum_m15_g,0.0,645,0
+fase_grupos_mean_m15_g,0.0,646,0
+fase_jornadas_sum_m15_g,0.0,647,0
+fase_jornadas_mean_m15_g,0.0,648,0
+pokes_sob_sum_m15_g,0.0,649,0
+participo_liga_sum_m15_g,0.0,650,0
+participo_liga_mean_m15_g,0.0,651,0
+rep_actual_sum_m15_g,0.0,652,0
+rep_actual_mean_m15_g,0.0,653,0
+liga_pms_sum_m15_g,0.0,654,0
+liga_pss_sum_m15_g,0.0,655,0
+liga_pes_sum_m15_g,0.0,656,0
+liga_pes_mean_m15_g,0.0,657,0
+liga_pjs_sum_m15_g,0.0,658,0
+liga_pjs_mean_m15_g,0.0,659,0
+liga_pls_mean_m15_g,0.0,660,0
+wr_tier_BABY RANDOM SINGLES_m15_g,0.0,661,0
+wr_tier_BSS_m15_g,0.0,662,0
+wr_tier_BSS CHAMPIONS_m15_g,0.0,663,0
+wr_tier_CHAMPIONS_m15_g,0.0,664,0
+wr_tier_CHAMPIONS OU_m15_g,0.0,665,0
+wr_tier_DOBLES LC_m15_g,0.0,666,0
+wr_tier_DOU_m15_g,0.0,667,0
+wr_tier_DUBERS_m15_g,0.0,668,0
+wr_tier_DUU_m15_g,0.0,669,0
+wr_tier_Free For all_m15_g,0.0,670,0
+wr_tier_Free For all Randoms_m15_g,0.0,671,0
+wr_tier_LC_m15_g,0.0,672,0
+wr_tier_LEYENDAS Z-A OU_m15_g,0.0,673,0
+wr_tier_METRONOMO_m15_g,0.0,674,0
+wr_tier_MONOTYPE RANDOM BATTLE_m15_g,0.0,675,0
+wr_tier_MultiRandomBattle_m15_g,0.0,676,0
+wr_tier_NAT DEX DOBLES_m15_g,0.0,677,0
+wr_tier_NAT DEX DUBERS_m15_g,0.0,678,0
+wr_tier_NAT DEX MONOTYPE_m15_g,0.0,679,0
+wr_tier_NAT DEX UBERS_m15_g,0.0,680,0
+wr_tier_NAT DEX UBERS UU_m15_g,0.0,681,0
+wr_tier_ORRE COLOSSEUM_m15_g,0.0,682,0
+wr_tier_RANDBATS CHAMPIONS_m15_g,0.0,683,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m15_g,0.0,684,0
+wr_tier_RANDOM DOUBLES_m15_g,0.0,685,0
+wr_tier_RANDOM SINGLES_m15_g,0.0,686,0
+wr_tier_STADIUM OU GEN 1_m15_g,0.0,687,0
+wr_tier_STADIUM OU GEN 2_m15_g,0.0,688,0
+wr_tier_TRADEMARKED_m15_g,0.0,689,0
+wr_tier_UBERS_m15_g,0.0,690,0
+wr_tier_VGC 2010_m15_g,0.0,691,0
+wr_tier_VGC 2013_m15_g,0.0,692,0
+wr_tier_VGC 2014_m15_g,0.0,693,0
+wr_rep_2_m15_g,0.0,694,0
+wr_rep_4_m15_g,0.0,695,0
+wr_rep_5_m15_g,0.0,696,0
+n_batallas_m18_g,0.0,697,0
+fmt_singles_sum_m18_g,0.0,698,0
+fmt_dobles_mean_m18_g,0.0,699,0
+fmt_vgc_sum_m18_g,0.0,700,0
+cat_liga_sum_m18_g,0.0,701,0
+cat_liga_mean_m18_g,0.0,702,0
+cat_torneo_mean_m18_g,0.0,703,0
+cat_cypher_sum_m18_g,0.0,704,0
+cat_cypher_mean_m18_g,0.0,705,0
+fase_grupos_sum_m18_g,0.0,706,0
+fase_jornadas_sum_m18_g,0.0,707,0
+fase_jornadas_mean_m18_g,0.0,708,0
+fase_rondas_sum_m18_g,0.0,709,0
+participo_liga_sum_m18_g,0.0,710,0
+participo_liga_mean_m18_g,0.0,711,0
+rep_actual_sum_m18_g,0.0,712,0
+liga_pms_sum_m18_g,0.0,713,0
+liga_pss_mean_m18_g,0.0,714,0
+liga_pes_sum_m18_g,0.0,715,0
+liga_pes_mean_m18_g,0.0,716,0
+liga_pjs_sum_m18_g,0.0,717,0
+liga_pjs_mean_m18_g,0.0,718,0
+liga_pls_sum_m18_g,0.0,719,0
+liga_pls_mean_m18_g,0.0,720,0
+wr_tier_BABY RANDOM SINGLES_m18_g,0.0,721,0
+wr_tier_BSS_m18_g,0.0,722,0
+wr_tier_BSS CHAMPIONS_m18_g,0.0,723,0
+wr_tier_CHAMPIONS_m18_g,0.0,724,0
+wr_tier_CHAMPIONS OU_m18_g,0.0,725,0
+wr_tier_DOBLES LC_m18_g,0.0,726,0
+wr_tier_DUBERS_m18_g,0.0,727,0
+wr_tier_DUU_m18_g,0.0,728,0
+wr_tier_Free For all_m18_g,0.0,729,0
+wr_tier_Free For all Randoms_m18_g,0.0,730,0
+wr_tier_LC_m18_g,0.0,731,0
+wr_tier_LEYENDAS Z-A OU_m18_g,0.0,732,0
+wr_tier_METRONOMO_m18_g,0.0,733,0
+wr_tier_MONOTYPE RANDOM BATTLE_m18_g,0.0,734,0
+wr_tier_MultiRandomBattle_m18_g,0.0,735,0
+wr_tier_NAT DEX DOBLES_m18_g,0.0,736,0
+wr_tier_NAT DEX DUBERS_m18_g,0.0,737,0
+wr_tier_NAT DEX MONOTYPE_m18_g,0.0,738,0
+wr_tier_NAT DEX UBERS_m18_g,0.0,739,0
+wr_tier_NAT DEX UBERS UU_m18_g,0.0,740,0
+wr_tier_ORRE COLOSSEUM_m18_g,0.0,741,0
+wr_tier_OU_m18_g,0.0,742,0
+wr_tier_RANDBATS CHAMPIONS_m18_g,0.0,743,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m18_g,0.0,744,0
+wr_tier_RANDOM DOUBLES_m18_g,0.0,745,0
+wr_tier_STADIUM OU GEN 1_m18_g,0.0,746,0
+wr_tier_STADIUM OU GEN 2_m18_g,0.0,747,0
+wr_tier_TRADEMARKED_m18_g,0.0,748,0
+wr_tier_UBERS_m18_g,0.0,749,0
+wr_tier_VGC_m18_g,0.0,750,0
+wr_tier_VGC 2010_m18_g,0.0,751,0
+wr_tier_VGC 2013_m18_g,0.0,752,0
+wr_tier_VGC 2014_m18_g,0.0,753,0
+wr_rep_5_m18_g,0.0,754,0
+n_batallas_m24_g,0.0,755,0
+winrate_m24_g,0.0,756,0
+meses_activo_m24_g,0.0,757,0
+fmt_singles_sum_m24_g,0.0,758,0
+fmt_dobles_mean_m24_g,0.0,759,0
+fmt_vgc_sum_m24_g,0.0,760,0
+cat_liga_sum_m24_g,0.0,761,0
+cat_torneo_mean_m24_g,0.0,762,0
+cat_ascenso_sum_m24_g,0.0,763,0
+cat_ascenso_mean_m24_g,0.0,764,0
+cat_cypher_sum_m24_g,0.0,765,0
+cat_cypher_mean_m24_g,0.0,766,0
+fase_elim_sum_m24_g,0.0,767,0
+fase_grupos_sum_m24_g,0.0,768,0
+fase_jornadas_sum_m24_g,0.0,769,0
+fase_jornadas_mean_m24_g,0.0,770,0
+fase_rondas_sum_m24_g,0.0,771,0
+pokes_venc_sum_m24_g,0.0,772,0
+participo_liga_sum_m24_g,0.0,773,0
+participo_liga_mean_m24_g,0.0,774,0
+rep_actual_sum_m24_g,0.0,775,0
+liga_pms_sum_m24_g,0.0,776,0
+liga_pms_mean_m24_g,0.0,777,0
+liga_pss_sum_m24_g,0.0,778,0
+liga_pes_mean_m24_g,0.0,779,0
+liga_pjs_sum_m24_g,0.0,780,0
+liga_pls_sum_m24_g,0.0,781,0
+wr_tier_BABY RANDOM SINGLES_m24_g,0.0,782,0
+wr_tier_BSS_m24_g,0.0,783,0
+wr_tier_BSS CHAMPIONS_m24_g,0.0,784,0
+wr_tier_CHAMPIONS_m24_g,0.0,785,0
+wr_tier_CHAMPIONS OU_m24_g,0.0,786,0
+wr_tier_DOBLES LC_m24_g,0.0,787,0
+wr_tier_DUBERS_m24_g,0.0,788,0
+wr_tier_DUU_m24_g,0.0,789,0
+wr_tier_Free For all_m24_g,0.0,790,0
+wr_tier_Free For all Randoms_m24_g,0.0,791,0
+wr_tier_LC_m24_g,0.0,792,0
+wr_tier_LEYENDAS Z-A OU_m24_g,0.0,793,0
+wr_tier_METRONOMO_m24_g,0.0,794,0
+wr_tier_MONOTYPE RANDOM BATTLE_m24_g,0.0,795,0
+wr_tier_MultiRandomBattle_m24_g,0.0,796,0
+wr_tier_NAT DEX DUBERS_m24_g,0.0,797,0
+wr_tier_NAT DEX MONOTYPE_m24_g,0.0,798,0
+wr_tier_NAT DEX UBERS_m24_g,0.0,799,0
+wr_tier_ORRE COLOSSEUM_m24_g,0.0,800,0
+wr_tier_RANDBATS CHAMPIONS_m24_g,0.0,801,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m24_g,0.0,802,0
+wr_tier_RANDOM DOUBLES_m24_g,0.0,803,0
+wr_tier_STADIUM OU GEN 1_m24_g,0.0,804,0
+wr_tier_STADIUM OU GEN 2_m24_g,0.0,805,0
+wr_tier_TRADEMARKED_m24_g,0.0,806,0
+wr_tier_UBERS_m24_g,0.0,807,0
+wr_tier_VGC_m24_g,0.0,808,0
+wr_tier_VGC 2010_m24_g,0.0,809,0
+wr_tier_VGC 2013_m24_g,0.0,810,0
+wr_tier_VGC 2014_m24_g,0.0,811,0
+wr_rep_4_m24_g,0.0,812,0
+wr_rep_5_m24_g,0.0,813,0
+n_batallas_m36_g,0.0,814,0
+meses_activo_m36_g,0.0,815,0
+fmt_singles_sum_m36_g,0.0,816,0
+fmt_singles_mean_m36_g,0.0,817,0
+fmt_dobles_mean_m36_g,0.0,818,0
+fmt_vgc_sum_m36_g,0.0,819,0
+cat_liga_sum_m36_g,0.0,820,0
+cat_torneo_mean_m36_g,0.0,821,0
+cat_cypher_sum_m36_g,0.0,822,0
+cat_cypher_mean_m36_g,0.0,823,0
+fase_grupos_sum_m36_g,0.0,824,0
+fase_jornadas_sum_m36_g,0.0,825,0
+fase_jornadas_mean_m36_g,0.0,826,0
+fase_rondas_sum_m36_g,0.0,827,0
+pokes_venc_sum_m36_g,0.0,828,0
+participo_liga_sum_m36_g,0.0,829,0
+participo_liga_mean_m36_g,0.0,830,0
+liga_pss_mean_m36_g,0.0,831,0
+liga_pes_sum_m36_g,0.0,832,0
+liga_pes_mean_m36_g,0.0,833,0
+liga_pls_sum_m36_g,0.0,834,0
+liga_pls_mean_m36_g,0.0,835,0
+wr_tier_BABY RANDOM SINGLES_m36_g,0.0,836,0
+wr_tier_BSS_m36_g,0.0,837,0
+wr_tier_BSS CHAMPIONS_m36_g,0.0,838,0
+wr_tier_CHAMPIONS_m36_g,0.0,839,0
+wr_tier_CHAMPIONS OU_m36_g,0.0,840,0
+wr_tier_DOBLES LC_m36_g,0.0,841,0
+wr_tier_DUBERS_m36_g,0.0,842,0
+wr_tier_DUU_m36_g,0.0,843,0
+wr_tier_Free For all_m36_g,0.0,844,0
+wr_tier_Free For all Randoms_m36_g,0.0,845,0
+wr_tier_LC_m36_g,0.0,846,0
+wr_tier_LEYENDAS Z-A OU_m36_g,0.0,847,0
+wr_tier_METRONOMO_m36_g,0.0,848,0
+wr_tier_MONOTYPE RANDOM BATTLE_m36_g,0.0,849,0
+wr_tier_MultiRandomBattle_m36_g,0.0,850,0
+wr_tier_NAT DEX DOBLES_m36_g,0.0,851,0
+wr_tier_NAT DEX DUBERS_m36_g,0.0,852,0
+wr_tier_NAT DEX MONOTYPE_m36_g,0.0,853,0
+wr_tier_NAT DEX UBERS_m36_g,0.0,854,0
+wr_tier_NAT DEX UBERS UU_m36_g,0.0,855,0
+wr_tier_ORRE COLOSSEUM_m36_g,0.0,856,0
+wr_tier_OU_m36_g,0.0,857,0
+wr_tier_RANDBATS CHAMPIONS_m36_g,0.0,858,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m36_g,0.0,859,0
+wr_tier_RANDOM DOUBLES_m36_g,0.0,860,0
+wr_tier_RANDOM SINGLES_m36_g,0.0,861,0
+wr_tier_STADIUM OU GEN 1_m36_g,0.0,862,0
+wr_tier_STADIUM OU GEN 2_m36_g,0.0,863,0
+wr_tier_TRADEMARKED_m36_g,0.0,864,0
+wr_tier_VGC_m36_g,0.0,865,0
+wr_tier_VGC 2010_m36_g,0.0,866,0
+wr_tier_VGC 2013_m36_g,0.0,867,0
+wr_tier_VGC 2014_m36_g,0.0,868,0
+wr_rep_4_m36_g,0.0,869,0
+wr_rep_5_m36_g,0.0,870,0
+ma_ratio_m1_vs_m3_g,0.0,871,0
+ma_ratio_m3_vs_m5_g,0.0,872,0
+nb_diff_m3_vs_m12_g,0.0,873,0
+ma_ratio_m3_vs_m12_g,0.0,874,0
+nb_diff_m5_vs_m12_g,0.0,875,0
+nb_diff_m1_vs_m12_g,0.0,876,0
+nb_diff_m12_vs_m24_g,0.0,877,0
+nb_diff_m24_vs_m36_g,0.0,878,0
+wr_diff_m1_vs_m36_g,0.0,879,0
+nb_diff_m1_vs_m36_g,0.0,880,0
+log_n_batallas_m1_g,0.0,881,0
+log_n_batallas_m3_g,0.0,882,0
+log_n_batallas_m5_g,0.0,883,0
+log_n_batallas_m7_g,0.0,884,0
+log_n_batallas_m9_g,0.0,885,0
+log_n_batallas_m12_g,0.0,886,0
+log_n_batallas_m15_g,0.0,887,0
+log_n_batallas_m18_g,0.0,888,0
+log_n_batallas_m24_g,0.0,889,0
+log_n_batallas_m36_g,0.0,890,0
+log_meses_activo_m1_g,0.0,891,0
+log_meses_activo_m3_g,0.0,892,0
+log_meses_activo_m5_g,0.0,893,0
+log_meses_activo_m7_g,0.0,894,0
+log_meses_activo_m9_g,0.0,895,0
+log_meses_activo_m12_g,0.0,896,0
+log_meses_activo_m15_g,0.0,897,0
+log_meses_activo_m18_g,0.0,898,0
+log_meses_activo_m24_g,0.0,899,0
+log_meses_activo_m36_g,0.0,900,0
+log1p_wr_winrate_m1_g,0.0,901,0
+log1p_wr_winrate_m3_g,0.0,902,0
+log1p_wr_winrate_m5_g,0.0,903,0
+log1p_wr_winrate_m7_g,0.0,904,0
+log1p_wr_winrate_m9_g,0.0,905,0
+log1p_wr_winrate_m12_g,0.0,906,0
+log1p_wr_winrate_m15_g,0.0,907,0
+log1p_wr_winrate_m18_g,0.0,908,0
+log1p_wr_winrate_m24_g,0.0,909,0
+log1p_wr_winrate_m36_g,0.0,910,0
+n_batallas_m1_p,0.0,911,0
+winrate_m1_p,0.0,912,0
+meses_activo_m1_p,0.0,913,0
+fmt_singles_sum_m1_p,0.0,914,0
+fase_grupos_sum_m1_g,0.0,915,0
+fase_jornadas_sum_m1_g,0.0,916,0
+fmt_dobles_mean_m1_p,0.0,917,0
+fmt_vgc_sum_m1_p,0.0,918,0
+fase_jornadas_mean_m1_g,0.0,919,0
+cat_liga_sum_m1_p,0.0,920,0
+fase_rondas_sum_m1_g,0.0,921,0
+cat_torneo_sum_m1_p,0.0,922,0
+pokes_venc_mean_m1_g,0.0,923,0
+cat_ascenso_sum_m1_p,0.0,924,0
+cat_ascenso_mean_m1_p,0.0,925,0
+cat_cypher_sum_m1_p,0.0,926,0
+cat_cypher_mean_m1_p,0.0,927,0
+participo_liga_sum_m1_g,0.0,928,0
+fase_elim_mean_m1_p,0.0,929,0
+fase_grupos_sum_m1_p,0.0,930,0
+participo_liga_mean_m1_g,0.0,931,0
+fase_jornadas_sum_m1_p,0.0,932,0
+fase_jornadas_mean_m1_p,0.0,933,0
+fase_rondas_sum_m1_p,0.0,934,0
+fase_rondas_mean_m1_p,0.0,935,0
+wr_tier_NAT DEX MONOTYPE_m1_g,0.0,936,0
+log_n_batallas_m24_p,0.0,937,0
+log_n_batallas_m1_p,0.0,938,0
+meses_activo_m1_g,0.0,939,0
+participo_liga_sum_m1_p,0.0,940,0
+participo_liga_mean_m1_p,0.0,941,0
+fmt_dobles_sum_m1_g,0.0,942,0
+cat_liga_sum_m1_g,0.0,943,0
+liga_pms_sum_m1_p,0.0,944,0
+liga_pms_mean_m1_p,0.0,945,0
+liga_pss_sum_m1_p,0.0,946,0
+liga_pss_mean_m1_p,0.0,947,0
+liga_pes_sum_m1_p,0.0,948,0
+log_n_batallas_m3_p,0.0,949,0
+log_n_batallas_m5_p,0.0,950,0
+liga_pjs_mean_m1_p,0.0,951,0
+liga_pls_sum_m1_p,0.0,952,0
+liga_pls_mean_m1_p,0.0,953,0
+wr_tier_BABY RANDOM SINGLES_m1_p,0.0,954,0
+log_n_batallas_m7_p,0.0,955,0
+wr_tier_BSS CHAMPIONS_m1_p,0.0,956,0
+wr_tier_CHAMPIONS_m1_p,0.0,957,0
+wr_tier_CHAMPIONS OU_m1_p,0.0,958,0
+wr_tier_DOBLES LC_m1_p,0.0,959,0
+wr_tier_DOU_m1_p,0.0,960,0
+log_n_batallas_m9_p,0.0,961,0
+wr_tier_DUU_m1_p,0.0,962,0
+wr_tier_Free For all_m1_p,0.0,963,0
+wr_tier_Free For all Randoms_m1_p,0.0,964,0
+wr_tier_LC_m1_p,0.0,965,0
+wr_tier_LEYENDAS Z-A OU_m1_p,0.0,966,0
+wr_tier_METRONOMO_m1_p,0.0,967,0
+wr_tier_MONOTYPE RANDOM BATTLE_m1_p,0.0,968,0
+wr_tier_MultiRandomBattle_m1_p,0.0,969,0
+log_n_batallas_m12_p,0.0,970,0
+log_n_batallas_m15_p,0.0,971,0
+wr_tier_NAT DEX DUBERS_m1_p,0.0,972,0
+wr_tier_NAT DEX MONOTYPE_m1_p,0.0,973,0
+wr_tier_NAT DEX UBERS_m1_p,0.0,974,0
+wr_tier_NAT DEX UBERS UU_m1_p,0.0,975,0
+wr_tier_ORRE COLOSSEUM_m1_p,0.0,976,0
+log_n_batallas_m18_p,0.0,977,0
+wr_tier_RANDBATS CHAMPIONS_m1_p,0.0,978,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m1_p,0.0,979,0
+cat_cypher_sum_m1_g,0.0,980,0
+wr_tier_RANDOM SINGLES_m1_p,0.0,981,0
+wr_tier_STADIUM OU GEN 1_m1_p,0.0,982,0
+wr_tier_STADIUM OU GEN 2_m1_p,0.0,983,0
+wr_tier_TRADEMARKED_m1_p,0.0,984,0
+wr_tier_UBERS_m1_p,0.0,985,0
+log_n_batallas_m36_p,0.0,986,0
+wr_tier_VGC 2010_m1_p,0.0,987,0
+wr_tier_VGC 2013_m1_p,0.0,988,0
+wr_tier_VGC 2014_m1_p,0.0,989,0
+wr_rep_1_m1_p,0.0,990,0
+log_meses_activo_m1_p,0.0,991,0
+wr_rep_3_m1_p,0.0,992,0
+wr_rep_4_m1_p,0.0,993,0
+wr_rep_5_m1_p,0.0,994,0
+log_meses_activo_m3_p,0.0,995,0
+log_meses_activo_m5_p,0.0,996,0
+meses_activo_m3_p,0.0,997,0
+fmt_singles_sum_m3_p,0.0,998,0
+log_meses_activo_m7_p,0.0,999,0
+log_meses_activo_m9_p,0.0,1000,0
+log_meses_activo_m12_p,0.0,1001,0
+fmt_vgc_sum_m3_p,0.0,1002,0
+log_meses_activo_m15_p,0.0,1003,0
+log_meses_activo_m18_p,0.0,1004,0
+log_meses_activo_m24_p,0.0,1005,0
+log_meses_activo_m36_p,0.0,1006,0
+cat_torneo_mean_m3_p,0.0,1007,0
+cat_ascenso_sum_m3_p,0.0,1008,0
+cat_ascenso_mean_m3_p,0.0,1009,0
+log1p_wr_winrate_m1_p,0.0,1010,0
+log1p_wr_winrate_m3_p,0.0,1011,0
+log1p_wr_winrate_m5_p,0.0,1012,0
+fase_elim_mean_m3_p,0.0,1013,0
+fase_grupos_sum_m3_p,0.0,1014,0
+log1p_wr_winrate_m7_p,0.0,1015,0
+fase_jornadas_sum_m3_p,0.0,1016,0
+fase_jornadas_mean_m3_p,0.0,1017,0
+log1p_wr_winrate_m9_p,0.0,1018,0
+log1p_wr_winrate_m12_p,0.0,1019,0
+log1p_wr_winrate_m15_p,0.0,1020,0
+log1p_wr_winrate_m18_p,0.0,1021,0
+pokes_venc_sum_m3_p,0.0,1022,0
+log1p_wr_winrate_m24_p,0.0,1023,0
+participo_liga_sum_m3_p,0.0,1024,0
+participo_liga_mean_m3_p,0.0,1025,0
+log1p_wr_winrate_m36_p,0.0,1026,0
+rep_actual_mean_m3_p,0.0,1027,0
+ctx_es_decisivo,0.0,1028,0
+liga_pms_mean_m3_p,0.0,1029,0
+liga_pss_sum_m3_p,0.0,1030,0
+liga_pss_mean_m3_p,0.0,1031,0
+liga_pes_sum_m3_p,0.0,1032,0
+cat_torneo_mean_m1_g,0.0,1033,0
+liga_pjs_sum_m3_p,0.0,1034,0
+wr_tier_NAT DEX UBERS_m1_g,0.0,1035,0
+liga_pls_sum_m3_p,0.0,1036,0
+wr_tier_NAT DEX UBERS UU_m1_g,0.0,1037,0
+wr_tier_BABY RANDOM SINGLES_m3_p,0.0,1038,0
 wr_tier_BSS_m3_p,0.0,1039,0
 wr_tier_BSS CHAMPIONS_m3_p,0.0,1040,0
 wr_tier_CHAMPIONS_m3_p,0.0,1041,0
-meses_activo_m5_p,0.0,1042,0
-fmt_singles_mean_m5_p,0.0,1043,0
-fmt_dobles_sum_m5_p,0.0,1044,0
-fmt_vgc_sum_m5_p,0.0,1045,0
-cat_liga_sum_m5_p,0.0,1046,0
-cat_liga_mean_m5_p,0.0,1047,0
-cat_ascenso_sum_m5_p,0.0,1048,0
-wr_tier_NAT DEX UBERS_m9_g,0.0,1049,0
-wr_tier_NAT DEX UBERS UU_m9_g,0.0,1050,0
-wr_tier_ORRE COLOSSEUM_m9_g,0.0,1051,0
-wr_tier_VGC 2010_m3_p,0.0,1052,0
-wr_rep_2_m3_p,0.0,1053,0
-wr_rep_4_m3_p,0.0,1054,0
-wr_rep_5_m3_p,0.0,1055,0
-n_batallas_m5_p,0.0,1056,0
-wr_tier_LC_m9_g,0.0,1057,0
-wr_tier_LEYENDAS Z-A OU_m9_g,0.0,1058,0
-wr_tier_METRONOMO_m9_g,0.0,1059,0
-wr_tier_MONOTYPE RANDOM BATTLE_m9_g,0.0,1060,0
-wr_tier_MultiRandomBattle_m9_g,0.0,1061,0
-wr_tier_NAT DEX DOBLES_m9_g,0.0,1062,0
-wr_tier_NAT DEX DUBERS_m9_g,0.0,1063,0
-wr_tier_NAT DEX MONOTYPE_m9_g,0.0,1064,0
-liga_pls_mean_m9_g,0.0,1065,0
-wr_tier_BABY RANDOM SINGLES_m9_g,0.0,1066,0
-wr_tier_BSS_m9_g,0.0,1067,0
-wr_tier_BSS CHAMPIONS_m9_g,0.0,1068,0
-wr_tier_CHAMPIONS_m9_g,0.0,1069,0
-wr_tier_DOBLES LC_m9_g,0.0,1070,0
-wr_tier_DUBERS_m9_g,0.0,1071,0
-wr_tier_Free For all_m9_g,0.0,1072,0
-liga_pms_mean_m5_p,0.0,1073,0
-liga_pes_sum_m5_p,0.0,1074,0
-liga_pjs_sum_m5_p,0.0,1075,0
-liga_pjs_mean_m5_p,0.0,1076,0
-liga_pls_sum_m5_p,0.0,1077,0
-liga_pls_mean_m5_p,0.0,1078,0
-wr_tier_BABY RANDOM SINGLES_m5_p,0.0,1079,0
-wr_tier_BSS_m5_p,0.0,1080,0
-participo_liga_sum_m9_g,0.0,1081,0
-participo_liga_mean_m9_g,0.0,1082,0
-rep_actual_sum_m9_g,0.0,1083,0
-pokes_venc_sum_m5_p,0.0,1084,0
-participo_liga_sum_m5_p,0.0,1085,0
-participo_liga_mean_m5_p,0.0,1086,0
-rep_actual_sum_m5_p,0.0,1087,0
-liga_pms_sum_m5_p,0.0,1088,0
-fmt_vgc_sum_m9_g,0.0,1089,0
-cat_liga_mean_m9_g,0.0,1090,0
-cat_cypher_mean_m9_g,0.0,1091,0
-fase_grupos_sum_m9_g,0.0,1092,0
-fase_grupos_mean_m9_g,0.0,1093,0
-fase_jornadas_sum_m9_g,0.0,1094,0
-fase_jornadas_mean_m9_g,0.0,1095,0
-fase_rondas_mean_m9_g,0.0,1096,0
-cat_ascenso_mean_m5_p,0.0,1097,0
-cat_cypher_sum_m5_p,0.0,1098,0
-cat_cypher_mean_m5_p,0.0,1099,0
-fase_grupos_mean_m5_p,0.0,1100,0
-fase_jornadas_sum_m5_p,0.0,1101,0
-fase_jornadas_mean_m5_p,0.0,1102,0
-fase_rondas_sum_m5_p,0.0,1103,0
-n_batallas_m9_g,0.0,1104,0
-wr_tier_VGC 2010_m5_p,0.0,1105,0
-wr_rep_4_m5_p,0.0,1106,0
-meses_activo_m7_p,0.0,1107,0
-fmt_vgc_sum_m7_p,0.0,1108,0
-wr_tier_DUBERS_m7_g,0.0,1109,0
-wr_tier_Free For all_m7_g,0.0,1110,0
-wr_tier_Free For all Randoms_m7_g,0.0,1111,0
-wr_tier_LC_m7_g,0.0,1112,0
-wr_tier_ORRE COLOSSEUM_m5_p,0.0,1113,0
-wr_tier_RANDBATS CHAMPIONS_m5_p,0.0,1114,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m5_p,0.0,1115,0
-wr_tier_RANDOM DOUBLES_m5_p,0.0,1116,0
-wr_tier_STADIUM OU GEN 2_m5_p,0.0,1117,0
-wr_tier_TRADEMARKED_m5_p,0.0,1118,0
-wr_tier_UBERS_m5_p,0.0,1119,0
-wr_tier_VGC_m5_p,0.0,1120,0
-wr_tier_MONOTYPE RANDOM BATTLE_m5_p,0.0,1121,0
-wr_tier_MultiRandomBattle_m5_p,0.0,1122,0
-wr_tier_NAT DEX_m5_p,0.0,1123,0
-wr_tier_NAT DEX DOBLES_m5_p,0.0,1124,0
-wr_tier_NAT DEX DUBERS_m5_p,0.0,1125,0
-wr_tier_NAT DEX MONOTYPE_m5_p,0.0,1126,0
-wr_tier_NAT DEX UBERS_m5_p,0.0,1127,0
-wr_tier_NAT DEX UBERS UU_m5_p,0.0,1128,0
-wr_tier_BSS CHAMPIONS_m5_p,0.0,1129,0
-wr_tier_CHAMPIONS_m5_p,0.0,1130,0
-wr_tier_DUBERS_m5_p,0.0,1131,0
-wr_tier_Free For all_m5_p,0.0,1132,0
-wr_tier_Free For all Randoms_m5_p,0.0,1133,0
-wr_tier_LC_m5_p,0.0,1134,0
-wr_tier_LEYENDAS Z-A OU_m5_p,0.0,1135,0
-wr_tier_METRONOMO_m5_p,0.0,1136,0
-fase_grupos_sum_m7_p,0.0,1137,0
-fase_jornadas_sum_m7_p,0.0,1138,0
-fase_jornadas_mean_m7_p,0.0,1139,0
-fase_rondas_sum_m7_p,0.0,1140,0
-pokes_sob_sum_m7_p,0.0,1141,0
-pokes_venc_sum_m7_p,0.0,1142,0
-participo_liga_sum_m7_p,0.0,1143,0
-wr_tier_TRADEMARKED_m7_g,0.0,1144,0
-wr_tier_UBERS_m7_g,0.0,1145,0
-wr_tier_VGC 2010_m7_g,0.0,1146,0
-wr_rep_1_m7_g,0.0,1147,0
-wr_rep_5_m7_g,0.0,1148,0
-cat_ascenso_sum_m7_p,0.0,1149,0
-cat_cypher_sum_m7_p,0.0,1150,0
-fase_elim_sum_m7_p,0.0,1151,0
-wr_tier_NAT DEX UBERS UU_m7_g,0.0,1152,0
-wr_tier_ORRE COLOSSEUM_m7_g,0.0,1153,0
-wr_tier_RANDBATS CHAMPIONS_m7_g,0.0,1154,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m7_g,0.0,1155,0
-wr_tier_RANDOM DOUBLES_m7_g,0.0,1156,0
-meses_activo_m1_g,0.0,1157,0
-wr_tier_STADIUM OU GEN 1_m7_g,0.0,1158,0
-wr_tier_STADIUM OU GEN 2_m7_g,0.0,1159,0
-wr_tier_LEYENDAS Z-A OU_m7_g,0.0,1160,0
-wr_tier_METRONOMO_m7_g,0.0,1161,0
-wr_tier_MONOTYPE RANDOM BATTLE_m7_g,0.0,1162,0
-wr_tier_MultiRandomBattle_m7_g,0.0,1163,0
-wr_tier_NAT DEX DOBLES_m7_g,0.0,1164,0
-wr_tier_NAT DEX DUBERS_m7_g,0.0,1165,0
-wr_tier_NAT DEX MONOTYPE_m7_g,0.0,1166,0
-wr_tier_NAT DEX UBERS_m7_g,0.0,1167,0
-wr_tier_RANDBATS CHAMPIONS_m7_p,0.0,1168,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m7_p,0.0,1169,0
-wr_tier_STADIUM OU GEN 1_m7_p,0.0,1170,0
-wr_tier_STADIUM OU GEN 2_m7_p,0.0,1171,0
-wr_tier_TRADEMARKED_m7_p,0.0,1172,0
-wr_tier_UBERS_m7_p,0.0,1173,0
-fase_grupos_sum_m7_g,0.0,1174,0
-fmt_dobles_sum_m1_g,0.0,1175,0
-wr_tier_MONOTYPE RANDOM BATTLE_m7_p,0.0,1176,0
-wr_tier_MultiRandomBattle_m7_p,0.0,1177,0
-wr_tier_NAT DEX DUBERS_m7_p,0.0,1178,0
-wr_tier_NAT DEX MONOTYPE_m7_p,0.0,1179,0
-wr_tier_NAT DEX UBERS_m7_p,0.0,1180,0
-wr_tier_NAT DEX UBERS UU_m7_p,0.0,1181,0
-wr_tier_ORRE COLOSSEUM_m7_p,0.0,1182,0
-wr_tier_OU_m7_p,0.0,1183,0
-wr_tier_BSS CHAMPIONS_m7_p,0.0,1184,0
-wr_tier_CHAMPIONS_m7_p,0.0,1185,0
-wr_tier_DOBLES LC_m7_p,0.0,1186,0
-wr_tier_DOU_m7_p,0.0,1187,0
-wr_tier_Free For all_m7_p,0.0,1188,0
-wr_tier_Free For all Randoms_m7_p,0.0,1189,0
-wr_tier_LEYENDAS Z-A OU_m7_p,0.0,1190,0
-wr_tier_METRONOMO_m7_p,0.0,1191,0
-participo_liga_mean_m7_p,0.0,1192,0
-rep_actual_sum_m7_p,0.0,1193,0
-liga_pms_mean_m7_p,0.0,1194,0
-liga_pes_sum_m7_p,0.0,1195,0
-liga_pjs_sum_m7_p,0.0,1196,0
-liga_pls_sum_m7_p,0.0,1197,0
-wr_tier_BABY RANDOM SINGLES_m7_p,0.0,1198,0
-wr_tier_BSS_m7_p,0.0,1199,0
-cat_liga_mean_m9_p,0.0,1200,0
-cat_ascenso_sum_m9_p,0.0,1201,0
-cat_ascenso_mean_m9_p,0.0,1202,0
-cat_cypher_sum_m9_p,0.0,1203,0
-cat_cypher_mean_m9_p,0.0,1204,0
-fase_elim_sum_m9_p,0.0,1205,0
-fase_grupos_sum_m9_p,0.0,1206,0
-fase_jornadas_sum_m9_p,0.0,1207,0
-wr_tier_BSS CHAMPIONS_m7_g,0.0,1208,0
-wr_tier_CHAMPIONS_m7_g,0.0,1209,0
-wr_tier_VGC 2010_m7_p,0.0,1210,0
-wr_rep_4_m7_p,0.0,1211,0
-wr_rep_5_m7_p,0.0,1212,0
-winrate_m9_p,0.0,1213,0
-meses_activo_m9_p,0.0,1214,0
-fmt_singles_sum_m9_p,0.0,1215,0
-liga_pss_sum_m7_g,0.0,1216,0
-liga_pss_mean_m7_g,0.0,1217,0
-liga_pjs_sum_m7_g,0.0,1218,0
-liga_pjs_mean_m7_g,0.0,1219,0
-liga_pls_sum_m7_g,0.0,1220,0
-liga_pls_mean_m7_g,0.0,1221,0
-wr_tier_BABY RANDOM SINGLES_m7_g,0.0,1222,0
-wr_tier_BSS_m7_g,0.0,1223,0
-fase_jornadas_sum_m7_g,0.0,1224,0
-fase_jornadas_mean_m7_g,0.0,1225,0
-pokes_sob_sum_m7_g,0.0,1226,0
-pokes_venc_sum_m7_g,0.0,1227,0
-participo_liga_sum_m7_g,0.0,1228,0
-participo_liga_mean_m7_g,0.0,1229,0
-rep_actual_mean_m7_g,0.0,1230,0
-liga_pms_mean_m7_g,0.0,1231,0
-participo_liga_sum_m9_p,0.0,1232,0
-participo_liga_mean_m9_p,0.0,1233,0
-fmt_vgc_sum_m1_g,0.0,1234,0
-liga_pms_sum_m9_p,0.0,1235,0
-liga_pms_mean_m9_p,0.0,1236,0
-liga_pss_sum_m9_p,0.0,1237,0
-liga_pes_mean_m9_p,0.0,1238,0
-liga_pjs_sum_m9_p,0.0,1239,0
-meses_activo_m7_g,0.0,1240,0
-fmt_singles_sum_m7_g,0.0,1241,0
-fmt_dobles_sum_m7_g,0.0,1242,0
-cat_liga_sum_m1_g,0.0,1243,0
-cat_liga_sum_m7_g,0.0,1244,0
-cat_torneo_sum_m7_g,0.0,1245,0
-cat_ascenso_mean_m7_g,0.0,1246,0
-cat_cypher_sum_m7_g,0.0,1247,0
-wr_tier_STADIUM OU GEN 2_m5_g,0.0,1248,0
-wr_tier_TRADEMARKED_m5_g,0.0,1249,0
-wr_tier_UBERS_m5_g,0.0,1250,0
-wr_tier_VGC 2010_m5_g,0.0,1251,0
-cat_torneo_sum_m1_g,0.0,1252,0
-cat_torneo_mean_m1_g,0.0,1253,0
-wr_rep_4_m5_g,0.0,1254,0
-wr_rep_5_m5_g,0.0,1255,0
-fase_jornadas_mean_m9_p,0.0,1256,0
-fase_rondas_mean_m9_p,0.0,1257,0
-pokes_sob_sum_m9_p,0.0,1258,0
-wr_tier_OU_m5_g,0.0,1259,0
-wr_tier_RANDBATS CHAMPIONS_m5_g,0.0,1260,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m5_g,0.0,1261,0
-cat_ascenso_sum_m1_g,0.0,1262,0
-wr_tier_STADIUM OU GEN 1_m5_g,0.0,1263,0
-wr_tier_RANDOM SINGLES_m9_p,0.0,1264,0
-wr_tier_STADIUM OU GEN 1_m9_p,0.0,1265,0
-wr_tier_STADIUM OU GEN 2_m9_p,0.0,1266,0
-wr_tier_TRADEMARKED_m9_p,0.0,1267,0
-wr_tier_UBERS_m9_p,0.0,1268,0
-wr_tier_VGC_m9_p,0.0,1269,0
-wr_tier_VGC 2010_m9_p,0.0,1270,0
-wr_rep_2_m9_p,0.0,1271,0
-wr_tier_NAT DEX DUBERS_m9_p,0.0,1272,0
-wr_tier_NAT DEX MONOTYPE_m9_p,0.0,1273,0
-wr_tier_NAT DEX UBERS_m9_p,0.0,1274,0
-wr_tier_NAT DEX UBERS UU_m9_p,0.0,1275,0
-wr_tier_ORRE COLOSSEUM_m9_p,0.0,1276,0
-wr_tier_RANDBATS CHAMPIONS_m9_p,0.0,1277,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m9_p,0.0,1278,0
-wr_tier_RANDOM DOUBLES_m9_p,0.0,1279,0
-wr_tier_Free For all_m9_p,0.0,1280,0
-wr_tier_Free For all Randoms_m9_p,0.0,1281,0
-wr_tier_LC_m9_p,0.0,1282,0
-wr_tier_LEYENDAS Z-A OU_m9_p,0.0,1283,0
-wr_tier_METRONOMO_m9_p,0.0,1284,0
-wr_tier_MONOTYPE RANDOM BATTLE_m9_p,0.0,1285,0
-wr_tier_MultiRandomBattle_m9_p,0.0,1286,0
-wr_tier_NAT DEX DOBLES_m9_p,0.0,1287,0
-liga_pls_sum_m9_p,0.0,1288,0
+wr_tier_CHAMPIONS OU_m3_p,0.0,1042,0
+wr_tier_DOBLES LC_m3_p,0.0,1043,0
+wr_tier_ORRE COLOSSEUM_m1_g,0.0,1044,0
+wr_tier_OU_m1_g,0.0,1045,0
+wr_tier_DUU_m3_p,0.0,1046,0
+wr_tier_Free For all_m3_p,0.0,1047,0
+wr_tier_Free For all Randoms_m3_p,0.0,1048,0
+wr_tier_LC_m3_p,0.0,1049,0
+wr_tier_LEYENDAS Z-A OU_m3_p,0.0,1050,0
+wr_tier_METRONOMO_m3_p,0.0,1051,0
+wr_tier_MONOTYPE RANDOM BATTLE_m3_p,0.0,1052,0
+wr_tier_MultiRandomBattle_m3_p,0.0,1053,0
+wr_tier_RANDBATS CHAMPIONS_m1_g,0.0,1054,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m1_g,0.0,1055,0
+wr_tier_NAT DEX DUBERS_m3_p,0.0,1056,0
+wr_tier_NAT DEX MONOTYPE_m3_p,0.0,1057,0
+wr_tier_NAT DEX UBERS_m3_p,0.0,1058,0
+wr_tier_NAT DEX UBERS UU_m3_p,0.0,1059,0
+wr_tier_ORRE COLOSSEUM_m3_p,0.0,1060,0
+wr_tier_OU_m3_p,0.0,1061,0
+wr_tier_RANDBATS CHAMPIONS_m3_p,0.0,1062,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m3_p,0.0,1063,0
+wr_tier_RANDOM DOUBLES_m3_p,0.0,1064,0
+wr_tier_RANDOM SINGLES_m3_p,0.0,1065,0
+wr_tier_STADIUM OU GEN 1_m3_p,0.0,1066,0
+wr_tier_STADIUM OU GEN 2_m3_p,0.0,1067,0
+wr_tier_TRADEMARKED_m3_p,0.0,1068,0
+wr_tier_RANDOM DOUBLES_m1_g,0.0,1069,0
+wr_tier_RANDOM SINGLES_m1_g,0.0,1070,0
+wr_tier_VGC 2010_m3_p,0.0,1071,0
+wr_tier_VGC 2013_m3_p,0.0,1072,0
+wr_tier_VGC 2014_m3_p,0.0,1073,0
+wr_tier_STADIUM OU GEN 1_m1_g,0.0,1074,0
+wr_rep_2_m3_p,0.0,1075,0
+wr_tier_STADIUM OU GEN 2_m1_g,0.0,1076,0
+wr_tier_TRADEMARKED_m1_g,0.0,1077,0
+wr_rep_5_m3_p,0.0,1078,0
+wr_tier_UBERS_m1_g,0.0,1079,0
+wr_tier_VGC 2010_m1_g,0.0,1080,0
+meses_activo_m5_p,0.0,1081,0
+wr_tier_VGC 2013_m1_g,0.0,1082,0
+wr_tier_VGC 2014_m1_g,0.0,1083,0
+wr_rep_2_m1_g,0.0,1084,0
+wr_rep_3_m1_g,0.0,1085,0
+wr_rep_4_m1_g,0.0,1086,0
+wr_rep_5_m1_g,0.0,1087,0
+cat_liga_sum_m5_p,0.0,1088,0
+cat_liga_mean_m5_p,0.0,1089,0
+cat_torneo_sum_m5_p,0.0,1090,0
+cat_torneo_mean_m5_p,0.0,1091,0
+cat_ascenso_sum_m5_p,0.0,1092,0
+n_batallas_m3_g,0.0,1093,0
+cat_cypher_sum_m5_p,0.0,1094,0
+cat_cypher_mean_m5_p,0.0,1095,0
+fase_elim_sum_m5_p,0.0,1096,0
+fase_elim_mean_m5_p,0.0,1097,0
+fase_grupos_sum_m5_p,0.0,1098,0
+meses_activo_m3_g,0.0,1099,0
+fase_jornadas_sum_m5_p,0.0,1100,0
+fase_jornadas_mean_m5_p,0.0,1101,0
+fmt_dobles_mean_m3_g,0.0,1102,0
+fmt_vgc_sum_m3_g,0.0,1103,0
+cat_liga_sum_m3_g,0.0,1104,0
+cat_torneo_sum_m3_g,0.0,1105,0
+cat_ascenso_mean_m3_g,0.0,1106,0
+cat_cypher_sum_m3_g,0.0,1107,0
+participo_liga_sum_m5_p,0.0,1108,0
+participo_liga_mean_m5_p,0.0,1109,0
+cat_cypher_mean_m3_g,0.0,1110,0
+fase_elim_mean_m3_g,0.0,1111,0
+liga_pms_sum_m5_p,0.0,1112,0
+fase_grupos_sum_m3_g,0.0,1113,0
+liga_pss_sum_m5_p,0.0,1114,0
+liga_pss_mean_m5_p,0.0,1115,0
+fase_jornadas_sum_m3_g,0.0,1116,0
+liga_pes_mean_m5_p,0.0,1117,0
+liga_pjs_sum_m5_p,0.0,1118,0
+liga_pjs_mean_m5_p,0.0,1119,0
+liga_pls_sum_m5_p,0.0,1120,0
+liga_pls_mean_m5_p,0.0,1121,0
+wr_tier_BABY RANDOM SINGLES_m5_p,0.0,1122,0
+wr_tier_BSS_m5_p,0.0,1123,0
+wr_tier_BSS CHAMPIONS_m5_p,0.0,1124,0
+wr_tier_CHAMPIONS_m5_p,0.0,1125,0
+wr_tier_CHAMPIONS OU_m5_p,0.0,1126,0
+wr_tier_DOBLES LC_m5_p,0.0,1127,0
+fase_jornadas_mean_m3_g,0.0,1128,0
+wr_tier_DUBERS_m5_p,0.0,1129,0
+wr_tier_DUU_m5_p,0.0,1130,0
+wr_tier_Free For all_m5_p,0.0,1131,0
+wr_tier_Free For all Randoms_m5_p,0.0,1132,0
+wr_tier_LC_m5_p,0.0,1133,0
+wr_tier_LEYENDAS Z-A OU_m5_p,0.0,1134,0
+wr_tier_METRONOMO_m5_p,0.0,1135,0
+wr_tier_MONOTYPE RANDOM BATTLE_m5_p,0.0,1136,0
+wr_tier_MultiRandomBattle_m5_p,0.0,1137,0
+pokes_venc_sum_m3_g,0.0,1138,0
+wr_tier_NAT DEX DOBLES_m5_p,0.0,1139,0
+wr_tier_NAT DEX DUBERS_m5_p,0.0,1140,0
+wr_tier_NAT DEX MONOTYPE_m5_p,0.0,1141,0
+wr_tier_NAT DEX UBERS_m5_p,0.0,1142,0
+wr_tier_NAT DEX UBERS UU_m5_p,0.0,1143,0
+participo_liga_sum_m3_g,0.0,1144,0
+participo_liga_mean_m3_g,0.0,1145,0
+wr_tier_RANDBATS CHAMPIONS_m5_p,0.0,1146,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m5_p,0.0,1147,0
+wr_tier_RANDOM DOUBLES_m5_p,0.0,1148,0
+rep_actual_sum_m3_g,0.0,1149,0
+wr_tier_STADIUM OU GEN 1_m5_p,0.0,1150,0
+wr_tier_STADIUM OU GEN 2_m5_p,0.0,1151,0
+wr_tier_TRADEMARKED_m5_p,0.0,1152,0
+wr_tier_UBERS_m5_p,0.0,1153,0
+liga_pms_sum_m3_g,0.0,1154,0
+wr_tier_VGC 2010_m5_p,0.0,1155,0
+wr_tier_VGC 2013_m5_p,0.0,1156,0
+wr_tier_VGC 2014_m5_p,0.0,1157,0
+liga_pms_mean_m3_g,0.0,1158,0
+wr_rep_2_m5_p,0.0,1159,0
+wr_rep_3_m5_p,0.0,1160,0
+wr_rep_4_m5_p,0.0,1161,0
+liga_pss_sum_m3_g,0.0,1162,0
+liga_pes_sum_m3_g,0.0,1163,0
+liga_pjs_sum_m3_g,0.0,1164,0
+meses_activo_m7_p,0.0,1165,0
+fmt_singles_sum_m7_p,0.0,1166,0
+liga_pls_sum_m3_g,0.0,1167,0
+liga_pls_mean_m3_g,0.0,1168,0
+fmt_dobles_mean_m7_p,0.0,1169,0
+wr_tier_BABY RANDOM SINGLES_m3_g,0.0,1170,0
+wr_tier_BSS_m3_g,0.0,1171,0
+wr_tier_BSS CHAMPIONS_m3_g,0.0,1172,0
+cat_liga_mean_m7_p,0.0,1173,0
+cat_torneo_sum_m7_p,0.0,1174,0
+wr_tier_CHAMPIONS OU_m3_g,0.0,1175,0
+cat_ascenso_sum_m7_p,0.0,1176,0
+cat_ascenso_mean_m7_p,0.0,1177,0
+cat_cypher_sum_m7_p,0.0,1178,0
+wr_tier_DOBLES LC_m3_g,0.0,1179,0
+wr_tier_DUBERS_m3_g,0.0,1180,0
+wr_tier_DUU_m3_g,0.0,1181,0
+fase_grupos_sum_m7_p,0.0,1182,0
+fase_grupos_mean_m7_p,0.0,1183,0
+fase_jornadas_sum_m7_p,0.0,1184,0
+fase_jornadas_mean_m7_p,0.0,1185,0
+fase_rondas_sum_m7_p,0.0,1186,0
+wr_tier_Free For all_m3_g,0.0,1187,0
+wr_tier_Free For all Randoms_m3_g,0.0,1188,0
+wr_tier_LC_m3_g,0.0,1189,0
+pokes_venc_sum_m7_p,0.0,1190,0
+wr_tier_LEYENDAS Z-A OU_m3_g,0.0,1191,0
+participo_liga_sum_m7_p,0.0,1192,0
+participo_liga_mean_m7_p,0.0,1193,0
+wr_tier_METRONOMO_m3_g,0.0,1194,0
+rep_actual_mean_m7_p,0.0,1195,0
+liga_pms_sum_m7_p,0.0,1196,0
+wr_tier_MONOTYPE RANDOM BATTLE_m3_g,0.0,1197,0
+wr_tier_MultiRandomBattle_m3_g,0.0,1198,0
+wr_tier_NAT DEX DOBLES_m3_g,0.0,1199,0
+wr_tier_NAT DEX DUBERS_m3_g,0.0,1200,0
+liga_pes_mean_m7_p,0.0,1201,0
+liga_pjs_sum_m7_p,0.0,1202,0
+liga_pjs_mean_m7_p,0.0,1203,0
+liga_pls_sum_m7_p,0.0,1204,0
+liga_pls_mean_m7_p,0.0,1205,0
+wr_tier_BABY RANDOM SINGLES_m7_p,0.0,1206,0
+wr_tier_BSS_m7_p,0.0,1207,0
+wr_tier_BSS CHAMPIONS_m7_p,0.0,1208,0
+wr_tier_CHAMPIONS_m7_p,0.0,1209,0
+wr_tier_CHAMPIONS OU_m7_p,0.0,1210,0
+wr_tier_NAT DEX MONOTYPE_m3_g,0.0,1211,0
+wr_tier_NAT DEX UBERS_m3_g,0.0,1212,0
+wr_tier_DUBERS_m7_p,0.0,1213,0
+wr_tier_DUU_m7_p,0.0,1214,0
+wr_tier_Free For all_m7_p,0.0,1215,0
+wr_tier_Free For all Randoms_m7_p,0.0,1216,0
+wr_tier_NAT DEX UBERS UU_m3_g,0.0,1217,0
+wr_tier_LEYENDAS Z-A OU_m7_p,0.0,1218,0
+wr_tier_METRONOMO_m7_p,0.0,1219,0
+wr_tier_MONOTYPE RANDOM BATTLE_m7_p,0.0,1220,0
+wr_tier_MultiRandomBattle_m7_p,0.0,1221,0
+wr_tier_ORRE COLOSSEUM_m3_g,0.0,1222,0
+wr_tier_RANDBATS CHAMPIONS_m3_g,0.0,1223,0
+wr_tier_NAT DEX DUBERS_m7_p,0.0,1224,0
+wr_tier_NAT DEX MONOTYPE_m7_p,0.0,1225,0
+wr_tier_NAT DEX UBERS_m7_p,0.0,1226,0
+wr_tier_NAT DEX UBERS UU_m7_p,0.0,1227,0
+wr_tier_ORRE COLOSSEUM_m7_p,0.0,1228,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m3_g,0.0,1229,0
+wr_tier_RANDBATS CHAMPIONS_m7_p,0.0,1230,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m7_p,0.0,1231,0
+wr_tier_RANDOM DOUBLES_m7_p,0.0,1232,0
+wr_tier_RANDOM DOUBLES_m3_g,0.0,1233,0
+wr_tier_STADIUM OU GEN 1_m7_p,0.0,1234,0
+wr_tier_STADIUM OU GEN 2_m7_p,0.0,1235,0
+wr_tier_TRADEMARKED_m7_p,0.0,1236,0
+wr_tier_UBERS_m7_p,0.0,1237,0
+wr_tier_STADIUM OU GEN 1_m3_g,0.0,1238,0
+wr_tier_VGC 2010_m7_p,0.0,1239,0
+wr_tier_VGC 2013_m7_p,0.0,1240,0
+wr_tier_VGC 2014_m7_p,0.0,1241,0
+wr_tier_STADIUM OU GEN 2_m3_g,0.0,1242,0
+wr_tier_TRADEMARKED_m3_g,0.0,1243,0
+wr_tier_UBERS_m3_g,0.0,1244,0
+wr_rep_4_m7_p,0.0,1245,0
+wr_rep_5_m7_p,0.0,1246,0
+n_batallas_m9_p,0.0,1247,0
+winrate_m9_p,0.0,1248,0
+meses_activo_m9_p,0.0,1249,0
+wr_tier_VGC_m3_g,0.0,1250,0
+wr_tier_VGC 2010_m3_g,0.0,1251,0
+wr_tier_VGC 2013_m3_g,0.0,1252,0
+wr_tier_VGC 2014_m3_g,0.0,1253,0
+fmt_vgc_sum_m9_p,0.0,1254,0
+fmt_vgc_mean_m9_p,0.0,1255,0
+cat_liga_sum_m9_p,0.0,1256,0
+cat_liga_mean_m9_p,0.0,1257,0
+wr_rep_1_m3_g,0.0,1258,0
+wr_rep_4_m3_g,0.0,1259,0
+cat_ascenso_sum_m9_p,0.0,1260,0
+wr_rep_5_m3_g,0.0,1261,0
+cat_cypher_sum_m9_p,0.0,1262,0
+cat_cypher_mean_m9_p,0.0,1263,0
+meses_activo_m5_g,0.0,1264,0
+fmt_singles_sum_m5_g,0.0,1265,0
+fase_grupos_sum_m9_p,0.0,1266,0
+fmt_dobles_mean_m5_g,0.0,1267,0
+fase_jornadas_sum_m9_p,0.0,1268,0
+fase_jornadas_mean_m9_p,0.0,1269,0
+fmt_vgc_sum_m5_g,0.0,1270,0
+cat_liga_mean_m5_g,0.0,1271,0
+cat_torneo_sum_m5_g,0.0,1272,0
+cat_ascenso_sum_m5_g,0.0,1273,0
+cat_ascenso_mean_m5_g,0.0,1274,0
+pokes_venc_mean_m9_p,0.0,1275,0
+participo_liga_sum_m9_p,0.0,1276,0
+participo_liga_mean_m9_p,0.0,1277,0
+rep_actual_sum_m9_p,0.0,1278,0
+cat_cypher_sum_m5_g,0.0,1279,0
+liga_pms_sum_m9_p,0.0,1280,0
+liga_pms_mean_m9_p,0.0,1281,0
+liga_pss_sum_m9_p,0.0,1282,0
+liga_pss_mean_m9_p,0.0,1283,0
+fase_grupos_sum_m5_g,0.0,1284,0
+liga_pes_mean_m9_p,0.0,1285,0
+fase_grupos_mean_m5_g,0.0,1286,0
+liga_pjs_mean_m9_p,0.0,1287,0
+fase_jornadas_sum_m5_g,0.0,1288,0
 liga_pls_mean_m9_p,0.0,1289,0
 wr_tier_BABY RANDOM SINGLES_m9_p,0.0,1290,0
-wr_tier_BSS_m9_p,0.0,1291,0
+fase_jornadas_mean_m5_g,0.0,1291,0
 wr_tier_BSS CHAMPIONS_m9_p,0.0,1292,0
 wr_tier_CHAMPIONS_m9_p,0.0,1293,0
-wr_tier_DOBLES LC_m9_p,0.0,1294,0
-wr_tier_DUBERS_m9_p,0.0,1295,0
-liga_pms_mean_m12_p,0.0,1296,0
-liga_pss_sum_m12_p,0.0,1297,0
-liga_pss_mean_m12_p,0.0,1298,0
-liga_pes_sum_m12_p,0.0,1299,0
-liga_pes_mean_m12_p,0.0,1300,0
-liga_pjs_sum_m12_p,0.0,1301,0
-liga_pls_sum_m12_p,0.0,1302,0
-liga_pms_sum_m5_g,0.0,1303,0
-fase_jornadas_mean_m12_p,0.0,1304,0
-fase_rondas_sum_m12_p,0.0,1305,0
-pokes_sob_sum_m12_p,0.0,1306,0
-participo_liga_sum_m12_p,0.0,1307,0
-participo_liga_mean_m12_p,0.0,1308,0
-rep_actual_sum_m12_p,0.0,1309,0
-rep_actual_mean_m12_p,0.0,1310,0
-liga_pms_sum_m12_p,0.0,1311,0
-cat_torneo_mean_m12_p,0.0,1312,0
-cat_ascenso_sum_m12_p,0.0,1313,0
-cat_cypher_sum_m12_p,0.0,1314,0
-cat_cypher_mean_m12_p,0.0,1315,0
-fase_elim_sum_m12_p,0.0,1316,0
-fase_elim_mean_m12_p,0.0,1317,0
-fase_grupos_sum_m12_p,0.0,1318,0
-fase_jornadas_sum_m12_p,0.0,1319,0
-cat_ascenso_mean_m1_g,0.0,1320,0
-wr_rep_5_m9_p,0.0,1321,0
-meses_activo_m12_p,0.0,1322,0
-fmt_dobles_sum_m12_p,0.0,1323,0
-fmt_vgc_sum_m12_p,0.0,1324,0
-cat_liga_sum_m12_p,0.0,1325,0
-cat_liga_mean_m12_p,0.0,1326,0
-cat_torneo_sum_m12_p,0.0,1327,0
-wr_tier_BSS_m12_p,0.0,1328,0
-wr_tier_BSS CHAMPIONS_m12_p,0.0,1329,0
-wr_tier_CHAMPIONS_m12_p,0.0,1330,0
-wr_tier_DOBLES LC_m12_p,0.0,1331,0
-wr_tier_DOU_m12_p,0.0,1332,0
-wr_tier_DUBERS_m12_p,0.0,1333,0
-wr_tier_Free For all_m12_p,0.0,1334,0
-wr_tier_Free For all Randoms_m12_p,0.0,1335,0
-wr_tier_MONOTYPE RANDOM BATTLE_m5_g,0.0,1336,0
-wr_tier_MultiRandomBattle_m5_g,0.0,1337,0
-wr_tier_NAT DEX DUBERS_m5_g,0.0,1338,0
-wr_tier_NAT DEX MONOTYPE_m5_g,0.0,1339,0
-wr_tier_NAT DEX UBERS_m5_g,0.0,1340,0
-wr_tier_NAT DEX UBERS UU_m5_g,0.0,1341,0
-wr_tier_ORRE COLOSSEUM_m5_g,0.0,1342,0
-wr_tier_BABY RANDOM SINGLES_m12_p,0.0,1343,0
-wr_tier_CHAMPIONS_m5_g,0.0,1344,0
-wr_tier_DOBLES LC_m5_g,0.0,1345,0
-wr_tier_DUBERS_m5_g,0.0,1346,0
-wr_tier_Free For all_m5_g,0.0,1347,0
-wr_tier_Free For all Randoms_m5_g,0.0,1348,0
-wr_tier_LC_m5_g,0.0,1349,0
-wr_tier_LEYENDAS Z-A OU_m5_g,0.0,1350,0
-wr_tier_METRONOMO_m5_g,0.0,1351,0
-liga_pms_mean_m5_g,0.0,1352,0
-liga_pss_mean_m5_g,0.0,1353,0
-liga_pes_sum_m5_g,0.0,1354,0
-liga_pes_mean_m5_g,0.0,1355,0
-liga_pls_sum_m5_g,0.0,1356,0
-liga_pls_mean_m5_g,0.0,1357,0
-wr_tier_BABY RANDOM SINGLES_m5_g,0.0,1358,0
-wr_tier_BSS CHAMPIONS_m5_g,0.0,1359,0
-cat_liga_mean_m15_p,0.0,1360,0
-cat_torneo_sum_m15_p,0.0,1361,0
-cat_torneo_mean_m15_p,0.0,1362,0
-cat_ascenso_mean_m15_p,0.0,1363,0
-cat_cypher_sum_m15_p,0.0,1364,0
-fase_elim_sum_m15_p,0.0,1365,0
-fase_jornadas_sum_m15_p,0.0,1366,0
-fase_jornadas_mean_m15_p,0.0,1367,0
-wr_tier_UBERS_m12_p,0.0,1368,0
-wr_tier_VGC 2010_m12_p,0.0,1369,0
-wr_rep_2_m12_p,0.0,1370,0
-wr_rep_4_m12_p,0.0,1371,0
-wr_rep_5_m12_p,0.0,1372,0
-fmt_singles_sum_m15_p,0.0,1373,0
-fmt_dobles_mean_m15_p,0.0,1374,0
-cat_liga_sum_m15_p,0.0,1375,0
-wr_tier_NAT DEX UBERS UU_m12_p,0.0,1376,0
-wr_tier_ORRE COLOSSEUM_m12_p,0.0,1377,0
-wr_tier_RANDBATS CHAMPIONS_m12_p,0.0,1378,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m12_p,0.0,1379,0
-wr_tier_RANDOM SINGLES_m12_p,0.0,1380,0
-wr_tier_STADIUM OU GEN 1_m12_p,0.0,1381,0
-wr_tier_STADIUM OU GEN 2_m12_p,0.0,1382,0
-wr_tier_TRADEMARKED_m12_p,0.0,1383,0
-wr_tier_LC_m12_p,0.0,1384,0
-wr_tier_LEYENDAS Z-A OU_m12_p,0.0,1385,0
-wr_tier_METRONOMO_m12_p,0.0,1386,0
-wr_tier_MONOTYPE RANDOM BATTLE_m12_p,0.0,1387,0
-wr_tier_MultiRandomBattle_m12_p,0.0,1388,0
-wr_tier_NAT DEX DUBERS_m12_p,0.0,1389,0
-wr_tier_NAT DEX MONOTYPE_m12_p,0.0,1390,0
-wr_tier_NAT DEX UBERS_m12_p,0.0,1391,0
-liga_pjs_sum_m15_p,0.0,1392,0
-liga_pjs_mean_m15_p,0.0,1393,0
-liga_pls_sum_m15_p,0.0,1394,0
-wr_tier_BABY RANDOM SINGLES_m15_p,0.0,1395,0
-wr_tier_BSS_m15_p,0.0,1396,0
-wr_tier_BSS CHAMPIONS_m15_p,0.0,1397,0
-wr_tier_CHAMPIONS_m15_p,0.0,1398,0
-wr_tier_DUBERS_m15_p,0.0,1399,0
-participo_liga_mean_m5_g,0.0,1400,0
-cat_cypher_mean_m1_g,0.0,1401,0
-participo_liga_sum_m15_p,0.0,1402,0
-participo_liga_mean_m15_p,0.0,1403,0
-rep_actual_sum_m15_p,0.0,1404,0
-rep_actual_mean_m15_p,0.0,1405,0
-liga_pms_mean_m15_p,0.0,1406,0
-liga_pes_sum_m15_p,0.0,1407,0
-cat_cypher_sum_m5_g,0.0,1408,0
-cat_cypher_mean_m5_g,0.0,1409,0
-fase_grupos_sum_m5_g,0.0,1410,0
-fase_jornadas_sum_m5_g,0.0,1411,0
-fase_jornadas_mean_m5_g,0.0,1412,0
-fase_rondas_sum_m5_g,0.0,1413,0
-fase_elim_sum_m1_g,0.0,1414,0
-participo_liga_sum_m5_g,0.0,1415,0
-pokes_sob_sum_m15_p,0.0,1416,0
-n_batallas_m5_g,0.0,1417,0
-meses_activo_m5_g,0.0,1418,0
-fmt_singles_mean_m5_g,0.0,1419,0
-fmt_vgc_sum_m5_g,0.0,1420,0
-cat_liga_sum_m5_g,0.0,1421,0
-cat_liga_mean_m5_g,0.0,1422,0
-cat_ascenso_sum_m5_g,0.0,1423,0
-wr_rep_5_m15_p,0.0,1424,0
-meses_activo_m18_p,0.0,1425,0
-fmt_singles_sum_m18_p,0.0,1426,0
-wr_tier_DUBERS_m3_g,0.0,1427,0
-wr_tier_Free For all_m3_g,0.0,1428,0
-wr_tier_Free For all Randoms_m3_g,0.0,1429,0
-wr_tier_LC_m3_g,0.0,1430,0
-wr_tier_LEYENDAS Z-A OU_m3_g,0.0,1431,0
-wr_tier_RANDOM DOUBLES_m15_p,0.0,1432,0
-wr_tier_RANDOM SINGLES_m15_p,0.0,1433,0
-wr_tier_STADIUM OU GEN 1_m15_p,0.0,1434,0
-wr_tier_STADIUM OU GEN 2_m15_p,0.0,1435,0
-wr_tier_TRADEMARKED_m15_p,0.0,1436,0
-wr_tier_UBERS_m15_p,0.0,1437,0
-wr_tier_VGC 2010_m15_p,0.0,1438,0
-wr_rep_1_m15_p,0.0,1439,0
-wr_tier_NAT DEX DUBERS_m15_p,0.0,1440,0
-wr_tier_NAT DEX MONOTYPE_m15_p,0.0,1441,0
-wr_tier_NAT DEX UBERS_m15_p,0.0,1442,0
-wr_tier_NAT DEX UBERS UU_m15_p,0.0,1443,0
-wr_tier_ORRE COLOSSEUM_m15_p,0.0,1444,0
-fase_grupos_sum_m1_g,0.0,1445,0
-wr_tier_RANDBATS CHAMPIONS_m15_p,0.0,1446,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m15_p,0.0,1447,0
-wr_tier_Free For all_m15_p,0.0,1448,0
-wr_tier_Free For all Randoms_m15_p,0.0,1449,0
-wr_tier_LC_m15_p,0.0,1450,0
-wr_tier_LEYENDAS Z-A OU_m15_p,0.0,1451,0
-wr_tier_METRONOMO_m15_p,0.0,1452,0
-wr_tier_MONOTYPE RANDOM BATTLE_m15_p,0.0,1453,0
-wr_tier_MultiRandomBattle_m15_p,0.0,1454,0
-wr_tier_NAT DEX DOBLES_m15_p,0.0,1455,0
-cat_ascenso_sum_m18_p,0.0,1456,0
-cat_ascenso_mean_m18_p,0.0,1457,0
-cat_cypher_sum_m18_p,0.0,1458,0
-cat_cypher_mean_m18_p,0.0,1459,0
-fase_elim_mean_m18_p,0.0,1460,0
-fase_jornadas_sum_m18_p,0.0,1461,0
-fase_jornadas_mean_m18_p,0.0,1462,0
-fase_rondas_sum_m18_p,0.0,1463,0
-wr_tier_TRADEMARKED_m3_g,0.0,1464,0
-wr_tier_UBERS_m3_g,0.0,1465,0
-wr_tier_VGC 2010_m3_g,0.0,1466,0
-wr_rep_3_m3_g,0.0,1467,0
-wr_rep_4_m3_g,0.0,1468,0
-wr_rep_5_m3_g,0.0,1469,0
-cat_torneo_sum_m18_p,0.0,1470,0
-cat_torneo_mean_m18_p,0.0,1471,0
-wr_tier_ORRE COLOSSEUM_m3_g,0.0,1472,0
-wr_tier_OU_m3_g,0.0,1473,0
-wr_tier_RANDBATS CHAMPIONS_m3_g,0.0,1474,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m3_g,0.0,1475,0
-fase_grupos_mean_m1_g,0.0,1476,0
-wr_tier_RANDOM SINGLES_m3_g,0.0,1477,0
-wr_tier_STADIUM OU GEN 1_m3_g,0.0,1478,0
-wr_tier_STADIUM OU GEN 2_m3_g,0.0,1479,0
-wr_tier_METRONOMO_m3_g,0.0,1480,0
-wr_tier_MONOTYPE RANDOM BATTLE_m3_g,0.0,1481,0
-wr_tier_MultiRandomBattle_m3_g,0.0,1482,0
-wr_tier_NAT DEX DOBLES_m3_g,0.0,1483,0
-wr_tier_NAT DEX DUBERS_m3_g,0.0,1484,0
-wr_tier_NAT DEX MONOTYPE_m3_g,0.0,1485,0
-wr_tier_NAT DEX UBERS_m3_g,0.0,1486,0
-wr_tier_NAT DEX UBERS UU_m3_g,0.0,1487,0
-wr_tier_LC_m18_p,0.0,1488,0
-wr_tier_LEYENDAS Z-A OU_m18_p,0.0,1489,0
-wr_tier_METRONOMO_m18_p,0.0,1490,0
-wr_tier_MONOTYPE RANDOM BATTLE_m18_p,0.0,1491,0
-wr_tier_MultiRandomBattle_m18_p,0.0,1492,0
-wr_tier_NAT DEX_m18_p,0.0,1493,0
-wr_tier_NAT DEX DUBERS_m18_p,0.0,1494,0
-wr_tier_NAT DEX MONOTYPE_m18_p,0.0,1495,0
-wr_tier_BABY RANDOM SINGLES_m18_p,0.0,1496,0
-wr_tier_BSS_m18_p,0.0,1497,0
-wr_tier_BSS CHAMPIONS_m18_p,0.0,1498,0
-wr_tier_CHAMPIONS_m18_p,0.0,1499,0
-wr_tier_DOU_m18_p,0.0,1500,0
-wr_tier_DUBERS_m18_p,0.0,1501,0
-wr_tier_Free For all_m18_p,0.0,1502,0
-wr_tier_Free For all Randoms_m18_p,0.0,1503,0
-liga_pss_sum_m18_p,0.0,1504,0
-liga_pss_mean_m18_p,0.0,1505,0
-liga_pes_sum_m18_p,0.0,1506,0
-liga_pes_mean_m18_p,0.0,1507,0
-liga_pjs_sum_m18_p,0.0,1508,0
-wr_tier_RANDOM DOUBLES_m36_p,0.0,1509,0
-liga_pls_sum_m18_p,0.0,1510,0
-liga_pls_mean_m18_p,0.0,1511,0
-fase_rondas_mean_m18_p,0.0,1512,0
-pokes_venc_sum_m18_p,0.0,1513,0
-pokes_venc_mean_m18_p,0.0,1514,0
-participo_liga_sum_m18_p,0.0,1515,0
-participo_liga_mean_m18_p,0.0,1516,0
-rep_actual_mean_m18_p,0.0,1517,0
-liga_pms_sum_m18_p,0.0,1518,0
-liga_pms_mean_m18_p,0.0,1519,0
-cat_torneo_sum_m24_p,0.0,1520,0
-cat_ascenso_sum_m24_p,0.0,1521,0
-cat_ascenso_mean_m24_p,0.0,1522,0
-cat_cypher_sum_m24_p,0.0,1523,0
-fase_elim_sum_m24_p,0.0,1524,0
-fase_grupos_mean_m24_p,0.0,1525,0
-fase_jornadas_sum_m24_p,0.0,1526,0
-fase_jornadas_mean_m24_p,0.0,1527,0
-wr_rep_5_m18_p,0.0,1528,0
-winrate_m24_p,0.0,1529,0
-meses_activo_m24_p,0.0,1530,0
-fmt_singles_sum_m24_p,0.0,1531,0
-fmt_dobles_sum_m24_p,0.0,1532,0
-fmt_dobles_mean_m24_p,0.0,1533,0
-fmt_vgc_sum_m24_p,0.0,1534,0
-fmt_vgc_mean_m24_p,0.0,1535,0
-wr_tier_STADIUM OU GEN 2_m18_p,0.0,1536,0
-wr_tier_TRADEMARKED_m18_p,0.0,1537,0
-wr_tier_UBERS_m18_p,0.0,1538,0
-wr_tier_VGC_m18_p,0.0,1539,0
-wr_tier_VGC 2010_m18_p,0.0,1540,0
-wr_rep_2_m18_p,0.0,1541,0
-wr_rep_3_m18_p,0.0,1542,0
-wr_rep_4_m18_p,0.0,1543,0
-wr_tier_NAT DEX UBERS_m18_p,0.0,1544,0
-wr_tier_NAT DEX UBERS UU_m18_p,0.0,1545,0
-wr_tier_ORRE COLOSSEUM_m18_p,0.0,1546,0
-wr_tier_RANDBATS CHAMPIONS_m18_p,0.0,1547,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m18_p,0.0,1548,0
-wr_tier_RANDOM DOUBLES_m18_p,0.0,1549,0
-wr_tier_RANDOM SINGLES_m18_p,0.0,1550,0
-wr_tier_STADIUM OU GEN 1_m18_p,0.0,1551,0
-pokes_venc_mean_m24_p,0.0,1552,0
-participo_liga_sum_m24_p,0.0,1553,0
-participo_liga_mean_m24_p,0.0,1554,0
-rep_actual_sum_m24_p,0.0,1555,0
-liga_pms_sum_m24_p,0.0,1556,0
-liga_pms_mean_m24_p,0.0,1557,0
-liga_pss_sum_m24_p,0.0,1558,0
-liga_pss_mean_m24_p,0.0,1559,0
-liga_pjs_sum_m3_g,0.0,1560,0
-liga_pls_sum_m3_g,0.0,1561,0
-wr_tier_BABY RANDOM SINGLES_m3_g,0.0,1562,0
-wr_tier_BSS_m3_g,0.0,1563,0
-wr_tier_BSS CHAMPIONS_m3_g,0.0,1564,0
-wr_tier_CHAMPIONS_m3_g,0.0,1565,0
-wr_tier_DOBLES LC_m3_g,0.0,1566,0
-pokes_venc_sum_m24_p,0.0,1567,0
-participo_liga_sum_m3_g,0.0,1568,0
-participo_liga_mean_m3_g,0.0,1569,0
-wr_tier_CHAMPIONS_m1_g,0.0,1570,0
-liga_pms_sum_m3_g,0.0,1571,0
-liga_pms_mean_m3_g,0.0,1572,0
-liga_pss_sum_m3_g,0.0,1573,0
-liga_pss_mean_m3_g,0.0,1574,0
-liga_pes_sum_m3_g,0.0,1575,0
-fase_rondas_sum_m24_p,0.0,1576,0
-fase_rondas_mean_m24_p,0.0,1577,0
-cat_cypher_mean_m3_g,0.0,1578,0
-fase_elim_sum_m3_g,0.0,1579,0
-fase_grupos_sum_m3_g,0.0,1580,0
-fase_jornadas_sum_m3_g,0.0,1581,0
-fase_jornadas_mean_m3_g,0.0,1582,0
-fase_rondas_sum_m3_g,0.0,1583,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m24_p,0.0,1584,0
-wr_tier_RANDOM DOUBLES_m24_p,0.0,1585,0
-wr_tier_RANDOM SINGLES_m24_p,0.0,1586,0
-wr_tier_STADIUM OU GEN 1_m24_p,0.0,1587,0
-wr_tier_STADIUM OU GEN 2_m24_p,0.0,1588,0
-wr_tier_TRADEMARKED_m24_p,0.0,1589,0
-wr_tier_UBERS_m24_p,0.0,1590,0
-wr_tier_VGC 2010_m24_p,0.0,1591,0
-wr_tier_MultiRandomBattle_m24_p,0.0,1592,0
-wr_tier_NAT DEX DOBLES_m24_p,0.0,1593,0
-wr_tier_OU_m15_p,0.0,1594,0
-wr_tier_NAT DEX MONOTYPE_m24_p,0.0,1595,0
-wr_tier_NAT DEX UBERS_m24_p,0.0,1596,0
-wr_tier_NAT DEX UBERS UU_m24_p,0.0,1597,0
-wr_tier_ORRE COLOSSEUM_m24_p,0.0,1598,0
-wr_tier_RANDBATS CHAMPIONS_m24_p,0.0,1599,0
-wr_tier_DOU_m24_p,0.0,1600,0
-wr_tier_DUBERS_m24_p,0.0,1601,0
-wr_tier_Free For all_m24_p,0.0,1602,0
-wr_tier_Free For all Randoms_m24_p,0.0,1603,0
-wr_tier_LC_m24_p,0.0,1604,0
-wr_tier_LEYENDAS Z-A OU_m24_p,0.0,1605,0
-wr_tier_METRONOMO_m24_p,0.0,1606,0
-wr_tier_MONOTYPE RANDOM BATTLE_m24_p,0.0,1607,0
-liga_pes_sum_m24_p,0.0,1608,0
-liga_pls_sum_m24_p,0.0,1609,0
-liga_pls_mean_m24_p,0.0,1610,0
-wr_tier_BABY RANDOM SINGLES_m24_p,0.0,1611,0
-wr_tier_BSS_m24_p,0.0,1612,0
-wr_tier_BSS CHAMPIONS_m24_p,0.0,1613,0
-wr_tier_CHAMPIONS_m24_p,0.0,1614,0
-wr_tier_DOBLES LC_m24_p,0.0,1615,0
-liga_pes_mean_m36_p,0.0,1616,0
-liga_pls_sum_m36_p,0.0,1617,0
-wr_tier_OU_m1_g,0.0,1618,0
-wr_tier_RANDBATS CHAMPIONS_m1_g,0.0,1619,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m1_g,0.0,1620,0
-wr_tier_RANDOM DOUBLES_m1_g,0.0,1621,0
-wr_tier_STADIUM OU GEN 1_m1_g,0.0,1622,0
-wr_tier_STADIUM OU GEN 2_m1_g,0.0,1623,0
-participo_liga_sum_m36_p,0.0,1624,0
-participo_liga_mean_m36_p,0.0,1625,0
-rep_actual_sum_m36_p,0.0,1626,0
-rep_actual_mean_m36_p,0.0,1627,0
-liga_pms_sum_m36_p,0.0,1628,0
-liga_pms_mean_m36_p,0.0,1629,0
-liga_pss_mean_m36_p,0.0,1630,0
-liga_pes_sum_m36_p,0.0,1631,0
-cat_torneo_sum_m36_p,0.0,1632,0
-cat_ascenso_sum_m36_p,0.0,1633,0
-cat_cypher_mean_m36_p,0.0,1634,0
-fase_grupos_mean_m36_p,0.0,1635,0
-fase_jornadas_sum_m36_p,0.0,1636,0
-fase_jornadas_mean_m36_p,0.0,1637,0
-fase_rondas_sum_m36_p,0.0,1638,0
-pokes_venc_sum_m36_p,0.0,1639,0
-wr_rep_1_m24_p,0.0,1640,0
-wr_rep_4_m24_p,0.0,1641,0
-wr_rep_5_m24_p,0.0,1642,0
-n_batallas_m36_p,0.0,1643,0
-winrate_m36_p,0.0,1644,0
-fmt_singles_sum_m36_p,0.0,1645,0
-fmt_dobles_sum_m36_p,0.0,1646,0
-fmt_vgc_mean_m36_p,0.0,1647,0
-wr_tier_DUBERS_m36_p,0.0,1648,0
-wr_tier_Free For all_m36_p,0.0,1649,0
-wr_tier_Free For all Randoms_m36_p,0.0,1650,0
-wr_tier_LC_m36_p,0.0,1651,0
-wr_tier_LEYENDAS Z-A OU_m36_p,0.0,1652,0
-wr_tier_METRONOMO_m36_p,0.0,1653,0
-wr_tier_MONOTYPE RANDOM BATTLE_m36_p,0.0,1654,0
-wr_tier_MultiRandomBattle_m36_p,0.0,1655,0
-cat_ascenso_sum_m3_g,0.0,1656,0
-cat_cypher_sum_m3_g,0.0,1657,0
-liga_pls_mean_m36_p,0.0,1658,0
-wr_tier_BABY RANDOM SINGLES_m36_p,0.0,1659,0
-wr_tier_BSS_m36_p,0.0,1660,0
-wr_tier_BSS CHAMPIONS_m36_p,0.0,1661,0
-wr_tier_CHAMPIONS_m36_p,0.0,1662,0
-wr_tier_DOBLES LC_m36_p,0.0,1663,0
-meses_activo_m3_g,0.0,1664,0
-fmt_dobles_mean_m3_g,0.0,1665,0
-fmt_vgc_sum_m3_g,0.0,1666,0
-wr_tier_DOBLES LC_m1_g,0.0,1667,0
-cat_liga_sum_m3_g,0.0,1668,0
-wr_tier_DUBERS_m1_g,0.0,1669,0
-cat_torneo_sum_m3_g,0.0,1670,0
-cat_torneo_mean_m3_g,0.0,1671,0
-wr_tier_TRADEMARKED_m1_g,0.0,1672,0
-wr_tier_UBERS_m1_g,0.0,1673,0
-wr_tier_VGC 2010_m1_g,0.0,1674,0
-wr_rep_1_m1_g,0.0,1675,0
-wr_rep_4_m1_g,0.0,1676,0
-wr_rep_5_m1_g,0.0,1677,0
-wr_tier_Free For all_m1_g,0.0,1678,0
-wr_tier_Free For all Randoms_m1_g,0.0,1679,0
-log1p_wr_winrate_m12_p,0.0,1680,0
-log1p_wr_winrate_m15_p,0.0,1681,0
-log1p_wr_winrate_m18_p,0.0,1682,0
-log1p_wr_winrate_m24_p,0.0,1683,0
-log1p_wr_winrate_m36_p,0.0,1684,0
-wr_tier_LC_m1_g,0.0,1685,0
-ctx_es_decisivo,0.0,1686,0
-wr_tier_STADIUM OU GEN 1_m15_g,0.0,1687,0
-ma_ratio_m5_vs_m12_p,0.0,1688,0
-log_meses_activo_m24_p,0.0,1689,0
-log_meses_activo_m36_p,0.0,1690,0
-log1p_wr_winrate_m1_p,0.0,1691,0
-log1p_wr_winrate_m3_p,0.0,1692,0
-log1p_wr_winrate_m5_p,0.0,1693,0
-log1p_wr_winrate_m7_p,0.0,1694,0
-log1p_wr_winrate_m9_p,0.0,1695,0
-wr_tier_ORRE COLOSSEUM_m1_g,0.0,1696,0
-wr_tier_VGC 2010_m36_p,0.0,1697,0
-wr_rep_3_m36_p,0.0,1698,0
-wr_rep_5_m36_p,0.0,1699,0
-ma_ratio_m1_vs_m3_p,0.0,1700,0
-nb_diff_m3_vs_m5_p,0.0,1701,0
-ma_ratio_m3_vs_m5_p,0.0,1702,0
-nb_diff_m5_vs_m12_p,0.0,1703,0
-wr_tier_METRONOMO_m1_g,0.0,1704,0
-wr_tier_MONOTYPE RANDOM BATTLE_m1_g,0.0,1705,0
-wr_tier_MultiRandomBattle_m1_g,0.0,1706,0
-wr_tier_NAT DEX DOBLES_m1_g,0.0,1707,0
-wr_tier_NAT DEX DUBERS_m1_g,0.0,1708,0
-wr_tier_NAT DEX MONOTYPE_m1_g,0.0,1709,0
-wr_tier_NAT DEX UBERS_m1_g,0.0,1710,0
-ma_ratio_m12_vs_m24_p,0.0,1711,0
-log_meses_activo_m7_p,0.0,1712,0
-log_meses_activo_m9_p,0.0,1713,0
-log_meses_activo_m12_p,0.0,1714,0
-log_meses_activo_m15_p,0.0,1715,0
-log_meses_activo_m18_p,0.0,1716,0
-wr_tier_RANDBATS CHAMPIONS_m15_g,0.0,1717,0
-wr_tier_RANDOM DOBLES CHAMPIONS_m15_g,0.0,1718,0
-wr_tier_LEYENDAS Z-A OU_m1_g,0.0,1719,0
-log_n_batallas_m12_p,0.0,1720,0
-log_n_batallas_m15_p,0.0,1721,0
-log_n_batallas_m18_p,0.0,1722,0
-log_n_batallas_m24_p,0.0,1723,0
-log_n_batallas_m36_p,0.0,1724,0
-log_meses_activo_m1_p,0.0,1725,0
-log_meses_activo_m3_p,0.0,1726,0
-log_meses_activo_m5_p,0.0,1727,0
-nb_ratio_m24_vs_m36_p,0.0,1728,0
-nb_diff_m1_vs_m36_p,0.0,1729,0
-ma_ratio_m1_vs_m36_p,0.0,1730,0
-log_n_batallas_m1_p,0.0,1731,0
-log_n_batallas_m3_p,0.0,1732,0
-log_n_batallas_m5_p,0.0,1733,0
-log_n_batallas_m7_p,0.0,1734,0
-log_n_batallas_m9_p,0.0,1735,0
-fase_jornadas_sum_m1_g,0.0,1736,0
-fase_jornadas_mean_m1_g,0.0,1737,0
-participo_liga_sum_m1_g,0.0,1738,0
-participo_liga_mean_m1_g,0.0,1739,0
-rep_actual_sum_m1_g,0.0,1740,0
-nb_ratio_m12_vs_m24_p,0.0,1741,0
-nb_diff_m12_vs_m24_p,0.0,1742,0
-wr_tier_NAT DEX DUBERS_m24_p,0.0,1743,0
+wr_tier_CHAMPIONS OU_m9_p,0.0,1294,0
+wr_tier_DOBLES LC_m9_p,0.0,1295,0
+fase_rondas_sum_m5_g,0.0,1296,0
+wr_tier_DUBERS_m9_p,0.0,1297,0
+wr_tier_DUU_m9_p,0.0,1298,0
+wr_tier_Free For all_m9_p,0.0,1299,0
+wr_tier_Free For all Randoms_m9_p,0.0,1300,0
+wr_tier_LC_m9_p,0.0,1301,0
+wr_tier_LEYENDAS Z-A OU_m9_p,0.0,1302,0
+wr_tier_METRONOMO_m9_p,0.0,1303,0
+wr_tier_MONOTYPE RANDOM BATTLE_m9_p,0.0,1304,0
+wr_tier_MultiRandomBattle_m9_p,0.0,1305,0
+participo_liga_sum_m5_g,0.0,1306,0
+participo_liga_mean_m5_g,0.0,1307,0
+wr_tier_NAT DEX DUBERS_m9_p,0.0,1308,0
+wr_tier_NAT DEX MONOTYPE_m9_p,0.0,1309,0
+wr_tier_NAT DEX UBERS_m9_p,0.0,1310,0
+wr_tier_NAT DEX UBERS UU_m9_p,0.0,1311,0
+wr_tier_ORRE COLOSSEUM_m9_p,0.0,1312,0
+rep_actual_mean_m5_g,0.0,1313,0
+wr_tier_RANDBATS CHAMPIONS_m9_p,0.0,1314,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m9_p,0.0,1315,0
+wr_tier_RANDOM DOUBLES_m9_p,0.0,1316,0
+wr_tier_RANDOM SINGLES_m9_p,0.0,1317,0
+wr_tier_STADIUM OU GEN 1_m9_p,0.0,1318,0
+wr_tier_STADIUM OU GEN 2_m9_p,0.0,1319,0
+wr_tier_TRADEMARKED_m9_p,0.0,1320,0
+wr_tier_UBERS_m9_p,0.0,1321,0
+wr_tier_VGC_m9_p,0.0,1322,0
+wr_tier_VGC 2010_m9_p,0.0,1323,0
+wr_tier_VGC 2013_m9_p,0.0,1324,0
+wr_tier_VGC 2014_m9_p,0.0,1325,0
+wr_rep_1_m9_p,0.0,1326,0
+wr_rep_2_m9_p,0.0,1327,0
+wr_rep_3_m9_p,0.0,1328,0
+wr_rep_4_m9_p,0.0,1329,0
+wr_rep_5_m9_p,0.0,1330,0
+n_batallas_m12_p,0.0,1331,0
+winrate_m12_p,0.0,1332,0
+meses_activo_m12_p,0.0,1333,0
+fmt_singles_sum_m12_p,0.0,1334,0
+liga_pms_sum_m5_g,0.0,1335,0
+fmt_dobles_sum_m12_p,0.0,1336,0
+liga_pms_mean_m5_g,0.0,1337,0
+fmt_vgc_sum_m12_p,0.0,1338,0
+fmt_vgc_mean_m12_p,0.0,1339,0
+liga_pss_mean_m5_g,0.0,1340,0
+liga_pes_sum_m5_g,0.0,1341,0
+liga_pes_mean_m5_g,0.0,1342,0
+liga_pjs_mean_m5_g,0.0,1343,0
+liga_pls_sum_m5_g,0.0,1344,0
+liga_pls_mean_m5_g,0.0,1345,0
+cat_cypher_sum_m12_p,0.0,1346,0
+cat_cypher_mean_m12_p,0.0,1347,0
+wr_tier_BABY RANDOM SINGLES_m5_g,0.0,1348,0
+wr_tier_BSS_m5_g,0.0,1349,0
+fase_grupos_sum_m12_p,0.0,1350,0
+wr_tier_BSS CHAMPIONS_m5_g,0.0,1351,0
+fase_jornadas_sum_m12_p,0.0,1352,0
+fase_jornadas_mean_m12_p,0.0,1353,0
+wr_tier_CHAMPIONS_m5_g,0.0,1354,0
+fase_rondas_mean_m12_p,0.0,1355,0
+wr_tier_CHAMPIONS OU_m5_g,0.0,1356,0
+wr_tier_DOU_m5_g,0.0,1357,0
+wr_tier_DUBERS_m5_g,0.0,1358,0
+wr_tier_DUU_m5_g,0.0,1359,0
+participo_liga_sum_m12_p,0.0,1360,0
+participo_liga_mean_m12_p,0.0,1361,0
+rep_actual_sum_m12_p,0.0,1362,0
+wr_tier_Free For all_m5_g,0.0,1363,0
+wr_tier_Free For all Randoms_m5_g,0.0,1364,0
+liga_pms_mean_m12_p,0.0,1365,0
+liga_pss_sum_m12_p,0.0,1366,0
+liga_pss_mean_m12_p,0.0,1367,0
+wr_tier_LC_m5_g,0.0,1368,0
+liga_pes_mean_m12_p,0.0,1369,0
+wr_tier_LEYENDAS Z-A OU_m5_g,0.0,1370,0
+liga_pjs_mean_m12_p,0.0,1371,0
+liga_pls_sum_m12_p,0.0,1372,0
+liga_pls_mean_m12_p,0.0,1373,0
+wr_tier_BABY RANDOM SINGLES_m12_p,0.0,1374,0
+wr_tier_BSS_m12_p,0.0,1375,0
+wr_tier_BSS CHAMPIONS_m12_p,0.0,1376,0
+wr_tier_CHAMPIONS_m12_p,0.0,1377,0
+wr_tier_CHAMPIONS OU_m12_p,0.0,1378,0
+wr_tier_DOBLES LC_m12_p,0.0,1379,0
+wr_tier_DOU_m12_p,0.0,1380,0
+wr_tier_DUBERS_m12_p,0.0,1381,0
+wr_tier_DUU_m12_p,0.0,1382,0
+wr_tier_Free For all_m12_p,0.0,1383,0
+wr_tier_Free For all Randoms_m12_p,0.0,1384,0
+wr_tier_LC_m12_p,0.0,1385,0
+wr_tier_LEYENDAS Z-A OU_m12_p,0.0,1386,0
+wr_tier_METRONOMO_m12_p,0.0,1387,0
+wr_tier_MONOTYPE RANDOM BATTLE_m12_p,0.0,1388,0
+wr_tier_MultiRandomBattle_m12_p,0.0,1389,0
+wr_tier_METRONOMO_m5_g,0.0,1390,0
+wr_tier_NAT DEX DOBLES_m12_p,0.0,1391,0
+wr_tier_NAT DEX DUBERS_m12_p,0.0,1392,0
+wr_tier_NAT DEX MONOTYPE_m12_p,0.0,1393,0
+wr_tier_NAT DEX UBERS_m12_p,0.0,1394,0
+wr_tier_NAT DEX UBERS UU_m12_p,0.0,1395,0
+wr_tier_ORRE COLOSSEUM_m12_p,0.0,1396,0
+wr_tier_MONOTYPE RANDOM BATTLE_m5_g,0.0,1397,0
+wr_tier_RANDBATS CHAMPIONS_m12_p,0.0,1398,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m12_p,0.0,1399,0
+wr_tier_RANDOM DOUBLES_m12_p,0.0,1400,0
+wr_tier_RANDOM SINGLES_m12_p,0.0,1401,0
+wr_tier_STADIUM OU GEN 1_m12_p,0.0,1402,0
+wr_tier_STADIUM OU GEN 2_m12_p,0.0,1403,0
+wr_tier_TRADEMARKED_m12_p,0.0,1404,0
+wr_tier_UBERS_m12_p,0.0,1405,0
+wr_tier_MultiRandomBattle_m5_g,0.0,1406,0
+wr_tier_VGC 2010_m12_p,0.0,1407,0
+wr_tier_VGC 2013_m12_p,0.0,1408,0
+wr_tier_VGC 2014_m12_p,0.0,1409,0
+wr_tier_NAT DEX DOBLES_m5_g,0.0,1410,0
+wr_tier_NAT DEX DUBERS_m5_g,0.0,1411,0
+wr_tier_NAT DEX MONOTYPE_m5_g,0.0,1412,0
+wr_rep_4_m12_p,0.0,1413,0
+wr_rep_5_m12_p,0.0,1414,0
+n_batallas_m15_p,0.0,1415,0
+wr_tier_NAT DEX UBERS_m5_g,0.0,1416,0
+meses_activo_m15_p,0.0,1417,0
+wr_tier_NAT DEX UBERS UU_m5_g,0.0,1418,0
+wr_tier_ORRE COLOSSEUM_m5_g,0.0,1419,0
+fmt_dobles_sum_m15_p,0.0,1420,0
+fmt_dobles_mean_m15_p,0.0,1421,0
+wr_tier_OU_m5_g,0.0,1422,0
+wr_tier_RANDBATS CHAMPIONS_m5_g,0.0,1423,0
+cat_liga_sum_m15_p,0.0,1424,0
+cat_liga_mean_m15_p,0.0,1425,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m5_g,0.0,1426,0
+wr_tier_STADIUM OU GEN 1_m5_g,0.0,1427,0
+cat_ascenso_sum_m15_p,0.0,1428,0
+cat_ascenso_mean_m15_p,0.0,1429,0
+cat_cypher_sum_m15_p,0.0,1430,0
+cat_cypher_mean_m15_p,0.0,1431,0
+wr_tier_TRADEMARKED_m5_g,0.0,1432,0
+wr_tier_UBERS_m5_g,0.0,1433,0
+fase_grupos_sum_m15_p,0.0,1434,0
+wr_tier_VGC 2010_m5_g,0.0,1435,0
+fase_jornadas_sum_m15_p,0.0,1436,0
+fase_jornadas_mean_m15_p,0.0,1437,0
+wr_tier_VGC 2013_m5_g,0.0,1438,0
+wr_tier_VGC 2014_m5_g,0.0,1439,0
+pokes_sob_sum_m15_p,0.0,1440,0
+wr_rep_3_m5_g,0.0,1441,0
+pokes_venc_sum_m15_p,0.0,1442,0
+pokes_venc_mean_m15_p,0.0,1443,0
+participo_liga_sum_m15_p,0.0,1444,0
+participo_liga_mean_m15_p,0.0,1445,0
+rep_actual_sum_m15_p,0.0,1446,0
+wr_rep_4_m5_g,0.0,1447,0
+liga_pms_sum_m15_p,0.0,1448,0
+liga_pms_mean_m15_p,0.0,1449,0
+n_batallas_m7_g,0.0,1450,0
+meses_activo_m7_g,0.0,1451,0
+fmt_dobles_sum_m7_g,0.0,1452,0
+liga_pes_mean_m15_p,0.0,1453,0
+liga_pjs_sum_m15_p,0.0,1454,0
+cat_liga_sum_m7_g,0.0,1455,0
+cat_liga_mean_m7_g,0.0,1456,0
+liga_pls_mean_m15_p,0.0,1457,0
+wr_tier_BABY RANDOM SINGLES_m15_p,0.0,1458,0
+wr_tier_BSS_m15_p,0.0,1459,0
+wr_tier_BSS CHAMPIONS_m15_p,0.0,1460,0
+wr_tier_CHAMPIONS_m15_p,0.0,1461,0
+wr_tier_CHAMPIONS OU_m15_p,0.0,1462,0
+wr_tier_DOBLES LC_m15_p,0.0,1463,0
+cat_ascenso_sum_m7_g,0.0,1464,0
+wr_tier_DUBERS_m15_p,0.0,1465,0
+wr_tier_DUU_m15_p,0.0,1466,0
+wr_tier_Free For all_m15_p,0.0,1467,0
+wr_tier_Free For all Randoms_m15_p,0.0,1468,0
+wr_tier_LC_m15_p,0.0,1469,0
+wr_tier_LEYENDAS Z-A OU_m15_p,0.0,1470,0
+wr_tier_METRONOMO_m15_p,0.0,1471,0
+wr_tier_MONOTYPE RANDOM BATTLE_m15_p,0.0,1472,0
+wr_tier_MultiRandomBattle_m15_p,0.0,1473,0
+cat_ascenso_mean_m7_g,0.0,1474,0
+wr_tier_NAT DEX DOBLES_m15_p,0.0,1475,0
+wr_tier_NAT DEX DUBERS_m15_p,0.0,1476,0
+wr_tier_NAT DEX MONOTYPE_m15_p,0.0,1477,0
+wr_tier_NAT DEX UBERS_m15_p,0.0,1478,0
+wr_tier_NAT DEX UBERS UU_m15_p,0.0,1479,0
+wr_tier_ORRE COLOSSEUM_m15_p,0.0,1480,0
+cat_cypher_sum_m7_g,0.0,1481,0
+wr_tier_RANDBATS CHAMPIONS_m15_p,0.0,1482,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m15_p,0.0,1483,0
+wr_tier_RANDOM DOUBLES_m15_p,0.0,1484,0
+fase_elim_sum_m7_g,0.0,1485,0
+wr_tier_STADIUM OU GEN 1_m15_p,0.0,1486,0
+wr_tier_STADIUM OU GEN 2_m15_p,0.0,1487,0
+wr_tier_TRADEMARKED_m15_p,0.0,1488,0
+wr_tier_UBERS_m15_p,0.0,1489,0
+fase_jornadas_sum_m7_g,0.0,1490,0
+wr_tier_VGC 2010_m15_p,0.0,1491,0
+wr_tier_VGC 2013_m15_p,0.0,1492,0
+wr_tier_VGC 2014_m15_p,0.0,1493,0
+wr_rep_1_m15_p,0.0,1494,0
+fase_jornadas_mean_m7_g,0.0,1495,0
+wr_rep_3_m15_p,0.0,1496,0
+wr_rep_4_m15_p,0.0,1497,0
+wr_rep_5_m15_p,0.0,1498,0
+fase_rondas_sum_m7_g,0.0,1499,0
+fase_rondas_mean_m7_g,0.0,1500,0
+meses_activo_m18_p,0.0,1501,0
+fmt_singles_sum_m18_p,0.0,1502,0
+pokes_venc_sum_m7_g,0.0,1503,0
+participo_liga_sum_m7_g,0.0,1504,0
+fmt_dobles_mean_m18_p,0.0,1505,0
+participo_liga_mean_m7_g,0.0,1506,0
+rep_actual_sum_m7_g,0.0,1507,0
+liga_pss_sum_m7_g,0.0,1508,0
+cat_liga_mean_m18_p,0.0,1509,0
+cat_torneo_sum_m18_p,0.0,1510,0
+liga_pes_sum_m7_g,0.0,1511,0
+cat_ascenso_sum_m18_p,0.0,1512,0
+cat_ascenso_mean_m18_p,0.0,1513,0
+cat_cypher_sum_m18_p,0.0,1514,0
+liga_pes_mean_m7_g,0.0,1515,0
+liga_pjs_sum_m7_g,0.0,1516,0
+liga_pls_sum_m7_g,0.0,1517,0
+liga_pls_mean_m7_g,0.0,1518,0
+fase_grupos_mean_m18_p,0.0,1519,0
+fase_jornadas_sum_m18_p,0.0,1520,0
+fase_jornadas_mean_m18_p,0.0,1521,0
+fase_rondas_sum_m18_p,0.0,1522,0
+fase_rondas_mean_m18_p,0.0,1523,0
+wr_tier_BABY RANDOM SINGLES_m7_g,0.0,1524,0
+pokes_sob_mean_m18_p,0.0,1525,0
+pokes_venc_sum_m18_p,0.0,1526,0
+wr_tier_BSS CHAMPIONS_m7_g,0.0,1527,0
+participo_liga_sum_m18_p,0.0,1528,0
+participo_liga_mean_m18_p,0.0,1529,0
+rep_actual_sum_m18_p,0.0,1530,0
+wr_tier_CHAMPIONS_m7_g,0.0,1531,0
+liga_pms_sum_m18_p,0.0,1532,0
+liga_pms_mean_m18_p,0.0,1533,0
+wr_tier_CHAMPIONS OU_m7_g,0.0,1534,0
+liga_pss_mean_m18_p,0.0,1535,0
+wr_tier_DOU_m7_g,0.0,1536,0
+wr_tier_DUBERS_m7_g,0.0,1537,0
+liga_pjs_sum_m18_p,0.0,1538,0
+liga_pjs_mean_m18_p,0.0,1539,0
+liga_pls_sum_m18_p,0.0,1540,0
+liga_pls_mean_m18_p,0.0,1541,0
+wr_tier_BABY RANDOM SINGLES_m18_p,0.0,1542,0
+wr_tier_BSS_m18_p,0.0,1543,0
+wr_tier_BSS CHAMPIONS_m18_p,0.0,1544,0
+wr_tier_CHAMPIONS_m18_p,0.0,1545,0
+wr_tier_CHAMPIONS OU_m18_p,0.0,1546,0
+wr_tier_DOBLES LC_m18_p,0.0,1547,0
+wr_tier_DOU_m18_p,0.0,1548,0
+wr_tier_DUBERS_m18_p,0.0,1549,0
+wr_tier_DUU_m18_p,0.0,1550,0
+wr_tier_Free For all_m18_p,0.0,1551,0
+wr_tier_Free For all Randoms_m18_p,0.0,1552,0
+wr_tier_LC_m18_p,0.0,1553,0
+wr_tier_LEYENDAS Z-A OU_m18_p,0.0,1554,0
+wr_tier_METRONOMO_m18_p,0.0,1555,0
+wr_tier_MONOTYPE RANDOM BATTLE_m18_p,0.0,1556,0
+wr_tier_MultiRandomBattle_m18_p,0.0,1557,0
+wr_tier_NAT DEX_m18_p,0.0,1558,0
+wr_tier_NAT DEX DOBLES_m18_p,0.0,1559,0
+wr_tier_NAT DEX DUBERS_m18_p,0.0,1560,0
+wr_tier_NAT DEX MONOTYPE_m18_p,0.0,1561,0
+wr_tier_NAT DEX UBERS_m18_p,0.0,1562,0
+wr_tier_NAT DEX UBERS UU_m18_p,0.0,1563,0
+wr_tier_ORRE COLOSSEUM_m18_p,0.0,1564,0
+wr_tier_DUU_m7_g,0.0,1565,0
+wr_tier_RANDBATS CHAMPIONS_m18_p,0.0,1566,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m18_p,0.0,1567,0
+wr_tier_RANDOM DOUBLES_m18_p,0.0,1568,0
+wr_tier_Free For all_m7_g,0.0,1569,0
+wr_tier_STADIUM OU GEN 1_m18_p,0.0,1570,0
+wr_tier_STADIUM OU GEN 2_m18_p,0.0,1571,0
+wr_tier_TRADEMARKED_m18_p,0.0,1572,0
+wr_tier_UBERS_m18_p,0.0,1573,0
+wr_tier_VGC_m18_p,0.0,1574,0
+wr_tier_VGC 2010_m18_p,0.0,1575,0
+wr_tier_VGC 2013_m18_p,0.0,1576,0
+wr_tier_VGC 2014_m18_p,0.0,1577,0
+wr_rep_1_m18_p,0.0,1578,0
+wr_tier_Free For all Randoms_m7_g,0.0,1579,0
+wr_rep_3_m18_p,0.0,1580,0
+wr_rep_4_m18_p,0.0,1581,0
+wr_rep_5_m18_p,0.0,1582,0
+n_batallas_m24_p,0.0,1583,0
+wr_tier_LC_m7_g,0.0,1584,0
+wr_tier_LEYENDAS Z-A OU_m7_g,0.0,1585,0
+fmt_singles_sum_m24_p,0.0,1586,0
+wr_tier_METRONOMO_m7_g,0.0,1587,0
+wr_tier_MONOTYPE RANDOM BATTLE_m7_g,0.0,1588,0
+fmt_dobles_mean_m24_p,0.0,1589,0
+wr_tier_MultiRandomBattle_m7_g,0.0,1590,0
+wr_tier_NAT DEX DOBLES_m7_g,0.0,1591,0
+wr_tier_NAT DEX DUBERS_m7_g,0.0,1592,0
+wr_tier_NAT DEX MONOTYPE_m7_g,0.0,1593,0
+cat_torneo_sum_m24_p,0.0,1594,0
+wr_tier_NAT DEX UBERS_m7_g,0.0,1595,0
+cat_ascenso_sum_m24_p,0.0,1596,0
+cat_ascenso_mean_m24_p,0.0,1597,0
+wr_tier_NAT DEX UBERS UU_m7_g,0.0,1598,0
+wr_tier_ORRE COLOSSEUM_m7_g,0.0,1599,0
+wr_tier_RANDBATS CHAMPIONS_m7_g,0.0,1600,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m7_g,0.0,1601,0
+wr_tier_RANDOM DOUBLES_m7_g,0.0,1602,0
+fase_grupos_mean_m24_p,0.0,1603,0
+fase_jornadas_sum_m24_p,0.0,1604,0
+fase_jornadas_mean_m24_p,0.0,1605,0
+fase_rondas_sum_m24_p,0.0,1606,0
+fase_rondas_mean_m24_p,0.0,1607,0
+pokes_sob_sum_m24_p,0.0,1608,0
+wr_tier_STADIUM OU GEN 1_m7_g,0.0,1609,0
+wr_tier_STADIUM OU GEN 2_m7_g,0.0,1610,0
+pokes_venc_mean_m24_p,0.0,1611,0
+participo_liga_sum_m24_p,0.0,1612,0
+participo_liga_mean_m24_p,0.0,1613,0
+wr_tier_TRADEMARKED_m7_g,0.0,1614,0
+rep_actual_mean_m24_p,0.0,1615,0
+liga_pms_sum_m24_p,0.0,1616,0
+liga_pms_mean_m24_p,0.0,1617,0
+liga_pss_sum_m24_p,0.0,1618,0
+liga_pss_mean_m24_p,0.0,1619,0
+liga_pes_sum_m24_p,0.0,1620,0
+liga_pes_mean_m24_p,0.0,1621,0
+wr_tier_VGC 2010_m7_g,0.0,1622,0
+wr_tier_VGC 2013_m7_g,0.0,1623,0
+liga_pls_sum_m24_p,0.0,1624,0
+liga_pls_mean_m24_p,0.0,1625,0
+wr_tier_BABY RANDOM SINGLES_m24_p,0.0,1626,0
+wr_tier_BSS_m24_p,0.0,1627,0
+wr_tier_BSS CHAMPIONS_m24_p,0.0,1628,0
+wr_tier_CHAMPIONS_m24_p,0.0,1629,0
+wr_tier_CHAMPIONS OU_m24_p,0.0,1630,0
+wr_tier_DOBLES LC_m24_p,0.0,1631,0
+wr_tier_VGC 2014_m7_g,0.0,1632,0
+wr_rep_2_m7_g,0.0,1633,0
+wr_tier_DUU_m24_p,0.0,1634,0
+wr_tier_Free For all_m24_p,0.0,1635,0
+wr_tier_Free For all Randoms_m24_p,0.0,1636,0
+wr_tier_LC_m24_p,0.0,1637,0
+wr_tier_LEYENDAS Z-A OU_m24_p,0.0,1638,0
+wr_tier_METRONOMO_m24_p,0.0,1639,0
+wr_tier_MONOTYPE RANDOM BATTLE_m24_p,0.0,1640,0
+wr_tier_MultiRandomBattle_m24_p,0.0,1641,0
+wr_tier_NAT DEX_m24_p,0.0,1642,0
+wr_tier_NAT DEX DOBLES_m24_p,0.0,1643,0
+wr_tier_NAT DEX DUBERS_m24_p,0.0,1644,0
+wr_tier_NAT DEX MONOTYPE_m24_p,0.0,1645,0
+wr_tier_NAT DEX UBERS_m24_p,0.0,1646,0
+wr_tier_NAT DEX UBERS UU_m24_p,0.0,1647,0
+wr_tier_ORRE COLOSSEUM_m24_p,0.0,1648,0
+wr_tier_OU_m24_p,0.0,1649,0
+wr_tier_RANDBATS CHAMPIONS_m24_p,0.0,1650,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m24_p,0.0,1651,0
+wr_tier_RANDOM DOUBLES_m24_p,0.0,1652,0
+wr_rep_3_m7_g,0.0,1653,0
+wr_tier_STADIUM OU GEN 1_m24_p,0.0,1654,0
+wr_tier_STADIUM OU GEN 2_m24_p,0.0,1655,0
+wr_tier_TRADEMARKED_m24_p,0.0,1656,0
+wr_tier_UBERS_m24_p,0.0,1657,0
+wr_tier_VGC_m24_p,0.0,1658,0
+wr_tier_VGC 2010_m24_p,0.0,1659,0
+wr_tier_VGC 2013_m24_p,0.0,1660,0
+wr_tier_VGC 2014_m24_p,0.0,1661,0
+wr_rep_1_m24_p,0.0,1662,0
+wr_rep_2_m24_p,0.0,1663,0
+wr_rep_4_m7_g,0.0,1664,0
+wr_rep_4_m24_p,0.0,1665,0
+wr_rep_5_m24_p,0.0,1666,0
+n_batallas_m36_p,0.0,1667,0
+wr_rep_5_m7_g,0.0,1668,0
+n_batallas_m9_g,0.0,1669,0
+fmt_singles_sum_m36_p,0.0,1670,0
+fmt_singles_mean_m36_p,0.0,1671,0
+meses_activo_m9_g,0.0,1672,0
+fmt_singles_sum_m9_g,0.0,1673,0
+fmt_vgc_sum_m36_p,0.0,1674,0
+fmt_dobles_sum_m9_g,0.0,1675,0
+cat_liga_sum_m36_p,0.0,1676,0
+fmt_vgc_sum_m9_g,0.0,1677,0
+cat_torneo_sum_m36_p,0.0,1678,0
+fmt_vgc_mean_m9_g,0.0,1679,0
+cat_ascenso_sum_m36_p,0.0,1680,0
+cat_liga_mean_m9_g,0.0,1681,0
+cat_cypher_sum_m36_p,0.0,1682,0
+cat_ascenso_sum_m9_g,0.0,1683,0
+cat_ascenso_mean_m9_g,0.0,1684,0
+fase_elim_mean_m36_p,0.0,1685,0
+fase_grupos_sum_m36_p,0.0,1686,0
+cat_cypher_sum_m9_g,0.0,1687,0
+fase_jornadas_sum_m36_p,0.0,1688,0
+fase_jornadas_mean_m36_p,0.0,1689,0
+fase_rondas_sum_m36_p,0.0,1690,0
+fase_rondas_mean_m36_p,0.0,1691,0
+cat_cypher_mean_m9_g,0.0,1692,0
+fase_elim_sum_m9_g,0.0,1693,0
+fase_grupos_sum_m9_g,0.0,1694,0
+fase_jornadas_sum_m9_g,0.0,1695,0
+participo_liga_sum_m36_p,0.0,1696,0
+participo_liga_mean_m36_p,0.0,1697,0
+fase_jornadas_mean_m9_g,0.0,1698,0
+pokes_venc_sum_m9_g,0.0,1699,0
+participo_liga_sum_m9_g,0.0,1700,0
+liga_pms_mean_m36_p,0.0,1701,0
+liga_pss_sum_m36_p,0.0,1702,0
+liga_pss_mean_m36_p,0.0,1703,0
+liga_pes_sum_m36_p,0.0,1704,0
+liga_pes_mean_m36_p,0.0,1705,0
+participo_liga_mean_m9_g,0.0,1706,0
+liga_pms_mean_m9_g,0.0,1707,0
+liga_pls_sum_m36_p,0.0,1708,0
+liga_pls_mean_m36_p,0.0,1709,0
+wr_tier_BABY RANDOM SINGLES_m36_p,0.0,1710,0
+wr_tier_BSS_m36_p,0.0,1711,0
+wr_tier_BSS CHAMPIONS_m36_p,0.0,1712,0
+wr_tier_CHAMPIONS_m36_p,0.0,1713,0
+wr_tier_CHAMPIONS OU_m36_p,0.0,1714,0
+wr_tier_DOBLES LC_m36_p,0.0,1715,0
+liga_pes_mean_m9_g,0.0,1716,0
+liga_pjs_sum_m9_g,0.0,1717,0
+wr_tier_DUU_m36_p,0.0,1718,0
+wr_tier_Free For all_m36_p,0.0,1719,0
+wr_tier_Free For all Randoms_m36_p,0.0,1720,0
+wr_tier_LC_m36_p,0.0,1721,0
+wr_tier_LEYENDAS Z-A OU_m36_p,0.0,1722,0
+wr_tier_METRONOMO_m36_p,0.0,1723,0
+wr_tier_MONOTYPE RANDOM BATTLE_m36_p,0.0,1724,0
+wr_tier_MultiRandomBattle_m36_p,0.0,1725,0
+wr_tier_NAT DEX_m36_p,0.0,1726,0
+liga_pjs_mean_m9_g,0.0,1727,0
+wr_tier_NAT DEX DUBERS_m36_p,0.0,1728,0
+wr_tier_NAT DEX MONOTYPE_m36_p,0.0,1729,0
+wr_tier_NAT DEX UBERS_m36_p,0.0,1730,0
+wr_tier_NAT DEX UBERS UU_m36_p,0.0,1731,0
+wr_tier_ORRE COLOSSEUM_m36_p,0.0,1732,0
+wr_tier_OU_m36_p,0.0,1733,0
+wr_tier_RANDBATS CHAMPIONS_m36_p,0.0,1734,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m36_p,0.0,1735,0
+wr_tier_RANDOM DOUBLES_m36_p,0.0,1736,0
+liga_pls_sum_m9_g,0.0,1737,0
+wr_tier_STADIUM OU GEN 1_m36_p,0.0,1738,0
+wr_tier_STADIUM OU GEN 2_m36_p,0.0,1739,0
+wr_tier_TRADEMARKED_m36_p,0.0,1740,0
+liga_pls_mean_m9_g,0.0,1741,0
+wr_tier_BABY RANDOM SINGLES_m9_g,0.0,1742,0
+wr_tier_VGC 2010_m36_p,0.0,1743,0
+wr_tier_VGC 2013_m36_p,0.0,1744,0
+wr_tier_VGC 2014_m36_p,0.0,1745,0
+wr_tier_BSS_m9_g,0.0,1746,0
+wr_tier_BSS CHAMPIONS_m9_g,0.0,1747,0
+wr_rep_3_m36_p,0.0,1748,0
+wr_tier_CHAMPIONS_m9_g,0.0,1749,0
+wr_tier_CHAMPIONS OU_m9_g,0.0,1750,0
+wr_tier_DOBLES LC_m9_g,0.0,1751,0
+wr_diff_m1_vs_m3_p,0.0,1752,0
+wr_tier_DUBERS_m9_g,0.0,1753,0
+wr_tier_DUU_m9_g,0.0,1754,0
+ma_ratio_m1_vs_m3_p,0.0,1755,0
+wr_tier_Free For all_m9_g,0.0,1756,0
+wr_tier_Free For all Randoms_m9_g,0.0,1757,0
+wr_tier_LC_m9_g,0.0,1758,0
+wr_tier_LEYENDAS Z-A OU_m9_g,0.0,1759,0
+rep_actual_sum_m1_g,0.0,1760,0
+rep_actual_mean_m1_g,0.0,1761,0
+liga_pms_sum_m1_g,0.0,1762,0
+liga_pms_mean_m1_g,0.0,1763,0
+liga_pss_sum_m1_g,0.0,1764,0
+liga_pss_mean_m1_g,0.0,1765,0
+liga_pes_sum_m1_g,0.0,1766,0
+cat_torneo_sum_m1_g,0.0,1767,0
+liga_pjs_sum_m1_g,0.0,1768,0
+liga_pjs_mean_m1_g,0.0,1769,0
+liga_pls_sum_m1_g,0.0,1770,0
+liga_pls_mean_m1_g,0.0,1771,0
+wr_tier_BABY RANDOM SINGLES_m1_g,0.0,1772,0
+wr_tier_METRONOMO_m9_g,0.0,1773,0
+wr_tier_BSS CHAMPIONS_m1_g,0.0,1774,0
+wr_tier_CHAMPIONS_m1_g,0.0,1775,0
+wr_tier_CHAMPIONS OU_m1_g,0.0,1776,0
+wr_tier_DOBLES LC_m1_g,0.0,1777,0
+wr_tier_DOU_m1_g,0.0,1778,0
+wr_tier_DUBERS_m1_g,0.0,1779,0
+wr_tier_DUU_m1_g,0.0,1780,0
+wr_tier_Free For all_m1_g,0.0,1781,0
+wr_tier_Free For all Randoms_m1_g,0.0,1782,0
+wr_tier_LC_m1_g,0.0,1783,0
+wr_tier_LEYENDAS Z-A OU_m1_g,0.0,1784,0
+wr_tier_METRONOMO_m1_g,0.0,1785,0
+wr_tier_MONOTYPE RANDOM BATTLE_m1_g,0.0,1786,0
+wr_tier_MultiRandomBattle_m1_g,0.0,1787,0
+wr_tier_MONOTYPE RANDOM BATTLE_m9_g,0.0,1788,0
+wr_tier_NAT DEX DOBLES_m1_g,0.0,1789,0
+wr_tier_MultiRandomBattle_m9_g,0.0,1790,0
+cat_ascenso_mean_m1_g,0.0,1791,0
+wr_tier_NAT DEX_m9_g,0.0,1792,0
+wr_tier_NAT DEX DUBERS_m9_g,0.0,1793,0
+wr_tier_NAT DEX MONOTYPE_m9_g,0.0,1794,0
+nb_ratio_m3_vs_m12_p,0.0,1795,0
+nb_diff_m3_vs_m12_p,0.0,1796,0
+wr_tier_NAT DEX UBERS_m9_g,0.0,1797,0
+wr_tier_NAT DEX UBERS UU_m9_g,0.0,1798,0
+cat_ascenso_sum_m1_g,0.0,1799,0
+wr_tier_ORRE COLOSSEUM_m9_g,0.0,1800,0
+nb_diff_m5_vs_m12_p,0.0,1801,0
+wr_tier_OU_m9_g,0.0,1802,0
+wr_tier_RANDBATS CHAMPIONS_m9_g,0.0,1803,0
+wr_tier_RANDOM DOBLES CHAMPIONS_m9_g,0.0,1804,0
+nb_ratio_m1_vs_m12_p,0.0,1805,0
+nb_diff_m1_vs_m12_p,0.0,1806,0
+ma_ratio_m1_vs_m12_p,0.0,1807,0
+wr_tier_RANDOM DOUBLES_m9_g,0.0,1808,0
+wr_tier_STADIUM OU GEN 1_m9_g,0.0,1809,0
+wr_tier_STADIUM OU GEN 2_m9_g,0.0,1810,0
+wr_tier_TRADEMARKED_m9_g,0.0,1811,0
+wr_tier_UBERS_m9_g,0.0,1812,0
+wr_tier_VGC_m9_g,0.0,1813,0
+wr_tier_VGC 2010_m9_g,0.0,1814,0
+wr_tier_VGC 2013_m9_g,0.0,1815,0
+wr_tier_VGC 2014_m9_g,0.0,1816,0
+ma_ratio_m24_vs_m36_p,0.0,1817,0
+wr_rep_2_m9_g,0.0,1818,0
+wr_rep_3_m9_g,0.0,1819,0
+wr_rep_4_m9_g,0.0,1820,0
+nb_diff_m1_vs_m36_p,0.0,1821,0
+wr_rep_5_m9_g,0.0,1822,0
+cat_cypher_mean_m1_g,0.0,1823,0
