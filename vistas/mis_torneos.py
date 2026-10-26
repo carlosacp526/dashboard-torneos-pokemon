@@ -613,7 +613,7 @@ def _sec_participantes(torneo, parts):
         ya = {p["nombre"].lower() for p in parts}
         disp = [j for j in _directorio() if j.lower() not in ya]
         NUEVO = "🆕 Soy nuevo (no estoy en la lista)"
-        eleg = st.selectbox("Elegí tu nombre", [""] + disp + [NUEVO], key=f"insc_sel_{torneo['id']}")
+        eleg = st.selectbox("Elige tu nombre", [""] + disp + [NUEVO], key=f"insc_sel_{torneo['id']}")
         nombre = eleg
         if eleg == NUEVO:
             nombre = st.text_input("Tu nombre de jugador", max_chars=40, key=f"insc_new_{torneo['id']}")
@@ -768,7 +768,7 @@ def _form_resultado(torneo, matches, m, nombres, cfg, modo):
     n1, n2 = _nm(nombres, m["p1"]), _nm(nombres, m["p2"])
     s1 = c2.number_input(n1, min_value=0, value=int(m["puntaje1"] or 0), step=1, key=f"s1_{key}")
     s2 = c3.number_input(n2, min_value=0, value=int(m["puntaje2"] or 0), step=1, key=f"s2_{key}")
-    c1.caption(f"Serie al mejor de {bo}" if bo else "Ingresá los juegos/sets ganados por cada jugador.")
+    c1.caption(f"Serie al mejor de {bo}" if bo else "Ingresa los juegos/sets ganados por cada jugador.")
     n_bat = int(bo or 1)                     # una fila de puntos por batalla de la serie
     prev = m["detalle"].get("juegos") or []
     juegos = []
@@ -1136,7 +1136,7 @@ def _crear():
             st.error("Poné un nombre.")
             return
         if not tier or not fbatalla:
-            st.error("Elegí el Tier y el Formato (se usan para unir el torneo al puntaje del Mundial).")
+            st.error("Elige el Tier y el Formato (se usan para unir el torneo al puntaje del Mundial).")
             return
         t = DB.crear_torneo(nombre, formato, cfg, desc, f"{tier} · {fbatalla}", privado, inicio)
         st.query_params["torneo"] = t["slug"]

@@ -11,10 +11,23 @@ LOGOS_LIGAS = {
     "PLS": "logos_ligas/logo_pls.png",
 }
 
+def _unificar_nombres(df):
+    """Un mismo jugador escrito distinto (p. ej. 'Elin Beacil' y 'Elin beacil') se contaba como dos:
+    se deja en todo el historial la grafía más usada de cada nombre."""
+    cols = [c for c in ("player1", "player2", "winner") if c in df.columns]
+    nombres = pd.concat([df[c] for c in cols]).dropna().astype(str)
+    clave = nombres.str.strip().str.lower()
+    canon = nombres.groupby(clave).agg(lambda s: s.value_counts().idxmax())
+    for c in cols:
+        col = df[c]
+        df[c] = col.astype(str).str.strip().str.lower().map(canon).where(col.notna(), col)
+    return df
+
+
 @st.cache_data(ttl=3600)
 def _leer_csv(mtime):
     # mtime solo sirve de clave de caché: si el CSV cambia (nuevo deploy), se vuelve a leer sin reboot.
-    return pd.read_csv("archivo_preuba1.csv", sep=";")
+    return _unificar_nombres(pd.read_csv("archivo_preuba1.csv", sep=";"))
 
 def load_data():
     try:
@@ -180,7 +193,7 @@ def score_final(data):
     return d
 
 def asignar_zona(rank, total, lt):
-    # PEST3 y PSST6 no estaban listadas — se agregan acá siguiendo el mismo formato
+    # PEST3 y PSST6 no estaban listadas — se agregan aquí siguiendo el mismo formato
     # que la temporada anterior de su propia liga (PEST1/PEST2 y PSST3/PSST4/PSST5
     # respectivamente), a falta de que se haya definido explícitamente otra regla.
     if lt in ('PEST1','PEST2','PEST3','PSST3','PSST4','PSST5','PSST6'):

@@ -219,7 +219,7 @@ def _canon_id(nombre: str) -> str:
 # Nombres compactos que el separador genérico (espacio antes de cada mayúscula)
 # no puede reconstruir bien porque el nombre real lleva guión, apóstrofe o una
 # preposición en minúscula. Cubre los casos más comunes en VGC/doubles; lo que
-# no esté acá igual queda legible, solo sin el guión/apóstrofe exacto.
+# no esté aquí igual queda legible, solo sin el guión/apóstrofe exacto.
 NOMBRES_ESPECIALES = {
     "uturn": "U-turn", "xscissor": "X-Scissor", "willowisp": "Will-O-Wisp",
     "softboiled": "Soft-Boiled", "selfdestruct": "Self-Destruct",
@@ -799,7 +799,7 @@ def _construir_alias_showdown(df_raw: pd.DataFrame, cache_df: pd.DataFrame = Non
         # el formato viene mal cargado en el CSV pero el replay sí es FFA).
         # -- hay UN ganador pero VARIOS perdedores, y no hay forma de saber
         # cuál perdedor es cuál solo con esta fila. Ya se ignora FFA para
-        # ko_causados por la misma razón (ver _extraer_detalle_replay); acá
+        # ko_causados por la misma razón (ver _extraer_detalle_replay); aquí
         # también hay que ignorarlo o se termina asignando un perdedor al
         # azar (fue exactamente el bug que le puso "roy kasoy" de alias a
         # alguien que nunca jugó contra roy kasoy en esa partida).

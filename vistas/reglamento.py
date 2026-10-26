@@ -509,7 +509,7 @@ def show():
         st.write("Al registrar tu número de WhatsApp para participar en Poketubi, aceptas lo siguiente:")
 
         _step(1, "Mensajes automatizados",
-              "Vas a recibir recordatorios automáticos por WhatsApp sobre tus batallas pendientes "
+              "Recibirás recordatorios automáticos por WhatsApp sobre tus batallas pendientes "
               "(rival, fecha límite, formato). Este es el medio oficial de aviso de la liga.")
         _step(2, "Tu número se comparte con tu rival de turno",
               "En cada recordatorio se incluye el número de WhatsApp del rival que te toca enfrentar "
@@ -518,7 +518,7 @@ def show():
               "comparte con nadie fuera de tus rivales de turno ni se usa con fines distintos a la "
               "coordinación de partidas.")
         _step(3, "Cómo optar por no participar",
-              "Si prefieres no recibir estos mensajes ni compartir tu número, avisa al staff: podés "
+              "Si prefieres no recibir estos mensajes ni compartir tu número, avisa al staff: puedes "
               "coordinar tus batallas por otro medio, pero no recibirás los recordatorios "
               "automáticos y eres responsable de estar al tanto de tus fechas límite igual.")
 

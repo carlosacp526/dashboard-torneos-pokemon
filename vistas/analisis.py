@@ -76,7 +76,7 @@ def finales_recientes(df, limite=8):
     Una final Bo3/Bo5 son varias filas y cuenta una sola vez; gana quien tenga más victorias de la serie
     (empate en el máximo = co-campeones, ej. Torneo 61). Los Walk Over no cuentan como juego ni rival.
     Solo torneos: en Ascenso una final es una serie cuyos juegos se juegan en Tiers distintos y el campeón es el
-    primero de su tabla, así que no se anuncia desde acá."""
+    primero de su tabla, así que no se anuncia desde aquí."""
     cols = ['Evento', 'Campeones', 'Fecha']
     if df is None or df.empty or 'round' not in df.columns:
         return pd.DataFrame(columns=cols)
@@ -957,12 +957,12 @@ def show():
 
     st.markdown("---")
     # ── Winrate General por Jugador ──────────────────────────────────
-    # Filtro global de partidas mínimas: se define UNA sola vez acá y se reutiliza
+    # Filtro global de partidas mínimas: se define UNA sola vez aquí y se reutiliza
     # más abajo en "Clasificación por Evento" y "Clasificación por Tiers", en vez
     # de pedirlo por separado en cada sección.
     st.markdown('<div id="winrate-general"></div>', unsafe_allow_html=True)
     st.subheader("Winrate General por Jugador")
-    st.caption("Todo el historial, sin filtrar por evento ni tier. El mínimo de partidas de acá aplica también a las secciones de abajo.")
+    st.caption("Todo el historial, sin filtrar por evento ni tier. El mínimo de partidas de aquí aplica también a las secciones de abajo.")
 
     stats_global = compute_player_score(df)
     max_partidas_global = int(stats_global['Partidas'].max()) if not stats_global.empty else 1

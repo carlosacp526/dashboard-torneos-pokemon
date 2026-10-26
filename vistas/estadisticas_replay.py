@@ -85,7 +85,7 @@ def show():
         if pd.notna(p) and str(p).strip()
     )
     jugador_replay = st.selectbox(
-        "Elegí un jugador", options=jugadores_disponibles, key="sel_jugador_replay_stats"
+        "Elige un jugador", options=jugadores_disponibles, key="sel_jugador_replay_stats"
     )
 
     if jugador_replay and st.button("🔍 Analizar replays de este jugador", key="btn_stats_replay_analisis"):
@@ -117,7 +117,7 @@ def show():
         resumen_replay = None
         st.session_state.pop("_resumen_replay_analisis", None)
         st.session_state.pop("_resumen_replay_analisis_de", None)
-        st.info("Los resultados guardados son de una versión anterior de esta página — volvé a apretar 'Analizar replays' para refrescarlos.")
+        st.info("Los resultados guardados son de una versión anterior de esta página — vuelve a apretar 'Analizar replays' para refrescarlos.")
 
     if resumen_replay is not None and st.session_state.get("_resumen_replay_analisis_de") == jugador_replay:
         if resumen_replay["n_replays"] == 0:

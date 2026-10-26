@@ -423,7 +423,7 @@ def show():
 
     c_search, c_info = st.columns([3, 1])
     with c_search:
-        jugador_sel = st.selectbox("🔍 Elegí un jugador con batallas pendientes", nombres, key="scouting_jugador")
+        jugador_sel = st.selectbox("🔍 Elige un jugador con batallas pendientes", nombres, key="scouting_jugador")
     with c_info:
         st.metric("⏳ Jugadores con pendientes", len(nombres))
 

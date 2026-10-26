@@ -7,7 +7,7 @@ from utils import load_data, normalize_columns, ensure_fields
 _EMOJI = re.compile("[⌀-⏿☀-➿⬀-⯿️‍🀀-🫿]")
 
 def _sin_emoji(txt):
-    """Quita emojis del texto (los datos de GRUPOS los conservan; acá solo se muestran sin ellos)."""
+    """Quita emojis del texto (los datos de GRUPOS los conservan; aquí solo se muestran sin ellos)."""
     return re.sub(r"\s{2,}", " ", _EMOJI.sub("", txt)).strip()
 
 

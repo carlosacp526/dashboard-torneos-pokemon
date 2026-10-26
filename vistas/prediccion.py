@@ -365,9 +365,9 @@ def show():
         st.error("❌ No se encontró el archivo **modelo_prediccion.pkl**")
         st.info("""
 **Para generar el modelo:**
-1. Corré localmente: `python entrenar_modelo.py`
+1. Corre localmente: `python entrenar_modelo.py`
 2. Sube el archivo `modelo_prediccion.pkl` generado al repositorio (misma carpeta que `app.py`)
-3. Hacé redeploy en Streamlit Cloud
+3. Haz redeploy en Streamlit Cloud
         """)
         return
     elif status != "OK":

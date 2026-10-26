@@ -39,7 +39,7 @@ def _next_pow2(n):
 def show():
     st.header("Seeding de Torneo")
     st.caption(
-        "Elegí los participantes de un torneo próximo: se rankean por Elo actual y se ubican en el bracket "
+        "Elige los participantes de un torneo próximo: se rankean por Elo actual y se ubican en el bracket "
         "con seeding estándar para que los favoritos no se crucen hasta las rondas finales, junto con la "
         "probabilidad de cada cruce de primera ronda según el modelo de predicción. Es una sugerencia de "
         "referencia — no reemplaza el sorteo real si el reglamento del torneo lo exige."
@@ -71,7 +71,7 @@ def show():
         tier_sel = st.selectbox("Tier", tiers_disp) if tiers_disp else None
 
     if len(seleccionados) < 2:
-        st.info("Elegí al menos 2 participantes.")
+        st.info("Elige al menos 2 participantes.")
         return
 
     rank_source = data_elo

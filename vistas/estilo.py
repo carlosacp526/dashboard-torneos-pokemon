@@ -387,7 +387,7 @@ Táctica**, que describe *cómo* juega usando los mismos indicadores de la pági
 
 - Solo se calcula para jugadores con al menos **{TACTICA_MIN_REPLAYS} replays analizados** (si no, se
   avisa en vez de mostrar un percentil poco confiable).
-- A diferencia de los 5 ejes de arriba (que usan un valor directo 0-100), acá cada eje es un
+- A diferencia de los 5 ejes de arriba (que usan un valor directo 0-100), aquí cada eje es un
   **percentil** contra el resto de jugadores elegibles: 100 significa "el más alto de toda la
   comunidad", 50 significa "justo en la mediana" — porque estos indicadores no tienen un tope natural
   (no hay un "máximo" de curas por batalla como sí lo hay de Pokémon vivos de 6).

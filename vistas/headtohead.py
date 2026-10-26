@@ -37,7 +37,7 @@ def show():
         jugador_b = st.selectbox("👤 Jugador B", opciones_b, index=0, key="h2h_b")
 
     if jugador_a == jugador_b:
-        st.info("Elegí dos jugadores distintos para comparar.")
+        st.info("Elige dos jugadores distintos para comparar.")
         return
 
     st.markdown("---")

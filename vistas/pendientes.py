@@ -351,7 +351,7 @@ def show():
 **Cómo obtener estos datos:**
 1. Instala Evolution API en tu servidor o usa [evoai.cloud](https://evoai.cloud)
 2. Creá una instancia y escaneá el QR con WhatsApp
-3. Copiá la URL base, el nombre de instancia y la API key
+3. Copia la URL base, el nombre de instancia y la API key
 """)
         col_a, col_b, col_c = st.columns(3)
         with col_a:
@@ -380,7 +380,7 @@ def show():
             inst_test = st.session_state.get('evo_inst', '').strip() or "Poketubi"
             
             if not url_test:
-                st.error("Ingresá la URL base primero.")
+                st.error("Ingresa la URL base primero.")
             else:
                 try:
                     # Endpoint específico que valida la API Key de la instancia
@@ -689,7 +689,7 @@ def show():
             st.markdown("""
 Al registrar tu número de WhatsApp para participar en Poketubi, aceptas lo siguiente:
 
-1. **Mensajes automatizados.** Vas a recibir recordatorios automáticos por WhatsApp sobre tus
+1. **Mensajes automatizados.** Recibirás recordatorios automáticos por WhatsApp sobre tus
    batallas pendientes (rival, fecha límite, formato). Este es el medio oficial de aviso de la liga.
 2. **Tu número se comparte con tu rival de turno.** En cada recordatorio se incluye el número de
    WhatsApp del rival que te toca enfrentar (y al rival se le comparte el tuyo), ya que ambos forman

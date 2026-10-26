@@ -500,7 +500,7 @@ def show():
     # ── Jugador ───────────────────────────────────────────────────────
     with tab_jug:
         elegibles = tabla.sort_values("Score_Xtream", ascending=False)["Jugador"].tolist()
-        sel = st.selectbox("Elegí un jugador", elegibles, key="sx_jugador")
+        sel = st.selectbox("Elige un jugador", elegibles, key="sx_jugador")
         fila = tabla[tabla["Jugador"] == sel].iloc[0]
         pct = float((tabla["Score_Xtream"] < fila["Score_Xtream"]).mean() * 100)
         a1, a2, a3, a4 = st.columns(4)

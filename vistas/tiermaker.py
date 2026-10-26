@@ -513,7 +513,7 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
       btn.disabled = false; btn.textContent = '📷 Exportar PNG';
     }}).catch(() => {{
       btn.disabled = false; btn.textContent = '📷 Exportar PNG';
-      alert('No se pudo exportar la imagen. Probá de nuevo.');
+      alert('No se pudo exportar la imagen. Prueba de nuevo.');
     }});
   }});
 

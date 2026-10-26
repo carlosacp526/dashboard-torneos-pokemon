@@ -195,7 +195,7 @@ def calcular_rachas_maximas(df_raw, anio=None, liga=None):
 def _mostrar_historicas(df_raw):
     st.caption(
         "La **mejor racha ganadora** y la **peor racha perdedora** de cada jugador a lo largo del tiempo: no "
-        "hace falta que sigan vigentes hoy. Podés acotarlas a un año o a una competencia, y la racha se calcula "
+        "hace falta que sigan vigentes hoy. Puedes acotarlas a un año o a una competencia, y la racha se calcula "
         "solo con esas batallas."
     )
     base = ensure_fields(normalize_columns(df_raw.copy()))

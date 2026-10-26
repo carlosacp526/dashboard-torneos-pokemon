@@ -1390,7 +1390,7 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
 - **Supuesto importante (no verificado contra el reglamento real del torneo):** se asume que clasifican los
   {n_clasificados} mejores de la tabla GENERAL combinada (Victorias/Score), y que el organizador siembra con
   el criterio deportivo estándar. Si el torneo real clasifica por grupo (ej. "top 2 de cada llave") o siembra
-  por sorteo en vez de por tabla, el resultado real puede variar del estimado acá.
+  por sorteo en vez de por tabla, el resultado real puede variar del estimado aquí.
 - **Límite conocido (heredado del modelo base):** si un jugador no tiene historial suficiente sus variables
   quedan en 0 y la predicción de ese cruce es casi una moneda al aire.
         """)

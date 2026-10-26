@@ -2,13 +2,13 @@
 vistas/logros_analisis.py
 --------------------------
 Análisis de Logros — vista agregada a nivel COMUNIDAD (no de un jugador
-puntual): evalúa todos los logros de vistas/logros.py (224 hoy) contra todos los
+puntual): evalúa todos los logros de vistas/logros.py (233 hoy) contra todos los
 jugadores del historico y responde preguntas como cuántos jugadores tienen
 logros, qué tan repartido está por categoría/rareza, cuáles son los logros
 más raros/más comunes, y quiénes lideran el ranking de logros y XP.
 
 El cálculo por jugador (evaluar_logros) es el mismo que usa el perfil
-individual — acá simplemente se corre una vez por cada jugador del
+individual — aquí simplemente se corre una vez por cada jugador del
 historico y se cachea el resultado completo (matriz jugador x logro).
 """
 import streamlit as st
@@ -421,8 +421,8 @@ def show():
     # ═══════════════════════ Catálogo completo ═══════════════════════
     with tabs[0]:
         st.markdown(f"### Los {len(LOGROS)} logros, con cuántos jugadores tiene cada uno")
-        st.caption("Tabla completa del catálogo — buscá un logro puntual o filtrá por categoría/"
-                   "rareza para ver exactamente cuántos (y qué %) de los 272 jugadores lo tienen.")
+        st.caption("Tabla completa del catálogo — busca un logro puntual o filtra por categoría/"
+                   f"rareza para ver exactamente cuántos (y qué %) de los {total_jugadores} jugadores lo tienen.")
 
         tabla_todos = logros_df.copy()
         tabla_todos["Jugadores"] = unlock_counts
@@ -655,11 +655,11 @@ def show():
         jugadores_disp = sorted(matriz.index.tolist())
         jugador_sel = st.selectbox(
             "Jugador", [""] + jugadores_disp, index=0, key="logros_detalle_jugador",
-            format_func=lambda x: "— Elegí un jugador —" if x == "" else x,
+            format_func=lambda x: "— Elige un jugador —" if x == "" else x,
         )
 
         if not jugador_sel:
-            st.info("Elegí un jugador arriba para calcular su detalle.")
+            st.info("Elige un jugador arriba para calcular su detalle.")
         else:
             with st.spinner(f"Calculando el detalle de {jugador_sel}..."):
                 df_pl = normalize_columns(df_raw.copy())

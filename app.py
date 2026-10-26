@@ -34,7 +34,7 @@ def _precalentar_scouting():
             from utils import load_data
             from vistas import scouting, logros_analisis, estilo
             # matriz de logros de TODA la comunidad (la usa "Análisis de Logros" y el scouting): ~1 min de
-            # cálculo, cacheada en memoria; calentarla acá evita que el primer visitante espere.
+            # cálculo, cacheada en memoria; calentarla aquí evita que el primer visitante espere.
             logros_analisis.calcular_logros_comunidad(load_data(), logros_version=logros_analisis._version_logros())
         except Exception:
             pass
@@ -131,7 +131,7 @@ pg = st.navigation({
     "Jugadores": [p_jugadores, p_wrapped, p_tcg, p_headtohead],
     "Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
-    # hoy Roleplay; el Torneo 100 se suma acá cuando esté la info.
+    # hoy Roleplay; el Torneo 100 se suma aquí cuando esté la info.
     "Torneos especiales": [p_roleplay, p_mafias],
     "Rankings y calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
     "Organización": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting],

@@ -34,7 +34,7 @@ MOTION_CSS = """
 [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > :nth-child(6) { animation-delay: 350ms; }
 [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > :nth-child(n+7) { animation-delay: 420ms; }
 
-/* Métricas: ya traen su tarjeta (ver cada vista); acá solo se suman la elevación al hover y números tabulares.
+/* Métricas: ya traen su tarjeta (ver cada vista); aquí solo se suman la elevación al hover y números tabulares.
    No tocar padding/tamaño: las etiquetas largas se truncan con "…". */
 [data-testid="stMetric"] {
     transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease;

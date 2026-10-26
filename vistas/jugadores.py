@@ -1081,7 +1081,7 @@ def show():
     if 'selected_player' in st.session_state and st.session_state.selected_player:
         player_query = st.session_state.selected_player
         # Ya se resolvió a UN jugador puntual y real (vino de un botón de sugerencia,
-        # no de texto libre): de acá en más siempre exacto, sin importar el checkbox,
+        # no de texto libre): de aquí en más siempre exacto, sin importar el checkbox,
         # para no mezclar sus stats con las de otro jugador cuyo nombre lo contenga
         # (p.ej. "Mar" quedaría mezclado con "Omarjmata" si siguiera en modo difuso).
         exact_search = True
@@ -1176,7 +1176,7 @@ def show():
                 st.info("No ha participado en ligas")
 
         # Nombre real del evento (Aka_evento) por N_Torneo — "Torneo 11" solo
-        # no alcanza para distinguir uno de otro a simple vista. Se calcula acá
+        # no alcanza para distinguir uno de otro a simple vista. Se calcula aquí
         # afuera (no solo dentro del "if" de la columna Torneos) porque también
         # lo usa el bloque de Campeonatos de Torneo más abajo.
         # N_Torneo NO es una clave unica global -- se reinicia en 1 para cada
@@ -1734,7 +1734,7 @@ def show():
 
 
 
-            except Exception:
+            except Exception as e:
                 st.warning(f"Error calcular_elo: {e}")
                 _data_elo_lg   = pd.DataFrame()
                 _data_filas_lg = pd.DataFrame()
