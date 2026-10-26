@@ -91,6 +91,8 @@ st.session_state["_pages"] = {
     "analisis":   p_analisis,
     "jugadores":  p_jugadores,
     "wrapped":    p_wrapped,
+    "estadisticas_replay": p_estadisticas_replay,
+    "mis_torneos": p_mis_torneos,
     "rankings":   p_rankings,
     "mundial":    p_mundial,
     "replays":    p_replays,

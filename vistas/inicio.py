@@ -30,7 +30,9 @@ GRUPOS = [
             ("estilo", "🎭", "Estilo y Comportamiento",
              ["🎭 Huella de estilo en 5 ejes", "⏰ Ranking de Confiabilidad"]),
             ("logros_analisis", "🧭", "Análisis de Logros",
-             ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🏆 Ranking de jugadores"]),
+             ["📊 Cobertura por categoría y rareza", "🔥 Logros más difíciles/comunes", "🔍 Buscar quién tiene cada logro", "🏆 Ranking de jugadores"]),
+            ("estadisticas_replay", "📼", "Estadísticas de Replay",
+             ["📼 Indicadores de juego por jugador", "🎯 Pokémon, leads y duplas más usados", "⚔️ Rivales y apodos detectados"]),
             ("rachas", "🔥", "Rachas",
              ["🔥 Racha actual de cada jugador (en vivo)", "🧊 Top rachas ganadoras y perdedoras", "📜 Mejores rachas de toda la historia, por año y competencia"]),
             ("score_xtream", "⚡", "Score Xtream",
@@ -43,6 +45,8 @@ GRUPOS = [
         "items": [
             ("jugadores", "👤", "Jugadores y Competencias",
              ["👤 Perfil de Jugador"]),
+            ("wrapped", "🎁", "Wrapped",
+             ["🎁 Tu año como historias para compartir", "📊 Victorias, racha, rivales y Pokémon", "⚡ Elo, logros y percentiles"]),
             ("tcg", "🃏", "Carta TCG",
              ["🃏 Carta estilo trading card", "📸 Foto del jugador", "📊 Stats resumidas"]),
             ("headtohead", "⚔️", "Head-to-Head",
@@ -53,12 +57,16 @@ GRUPOS = [
         "titulo": "🏆 Competencia",
         "color": "#E67E22",
         "items": [
+            ("reglamento", "📜", "Reglamento",
+             ["🎮 Formatos y tiers", "🌎 Mundiales y puntajes", "⏱️ Regla de WO y Cypher"]),
             ("rankings", "🏅", "Histórico",
              ["🏆 Salón de la Fama", "📜 Historial de combates"]),
             ("ligas", "🏆", "Ligas",
              ["📋 Tablas por temporada", "🎯 Resultados por jornada", "🎯 Formatos y enfrentamientos"]),
             ("torneos", "🥊", "Torneos",
              ["🏟️ Tablas de torneos", "🥇 Campeonatos", "📊 Podio y estadísticas"]),
+            ("mis_torneos", "🧩", "Crear Torneos",
+             ["🧩 Llaves, rondas suizas y grupos", "📝 Inscripción abierta", "🛠️ Panel de organizador"]),
             ("cypher", "🎤", "Cypher",
              ["📋 Tabla por fecha", "🏆 Podio de cada fecha", "📊 Victorias y score"]),
             ("ascenso", "⬆️", "Ascenso",
@@ -88,7 +96,7 @@ GRUPOS = [
             ("tiermaker", "🏆", "Tier Maker",
              ["🏆 Tier list de jugadores", "🎯 Ranking visual", "📊 Por temporada/formato"]),
             ("fairplay", "⚖️", "Fair Play",
-             ["📈 Tendencia de Walkovers", "📊 % WO por tipo de evento", "🚫 Ranking de ausencias"]),
+             ["📈 Tendencia mensual de Walkovers", "📊 % WO por Tier, Formato y País", "🚫 Ranking de ausencias"]),
         ],
     },
     {
@@ -119,7 +127,7 @@ CARD_CSS = """
 .nav-card, .stat-card {
     background: rgba(128,128,128,0.07);
     border: 1px solid rgba(128,128,128,0.28);
-    border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 0.6rem; height: 100%;
+    border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 0.6rem; height: 100%; min-height: 9.6rem;
     transition: border-color 160ms ease, background-color 160ms ease;
 }
 .stat-card { padding: 0.85rem 1rem; }
