@@ -185,7 +185,7 @@ def torneos_estancados(df):
     return pd.DataFrame(filas)
 
 
-def replays_repetidos(df):
+def replays_repetidos(df, cache=None):
     j = df[df["Walkover"] >= 0]
     j = j[j["Match_replays"].astype(str).str.startswith("https://")]
     d = j[j.duplicated("Match_replays", keep=False)].copy()
@@ -203,7 +203,15 @@ def replays_repetidos(df):
                  + d["player1"].astype(str) + " vs " + d["player2"].astype(str) + " (fila " + d["Fila Excel"].astype(str) + ")")
     d["También aparece en"] = d.apply(
         lambda r: " | ".join(d.loc[(d["Match_replays"] == r["Match_replays"]) & (d.index != r.name), "_txt"]), axis=1)
-    cols = ["Grupo", "Fila Excel", "N_Torneo", "round", "player1", "player2", "winner", "También aparece en", "Match_replays"]
+    # quién juega de verdad en ese replay (nicks de Showdown), para ver a qué cruce pertenece
+    d["Nicks en el replay"] = ""
+    if cache is not None and not cache.empty:
+        ok = cache[cache["status"] == "ok"].drop_duplicates(["url", "player_id"]).sort_values("player_id")
+        nicks = {u: " vs ".join(f"{n}{' (ganó)' if str(w) == 'True' else ''}" for n, w in zip(x["player_name"], x["win"]))
+                 for u, x in ok.groupby("url")}
+        d["Nicks en el replay"] = d["Match_replays"].map(nicks).fillna("sin datos en el caché")
+    cols = ["Grupo", "Fila Excel", "N_Torneo", "round", "player1", "player2", "winner", "Nicks en el replay",
+            "También aparece en", "Match_replays"]
     return d[cols].sort_values(["Grupo", "Fila Excel"])
 
 
@@ -251,7 +259,7 @@ def correr_controles(df_raw, mtime_cache):
         "Fechas futuras": fechas_futuras(df),
         "Torneos estancados": torneos_estancados(df),
         "Datos incompletos": datos_incompletos(df),
-        "Replays repetidos": replays_repetidos(df),
+        "Replays repetidos": replays_repetidos(df, cache),
         "Replays sin procesar": replays_sin_procesar(df, cache),
         "Nombres con variantes": nombres_con_variantes(),
     }
