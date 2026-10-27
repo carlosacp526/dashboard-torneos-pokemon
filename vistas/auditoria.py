@@ -134,9 +134,9 @@ def replays_sin_procesar(df, cache):
     if f.empty:
         return pd.DataFrame()
     def _evento(r):
-        if r["league"] == "LIGA":                      # las ligas se identifican por temporada (ej. "Liga 5")
+        if r["league"] == "LIGA":                      # código de liga + temporada, como en round ("PMS T5 J5" -> "PMS T5")
             p = str(r["round"]).split(" ")
-            return "Liga " + p[1] if len(p) > 1 else "Liga"
+            return " ".join(p[:2]) if len(p) > 1 else "Liga"
         n = r["N_Torneo"]
         return f"{str(r['league']).title()} {int(n)}" if pd.notna(n) else str(r["league"]).title()
     f["Evento"] = f.apply(_evento, axis=1)
