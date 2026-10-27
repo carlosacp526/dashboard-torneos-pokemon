@@ -25,6 +25,9 @@ def _toid(s):
     return re.sub(r"[^a-z0-9]", "", str(s).lower())
 
 
+MIN_CAIDOS_FIN_NORMAL = 4   # en una batalla que termina con todos los Pokémon caídos, el perdedor tiene al menos 4
+
+
 def es_free_for_all(df):
     """Batallas free for all y multi random (Torneos 40 y 61): varios jugadores por replay y el ganador se define distinto, los controles no aplican."""
     pat = r"free\s*for\s*all|freeforall|multirandom"
@@ -61,6 +64,11 @@ def ganador_contradice_replay(df, cache):
             continue
         g = _toid(r["winner"])
         if g and g not in gano[u] and g in perdio[u]:
+            # un perdedor que no llegó a quedarse sin Pokémon (menos de 4 caídos) se rindió o abandonó: el replay lo da
+            # como perdedor aunque el rival se haya ido, y el organizador pudo darle el ganador al otro. No es un error.
+            caidos = _cds(u, r["winner"])
+            if caidos is not None and caidos < MIN_CAIDOS_FIN_NORMAL:
+                continue
             filas.append({"Fila Excel": idx + 2, "Torneo": r["N_Torneo"], "Ronda": r["round"], "Jugador 1": r["player1"],
                           "Jugador 2": r["player2"], "Ganador en el CSV": r["winner"],
                           "Sob. ganador (CSV)": r.get("pokemons Sob"), "Vencidos por ganador (CSV)": r.get("pokemon vencidos"),
