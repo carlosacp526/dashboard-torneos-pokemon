@@ -170,21 +170,6 @@ def replays_sin_procesar(df, cache):
     return out.sort_values(["Tipo", "_n", "Evento", "_o"]).drop(columns=["_n", "_o"]).reset_index(drop=True)
 
 
-def torneos_estancados(df):
-    """Torneos con batallas pendientes aunque ya terminó un torneo posterior."""
-    t = df[df["league"] == "TORNEO"]
-    pend = t[t["Walkover"] == -1]
-    pend = pend[~pend["player1"].astype(str).str.lower().isin(PLACEHOLDERS) | ~pend["player2"].astype(str).str.lower().isin(PLACEHOLDERS)]
-    terminados = set(t["N_Torneo"].dropna().astype(int)) - set(t[t["Walkover"] == -1]["N_Torneo"].dropna().astype(int))
-    filas = []
-    for nt, g in pend.groupby("N_Torneo"):
-        posteriores = sorted(x for x in terminados if x > nt)
-        if posteriores:
-            filas.append({"Torneo": int(nt), "Batallas pendientes": len(g),
-                          "Ya terminó el torneo": posteriores[0]})
-    return pd.DataFrame(filas)
-
-
 def replays_repetidos(df, cache=None):
     j = df[df["Walkover"] >= 0]
     j = j[j["Match_replays"].astype(str).str.startswith("https://")]
@@ -236,8 +221,6 @@ CONTROLES = [
      "Odds y las llaves muestren al jugador equivocado."),
     ("Fechas futuras", "Alta",
      "Batallas ya jugadas con fecha posterior a hoy. Distorsionan las gráficas por mes, el Elo y las rachas."),
-    ("Torneos estancados", "Media",
-     "Torneos con batallas pendientes aunque ya terminó uno posterior: quizá quedaron abandonados o falta cargar resultados."),
     ("Datos incompletos", "Media", "Batallas jugadas sin ganador, fecha, Tier o Formato."),
     ("Replays repetidos", "Media", "El mismo link de replay usado en batallas distintas (otro cruce, ronda o torneo): uno de los dos links está mal."),
     ("Replays sin procesar", "Baja",
@@ -257,7 +240,6 @@ def correr_controles(df_raw, mtime_cache):
         "Ganador contradice al replay": ganador_contradice_replay(df, cache),
         "Avanza sin haber ganado": avanza_sin_ganar(df),
         "Fechas futuras": fechas_futuras(df),
-        "Torneos estancados": torneos_estancados(df),
         "Datos incompletos": datos_incompletos(df),
         "Replays repetidos": replays_repetidos(df, cache),
         "Replays sin procesar": replays_sin_procesar(df, cache),
