@@ -39,7 +39,8 @@ def ganador_contradice_replay(df, cache):
     cds = {(u, t): k for u, t, k in zip(ok["url"], ok["t"], ok["ko_propios"])}   # Pokémon propios caídos en el replay
     def _cds(u, jug):
         k = cds.get((u, _toid(jug)))
-        return "" if k is None or pd.isna(k) else int(k)
+        k = pd.to_numeric(k, errors="coerce")   # en el caché puede venir vacío o como texto
+        return None if pd.isna(k) else int(k)
     gano = {u: set(x.loc[x["win"].astype(str) == "True", "t"]) for u, x in ok.groupby("url")}
     perdio = {u: set(x.loc[x["win"].astype(str) == "False", "t"]) for u, x in ok.groupby("url")}
     j = df[(df["Walkover"] == 0) & df["Match_replays"].astype(str).str.startswith("https://")]
