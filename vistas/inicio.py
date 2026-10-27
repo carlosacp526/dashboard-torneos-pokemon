@@ -27,6 +27,8 @@ GRUPOS = [
              ["📊 Ladder de Ratio de uso"]),
             ("meta", "📈", "Evolución del Meta",
              ["📈 Uso de Pokémon por tier a lo largo del tiempo", "🔼 Quién sube y quién baja", "🗓️ Por mes o por trimestre"]),
+            ("ficha_pokemon", "🔎", "Ficha de Pokémon",
+             ["🔎 Historia de un Pokémon en la comunidad", "📈 Uso, victorias y quién lo usa", "⚔️ Contra qué rinde mejor y peor", "🎒 Movimientos, objetos y Tera"]),
             ("social", "🕸️", "Analítica Social",
              ["🕸️ Grafo de rivalidades", "👑 Némesis y presas favoritas", "😲 Índice de Sorpresas"]),
             ("estilo", "🎭", "Estilo y Comportamiento",
@@ -61,6 +63,8 @@ GRUPOS = [
         "titulo": "🏆 Competencia",
         "color": "#E67E22",
         "items": [
+            ("en_curso", "🟢", "Torneos en Curso",
+             ["🟢 Torneos y ligas con batallas pendientes", "📊 Avance y fase actual", "⚔️ Cruces para jugar y quién sigue"]),
             ("reglamento", "📜", "Reglamento",
              ["🎮 Formatos y tiers", "🌎 Mundiales y puntajes", "⏱️ Regla de WO y Cypher"]),
             ("rankings", "🏅", "Histórico",
@@ -119,6 +123,8 @@ GRUPOS = [
              ["🎯 Qué Tier usar en la próxima jornada", "🏆 Qué Tier usar en el próximo torneo", "📊 Participación, balance y variedad"]),
             ("scouting", "📝", "Reporte de Scouting",
              ["📝 Resumen redactado por jugador activo", "🎭 Estilo, títulos y racha", "⚔️ Némesis y presa favorita"]),
+            ("auditoria", "🧪", "Auditoría de Datos",
+             ["🔒 Con la clave de organizador", "🧪 Ganadores que contradicen su replay", "📅 Fechas, replays y nombres a corregir"]),
         ],
     },
 ]

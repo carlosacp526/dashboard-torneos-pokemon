@@ -59,6 +59,9 @@ p_estilo = _pagina("estilo", "Estilo y Comportamiento", "theater_comedy", "estil
 p_mundial = _pagina("mundial_info", "Mundial Pokémon", "public", "mundial")
 p_replays = _pagina("replays", "Uso de Pokémon", "sports_esports", "replays")
 p_meta = _pagina("meta", "Evolución del Meta", "show_chart", "meta")
+p_ficha_pokemon = _pagina("ficha_pokemon", "Ficha de Pokémon", "search", "ficha-pokemon")
+p_en_curso = _pagina("en_curso", "Torneos en Curso", "pending_actions", "en-curso")
+p_auditoria = _pagina("auditoria", "Auditoría de Datos", "fact_check", "auditoria")
 p_inicio = _pagina("inicio", "Inicio", "home", "inicio", default=True)
 p_analisis = _pagina("analisis", "Análisis General", "analytics", "analisis")
 p_jugadores = _pagina("jugadores", "Jugadores", "person", "jugadores")
@@ -94,6 +97,9 @@ st.session_state["_pages"] = {
     "jugadores":  p_jugadores,
     "wrapped":    p_wrapped,
     "meta":       p_meta,
+    "ficha_pokemon": p_ficha_pokemon,
+    "en_curso":   p_en_curso,
+    "auditoria":  p_auditoria,
     "perfiles":   p_perfiles,
     "estadisticas_replay": p_estadisticas_replay,
     "mis_torneos": p_mis_torneos,
@@ -133,14 +139,14 @@ st.session_state["_pages"] = {
 # vez de tener 19 páginas sueltas bajo un único "Secciones".
 pg = st.navigation({
     "Inicio": [p_inicio],
-    "Análisis": [p_analisis, p_mundial, p_replays, p_meta, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
+    "Análisis": [p_analisis, p_mundial, p_replays, p_meta, p_ficha_pokemon, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
     "Jugadores": [p_jugadores, p_perfiles, p_wrapped, p_tcg, p_headtohead],
-    "Competencia": [p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
+    "Competencia": [p_en_curso, p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
     # hoy Roleplay; el Torneo 100 se suma aquí cuando esté la info.
     "Torneos especiales": [p_roleplay, p_mafias],
     "Rankings y calidad": [p_elo, p_calidad, p_tiermaker, p_fairplay],
-    "Organización": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting],
+    "Organización": [p_prediccion, p_pendientes, p_retencion, p_playoff_odds, p_tier_recomendador, p_scouting, p_auditoria],
 })
 
 # Menú lateral: una sola paleta sobria. Las secciones se distinguen por su encabezado en

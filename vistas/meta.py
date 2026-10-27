@@ -29,10 +29,12 @@ def _mtime_cache():
 
 
 @st.cache_data(ttl=3600, show_spinner="Armando el meta a partir de los replays…")
-def uso_mensual(df_raw, mtime_cache):
-    """(usos, totales): usos = [Mes, Tier, Pokémon, Equipos]; totales = [Mes, Tier, Total] (equipos por mes y tier)."""
+def equipos_base(df_raw, mtime_cache):
+    """Una fila por (replay, jugador, Pokémon) con fecha y tier de la batalla y el resultado del equipo (`gano`).
+    Es la base común de Evolución del meta y de la Ficha de Pokémon."""
     cache = replays._load_cache()
-    cache = cache[cache["status"] == "ok"][["url", "player_id", "pokemon"]]
+    cache = cache[cache["status"] == "ok"][["url", "player_id", "player_name", "pokemon", "moves", "abilities",
+                                            "items", "tera", "win"]]
     cache = cache[cache["pokemon"].astype(str).str.strip() != ""]
 
     df = df_raw.copy()
@@ -47,10 +49,17 @@ def uso_mensual(df_raw, mtime_cache):
 
     m = cache.merge(part[["Match_replays", "date", "Tier"]], left_on="url", right_on="Match_replays", how="inner")
     m["Mes"] = m["date"].dt.to_period("M").dt.to_timestamp()
-    m = m.drop_duplicates(["url", "player_id", "pokemon"])
-    usos = (m.groupby(["Mes", "Tier", "pokemon"]).size().reset_index(name="Equipos")
-              .rename(columns={"pokemon": "Pokémon"}))
-    totales = (m.drop_duplicates(["url", "player_id"]).groupby(["Mes", "Tier"]).size().reset_index(name="Total"))
+    m["gano"] = m["win"].astype(str) == "True"
+    m = m.drop_duplicates(["url", "player_id", "pokemon"]).rename(columns={"pokemon": "Pokémon"})
+    return m.drop(columns=["Match_replays", "win"]).reset_index(drop=True)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def uso_mensual(df_raw, mtime_cache):
+    """(usos, totales): usos = [Mes, Tier, Pokémon, Equipos]; totales = [Mes, Tier, Total] (equipos por mes y tier)."""
+    m = equipos_base(df_raw, mtime_cache)
+    usos = m.groupby(["Mes", "Tier", "Pokémon"]).size().reset_index(name="Equipos")
+    totales = m.drop_duplicates(["url", "player_id"]).groupby(["Mes", "Tier"]).size().reset_index(name="Total")
     return usos, totales
 
 
