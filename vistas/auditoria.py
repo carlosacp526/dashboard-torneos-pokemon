@@ -87,8 +87,12 @@ def avanza_sin_ganar(df):
                     # llave de doble eliminación (ganadores/perdedores), no un error.
                     if ganador0 in en_siguiente:
                         continue
+                    s_ = previas[((previas["player1"].astype(str).str.strip() == jug) & (previas["player2"].astype(str).str.strip() == ganador0))
+                                 | ((previas["player1"].astype(str).str.strip() == ganador0) & (previas["player2"].astype(str).str.strip() == jug))]
+                    marcador = f"{int((s_['winner'].astype(str).str.strip() == jug).sum())}-{int((s_['winner'].astype(str).str.strip() == ganador0).sum())}"
                     filas.append({"Fila Excel": i0 + 2, "Torneo": nt, "Ronda": ronda0,
                                   "Perdió según el CSV": jug, "Ganador según el CSV": ganador0,
+                                  "Serie (perdedor-ganador)": marcador,
                                   "Pero juega en": r["round"], "Fila de esa ronda": idx + 2})
     return pd.DataFrame(filas).drop_duplicates(["Fila Excel", "Pero juega en"]) if filas else pd.DataFrame()
 
@@ -172,7 +176,7 @@ CONTROLES = [
      "El ganador del CSV figura como perdedor en el replay de esa batalla. Puede ser un ganador mal escrito, o "
      "un replay de otra partida de la misma serie: revisa el replay antes de corregir."),
     ("Avanza sin haber ganado", "Alta",
-     "Según el CSV un jugador perdió su serie y, sin embargo, aparece en la ronda siguiente mientras que su rival "
+     "Según el CSV un jugador perdió su serie (Bo1, Bo3, Bo5 o Bo7: pierde quien gana menos de la mitad de sus partidas) y, sin embargo, aparece en la ronda siguiente mientras que su rival "
      "(el ganador registrado) desaparece de la llave. Es la señal de un ganador mal registrado: hace que Playoff "
      "Odds y las llaves muestren al jugador equivocado."),
     ("Fechas futuras", "Alta",
