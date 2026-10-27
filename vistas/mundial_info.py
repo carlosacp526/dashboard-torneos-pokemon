@@ -923,7 +923,7 @@ MONOTYPE1_LIGAS = {
         "SINGLES": {
             "Saga": "Participante",       # Jugador1 en SINGLES
             "HallacAs": "Participante",
-            "darkam580": "Top3",
+            
             "Minipapus": "Participante" ,
             "Ake-Izou": "Participante" ,
             "MaskWolf": "Participante"  ,
@@ -940,7 +940,7 @@ MONOTYPE1_LIGAS = {
              "EmperorGambit": "Campeón",
                 "Dino324000": "Participante",
                   "Bamdara": "Participante",
-                  "Mar": "Top3",# y también VGC
+                  "Mar": "Top3","darkam580": "Top3"# y también VGC
         },
     },
 
