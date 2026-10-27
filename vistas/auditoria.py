@@ -141,9 +141,14 @@ def replays_sin_procesar(df, cache):
         return f"{str(r['league']).title()} {int(n)}" if pd.notna(n) else str(r["league"]).title()
     f["Evento"] = f.apply(_evento, axis=1)
     f["Tipo"] = f["league"].astype(str).str.title()
-    out = f.groupby(["Tipo", "Evento"], sort=False).agg(Replays=("Match_replays", "size")).reset_index()
+    # liga: la jornada es la última parte de round ("PMS T5 J5" -> "J5"); torneo: la ronda tal cual
+    f["Jornada / ronda"] = [(" ".join(str(r).split(" ")[2:]) or "—") if l == "LIGA" else str(r)
+                            for l, r in zip(f["league"], f["round"])]
+    f["_o"] = f["round"].apply(get_round_order)
+    out = (f.groupby(["Tipo", "Evento", "Jornada / ronda"], sort=False)
+           .agg(Replays=("Match_replays", "size"), _o=("_o", "min")).reset_index())
     out["_n"] = out["Evento"].str.extract(r"(\d+)$").astype(float)
-    return out.sort_values(["Tipo", "_n"]).drop(columns="_n").reset_index(drop=True)
+    return out.sort_values(["Tipo", "_n", "Evento", "_o"]).drop(columns=["_n", "_o"]).reset_index(drop=True)
 
 
 def torneos_estancados(df):
