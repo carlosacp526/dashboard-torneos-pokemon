@@ -34,8 +34,12 @@ def _fila_excel(df):
 
 def ganador_contradice_replay(df, cache):
     """El ganador del CSV figura como PERDEDOR en el replay de Showdown de esa misma batalla."""
-    ok = cache[cache["status"] == "ok"].drop_duplicates(["url", "player_id"])[["url", "player_name", "win"]]
+    ok = cache[cache["status"] == "ok"].drop_duplicates(["url", "player_id"])[["url", "player_name", "win", "ko_propios"]]
     ok = ok.assign(t=ok["player_name"].map(_toid))
+    cds = {(u, t): k for u, t, k in zip(ok["url"], ok["t"], ok["ko_propios"])}   # Pokémon propios caídos en el replay
+    def _cds(u, jug):
+        k = cds.get((u, _toid(jug)))
+        return "" if k is None or pd.isna(k) else int(k)
     gano = {u: set(x.loc[x["win"].astype(str) == "True", "t"]) for u, x in ok.groupby("url")}
     perdio = {u: set(x.loc[x["win"].astype(str) == "False", "t"]) for u, x in ok.groupby("url")}
     j = df[(df["Walkover"] == 0) & df["Match_replays"].astype(str).str.startswith("https://")]
@@ -47,7 +51,10 @@ def ganador_contradice_replay(df, cache):
         g = _toid(r["winner"])
         if g and g not in gano[u] and g in perdio[u]:
             filas.append({"Fila Excel": idx + 2, "Torneo": r["N_Torneo"], "Ronda": r["round"], "Jugador 1": r["player1"],
-                          "Jugador 2": r["player2"], "Ganador en el CSV": r["winner"], "Replay": u})
+                          "Jugador 2": r["player2"], "Ganador en el CSV": r["winner"],
+                          "Sob. ganador (CSV)": r.get("pokemons Sob"), "Vencidos por ganador (CSV)": r.get("pokemon vencidos"),
+                          "Caídos J1 (replay)": _cds(u, r["player1"]), "Caídos J2 (replay)": _cds(u, r["player2"]),
+                          "Replay": u})
     return pd.DataFrame(filas)
 
 
