@@ -128,13 +128,22 @@ def nombres_con_variantes():
 
 
 def replays_sin_procesar(df, cache):
-    urls = df.loc[df["Match_replays"].astype(str).str.startswith("https://"), ["Match_replays", "N_Torneo", "date"]]
+    urls = df.loc[df["Match_replays"].astype(str).str.startswith("https://"), ["Match_replays", "league", "N_Torneo", "round"]]
     urls = urls.drop_duplicates("Match_replays")
-    vistos = set(cache["url"])
-    f = urls[~urls["Match_replays"].isin(vistos)]
+    f = urls[~urls["Match_replays"].isin(set(cache["url"]))].copy()
     if f.empty:
         return pd.DataFrame()
-    return (f.groupby("N_Torneo").agg(Replays=("Match_replays", "size")).reset_index().rename(columns={"N_Torneo": "Torneo"}))
+    def _evento(r):
+        if r["league"] == "LIGA":                      # las ligas se identifican por temporada (ej. "Liga 5")
+            p = str(r["round"]).split(" ")
+            return "Liga " + p[1] if len(p) > 1 else "Liga"
+        n = r["N_Torneo"]
+        return f"{str(r['league']).title()} {int(n)}" if pd.notna(n) else str(r["league"]).title()
+    f["Evento"] = f.apply(_evento, axis=1)
+    f["Tipo"] = f["league"].astype(str).str.title()
+    out = f.groupby(["Tipo", "Evento"], sort=False).agg(Replays=("Match_replays", "size")).reset_index()
+    out["_n"] = out["Evento"].str.extract(r"(\d+)$").astype(float)
+    return out.sort_values(["Tipo", "_n"]).drop(columns="_n").reset_index(drop=True)
 
 
 def torneos_estancados(df):
