@@ -157,7 +157,13 @@ def replays_repetidos(df):
     if d.empty:
         return pd.DataFrame()
     d["Fila Excel"] = _fila_excel(d)
-    return d[["Fila Excel", "N_Torneo", "round", "player1", "player2", "Match_replays"]].sort_values("Match_replays")
+    d["Grupo"] = d.groupby("Match_replays", sort=False).ngroup() + 1
+    d["_txt"] = ("T" + d["N_Torneo"].astype(str) + " " + d["round"].astype(str) + ": "
+                 + d["player1"].astype(str) + " vs " + d["player2"].astype(str) + " (fila " + d["Fila Excel"].astype(str) + ")")
+    d["También aparece en"] = d.apply(
+        lambda r: " | ".join(d.loc[(d["Match_replays"] == r["Match_replays"]) & (d.index != r.name), "_txt"]), axis=1)
+    cols = ["Grupo", "Fila Excel", "N_Torneo", "round", "player1", "player2", "winner", "También aparece en", "Match_replays"]
+    return d[cols].sort_values(["Grupo", "Fila Excel"])
 
 
 def datos_incompletos(df):
