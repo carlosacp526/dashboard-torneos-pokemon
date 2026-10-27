@@ -243,6 +243,8 @@ CONTROLES = [
 def correr_controles(df_raw, mtime_cache):
     cache = replays._load_cache()
     df = df_raw[~es_free_for_all(df_raw)].copy()
+    # algunos links del CSV traen espacios al final; el caché los guarda sin ellos
+    df["Match_replays"] = df["Match_replays"].astype(str).str.strip()
     return {
         "Ganador contradice al replay": ganador_contradice_replay(df, cache),
         "Avanza sin haber ganado": avanza_sin_ganar(df),
