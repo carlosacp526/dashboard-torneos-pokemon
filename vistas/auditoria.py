@@ -25,6 +25,16 @@ def _toid(s):
     return re.sub(r"[^a-z0-9]", "", str(s).lower())
 
 
+def es_free_for_all(df):
+    """Batallas free for all y multi random (Torneos 40 y 61): varios jugadores por replay y el ganador se define distinto, los controles no aplican."""
+    pat = r"free\s*for\s*all|freeforall|multirandom"
+    m = df["Match_replays"].astype(str).str.contains(pat, case=False, regex=True)
+    for c in ("Tier", "Formato", "Formato_esp"):
+        if c in df.columns:
+            m |= df[c].astype(str).str.contains(pat, case=False, regex=True)
+    return m
+
+
 def _fila_excel(df):
     """Fila que ocupa cada registro en Excel (la 1 es el encabezado)."""
     return df.index + 2
@@ -223,7 +233,7 @@ CONTROLES = [
 @st.cache_data(ttl=600, show_spinner="Revisando los datos…")
 def correr_controles(df_raw, mtime_cache):
     cache = replays._load_cache()
-    df = df_raw.copy()
+    df = df_raw[~es_free_for_all(df_raw)].copy()
     return {
         "Ganador contradice al replay": ganador_contradice_replay(df, cache),
         "Avanza sin haber ganado": avanza_sin_ganar(df),
