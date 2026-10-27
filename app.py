@@ -67,6 +67,7 @@ p_analisis = _pagina("analisis", "Análisis General", "analytics", "analisis")
 p_jugadores = _pagina("jugadores", "Jugadores", "person", "jugadores")
 p_wrapped = _pagina("wrapped", "Wrapped", "celebration", "wrapped")
 p_perfiles = _pagina("perfiles", "Perfiles de Juego", "badge", "perfiles")
+p_tickets = _pagina("tickets", "Tickets", "support_agent", "tickets")
 p_ligas = _pagina("ligas", "Ligas", "emoji_events", "ligas")
 p_torneos = _pagina("torneos", "Torneos", "military_tech", "torneos")
 p_cypher = _pagina("cypher", "Cypher", "mic", "cypher")
@@ -101,6 +102,7 @@ st.session_state["_pages"] = {
     "en_curso":   p_en_curso,
     "auditoria":  p_auditoria,
     "perfiles":   p_perfiles,
+    "tickets":    p_tickets,
     "estadisticas_replay": p_estadisticas_replay,
     "mis_torneos": p_mis_torneos,
     "rankings":   p_rankings,
@@ -140,7 +142,7 @@ st.session_state["_pages"] = {
 pg = st.navigation({
     "Inicio": [p_inicio],
     "Análisis": [p_analisis, p_mundial, p_replays, p_meta, p_ficha_pokemon, p_social, p_estilo, p_logros_analisis, p_rachas, p_estadisticas_replay, p_score_xtream],
-    "Jugadores": [p_jugadores, p_perfiles, p_wrapped, p_tcg, p_headtohead],
+    "Jugadores": [p_jugadores, p_perfiles, p_tickets, p_wrapped, p_tcg, p_headtohead],
     "Competencia": [p_en_curso, p_reglamento, p_rankings, p_ligas, p_torneos, p_mis_torneos, p_cypher, p_ascenso, p_seeding],
     # Sección grande para eventos fuera de la competencia regular. Cada evento es una subsección (página):
     # hoy Roleplay; el Torneo 100 se suma aquí cuando esté la info.

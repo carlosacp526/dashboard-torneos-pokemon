@@ -51,6 +51,8 @@ GRUPOS = [
              ["👤 Perfil de Jugador"]),
             ("perfiles", "🧬", "Perfiles de Juego",
              ["🧬 Perfil de tiers: un tier, pocos o multitier", "🎮 Perfil de formato, eventos y randoms", "🎯 One shot y multi shot"]),
+            ("tickets", "🎫", "Tickets",
+             ["🎫 Pedir o reclamar un WO", "⚠️ Reportar errores y agravios", "💡 Sugerir torneos y ver la respuesta"]),
             ("wrapped", "🎁", "Wrapped",
              ["🎁 Tu año como historias para compartir", "📊 Victorias, racha, rivales y Pokémon", "⚡ Elo, logros y percentiles"]),
             ("tcg", "🃏", "Carta TCG",

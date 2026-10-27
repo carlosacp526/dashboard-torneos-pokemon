@@ -19,7 +19,7 @@ import requests
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 LOCAL_PATH = os.path.join(ROOT, "data", "torneos_local.json")
-TABLAS = ("torneos", "torneo_participantes", "torneo_partidas")
+TABLAS = ("torneos", "torneo_participantes", "torneo_partidas", "tickets")
 _lock = threading.Lock()
 
 
@@ -68,7 +68,10 @@ def _params(filtros):
 def _local_load():
     if os.path.exists(LOCAL_PATH):
         with open(LOCAL_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+            db = json.load(f)
+        for t in TABLAS:                  # archivos viejos sin la tabla nueva
+            db.setdefault(t, [])
+        return db
     return {t: [] for t in TABLAS}
 
 

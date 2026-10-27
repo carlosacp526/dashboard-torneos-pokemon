@@ -31,6 +31,19 @@ def _hash_configurado():
     return h
 
 
+def desbloqueado():
+    return bool(st.session_state.get(CLAVE_SESION, False))
+
+
+def clave_correcta(pwd):
+    """True (y deja la sesión desbloqueada) si la clave coincide con el hash configurado."""
+    h = _hash_configurado()
+    if h and hashlib.sha256((pwd or "").encode("utf-8")).hexdigest() == h:
+        st.session_state[CLAVE_SESION] = True
+        return True
+    return False
+
+
 def exigir_clave(clave_form="acceso_login"):
     """Detiene la página (st.stop) hasta que se ingrese la clave correcta. Si ya se ingresó, no hace nada."""
     if st.session_state.get(CLAVE_SESION, False):
