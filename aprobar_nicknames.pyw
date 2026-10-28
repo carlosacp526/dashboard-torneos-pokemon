@@ -198,8 +198,9 @@ class App:
         self.lista.delete(*self.lista.get_children())
         for j in jug:
             self.lista.insert("", "end", iid=j, text=j, values=(int(pend.get(j, 0)),))
-        total = int((self.tabla["estado"] == "pendiente").sum())
-        self.resumen.set(f"{total} nicks pendientes de {len(self.tabla)}"
+        c = self.tabla["estado"].value_counts()
+        self.resumen.set(f"{int(c.get('pendiente', 0))} pendientes · {int(c.get('revisar', 0))} a revisar · "
+                         f"{int(c.get('no', 0))} no · {int(c.get('si', 0))} sí  (de {len(self.tabla)})"
                          + (f"  ·  {self.auto} aprobados solos (más de {nl.MIN_PARTIDAS_AUTO} replays)" if self.auto else ""))
         destino = actual if actual in jug else (jug[0] if jug else None)
         if destino:
