@@ -22,6 +22,7 @@ Pasos:
 import os
 import sys
 import copy
+import pickle
 from datetime import datetime
 
 import numpy as np
@@ -30,6 +31,7 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 import ficha_modelos as fm
+from modelo_v2_runtime import ModeloV2, aplicar_bins
 
 GAP_MIN = 0.05        # separación mínima de tasa (5 puntos) entre tramos vecinos
 MIN_FRAC = 0.05       # tamaño mínimo de un tramo (fracción de las filas con dato)
@@ -122,12 +124,6 @@ def optimal_binning(x, y, gap=GAP_MIN, min_frac=MIN_FRAC, max_pre=MAX_PREBINS):
         if mejor is None or cand["iv"] > mejor["iv"]:
             mejor = cand
     return mejor
-
-
-def aplicar_bins(x, b):
-    x = np.asarray(x, float)
-    w = np.asarray(b["woe"])[np.searchsorted(b["cortes"], x, side="left")]
-    return np.where(np.isnan(x), b["woe_miss"], w)
 
 
 def _idx_tramo(x, b):
@@ -273,6 +269,7 @@ def competir(Wtr, ytr, Wvl, yvl, Wte, yte):
         try:
             m.fit(Wtr, ytr)
             aucs = cross_val_score(m, Wtr, ytr, cv=N_FOLDS, scoring="roc_auc")
+            accs = cross_val_score(m, Wtr, ytr, cv=N_FOLDS, scoring="accuracy")
         except Exception as e:
             print(f"      [v2] {nombre}: {e}")
             continue
@@ -296,7 +293,7 @@ def competir(Wtr, ytr, Wvl, yvl, Wte, yte):
                       "gini_train": mt["gini"], "gini_cv": g_cv_m, "gini_cv_desvio": g_cv_s, "gini_val": mv["gini"],
                       "gini_test": ms["gini"], "brecha_train_cv": brecha_tv, "dif_cv_val": d_cv_val, "dif_val_test": d_val_test,
                       "score_robustez": score, "robustez": sem, "auc_train": mt["auc"], "auc_cv": float(np.mean(aucs)),
-                      "auc_val": mv["auc"], "auc_test": ms["auc"], "ks_val": mv["ks"], "ks_test": ms["ks"],
+                      "auc_val": mv["auc"], "auc_test": ms["auc"], "accuracy_cv": float(np.mean(accs)), "ks_val": mv["ks"], "ks_test": ms["ks"],
                       "accuracy_val": mv["accuracy"], "accuracy_test": ms["accuracy"]})
     t = pd.DataFrame(filas).sort_values("score_robustez", ascending=False).reset_index(drop=True)
     t.insert(0, "puesto", np.arange(1, len(t) + 1))
@@ -430,19 +427,16 @@ def correr_combates(X, y, ym, data, info, tiers):
     print(f"      train {len(Xtr)} · val {len(Xvl)} ({min(val_m)}-{max(val_m)}) · test {len(Xte)} ({min(test_m)}-{max(test_m)})")
     sel = seleccionar(Xtr, ytr, Xvl, yvl, TOPE_COMBATES)
     efecto_t, efecto_txt, efecto_p = efecto_numero_batalla(data)
-    ficha = _armar_ficha("combates_v2", "Predicción de combates · v2", "combates", sel, Xtr, ytr, Xvl, yvl, Xte, yte,
+    ficha, prod = _armar_ficha("combates_v2", "Predicción de combates · v2", "combates", sel, Xtr, ytr, Xvl, yvl, Xte, yte,
                          dict(train=f"hasta {_mes_previo(min(val_m))}", val=f"{min(val_m)}-{max(val_m)}", test=f"{min(test_m)}-{max(test_m)}"),
                          efecto_rep=(efecto_t, efecto_txt, efecto_p))
-    return ficha
+    prod["val_start"], prod["test_start"] = min(val_m), min(test_m)
+    return ficha, prod
 
 
-def correr_fuga(df_raw=None):
-    print("\n[v2] Fuga: binning óptimo + selección + competencia...")
+def _dataset_fuga(grid):
+    """Corte temporal de la fuga en train / validación / test (por meses). None si no hay historial suficiente."""
     from vistas import retencion as rt
-    if df_raw is None:
-        from utils import load_data
-        df_raw = load_data()
-    grid = rt.build_feature_grid(rt.build_monthly_panel(df_raw))
     ds = rt.dataset_churn(grid)
     if ds is None:
         return None
@@ -454,12 +448,91 @@ def correr_fuga(df_raw=None):
     es_tr = ~(es_te | es_vl)
     c = rt.FEATURE_COLS
     sp = lambda m: (train_df.loc[m, c].reset_index(drop=True), train_df.loc[m, "label_churn"].astype(int).reset_index(drop=True))
-    (Xtr, ytr), (Xvl, yvl), (Xte, yte) = sp(es_tr), sp(es_vl), sp(es_te)
+    return dict(tr=sp(es_tr), vl=sp(es_vl), te=sp(es_te), meses=meses, te_m=te_m, vl_m=vl_m, cols=c)
+
+
+def _metricas_fuga(prod, d):
+    """Métricas que muestra la página de Retención (holdout = test) más los Gini de cada corte."""
+    g = prod["comp"].iloc[0]
+    (_, ytr), (_, yvl), (_, yte) = d["tr"], d["vl"], d["te"]
+    return {"n_train": int(len(ytr) + len(yvl)), "n_test": int(len(yte)),
+            "churn_rate_train": round(float(pd.concat([ytr, yvl]).mean()) * 100, 1), "churn_rate_test": round(float(yte.mean()) * 100, 1),
+            "meses_train": len(d["meses"]) - len(d["te_m"]), "meses_test": len(d["te_m"]),
+            "auc": round(float(g["auc_test"]), 3), "accuracy": round(float(g["accuracy_test"]), 3), "cv_auc": round(float(g["auc_cv"]), 3),
+            "gini_train": round(float(g["gini_train"]), 3), "gini_cv": round(float(g["gini_cv"]), 3), "gini_val": round(float(g["gini_val"]), 3),
+            "gini_test": round(float(g["gini_test"]), 3), "robustez": g["robustez"], "modelo": g["modelo"], "version": "v2"}
+
+
+def _artefacto_fuga(prod, d, data_hash):
+    ganador = prod["modelos"][prod["best"]]
+    imp = pd.Series(ganador.feature_importances_, index=ganador.finales).sort_values(ascending=False)
+    return {"model": ganador, "metrics": _metricas_fuga(prod, d), "importancias": imp, "data_hash": data_hash,
+            "generado": datetime.now(), "modelos": prod["modelos"], "results": prod["results"], "best": prod["best"]}
+
+
+RUTA_FUGA = os.path.join(ROOT, "data", "modelo_fuga_v2.pkl")
+
+
+def entrenar_fuga_produccion(grid, data_hash):
+    """Entrena el modelo de fuga v2 (sin ficha) para usarlo en la app cuando no hay artefacto al día. Devuelve el artefacto."""
+    d = _dataset_fuga(grid)
+    if d is None:
+        return None
+    (Xtr, ytr), (Xvl, yvl), (Xte, yte) = d["tr"], d["vl"], d["te"]
+    sel = seleccionar(Xtr, ytr, Xvl, yvl, len(d["cols"]))
+    fin, bins = sel["finales"], sel["bins"]
+    Wtr, Wvl = sel["Wtr"][fin], sel["Wvl"][fin]
+    Wte = pd.DataFrame({c: aplicar_bins(Xte[c].values, bins[c]) for c in fin})
+    comp, entrenados, _ = competir(Wtr, ytr, Wvl, yvl, Wte, yte)
+    prod = _produccion(comp, entrenados, fin, bins, Wtr, ytr, Wvl, yvl)
+    return _artefacto_fuga(prod, d, data_hash)
+
+
+def correr_fuga(df_raw=None):
+    print("\n[v2] Fuga: binning óptimo + selección + competencia...")
+    from vistas import retencion as rt
+    if df_raw is None:
+        from utils import load_data
+        df_raw = load_data()
+    grid = rt.build_feature_grid(rt.build_monthly_panel(df_raw))
+    d = _dataset_fuga(grid)
+    if d is None:
+        return None
+    (Xtr, ytr), (Xvl, yvl), (Xte, yte) = d["tr"], d["vl"], d["te"]
+    meses, te_m, vl_m = d["meses"], d["te_m"], d["vl_m"]
     print(f"      train {len(Xtr)} · val {len(Xvl)} · test {len(Xte)}")
-    sel = seleccionar(Xtr, ytr, Xvl, yvl, len(c))
-    return _armar_ficha("fuga_v2", "Predicción de fuga · v2", "fuga", sel, Xtr, ytr, Xvl, yvl, Xte, yte,
-                        dict(train=f"{min(meses)} → {max(m for m in meses if m not in vl_m and m not in te_m)}",
-                             val=f"{min(vl_m)} → {max(vl_m)}", test=f"{min(te_m)} → {max(te_m)}"))
+    sel = seleccionar(Xtr, ytr, Xvl, yvl, len(d["cols"]))
+    ficha, prod = _armar_ficha("fuga_v2", "Predicción de fuga · v2", "fuga", sel, Xtr, ytr, Xvl, yvl, Xte, yte,
+                               dict(train=f"{min(meses)} → {max(m for m in meses if m not in vl_m and m not in te_m)}",
+                                    val=f"{min(vl_m)} → {max(vl_m)}", test=f"{min(te_m)} → {max(te_m)}"))
+    art = _artefacto_fuga(prod, d, len(df_raw))
+    tmp = RUTA_FUGA + ".tmp"
+    with open(tmp, "wb") as f:
+        pickle.dump(art, f)
+    os.replace(tmp, RUTA_FUGA)
+    print(f"  [v2] Modelo de fuga para la app: {RUTA_FUGA}")
+    return ficha, art
+
+
+def _produccion(comp, entrenados, fin, bins, Wtr, ytr, Wvl, yvl):
+    """Modelos listos para producción: cada competidor se reentrena con train + validación (las categorías quedan fijas, las del
+    entrenamiento) y se envuelve en ModeloV2, que recibe las variables crudas. El test holdout NO se usa: sigue limpio."""
+    from sklearn.base import clone
+    W = pd.concat([Wtr, Wvl], ignore_index=True)
+    y = pd.concat([ytr, yvl], ignore_index=True)
+    bf = {v: bins[v] for v in fin}
+    modelos, results = {}, {}
+    for nombre, m in entrenados.items():
+        m2 = clone(m).fit(W, y)
+        modelos[nombre] = ModeloV2(m2, fin, bf, nombre)
+        r = comp[comp["modelo"] == nombre].iloc[0]
+        results[nombre] = {"val_accuracy": round(float(r["accuracy_val"]), 4), "val_auc": round(float(r["auc_val"]), 4),
+                           "cv_accuracy": round(float(r["accuracy_cv"]), 4), "cv_auc": round(float(r["auc_cv"]), 4),
+                           "gini_train": round(float(r["gini_train"]), 4), "gini_cv": round(float(r["gini_cv"]), 4),
+                           "gini_val": round(float(r["gini_val"]), 4), "gini_test": round(float(r["gini_test"]), 4),
+                           "auc_test": round(float(r["auc_test"]), 4), "accuracy_test": round(float(r["accuracy_test"]), 4),
+                           "robustez": r["robustez"], "score_robustez": round(float(r["score_robustez"]), 4)}
+    return dict(modelos=modelos, results=results, best=comp.iloc[0]["modelo"], finales=list(fin), comp=comp, n_filas=len(W))
 
 
 def _armar_ficha(fid, titulo, base_id, sel, Xtr, ytr, Xvl, yvl, Xte, yte, periodos, efecto_rep=None):
@@ -605,9 +678,10 @@ def _armar_ficha(fid, titulo, base_id, sel, Xtr, ytr, Xvl, yvl, Xte, yte, period
                                 f"{int((rep_vars['seleccionada'] == 'SÍ').sum())} de {len(rep_vars)} quedaron en el modelo. "
                                 f"Efecto del n° de Rep sobre el favorito: p = {p:.4f}"))
     fm.guardar(f)
+    prod = _produccion(comp, entrenados, fin, bins, Wtr, ytr, Wvl, yvl)
     print(f"  [v2] Ficha guardada: {fm.ruta(fid)}  | ganador {ganador} · Gini train {gan['gini_train']:.3f} · CV {gan['gini_cv']:.3f} · "
           f"val {gan['gini_val']:.3f} · test {gan['gini_test']:.3f} · {gan['robustez']}")
-    return f
+    return f, prod
 
 
 if __name__ == "__main__":

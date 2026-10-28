@@ -550,9 +550,10 @@ def train_models(X, y, X_val, y_val):
 # ════════════════════════════════════════════════════════════════
 
 def build_pred_features(df_pend, cos, top_feat):
-    feat_cols_base = list({c[:-2] for c in top_feat if c.endswith(("_g","_p"))})
-
-    # ym máximo disponible (para pendientes sin fecha que tienen ym=0)
+    """Una fila por batalla pendiente con las variables finales del modelo (top_feat). Sirve para el modelo v1 (columnas _g/_p de la
+    cosecha) y para el v2 (además las variables del n° de batalla y las diferencias A-B, ver modelo_v2_runtime.valor_variable).
+    Lo que no se puede calcular (jugador sin historial) queda en NaN: el modelo v2 lo trata como su propio tramo."""
+    from modelo_v2_runtime import valor_variable
     max_ym = int(cos["ym"].max()) if not cos.empty else 999999
 
     def get_latest(jugador, ym_bat):
@@ -577,21 +578,52 @@ def build_pred_features(df_pend, cos, top_feat):
         for c in CTX_COLS:
             if c in r.index:
                 fila[c] = r[c]
-        for c in feat_cols_base:
-            fila[f"{c}_g"] = cos1[c] if cos1 is not None and c in cos1.index else np.nan
-            fila[f"{c}_p"] = cos2[c] if cos2 is not None and c in cos2.index else np.nan
+        rep_b = pd.to_numeric(r.get("ctx_rep_bucket", 1), errors="coerce")
+        rep_b = int(rep_b) if pd.notna(rep_b) else 1
+        for v in top_feat:
+            fila[v] = valor_variable(v, cos1, cos2, rep_b, ctx=fila)
         rows.append(fila)
 
     pred_df = pd.DataFrame(rows)
     for c in top_feat:
         if c not in pred_df.columns:
-            pred_df[c] = 0.0
+            pred_df[c] = np.nan
     return pred_df
 
 
 # ════════════════════════════════════════════════════════════════
 # 9. MAIN
 # ════════════════════════════════════════════════════════════════
+
+def verificar_serving(data_all, cos, finales, n=300):
+    """Comprueba que las variables calculadas como en producción (valor_variable sobre la última cosecha de cada jugador) coinciden
+    con las del entrenamiento (build_dataset). Imprime cuántas difieren; si algo no cuadra, la predicción de la app sería distinta."""
+    from modelo_v2_runtime import valor_variable
+    d = data_all.sample(min(n, len(data_all)), random_state=1)
+    cos_i = {j: g.sort_values("ym") for j, g in cos.groupby("jugador")}
+
+    def ultima(j, ym):
+        g = cos_i.get(j)
+        if g is None: return None
+        g = g[g["ym"] < ym]
+        return None if g.empty else g.iloc[-1]
+    malos, total = {}, 0
+    for _, r in d.iterrows():
+        cg, cp = ultima(r["ganador"], int(r["ym_batalla"])), ultima(r["perdedor"], int(r["ym_batalla"]))
+        rep_b = int(r["ctx_rep_bucket"])
+        for v in finales:
+            if v.startswith("dif_"):
+                b = v[4:]
+                esperado = r[f"{b}_g"] - r[f"{b}_p"] if f"{b}_g" in r.index else np.nan
+            else:
+                esperado = r[v] if v in r.index else np.nan
+            obtenido = valor_variable(v, cg, cp, rep_b)
+            total += 1
+            if not ((pd.isna(esperado) and pd.isna(obtenido)) or (pd.notna(esperado) and pd.notna(obtenido) and abs(esperado - obtenido) < 1e-9)):
+                malos[v] = malos.get(v, 0) + 1
+    print(f"  [serving] {total - sum(malos.values())}/{total} valores idénticos entre entrenamiento y producción"
+          + (f" — DIFIEREN: {malos}" if malos else " ✓"))
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -723,8 +755,8 @@ def main():
             ficha_modelos.generar_ficha_fuga(df_raw)
         except Exception as e:           # la ficha es informativa: un fallo no debe tumbar el entrenamiento
             print(f"  [ficha] No se pudo generar la ficha técnica: {e}")
-    # v2 (experimental, no toca el modelo en producción): binning óptimo monótono, selección por concordancia y
-    # robustez del Gini en train / CV / validación / test. Deja las fichas combates_v2 y fuga_v2 para el visor.
+    # v2 (modelo en producción): binning óptimo monótono, selección por concordancia y robustez del Gini en train / CV /
+    # validación / test. Sobrescribe args.out con el modelo v2 y deja las fichas combates_v2 y fuga_v2 (y data/modelo_fuga_v2.pkl).
     if not args.sin_v2:
         try:
             import modelado_v2
@@ -736,7 +768,20 @@ def main():
             if os.environ.get("MODELO_DUMP"):
                 with open(os.environ["MODELO_DUMP"], "wb") as f:
                     pickle.dump(dict(X=X_all, y=y_all, data=data_all, ym=ym_all, info=locals().get("info", {}), tiers=tiers), f)
-            modelado_v2.correr_combates(X_all, y_all, ym_all, data_all, locals().get("info", {}), tiers)
+            _, prod = modelado_v2.correr_combates(X_all, y_all, ym_all, data_all, locals().get("info", {}), tiers)
+            verificar_serving(data_all, cos, prod["finales"])
+            pred_v2 = build_pred_features(df_pend, cos, prod["finales"]) if not df_pend.empty else pd.DataFrame()
+            cache_v2 = dict(
+                trained=prod["modelos"], results=prod["results"], best=prod["best"],
+                top_feat=prod["finales"], all_feat=prod["finales"], tiers=tiers,
+                latest_stats=latest_stats, pred_features=pred_v2, df_pend=df_pend,
+                trained_at=datetime.now(), data_hash=data_hash, ventanas=VENTANAS, v2=True,
+                train_end=modelado_v2._mes_previo(prod["val_start"]), val_start=prod["val_start"], test_start=prod["test_start"],
+            )
+            with open(args.out, "wb") as f:
+                pickle.dump(cache_v2, f)
+            print(f"\n  MODELO v2 guardado como modelo de combates: {args.out} ({os.path.getsize(args.out) / 1024 / 1024:.1f} MB) · "
+                  f"ganador {prod['best']} · {len(prod['finales'])} variables")
             modelado_v2.correr_fuga(df_raw)
         except Exception as e:
             import traceback

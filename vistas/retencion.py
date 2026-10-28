@@ -372,7 +372,34 @@ def dataset_churn(_grid):
     return train_df, train_df['ym'].isin(meses_test), meses_sorted, meses_test
 
 
+RUTA_MODELO_FUGA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "modelo_fuga_v2.pkl")
+
+
+@st.cache_resource(ttl=3600, show_spinner=False)
 def train_churn_model(_grid, data_hash):
+    """Modelo de fuga v2 (variables categorizadas con tramos monótonos; el ganador entre varios competidores según la robustez del
+    Gini en train / CV / validación / test). Se lee de data/modelo_fuga_v2.pkl, que deja entrenar_modelo.py / actualizar_todo.py al
+    día con el historial; si falta o es de otra versión de los datos, se entrena aquí mismo (unos segundos) y, si eso fallara,
+    se usa el XGBoost simple de antes. Devuelve (modelo, métricas, importancias) como siempre."""
+    import pickle
+    try:
+        with open(RUTA_MODELO_FUGA, "rb") as f:
+            art = pickle.load(f)
+        if art.get("data_hash") == data_hash:
+            return art["model"], art["metrics"], art["importancias"]
+    except Exception:
+        pass
+    try:
+        import modelado_v2
+        art = modelado_v2.entrenar_fuga_produccion(_grid, data_hash)
+        if art is not None:
+            return art["model"], art["metrics"], art["importancias"]
+        return None, {'error': 'No hay suficiente historial todavía para entrenar el modelo.'}, None
+    except Exception:
+        return _train_churn_model_simple(_grid, data_hash)
+
+
+def _train_churn_model_simple(_grid, data_hash):
     import xgboost as xgb
     from sklearn.metrics import roc_auc_score, accuracy_score
     from sklearn.model_selection import cross_val_score
@@ -688,13 +715,13 @@ def show():
 
     # ── Predicción de fuga (XGBoost) ────────────────────────────────────────
     st.markdown("---")
-    st.subheader("Predicción de Fuga Confirmada (XGBoost)")
+    st.subheader("Predicción de Fuga Confirmada")
     st.caption(
         f"Modelo entrenado con el historial mensual de cada jugador (antigüedad, actividad reciente, "
         f"winrate, racha, tendencia, % de walkovers, consistencia) para estimar la probabilidad de que "
         f"un jugador **activo hoy** no vuelva a jugar en los próximos **{HORIZONTE_FUGA_MESES} meses** "
         "— el horizonte de 'fuga confirmada' justificado en la sección Roll Rate de arriba. Validado con "
-        "los meses más recientes (split temporal, sin mezclar futuro con pasado)."
+        "los meses más recientes (split temporal en entrenamiento / validación / test, sin mezclar futuro con pasado)."
     )
 
     with st.spinner("Entrenando modelo..."):
@@ -704,15 +731,21 @@ def show():
         st.warning(metrics.get('error', 'No se pudo entrenar el modelo.'))
     else:
         c1, c2, c3, c4, c5 = st.columns(5)
-        c1.metric("🎯 AUC (validación)", f"{metrics['auc']:.3f}" if metrics['auc'] is not None else "N/D")
+        c1.metric("🎯 AUC (test)", f"{metrics['auc']:.3f}" if metrics['auc'] is not None else "N/D")
         c2.metric("🔁 AUC (CV 5-fold)", f"{metrics['cv_auc']:.3f}" if metrics.get('cv_auc') is not None else "N/D")
-        c3.metric("✅ Accuracy (validación)", f"{metrics['accuracy']*100:.1f}%" if metrics['accuracy'] is not None else "N/D")
+        c3.metric("✅ Accuracy (test)", f"{metrics['accuracy']*100:.1f}%" if metrics['accuracy'] is not None else "N/D")
         c4.metric("📚 Filas de entrenamiento", f"{metrics['n_train']:,}")
-        c5.metric("🧪 Filas de validación", f"{metrics['n_test']:,}")
+        c5.metric("🧪 Filas de test", f"{metrics['n_test']:,}")
+        if metrics.get('gini_test') is not None:
+            st.caption(
+                f"Modelo: **{metrics.get('modelo', '')}** · Gini — entrenamiento {metrics['gini_train']:.2f} · CV {metrics['gini_cv']:.2f} · "
+                f"validación {metrics['gini_val']:.2f} · test {metrics['gini_test']:.2f} → robustez **{metrics.get('robustez', '')}** "
+                "(un modelo robusto rinde parecido en los cuatro cortes)."
+            )
         st.caption(
             f"Tasa de fuga real en entrenamiento: {metrics['churn_rate_train']}% · "
-            f"en validación: {metrics['churn_rate_test']}% · "
-            f"({metrics['meses_train']} meses de entrenamiento, {metrics['meses_test']} de validación). "
+            f"en test: {metrics['churn_rate_test']}% · "
+            f"({metrics['meses_train']} meses de entrenamiento, {metrics['meses_test']} de test). "
             "AUC (CV 5-fold) es una verificación adicional sobre el set de entrenamiento; el holdout "
             "temporal de arriba sigue siendo la métrica principal, por ser la que respeta el orden "
             "cronológico de los datos."

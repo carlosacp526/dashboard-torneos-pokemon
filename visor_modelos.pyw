@@ -28,8 +28,8 @@ sys.path.insert(0, ROOT)
 import ficha_modelos as fm
 import ui_premium as ui
 
-MODELOS = {"combates": "Predicción de combates", "fuga": "Predicción de fuga (retención)",
-           "combates_v2": "Predicción de combates · v2", "fuga_v2": "Predicción de fuga · v2"}
+MODELOS = {"combates_v2": "Predicción de combates · v2 (en producción)", "fuga_v2": "Predicción de fuga · v2 (en producción)",
+           "combates": "Predicción de combates · v1 (anterior)", "fuga": "Predicción de fuga · v1 (anterior)"}
 SECCIONES = ["Resumen", "Robustez (Gini)", "Datos y estructura", "Blueprint y transformaciones", "Target", "Validación y folds",
              "Modelos competidores", "Selección de variables", "Todas las variables", "Variables finales",
              "Concordancia y feature effect", "Importancia", "SHAP", "IV (Information Value)", "Análisis bivariado",

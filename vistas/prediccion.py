@@ -96,28 +96,17 @@ def blend_h2h(model_prob_a, victorias_a, victorias_b, prior_weight=6):
     return (h2h_wr_a * n + model_prob_a * prior_weight) / (n + prior_weight)
 
 
-def make_pred_row(j1, j2, latest_stats, feature_cols):
-    """Construye vector de features para predicción manual usando cosechas."""
+def make_pred_row(j1, j2, latest_stats, feature_cols, rep=1):
+    """Variables del cruce j1 (jugador A) vs j2 (jugador B) con la última cosecha de cada uno, para el modelo v2.
+    Incluye las variables del n° de batalla (rep = n° de partida de la serie, 1..5) y las diferencias A-B. Lo que no se puede
+    calcular (jugador sin historial en esa ventana) queda en NaN: el modelo lo trata como su propio tramo, igual que al entrenar."""
+    from modelo_v2_runtime import valor_variable
+
     def gs(jug):
         r = latest_stats[latest_stats["Jugador"] == jug]
-        if r.empty:
-            return {}
-        return r.iloc[0].to_dict()
+        return None if r.empty else r.iloc[0]
     s1, s2 = gs(j1), gs(j2)
-    feat = {}
-    for c in feature_cols:
-        if c.endswith("_g"):
-            base = c[:-2]
-            feat[c] = s1.get(base, 0)
-        elif c.endswith("_p"):
-            base = c[:-2]
-            feat[c] = s2.get(base, 0)
-        else:
-            feat[c] = 0
-    row = pd.DataFrame([feat])
-    for c in feature_cols:
-        if c not in row.columns: row[c] = 0
-    return row[feature_cols].fillna(0)
+    return pd.DataFrame([{c: valor_variable(c, s1, s2, rep) for c in feature_cols}])[list(feature_cols)]
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -354,7 +343,8 @@ def _bar_comparativa(label, val1, val2, nombre1, nombre2, fmt=None):
 
 def show():
     st.header("Predicción de Combates")
-    st.caption("Modelos ML basados en estadísticas históricas acumuladas por jugador")
+    st.caption("Modelos ML (v2: variables categorizadas con tramos monótonos, validados con train / CV / validación / test) "
+               "basados en estadísticas históricas acumuladas por jugador")
 
     df_raw = load_data()
 
@@ -449,7 +439,7 @@ def show():
             p2 = st.selectbox("🎮 Jugador 2", [p for p in all_players if p != p1], key="pp2")
 
         tiers_disp = sorted(df_j["Tier"].dropna().unique().tolist())
-        col_cfg1, col_cfg2, col_cfg3, col_cfg4 = st.columns(4)
+        col_cfg1, col_cfg2, col_cfg3, col_cfg4, col_cfg5 = st.columns(5)
         with col_cfg1:
             fmt_p  = st.selectbox("Formato", ["SINGLES","DOBLES","VGC"], key="pfmt")
         with col_cfg2:
@@ -459,6 +449,10 @@ def show():
         with col_cfg4:
             best_idx = list(trained.keys()).index(best_name)
             mod_p = st.selectbox("Modelo ML", list(trained.keys()), index=best_idx, key="pmod")
+        with col_cfg5:
+            rep_p = st.selectbox("N° de batalla (Rep)", [1, 2, 3, 4, 5], key="prep",
+                                 help="Partida de la serie entre estos dos jugadores (1 = primera, 3 = tercera de un Bo3...). "
+                                      "El modelo usa cómo le va a cada jugador en ese mismo n° de batalla.")
 
         # ── Perfiles de los jugadores ──────────────────────────────────────
         st.markdown("---")
@@ -498,7 +492,7 @@ def show():
         predecir = st.button("🔮 Predecir Combate", use_container_width=True, type="primary")
 
         if predecir:
-            X_p      = make_pred_row(p1, p2, latest_stats, feature_cols)
+            X_p      = make_pred_row(p1, p2, latest_stats, feature_cols, rep=rep_p)
             prob     = trained[mod_p].predict_proba(X_p)[0]
             prob_j1, prob_j2 = prob[0], prob[1]
             conf     = max(prob_j1, prob_j2)
@@ -592,18 +586,19 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier
             st.markdown("## 🔍 Análisis SHAP")
             try:
                 import shap
-                expl2 = shap.TreeExplainer(trained[mod_p])
-                sv2   = expl2.shap_values(X_p)
-
-                # manejo de distintas formas según modelo
-                if isinstance(sv2, list):
-                    sv2_row = sv2[1][0]       # Random Forest: lista [clase0, clase1]
-                elif sv2.ndim == 3:
-                    sv2_row = sv2[0, :, 1]    # array 3D: (muestras, features, clases)
-                elif sv2.ndim == 2:
-                    sv2_row = sv2[0]          # array 2D: (muestras, features)
+                if hasattr(trained[mod_p], "shap_valores"):      # modelo v2: SHAP sobre las variables ya categorizadas
+                    sv2_row = trained[mod_p].shap_valores(X_p)[0]
                 else:
-                    sv2_row = sv2             # ya es 1D
+                    sv2 = shap.TreeExplainer(trained[mod_p]).shap_values(X_p)
+                    # manejo de distintas formas según modelo
+                    if isinstance(sv2, list):
+                        sv2_row = sv2[1][0]       # Random Forest: lista [clase0, clase1]
+                    elif sv2.ndim == 3:
+                        sv2_row = sv2[0, :, 1]    # array 3D: (muestras, features, clases)
+                    elif sv2.ndim == 2:
+                        sv2_row = sv2[0]          # array 2D: (muestras, features)
+                    else:
+                        sv2_row = sv2             # ya es 1D
 
                 sv2df = (pd.DataFrame({
                             "Feature":   feature_cols,
@@ -677,7 +672,7 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier
             if pf.empty:
                 st.warning("Sin batallas pendientes con esos filtros.")
             else:
-                X_pend = pf[top_feat].fillna(0)
+                X_pend = pf[top_feat]      # sin rellenar: los nulos tienen su propio tramo en el modelo v2
                 probs  = trained[mod_pend].predict_proba(X_pend)
                 pf = pf.copy()
                 pf["prob_p1"] = (probs[:, 0] * 100).round(1)

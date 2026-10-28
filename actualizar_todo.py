@@ -28,7 +28,7 @@ os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 
 LOCK = os.path.join(ROOT, "data", ".actualizando.lock")
-ARCHIVOS = ["data/logros_comunidad.pkl", "data/score_xtream.pkl", "data/score_xtream.csv", "data/scouting_cache.pkl", "data/ficha_fuga.pkl", "rankings_monotype"]
+ARCHIVOS = ["data/logros_comunidad.pkl", "data/score_xtream.pkl", "data/score_xtream.csv", "data/scouting_cache.pkl", "data/ficha_fuga.pkl", "data/modelo_fuga_v2.pkl", "rankings_monotype"]
 CONFIG_GIT = ["-c", "core.autocrlf=false"]
 
 
@@ -84,20 +84,26 @@ def _pasos(forzar):
     else:
         log("Scouting: al día")
 
-    # Ficha técnica del modelo de fuga (la de combates la rehace entrenar_modelo.py al reentrenar)
+    # Modelo de fuga v2 (lo usa la página de Retención) y sus fichas del visor; el de combates lo rehace entrenar_modelo.py al reentrenar
     try:
+        import pickle
         import ficha_modelos as fm
-        ficha = fm.cargar("fuga")
-        csv_mtime = os.path.getmtime(os.path.join(ROOT, "archivo_preuba1.csv"))
-        if forzar or hizo or ficha is None or ficha["generado"].timestamp() < csv_mtime:
+        import modelado_v2
+        try:
+            with open(modelado_v2.RUTA_FUGA, "rb") as f:
+                al_dia = pickle.load(f).get("data_hash") == len(df_raw)
+        except Exception:
+            al_dia = False
+        if forzar or hizo or not al_dia:
             t = time.time()
             fm.generar_ficha_fuga(df_raw)
-            log(f"Ficha modelo de fuga: regenerada ({time.time() - t:.0f}s)")
+            modelado_v2.correr_fuga(df_raw)
+            log(f"Modelo de fuga v2 + fichas: regenerados ({time.time() - t:.0f}s)")
             hizo = True
         else:
-            log("Ficha modelo de fuga: al día")
-    except Exception as e:                               # informativa: no debe frenar lo demás
-        log(f"Ficha modelo de fuga: falló ({e})")
+            log("Modelo de fuga v2: al día")
+    except Exception as e:                               # no debe frenar lo demás (la app reentrena al vuelo si falta)
+        log(f"Modelo de fuga v2: falló ({e})")
     return hizo
 
 

@@ -500,7 +500,7 @@ def generar_ficha_fuga(df_raw=None):
     X_tr, y_tr = train_df.loc[~es_test, cols], train_df.loc[~es_test, "label_churn"].astype(int)
     X_te, y_te = train_df.loc[es_test, cols], train_df.loc[es_test, "label_churn"].astype(int)
 
-    model, metrics, importancias = rt.train_churn_model(grid, len(df_raw))
+    model, metrics, importancias = rt._train_churn_model_simple(grid, len(df_raw))   # el modelo anterior (v1), base de comparación de la v2
     p_te, p_tr = model.predict_proba(X_te)[:, 1], model.predict_proba(X_tr)[:, 1]
     mv, mt = metricas_binarias(y_te, p_te), metricas_binarias(y_tr, p_tr)
     try:
