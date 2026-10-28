@@ -47,10 +47,11 @@ class App:
         raiz.after(150, self.cargar)
 
     # ── datos ────────────────────────────────────────────────────────────────────────────────
-    def cargar(self):
+    def cargar_datos(self):
+        """Lee el historial y el caché de replays (y las decisiones guardadas) y arma los candidatos."""
         from utils import load_data
         from vistas import auditoria
-        df = load_data()
+        df = load_data()                 # se vuelve a leer solo si el CSV cambió en disco
         df = df[~auditoria.es_free_for_all(df)]
         cache = pd.read_csv(os.path.join(ROOT, "data", "replay_cache.csv"), low_memory=False)
         self.cands = nl.candidatos(df, cache)
@@ -58,6 +59,9 @@ class App:
         self.ejemplos = {}
         self.refrescar_estados()
         self.auto = self.aprobar_automaticos()
+
+    def cargar(self):
+        self.cargar_datos()
         for w in self.raiz.winfo_children():
             w.destroy()
         self.construir()
@@ -106,6 +110,7 @@ class App:
         ttk.Entry(barra, textvariable=self.busca, width=18).pack(side="left", padx=4)
         ttk.Button(barra, text="Aprobar coincidencias exactas", command=self.aprobar_exactos).pack(side="left", padx=12)
         ttk.Button(barra, text="Subir a GitHub", command=self.subir).pack(side="right")
+        ttk.Button(barra, text="Recargar datos", command=self.recargar).pack(side="right", padx=(0, 8))
         self.resumen = tk.StringVar()
         ttk.Label(barra, textvariable=self.resumen).pack(side="right", padx=12)
 
@@ -243,6 +248,21 @@ class App:
         if jug not in self.lista.get_children():
             return    # el jugador ya no tiene pendientes: queda seleccionado el siguiente
         self.llenar_nicks(seleccionar=sig or nid)
+
+    def recargar(self):
+        """Vuelve a leer el CSV y el caché de replays sin cerrar el programa (tras cambiar el Excel o procesar replays)."""
+        self.resumen.set("Recargando…")
+        self.raiz.update_idletasks()
+        antes = len(self.cands)
+        try:
+            self.cargar_datos()
+        except Exception as e:
+            messagebox.showerror("Recargar datos", f"No se pudieron leer los datos: {str(e)[:400]}")
+            return
+        self.llenar_jugadores()
+        nuevos = len(self.cands) - antes
+        messagebox.showinfo("Recargar datos", f"Datos al día: {len(self.cands)} nicks en total"
+                            + (f" ({nuevos:+d} respecto a antes)." if nuevos else "."))
 
     def mover(self, d):
         hijos = list(self.nicks.get_children())
