@@ -185,6 +185,14 @@ COMBINACIONES_VALIDAS = {
 }
 
 
+# Replays ya revisados a mano cuyo formato no coincide con el del link pero se aceptan (por link, no por fila).
+REPLAYS_FORMATO_ACEPTADOS = {
+    "https://replay.pokemonshowdown.com/gen9nationaldexdoubles-2527050077",    # T59 Mar vs Okari958 (DOU)
+    "https://replay.pokemonshowdown.com/gen9randombattle-2667569331",          # T81 lexodia vs Minipapus
+    "https://replay.pokemonshowdown.com/gen9randombattle-2701249837-3bxqh86t03bvcuxun7o6sy2ipjpmeg8pw",   # T88 EmperorGambit vs Minipapus
+}
+
+
 def formato_link_vs_formato_esp(df):
     """El formato que dice el link del replay (gen9ou, gen9vgc2025regh...) no concuerda con el Formato_esp de la fila.
     Lo habitual para cada formato de link se aprende del propio historial (los Formato_esp que cubren >=20% de sus batallas)."""
@@ -195,7 +203,8 @@ def formato_link_vs_formato_esp(df):
     parte = cuenta / cuenta.groupby(level=0).transform("sum")
     habituales = {f: sorted(parte[f][parte[f] >= MIN_SHARE_FORMATO].index, key=lambda v: -cuenta[(f, v)])
                   for f in parte.index.get_level_values(0).unique()}
-    mal = j[[r not in habituales[f] and (f, r) not in COMBINACIONES_VALIDAS for f, r in zip(j["_fmt"], j["Formato_esp"])]].copy()
+    mal = j[[r not in habituales[f] and (f, r) not in COMBINACIONES_VALIDAS and u.strip() not in REPLAYS_FORMATO_ACEPTADOS
+             for f, r, u in zip(j["_fmt"], j["Formato_esp"], j["Match_replays"])]].copy()
     if mal.empty:
         return pd.DataFrame()
     mal["Fila Excel"] = _fila_excel(mal)
