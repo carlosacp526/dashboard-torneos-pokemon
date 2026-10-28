@@ -27,7 +27,9 @@ import nicknames_logica as nl
 
 COLORES = {"si": "#1f7a3a", "no": "#a12b2b", "revisar": "#a8791c", "pendiente": "#555555"}
 ROTULO = {"si": "SÍ", "no": "NO", "revisar": "A REVISAR", "pendiente": "pendiente"}
-FILTROS = ["Con pendientes", "Todos los jugadores", "Con 'a revisar'", "Sin ningún nick aprobado"]
+FILTROS = ["Con pendientes", "Todos los jugadores", "Con 'a revisar'", "Con 'no'", "Sin ningún nick aprobado"]
+CUENTA_FILTRO = {0: ("pendiente", "Pendientes"), 1: ("pendiente", "Pendientes"), 2: ("revisar", "A revisar"),
+                 3: ("no", "Rechazados"), 4: ("pendiente", "Pendientes")}
 NO_VENTANA = 0x08000000 if os.name == "nt" else 0   # que git no abra una ventana de consola
 
 
@@ -35,8 +37,8 @@ class App:
     def __init__(self, raiz):
         self.raiz = raiz
         raiz.title("Nicknames de Showdown")
-        raiz.geometry("1100x640")
-        raiz.minsize(900, 520)
+        raiz.geometry("1150x700")
+        raiz.minsize(1000, 600)
         self.estado_txt = tk.StringVar(value="Cargando el historial y los replays…")
         ttk.Label(raiz, textvariable=self.estado_txt, padding=20, font=("Segoe UI", 12)).pack()
         raiz.after(150, self.cargar)
@@ -123,6 +125,12 @@ class App:
         der = ttk.Frame(cuerpo)
         self.titulo = tk.StringVar()
         ttk.Label(der, textvariable=self.titulo, font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(0, 6))
+        botones = ttk.Frame(der, padding=(0, 10))
+        botones.pack(side="bottom", fill="x")
+        for texto, est in (("Sí  (S)", "si"), ("No  (N)", "no"), ("A revisar  (R)", "revisar"), ("Quitar  (Supr)", "pendiente")):
+            tk.Button(botones, text=texto, width=14, height=2, bg=COLORES[est], fg="white", relief="flat",
+                      command=lambda e=est: self.decidir(e)).pack(side="left", padx=(0, 8))
+        ttk.Button(botones, text="Abrir replay de ejemplo (O)", command=self.abrir_replay).pack(side="left", padx=8)
         cols = ("nick", "partidas", "pct", "igual", "estado")
         self.nicks = ttk.Treeview(der, columns=cols, show="headings", selectmode="browse", height=12)
         for c, t, w, a in (("nick", "Nick en Showdown", 260, "w"), ("partidas", "Partidas", 80, "center"),
@@ -133,15 +141,9 @@ class App:
         for e, col in COLORES.items():
             self.nicks.tag_configure(e, foreground=col if e != "pendiente" else "#222222")
         self.nicks.pack(fill="both", expand=True)
-        botones = ttk.Frame(der, padding=(0, 10))
-        botones.pack(fill="x")
-        for texto, est in (("Sí  (S)", "si"), ("No  (N)", "no"), ("A revisar  (R)", "revisar"), ("Quitar  (Supr)", "pendiente")):
-            tk.Button(botones, text=texto, width=14, height=2, bg=COLORES[est], fg="white", relief="flat",
-                      command=lambda e=est: self.decidir(e)).pack(side="left", padx=(0, 8))
-        ttk.Button(botones, text="Abrir replay de ejemplo (O)", command=self.abrir_replay).pack(side="left", padx=8)
         self.ayuda = tk.StringVar(value="Un jugador puede tener varios nicks aprobados. El nick verdadero suele salir en casi "
                                         "todas sus batallas (% alto); los de rivales salen una o dos veces.")
-        ttk.Label(der, textvariable=self.ayuda, wraplength=640, foreground="#777777").pack(anchor="w")
+        ttk.Label(der, textvariable=self.ayuda, wraplength=640, foreground="#777777").pack(side="bottom", anchor="w")
         cuerpo.add(der, weight=3)
 
         def tecla(fn):                    # los atajos no actúan mientras se escribe en el buscador
@@ -160,8 +162,10 @@ class App:
     def jugadores_visibles(self):
         t = self.tabla
         modo = self.filtro.get()
-        pend = t[t["estado"] == "pendiente"].groupby("jugador").size()
+        estado_cuenta, _ = CUENTA_FILTRO[self.filtro.current()]
+        pend = t[t["estado"] == estado_cuenta].groupby("jugador").size()   # lo que muestra la columna de la derecha
         rev = set(t[t["estado"] == "revisar"]["jugador"])
+        no = set(t[t["estado"] == "no"]["jugador"])
         con_si = set(t[t["estado"] == "si"]["jugador"])
         jug = sorted(t["jugador"].unique(), key=str.lower)
         if modo == FILTROS[0]:
@@ -169,6 +173,8 @@ class App:
         elif modo == FILTROS[2]:
             jug = [j for j in jug if j in rev]
         elif modo == FILTROS[3]:
+            jug = [j for j in jug if j in no]
+        elif modo == FILTROS[4]:
             jug = [j for j in jug if j not in con_si]
         q = self.busca.get().strip().lower()
         if q:
@@ -178,6 +184,7 @@ class App:
     def llenar_jugadores(self, seleccionar=None):
         actual = seleccionar or (self.lista.selection()[0] if self.lista.selection() else None)
         jug, pend = self.jugadores_visibles()
+        self.lista.heading("pend", text=CUENTA_FILTRO[self.filtro.current()][1])
         self.lista.delete(*self.lista.get_children())
         for j in jug:
             self.lista.insert("", "end", iid=j, text=j, values=(int(pend.get(j, 0)),))
@@ -228,7 +235,7 @@ class App:
         sig = next((h for h in hijos[hijos.index(nid) + 1:] if self.tabla[(self.tabla["jugador"] == jug)
                     & (self.tabla["nick_id"] == h)]["estado"].iloc[0] == "pendiente"), None)
         self.llenar_jugadores(seleccionar=jug)
-        if self.filtro.get() == FILTROS[0] and jug not in self.lista.get_children():
+        if jug not in self.lista.get_children():
             return    # el jugador ya no tiene pendientes: queda seleccionado el siguiente
         self.llenar_nicks(seleccionar=sig or nid)
 
