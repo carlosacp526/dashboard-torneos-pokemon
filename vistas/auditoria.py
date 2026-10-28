@@ -12,6 +12,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import load_data
+import nicknames_logica
 from vistas import replays
 from vistas.acceso import exigir_clave
 from vistas.elo import get_round_order
@@ -271,6 +272,9 @@ CONTROLES = [
     ("Formato del link vs Formato_esp", "Media",
      "El formato del link del replay (gen9ou, gen9vgc2025regh…) no concuerda con el Formato_esp de esa fila: el link es de otra "
      "batalla o el Formato_esp está mal. «Lo habitual» sale de cómo se registró ese formato en el resto del historial."),
+    ("Nicknames de Showdown nuevos", "Media",
+     "El replay trae un nick de Showdown que no está aprobado para ese jugador (nick nuevo, de un jugador no revisado, o "
+     "marcado como «no»/«a revisar»). Se aprueban en el programa de escritorio `aprobar_nicknames.pyw`."),
     ("Replays repetidos", "Media", "El mismo link de replay usado en batallas distintas (otro cruce, ronda o torneo): uno de los dos links está mal."),
     ("Replays sin procesar", "Baja",
      "Replays del CSV que todavía no están en el caché. Se procesan con `python actualizar_replay_cache.py`."),
@@ -291,6 +295,7 @@ def correr_controles(df_raw, mtime_cache):
         "Fechas futuras": fechas_futuras(df),
         "Datos incompletos": datos_incompletos(df),
         "Formato del link vs Formato_esp": formato_link_vs_formato_esp(df),
+        "Nicknames de Showdown nuevos": nicknames_logica.nicks_nuevos(df, cache),
         "Replays repetidos": replays_repetidos(df, cache),
         "Replays sin procesar": replays_sin_procesar(df, cache),
         "Nombres con variantes": nombres_con_variantes(),
