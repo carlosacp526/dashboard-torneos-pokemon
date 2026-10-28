@@ -170,6 +170,37 @@ def replays_sin_procesar(df, cache):
     return out.sort_values(["Tipo", "_n", "Evento", "_o"]).drop(columns=["_n", "_o"]).reset_index(drop=True)
 
 
+def _formato_del_link(url):
+    """Id del formato de Showdown que va en el link ('gen9vgc2025regh-2463...' -> 'gen9vgc2025regh')."""
+    m = re.search(r"replay\.pokemonshowdown\.com/(?:[a-z]+-)?([a-z0-9]+)-\d", str(url))
+    return re.sub(r"bo3$", "", m.group(1)) if m else None
+
+
+MIN_SHARE_FORMATO = 0.2   # un Formato_esp es "habitual" para un formato de link si cubre al menos este % de sus batallas
+
+
+def formato_link_vs_formato_esp(df):
+    """El formato que dice el link del replay (gen9ou, gen9vgc2025regh...) no concuerda con el Formato_esp de la fila.
+    Lo habitual para cada formato de link se aprende del propio historial (los Formato_esp que cubren >=20% de sus batallas)."""
+    j = df[df["Match_replays"].astype(str).str.contains("replay.pokemonshowdown.com")].copy()
+    j["_fmt"] = j["Match_replays"].map(_formato_del_link)
+    j = j[j["_fmt"].notna() & j["Formato_esp"].notna()]
+    cuenta = j.groupby(["_fmt", "Formato_esp"]).size()
+    parte = cuenta / cuenta.groupby(level=0).transform("sum")
+    habituales = {f: sorted(parte[f][parte[f] >= MIN_SHARE_FORMATO].index, key=lambda v: -cuenta[(f, v)])
+                  for f in parte.index.get_level_values(0).unique()}
+    mal = j[[r not in habituales[f] for f, r in zip(j["_fmt"], j["Formato_esp"])]].copy()
+    if mal.empty:
+        return pd.DataFrame()
+    mal["Fila Excel"] = _fila_excel(mal)
+    mal["Lo habitual para ese link"] = mal["_fmt"].map(lambda f: " / ".join(habituales[f]))
+    out = mal.rename(columns={"league": "Tipo", "N_Torneo": "Torneo", "round": "Ronda", "player1": "Jugador 1",
+                              "player2": "Jugador 2", "Formato_esp": "Formato_esp en el CSV",
+                              "_fmt": "Formato según el link", "Match_replays": "Replay"})
+    return out[["Fila Excel", "Tipo", "Torneo", "Ronda", "Jugador 1", "Jugador 2", "Formato_esp en el CSV",
+                "Formato según el link", "Lo habitual para ese link", "Replay"]].sort_values(["Formato según el link", "Fila Excel"])
+
+
 def replays_repetidos(df, cache=None):
     j = df[df["Walkover"] >= 0]
     j = j[j["Match_replays"].astype(str).str.startswith("https://")]
@@ -222,6 +253,9 @@ CONTROLES = [
     ("Fechas futuras", "Alta",
      "Batallas ya jugadas con fecha posterior a hoy. Distorsionan las gráficas por mes, el Elo y las rachas."),
     ("Datos incompletos", "Media", "Batallas jugadas sin ganador, fecha, Tier o Formato."),
+    ("Formato del link vs Formato_esp", "Media",
+     "El formato del link del replay (gen9ou, gen9vgc2025regh…) no concuerda con el Formato_esp de esa fila: el link es de otra "
+     "batalla o el Formato_esp está mal. «Lo habitual» sale de cómo se registró ese formato en el resto del historial."),
     ("Replays repetidos", "Media", "El mismo link de replay usado en batallas distintas (otro cruce, ronda o torneo): uno de los dos links está mal."),
     ("Replays sin procesar", "Baja",
      "Replays del CSV que todavía no están en el caché. Se procesan con `python actualizar_replay_cache.py`."),
@@ -241,6 +275,7 @@ def correr_controles(df_raw, mtime_cache):
         "Avanza sin haber ganado": avanza_sin_ganar(df),
         "Fechas futuras": fechas_futuras(df),
         "Datos incompletos": datos_incompletos(df),
+        "Formato del link vs Formato_esp": formato_link_vs_formato_esp(df),
         "Replays repetidos": replays_repetidos(df, cache),
         "Replays sin procesar": replays_sin_procesar(df, cache),
         "Nombres con variantes": nombres_con_variantes(),
