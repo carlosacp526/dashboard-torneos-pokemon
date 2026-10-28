@@ -27,9 +27,12 @@ import nicknames_logica as nl
 
 COLORES = {"si": "#1f7a3a", "no": "#a12b2b", "revisar": "#a8791c", "pendiente": "#555555"}
 ROTULO = {"si": "SÍ", "no": "NO", "revisar": "A REVISAR", "pendiente": "pendiente"}
-FILTROS = ["Con pendientes", "Todos los jugadores", "Con 'a revisar'", "Con 'no'", "Sin ningún nick aprobado"]
-CUENTA_FILTRO = {0: ("pendiente", "Pendientes"), 1: ("pendiente", "Pendientes"), 2: ("revisar", "A revisar"),
-                 3: ("no", "Rechazados"), 4: ("pendiente", "Pendientes")}
+FILTROS = ["Con pendientes", "Todos los jugadores", "Con 'a revisar' o 'no'", "Solo 'a revisar'", "Solo 'no'",
+           "Sin ningún nick aprobado"]
+# estados que cuenta la columna de la derecha según el filtro, y su título
+CUENTA_FILTRO = {0: (("pendiente",), "Pendientes"), 1: (("pendiente",), "Pendientes"),
+                 2: (("revisar", "no"), "Revisar + No"), 3: (("revisar",), "A revisar"),
+                 4: (("no",), "Rechazados"), 5: (("pendiente",), "Pendientes")}
 NO_VENTANA = 0x08000000 if os.name == "nt" else 0   # que git no abra una ventana de consola
 
 
@@ -163,7 +166,7 @@ class App:
         t = self.tabla
         modo = self.filtro.get()
         estado_cuenta, _ = CUENTA_FILTRO[self.filtro.current()]
-        pend = t[t["estado"] == estado_cuenta].groupby("jugador").size()   # lo que muestra la columna de la derecha
+        pend = t[t["estado"].isin(estado_cuenta)].groupby("jugador").size()   # lo que muestra la columna de la derecha
         rev = set(t[t["estado"] == "revisar"]["jugador"])
         no = set(t[t["estado"] == "no"]["jugador"])
         con_si = set(t[t["estado"] == "si"]["jugador"])
@@ -171,10 +174,12 @@ class App:
         if modo == FILTROS[0]:
             jug = [j for j in jug if pend.get(j, 0) > 0]
         elif modo == FILTROS[2]:
-            jug = [j for j in jug if j in rev]
+            jug = [j for j in jug if j in rev or j in no]
         elif modo == FILTROS[3]:
-            jug = [j for j in jug if j in no]
+            jug = [j for j in jug if j in rev]
         elif modo == FILTROS[4]:
+            jug = [j for j in jug if j in no]
+        elif modo == FILTROS[5]:
             jug = [j for j in jug if j not in con_si]
         q = self.busca.get().strip().lower()
         if q:
