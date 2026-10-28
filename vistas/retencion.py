@@ -359,19 +359,28 @@ def compute_vintage(grid, max_offset=24, min_jugadores=5):
 
 # ── Paso 8: entrenamiento XGBoost (split temporal, sin fuga de datos) ───────
 @st.cache_resource(ttl=3600, show_spinner=False)
+def dataset_churn(_grid):
+    """Filas de entrenamiento del modelo de fuga y su corte temporal (últimos ~20% de meses = test).
+    Devuelve (train_df, es_test, meses_sorted, meses_test) o None si no hay historial suficiente.
+    Compartido con ficha_modelos.py para que la ficha describa exactamente lo que se entrena."""
+    train_df = _grid[(_grid['activo'] == 1) & _grid['label_churn'].notna()].copy()
+    if train_df.empty or train_df['label_churn'].nunique() < 2:
+        return None
+    meses_sorted = sorted(train_df['ym'].unique())
+    n_test = max(1, round(len(meses_sorted) * 0.2))
+    meses_test = set(meses_sorted[-n_test:])
+    return train_df, train_df['ym'].isin(meses_test), meses_sorted, meses_test
+
+
 def train_churn_model(_grid, data_hash):
     import xgboost as xgb
     from sklearn.metrics import roc_auc_score, accuracy_score
     from sklearn.model_selection import cross_val_score
 
-    train_df = _grid[(_grid['activo'] == 1) & _grid['label_churn'].notna()].copy()
-    if train_df.empty or train_df['label_churn'].nunique() < 2:
+    ds = dataset_churn(_grid)
+    if ds is None:
         return None, {'error': 'No hay suficiente historial todavía para entrenar el modelo.'}, None
-
-    meses_sorted = sorted(train_df['ym'].unique())
-    n_test = max(1, round(len(meses_sorted) * 0.2))
-    meses_test = set(meses_sorted[-n_test:])
-    es_test = train_df['ym'].isin(meses_test)
+    train_df, es_test, meses_sorted, meses_test = ds
 
     X_tr, y_tr = train_df.loc[~es_test, FEATURE_COLS], train_df.loc[~es_test, 'label_churn']
     X_te, y_te = train_df.loc[es_test, FEATURE_COLS], train_df.loc[es_test, 'label_churn']

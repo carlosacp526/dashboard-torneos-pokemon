@@ -494,16 +494,21 @@ def train_models(X, y, X_val, y_val):
             prob_val = model.predict_proba(X_val)[:, 1]
             acc_val  = accuracy_score(y_val, pred_val)
             auc_val  = roc_auc_score(y_val, prob_val)
-            cv_acc   = cross_val_score(model, X, y, cv=5, scoring="accuracy").mean()
+            cv_acc_f = cross_val_score(model, X, y, cv=5, scoring="accuracy")
+            cv_acc   = cv_acc_f.mean()
             # cv_auc (no solo cv_accuracy): AUC es el criterio que decide el
             # ganador mas abajo (ver 'best' en main()), asi que la validacion
             # cruzada tambien se reporta en esa misma metrica para que ambas
             # sean comparables entre si.
-            cv_auc   = cross_val_score(model, X, y, cv=5, scoring="roc_auc").mean()
+            cv_auc_f = cross_val_score(model, X, y, cv=5, scoring="roc_auc")
+            cv_auc   = cv_auc_f.mean()
             results[name] = {"val_accuracy": round(acc_val,4),
                              "val_auc":      round(auc_val,4),
                              "cv_accuracy":  round(cv_acc,4),
-                             "cv_auc":       round(cv_auc,4)}
+                             "cv_auc":       round(cv_auc,4),
+                             # por fold (para la ficha técnica, ficha_modelos.py)
+                             "cv_auc_folds": [round(float(v),4) for v in cv_auc_f],
+                             "cv_acc_folds": [round(float(v),4) for v in cv_acc_f]}
             trained[name] = model
         except Exception as e:
             results[name] = {"val_accuracy":0.0,"val_auc":0.0,
@@ -564,6 +569,7 @@ def main():
     parser.add_argument("--csv",     default=None)
     parser.add_argument("--out",     default="modelo_prediccion.pkl")
     parser.add_argument("--top_csv", default="top_features.csv")
+    parser.add_argument("--sin_ficha", action="store_true", help="no regenerar la ficha técnica (data/ficha_*.pkl)")
     args = parser.parse_args()
 
     print("=" * 65)
@@ -666,7 +672,26 @@ def main():
     size_mb = os.path.getsize(args.out) / 1024 / 1024
     print(f"\n  Guardado: {args.out} ({size_mb:.1f} MB)")
     print(f"  Features: {args.top_csv}")
-    print("\n[OK] Sube modelo_prediccion.pkl y top_features.csv al repo.")
+
+    # Ficha técnica para el visor de escritorio (Ver modelos.pyw): se rehace con cada entrenamiento.
+    if not args.sin_ficha:
+        try:
+            import ficha_modelos
+            ym_ok = df[df["Walkover"] == 0]
+            info = dict(
+                n_raw=len(df_raw), n_jugadas=len(ym_ok), n_pend=len(df_pend),
+                fecha_min=str(ym_ok["date"].min().date()), fecha_max=str(ym_ok["date"].max().date()),
+                n_jugadores=len(set(ym_ok["player1"].astype(str)) | set(ym_ok["player2"].astype(str))),
+                n_train_bat=len(df_train), n_val_bat=len(df_val),
+                n_hist=len(hist_all), cos_filas=len(cos), cos_cols=len(cos.columns),
+            )
+            ficha_modelos.generar_ficha_combates(
+                trained, results, best, X_tr, y_tr, X_vl, y_vl, all_feat, top_feat,
+                pd.read_csv(args.top_csv), info, tiers, TRAIN_END, VAL_START, VENTANAS)
+            ficha_modelos.generar_ficha_fuga(df_raw)
+        except Exception as e:           # la ficha es informativa: un fallo no debe tumbar el entrenamiento
+            print(f"  [ficha] No se pudo generar la ficha técnica: {e}")
+    print("\n[OK] Sube modelo_prediccion.pkl, top_features.csv y data/ficha_*.pkl al repo.")
     print("=" * 65)
 
 

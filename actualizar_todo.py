@@ -28,7 +28,7 @@ os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 
 LOCK = os.path.join(ROOT, "data", ".actualizando.lock")
-ARCHIVOS = ["data/logros_comunidad.pkl", "data/score_xtream.pkl", "data/score_xtream.csv", "data/scouting_cache.pkl", "rankings_monotype"]
+ARCHIVOS = ["data/logros_comunidad.pkl", "data/score_xtream.pkl", "data/score_xtream.csv", "data/scouting_cache.pkl", "data/ficha_fuga.pkl", "rankings_monotype"]
 CONFIG_GIT = ["-c", "core.autocrlf=false"]
 
 
@@ -83,6 +83,21 @@ def _pasos(forzar):
         hizo = True
     else:
         log("Scouting: al día")
+
+    # Ficha técnica del modelo de fuga (la de combates la rehace entrenar_modelo.py al reentrenar)
+    try:
+        import ficha_modelos as fm
+        ficha = fm.cargar("fuga")
+        csv_mtime = os.path.getmtime(os.path.join(ROOT, "archivo_preuba1.csv"))
+        if forzar or hizo or ficha is None or ficha["generado"].timestamp() < csv_mtime:
+            t = time.time()
+            fm.generar_ficha_fuga(df_raw)
+            log(f"Ficha modelo de fuga: regenerada ({time.time() - t:.0f}s)")
+            hizo = True
+        else:
+            log("Ficha modelo de fuga: al día")
+    except Exception as e:                               # informativa: no debe frenar lo demás
+        log(f"Ficha modelo de fuga: falló ({e})")
     return hizo
 
 
