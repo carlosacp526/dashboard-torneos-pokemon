@@ -277,6 +277,9 @@ def _evaluar_tabla_modelos(trained, results, ganador, X_tr, y_tr, X_vl, y_vl):
 # ════════════════════════════════════════════════════════════════
 
 _FAMILIAS = [
+    ("wr_rep_actual_", "Winrate del jugador en este mismo n° de Rep"),
+    ("rep_efecto_", "Efecto del n° de Rep (winrate en este Rep − winrate general)"),
+    ("dif_", "Diferencia A − B"),
     ("ctx_", "Contexto de esta batalla"), ("log1p_wr_", "Log del winrate"), ("log_n_batallas", "Log nº de batallas"),
     ("log_meses_activo", "Log meses activos"), ("wr_ratio", "Ratio de winrate entre ventanas"),
     ("wr_diff", "Diferencia de winrate entre ventanas"), ("nb_ratio", "Ratio de nº batallas entre ventanas"),

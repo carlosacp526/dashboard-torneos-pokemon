@@ -24,8 +24,10 @@ sys.path.insert(0, ROOT)
 import pandas as pd
 
 import nicknames_logica as nl
+import ui_premium as ui
 
-COLORES = {"si": "#1f7a3a", "no": "#a12b2b", "revisar": "#a8791c", "pendiente": "#555555"}
+COLORES = {"si": "#1f7a3a", "no": "#a12b2b", "revisar": "#a8791c", "pendiente": "#555555"}   # fondo de los botones grandes
+TAGS = {"si": "ok", "no": "bad", "revisar": "warn", "pendiente": ""}                           # color de las filas (sigue el tema)
 ROTULO = {"si": "SÍ", "no": "NO", "revisar": "A REVISAR", "pendiente": "pendiente"}
 FILTROS = ["Con pendientes", "Todos los jugadores", "Con 'a revisar' o 'no'", "Solo 'a revisar'", "Solo 'no'",
            "Sin ningún nick aprobado"]
@@ -39,11 +41,10 @@ NO_VENTANA = 0x08000000 if os.name == "nt" else 0   # que git no abra una ventan
 class App:
     def __init__(self, raiz):
         self.raiz = raiz
-        raiz.title("Nicknames de Showdown")
-        raiz.geometry("1150x700")
-        raiz.minsize(1000, 600)
+        self.cont = ttk.Frame(raiz)
+        self.cont.pack(fill="both", expand=True)
         self.estado_txt = tk.StringVar(value="Cargando el historial y los replays…")
-        ttk.Label(raiz, textvariable=self.estado_txt, padding=20, font=("Segoe UI", 12)).pack()
+        ttk.Label(self.cont, textvariable=self.estado_txt, padding=30, style="T.TLabel").pack()
         raiz.after(150, self.cargar)
 
     # ── datos ────────────────────────────────────────────────────────────────────────────────
@@ -62,10 +63,11 @@ class App:
 
     def cargar(self):
         self.cargar_datos()
-        for w in self.raiz.winfo_children():
+        for w in self.cont.winfo_children():
             w.destroy()
         self.construir()
         self.llenar_jugadores()
+        ui.retema(self.cont)
 
     def refrescar_estados(self):
         self.tabla = nl.con_estado(self.cands, self.decisiones)
@@ -96,7 +98,7 @@ class App:
 
     # ── interfaz ─────────────────────────────────────────────────────────────────────────────
     def construir(self):
-        r = self.raiz
+        r, rb = self.cont, self.raiz
         barra = ttk.Frame(r, padding=(10, 8))
         barra.pack(fill="x")
         ttk.Label(barra, text="Mostrar:").pack(side="left")
@@ -109,10 +111,10 @@ class App:
         self.busca.trace_add("write", lambda *a: self.llenar_jugadores())
         ttk.Entry(barra, textvariable=self.busca, width=18).pack(side="left", padx=4)
         ttk.Button(barra, text="Aprobar coincidencias exactas", command=self.aprobar_exactos).pack(side="left", padx=12)
-        ttk.Button(barra, text="Subir a GitHub", command=self.subir).pack(side="right")
+        ttk.Button(barra, text="Subir a GitHub", style="Accent.TButton", command=self.subir).pack(side="right")
         ttk.Button(barra, text="Recargar datos", command=self.recargar).pack(side="right", padx=(0, 8))
         self.resumen = tk.StringVar()
-        ttk.Label(barra, textvariable=self.resumen).pack(side="right", padx=12)
+        ttk.Label(barra, textvariable=self.resumen, style="S.TLabel").pack(side="right", padx=12)
 
         cuerpo = ttk.PanedWindow(r, orient="horizontal")
         cuerpo.pack(fill="both", expand=True, padx=10, pady=(0, 6))
@@ -132,7 +134,7 @@ class App:
 
         der = ttk.Frame(cuerpo)
         self.titulo = tk.StringVar()
-        ttk.Label(der, textvariable=self.titulo, font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(0, 6))
+        ttk.Label(der, textvariable=self.titulo, style="T.TLabel").pack(anchor="w", pady=(0, 6))
         botones = ttk.Frame(der, padding=(0, 10))
         botones.pack(side="bottom", fill="x")
         for texto, est in (("Sí  (S)", "si"), ("No  (N)", "no"), ("A revisar  (R)", "revisar"), ("Quitar  (Supr)", "pendiente")):
@@ -146,24 +148,22 @@ class App:
                            ("estado", "Estado", 110, "center")):
             self.nicks.heading(c, text=t)
             self.nicks.column(c, width=w, anchor=a)
-        for e, col in COLORES.items():
-            self.nicks.tag_configure(e, foreground=col if e != "pendiente" else "#222222")
         self.nicks.pack(fill="both", expand=True)
         self.ayuda = tk.StringVar(value="Un jugador puede tener varios nicks aprobados. El nick verdadero suele salir en casi "
                                         "todas sus batallas (% alto); los de rivales salen una o dos veces.")
-        ttk.Label(der, textvariable=self.ayuda, wraplength=640, foreground="#777777").pack(side="bottom", anchor="w")
+        ttk.Label(der, textvariable=self.ayuda, wraplength=640, style="S.TLabel").pack(side="bottom", anchor="w")
         cuerpo.add(der, weight=3)
 
         def tecla(fn):                    # los atajos no actúan mientras se escribe en el buscador
-            return lambda ev: None if isinstance(r.focus_get(), (ttk.Entry, tk.Entry)) else fn()
+            return lambda ev: None if isinstance(rb.focus_get(), (ttk.Entry, tk.Entry)) else fn()
         for k, e in (("s", "si"), ("n", "no"), ("r", "revisar")):
-            r.bind(k, tecla(lambda e=e: self.decidir(e)))
-            r.bind(k.upper(), tecla(lambda e=e: self.decidir(e)))
-        r.bind("<Delete>", tecla(lambda: self.decidir("pendiente")))
-        r.bind("o", tecla(self.abrir_replay))
-        r.bind("O", tecla(self.abrir_replay))
-        r.bind("<Up>", tecla(lambda: self.mover(-1)))
-        r.bind("<Down>", tecla(lambda: self.mover(1)))
+            rb.bind(k, tecla(lambda e=e: self.decidir(e)))
+            rb.bind(k.upper(), tecla(lambda e=e: self.decidir(e)))
+        rb.bind("<Delete>", tecla(lambda: self.decidir("pendiente")))
+        rb.bind("o", tecla(self.abrir_replay))
+        rb.bind("O", tecla(self.abrir_replay))
+        rb.bind("<Up>", tecla(lambda: self.mover(-1)))
+        rb.bind("<Down>", tecla(lambda: self.mover(1)))
         self.nicks.focus_set()
 
     # ── contenido ────────────────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ class App:
         t = self.tabla[self.tabla["jugador"] == jug].sort_values("partidas", ascending=False)
         self.nicks.delete(*self.nicks.get_children())
         for _, f in t.iterrows():
-            self.nicks.insert("", "end", iid=f["nick_id"], tags=(f["estado"],),
+            self.nicks.insert("", "end", iid=f["nick_id"], tags=(TAGS[f["estado"]], f["estado"]),
                               values=(f["nick"], f["partidas"], f"{f['pct']}%  ({f['partidas']} de {f['total']})",
                                       "sí" if nl.toid(jug) == f["nick_id"] else "", ROTULO[f["estado"]]))
             self.ejemplos[(jug, f["nick_id"])] = f["ejemplo"]
@@ -226,7 +226,7 @@ class App:
         hijos = self.nicks.get_children()
         if hijos:
             destino = seleccionar if seleccionar in hijos else next(
-                (h for h in hijos if self.nicks.item(h, "tags")[0] == "pendiente"), hijos[0])
+                (h for h in hijos if "pendiente" in self.nicks.item(h, "tags")), hijos[0])
             self.nicks.selection_set(destino)
             self.nicks.focus(destino)
             self.nicks.see(destino)
@@ -320,7 +320,16 @@ class App:
             messagebox.showerror("Subir a GitHub", f"No se pudo subir:\n{str(e)[:400]}")
 
 
+class Ventana(ui.Base):
+    PROGRAMA = "aprobar_nicknames"
+    TITULO = "Nicknames de Showdown"
+    TAM = "1180x720"
+    MIN = (1000, 600)
+    ATAJOS = [("S / N / R", "Sí / No / A revisar para el nick elegido"), ("Supr", "Quitar la decisión"), ("O", "Abrir un replay de ejemplo"),
+              ("↑ / ↓", "Moverse entre los nicks")]
+
+
 if __name__ == "__main__":
-    raiz = tk.Tk()
+    raiz = Ventana()
     App(raiz)
     raiz.mainloop()

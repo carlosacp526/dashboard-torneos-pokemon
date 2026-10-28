@@ -374,10 +374,22 @@ def build_derived(cos):
 CTX_COLS = ["ctx_rep_bucket", "ctx_es_decisivo", "ctx_es_final_torneo"]
 
 
-def build_dataset(df_battles, cos):
+REP_VENT = [12, 24, 36]    # ventanas (meses) de las variables de n° de batalla de la v2
+
+
+def es_extra_v2(c):
+    """Variables que solo existen para la v2 (modelado_v2.py): winrate en el mismo n° de Rep y diferencias A-B."""
+    return c.startswith(("wr_rep_actual_", "rep_efecto_", "dif_"))
+
+
+def build_dataset(df_battles, cos, rep_features=False, keep_nan=False, extended=False):
+    """rep_features: agrega variables del n° de batalla (winrate de cada jugador en ESTE mismo Rep, su diferencia con
+    su winrate general y las diferencias A-B). keep_nan: no rellena con 0 (la v2 trata los nulos con su propio tramo).
+    extended: devuelve además el mes de cada batalla (para cortes temporales train/val/test)."""
     df_ok = df_battles[df_battles["Walkover"] == 0].copy()
     feat_cols = [c for c in cos.columns if c not in ["jugador", "ym"]]
     ctx_cols = [c for c in CTX_COLS if c in df_ok.columns]
+    extra_base = [f"wr_rep_actual_m{n}" for n in REP_VENT] + [f"rep_efecto_m{n}" for n in REP_VENT] if rep_features else []
 
     cos_idx = cos.set_index(["jugador", "ym"])
 
@@ -403,6 +415,14 @@ def build_dataset(df_battles, cos):
         # no se ve afectado por el swap _g/_p de abajo porque describe el cruce, no a un jugador
         for c in ctx_cols:
             fila[c] = r[c]
+        if rep_features:
+            rb = int(r["ctx_rep_bucket"]) if "ctx_rep_bucket" in r.index and pd.notna(r["ctx_rep_bucket"]) else 1
+            for lado, cs in (("g", cos_g), ("p", cos_p)):
+                for n_v in REP_VENT:
+                    wr_rep = cs.get(f"wr_rep_{rb}_m{n_v}", np.nan)
+                    wr_all = cs.get(f"winrate_m{n_v}", np.nan)
+                    fila[f"wr_rep_actual_m{n_v}_{lado}"] = wr_rep
+                    fila[f"rep_efecto_m{n_v}_{lado}"] = wr_rep - wr_all
         rows.append(fila)
 
     data = pd.DataFrame(rows)
@@ -410,20 +430,29 @@ def build_dataset(df_battles, cos):
         raise ValueError("No se pudieron construir filas.")
 
     all_feat = [f"{c}_g" for c in feat_cols] + [f"{c}_p" for c in feat_cols] + ctx_cols
+    all_feat += [f"{c}_{l}" for c in extra_base for l in ("g", "p")]
     all_feat = [c for c in all_feat if c in data.columns]
 
     data = data.sample(frac=1, random_state=42).reset_index(drop=True)
     n = len(data)
     d0 = data.iloc[:n//2].copy(); d0["target"] = 0
     d1 = data.iloc[n//2:].copy(); d1["target"] = 1
-    for c in feat_cols:
+    for c in feat_cols + extra_base:
         cg, cp = f"{c}_g", f"{c}_p"
         if cg in d1.columns and cp in d1.columns:
             d1[cg], d1[cp] = d1[cp].values.copy(), d1[cg].values.copy()
 
     full = pd.concat([d0, d1], ignore_index=True)
-    X = full[all_feat].fillna(0)
+    if rep_features:
+        # diferencias A-B (antisimétricas: al espejar la batalla cambian de signo) para que el modelo compare jugadores
+        for base in ["winrate_m12", "winrate_m36"] + extra_base:
+            if f"{base}_g" in full.columns:
+                full[f"dif_{base}"] = full[f"{base}_g"] - full[f"{base}_p"]
+                all_feat.append(f"dif_{base}")
+    X = full[all_feat] if keep_nan else full[all_feat].fillna(0)
     y = full["target"].astype(int)
+    if extended:
+        return X, y, all_feat, data, full["ym_batalla"].values
     return X, y, all_feat, data
 
 
@@ -570,6 +599,9 @@ def main():
     parser.add_argument("--out",     default="modelo_prediccion.pkl")
     parser.add_argument("--top_csv", default="top_features.csv")
     parser.add_argument("--sin_ficha", action="store_true", help="no regenerar la ficha técnica (data/ficha_*.pkl)")
+    parser.add_argument("--sin_v2", action="store_true", help="no correr el pipeline v2 (binning óptimo, fichas *_v2)")
+    parser.add_argument("--test_meses", type=int, default=None, help="v2: meses más recientes reservados como test holdout (def. 2)")
+    parser.add_argument("--val_meses", type=int, default=None, help="v2: meses anteriores al test usados como validación (def. 3)")
     args = parser.parse_args()
 
     print("=" * 65)
@@ -691,6 +723,24 @@ def main():
             ficha_modelos.generar_ficha_fuga(df_raw)
         except Exception as e:           # la ficha es informativa: un fallo no debe tumbar el entrenamiento
             print(f"  [ficha] No se pudo generar la ficha técnica: {e}")
+    # v2 (experimental, no toca el modelo en producción): binning óptimo monótono, selección por concordancia y
+    # robustez del Gini en train / CV / validación / test. Deja las fichas combates_v2 y fuga_v2 para el visor.
+    if not args.sin_v2:
+        try:
+            import modelado_v2
+            if args.test_meses: modelado_v2.TEST_MESES = args.test_meses
+            if args.val_meses: modelado_v2.VAL_MESES = args.val_meses
+            print("\n[v2] Dataset completo con variables de n° de batalla...")
+            X_all, y_all, _, data_all, ym_all = build_dataset(df[df["Walkover"] == 0], cos, rep_features=True,
+                                                              keep_nan=True, extended=True)
+            if os.environ.get("MODELO_DUMP"):
+                with open(os.environ["MODELO_DUMP"], "wb") as f:
+                    pickle.dump(dict(X=X_all, y=y_all, data=data_all, ym=ym_all, info=locals().get("info", {}), tiers=tiers), f)
+            modelado_v2.correr_combates(X_all, y_all, ym_all, data_all, locals().get("info", {}), tiers)
+            modelado_v2.correr_fuga(df_raw)
+        except Exception as e:
+            import traceback
+            print(f"  [v2] No se pudo correr la v2: {e}\n{traceback.format_exc()}")
     print("\n[OK] Sube modelo_prediccion.pkl, top_features.csv y data/ficha_*.pkl al repo.")
     print("=" * 65)
 
