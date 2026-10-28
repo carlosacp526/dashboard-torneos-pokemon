@@ -621,8 +621,8 @@ def verificar_serving(data_all, cos, finales, n=300):
             total += 1
             if not ((pd.isna(esperado) and pd.isna(obtenido)) or (pd.notna(esperado) and pd.notna(obtenido) and abs(esperado - obtenido) < 1e-9)):
                 malos[v] = malos.get(v, 0) + 1
-    print(f"  [serving] {total - sum(malos.values())}/{total} valores idénticos entre entrenamiento y producción"
-          + (f" — DIFIEREN: {malos}" if malos else " ✓"))
+    print(f"  [serving] {total - sum(malos.values())}/{total} valores identicos entre entrenamiento y produccion"
+          + (f" — DIFIEREN: {malos}" if malos else " OK"))
 
 
 def main():

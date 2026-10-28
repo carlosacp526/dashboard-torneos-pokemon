@@ -23,6 +23,7 @@ import os
 import sys
 import copy
 import pickle
+import time
 from datetime import datetime
 
 import numpy as np
@@ -509,7 +510,14 @@ def correr_fuga(df_raw=None):
     tmp = RUTA_FUGA + ".tmp"
     with open(tmp, "wb") as f:
         pickle.dump(art, f)
-    os.replace(tmp, RUTA_FUGA)
+    for intento in range(8):
+        try:
+            os.replace(tmp, RUTA_FUGA)
+            break
+        except PermissionError:
+            time.sleep(0.5)
+    else:
+        os.replace(tmp, RUTA_FUGA)
     print(f"  [v2] Modelo de fuga para la app: {RUTA_FUGA}")
     return ficha, art
 

@@ -21,6 +21,7 @@ import os
 import re
 import pickle
 import sys
+import time
 from datetime import datetime
 
 import numpy as np
@@ -50,6 +51,12 @@ def guardar(ficha):
     tmp = ruta(ficha["id"]) + ".tmp"
     with open(tmp, "wb") as f:
         pickle.dump(ficha, f)
+    for intento in range(8):                 # Windows puede tener el archivo bloqueado un instante (antivirus, otro programa)
+        try:
+            os.replace(tmp, ruta(ficha["id"]))
+            return
+        except PermissionError:
+            time.sleep(0.5)
     os.replace(tmp, ruta(ficha["id"]))
 
 

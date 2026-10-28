@@ -712,7 +712,8 @@ class Visor(ui.Base):
         self.t0 = time.time()
         try:
             log = open(self.log_ruta, "w", encoding="utf-8", errors="replace")
-            self.proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, creationflags=0x08000000 if os.name == "nt" else 0)
+            self.proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
+                                 creationflags=0x08000000 if os.name == "nt" else 0)
         except Exception as e:
             messagebox.showerror("No se pudo iniciar", str(e))
             return
