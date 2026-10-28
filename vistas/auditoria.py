@@ -179,6 +179,12 @@ def _formato_del_link(url):
 MIN_SHARE_FORMATO = 0.2   # un Formato_esp es "habitual" para un formato de link si cubre al menos este % de sus batallas
 
 
+# Combinaciones (formato del link, Formato_esp) que son válidas aunque no sean las habituales.
+COMBINACIONES_VALIDAS = {
+    ("gen9nationaldex", "NAT DEX MONOTYPE"),   # un Monotype Nat Dex también se juega en el formato Nat Dex normal
+}
+
+
 def formato_link_vs_formato_esp(df):
     """El formato que dice el link del replay (gen9ou, gen9vgc2025regh...) no concuerda con el Formato_esp de la fila.
     Lo habitual para cada formato de link se aprende del propio historial (los Formato_esp que cubren >=20% de sus batallas)."""
@@ -189,7 +195,7 @@ def formato_link_vs_formato_esp(df):
     parte = cuenta / cuenta.groupby(level=0).transform("sum")
     habituales = {f: sorted(parte[f][parte[f] >= MIN_SHARE_FORMATO].index, key=lambda v: -cuenta[(f, v)])
                   for f in parte.index.get_level_values(0).unique()}
-    mal = j[[r not in habituales[f] for f, r in zip(j["_fmt"], j["Formato_esp"])]].copy()
+    mal = j[[r not in habituales[f] and (f, r) not in COMBINACIONES_VALIDAS for f, r in zip(j["_fmt"], j["Formato_esp"])]].copy()
     if mal.empty:
         return pd.DataFrame()
     mal["Fila Excel"] = _fila_excel(mal)
