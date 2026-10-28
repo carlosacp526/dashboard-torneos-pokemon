@@ -6,6 +6,7 @@ nicks de Showdown que aparecen en sus replays y tú decides: Sí (es suyo), No (
 tener varios nicks aprobados. Cada decisión se guarda al instante en data/nicknames_showdown.csv; el botón
 «Subir a GitHub» lo envía para que la Auditoría de la app avise cuando aparezca un nick nuevo.
 
+Los nicks con más de 10 replays del jugador se aprueban solos al abrir (Sí); lo demás lo decides tú.
 Atajos: S = Sí, N = No, R = A revisar, Supr = quitar decisión, O = abrir un replay de ejemplo, flechas arriba/abajo = moverse.
 """
 import os
@@ -51,6 +52,7 @@ class App:
         self.decisiones = nl.cargar()
         self.ejemplos = {}
         self.refrescar_estados()
+        self.auto = self.aprobar_automaticos()
         for w in self.raiz.winfo_children():
             w.destroy()
         self.construir()
@@ -58,6 +60,20 @@ class App:
 
     def refrescar_estados(self):
         self.tabla = nl.con_estado(self.cands, self.decisiones)
+
+    def aprobar_automaticos(self):
+        """Los nicks pendientes con más de MIN_PARTIDAS_AUTO replays del jugador pasan directo a Sí (nunca pisa un No / A revisar)."""
+        t = self.tabla
+        auto = t[(t["estado"] == "pendiente") & (t["partidas"] > nl.MIN_PARTIDAS_AUTO)]
+        if auto.empty:
+            return 0
+        ahora = datetime.now().strftime("%Y-%m-%d %H:%M")
+        nuevas = pd.DataFrame([{"jugador": f["jugador"], "nick": f["nick"], "estado": "si", "partidas": str(f["partidas"]),
+                                "actualizado": ahora} for _, f in auto.iterrows()])
+        self.decisiones = pd.concat([self.decisiones, nuevas], ignore_index=True)
+        nl.guardar(self.decisiones)
+        self.refrescar_estados()
+        return len(auto)
 
     def guardar_decision(self, jugador, nick, nick_id, estado, partidas):
         d = self.decisiones
@@ -166,7 +182,8 @@ class App:
         for j in jug:
             self.lista.insert("", "end", iid=j, text=j, values=(int(pend.get(j, 0)),))
         total = int((self.tabla["estado"] == "pendiente").sum())
-        self.resumen.set(f"{total} nicks pendientes de {len(self.tabla)}")
+        self.resumen.set(f"{total} nicks pendientes de {len(self.tabla)}"
+                         + (f"  ·  {self.auto} aprobados solos (más de {nl.MIN_PARTIDAS_AUTO} replays)" if self.auto else ""))
         destino = actual if actual in jug else (jug[0] if jug else None)
         if destino:
             self.lista.selection_set(destino)

@@ -16,6 +16,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 ARCHIVO = os.path.join(ROOT, "data", "nicknames_showdown.csv")
 ESTADOS = ("si", "no", "revisar")
 PLACEHOLDERS = {"pendiente", "nan", ""}
+MIN_PARTIDAS_AUTO = 10   # más de estos replays del jugador con un nick: se aprueba solo
 COLUMNAS = ["jugador", "nick", "estado", "partidas", "actualizado"]
 
 
