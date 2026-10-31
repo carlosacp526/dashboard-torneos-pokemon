@@ -49,6 +49,8 @@ GRUPOS = [
         "items": [
             ("jugadores", "👤", "Jugadores y Competencias",
              ["👤 Perfil de Jugador"]),
+            ("trayectoria", "🧭", "Trayectoria",
+             ["🧭 Línea de tiempo de cada jugador", "⭐ Momentos destacados y títulos", "🔎 Filtra por torneos o ligas"]),
             ("perfiles", "🧬", "Perfiles de Juego",
              ["🧬 Perfil de tiers: un tier, pocos o multitier", "🎮 Perfil de formato, eventos y randoms", "🎯 One shot y multi shot"]),
             ("tickets", "🎫", "Tickets",

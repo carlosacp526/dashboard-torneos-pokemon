@@ -373,3 +373,9 @@ def mostrar_trayectoria(df_raw=None, jugador_actual=None):
     mostrar = [e for e in eventos if e["destacado"]] if solo_dest else eventos
     st.caption(f"{len(mostrar)} momentos" + (" destacados" if solo_dest else "") + " · del más antiguo al más reciente")
     st.markdown('<div class="tl-wrap">' + "".join(_html_nodo(e) for e in mostrar) + "</div>", unsafe_allow_html=True)
+
+
+def show():
+    st.title("Trayectoria de jugadores")
+    st.caption("Su paso por Poketubi en una línea de tiempo: de dónde partió, por dónde pasó, qué ganó y sus momentos destacados.")
+    mostrar_trayectoria(None, st.session_state.get("selected_player"))
