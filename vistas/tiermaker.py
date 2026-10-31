@@ -141,6 +141,34 @@ VENTANAS_WINRATE = [
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
+def _xtream_y_titulos() -> dict:
+    """jugador_lower -> {'xtream': Score Xtream (0-1000) o None, 'titulos': [ "Torneo 46 · ORIGINS", "Liga ..." ]}.
+    Score Xtream desde data/score_xtream.pkl (precalculado); títulos de la misma fuente que el Salón de la Fama."""
+    out = {}
+    try:
+        import pickle
+        ruta = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "score_xtream.pkl")
+        with open(ruta, "rb") as f:
+            tabla = pickle.load(f)["tabla"]
+        for _, r in tabla.iterrows():
+            out.setdefault(str(r["Jugador"]).strip().lower(), {"xtream": None, "titulos": []})["xtream"] = round(float(r["Score_Xtream"]), 1)
+    except Exception:
+        pass
+    try:
+        from vistas.campeones_pixel import _datos_campeones
+        torneos, ligas, _ = _datos_campeones(load_data())
+        for t in torneos:
+            e = out.setdefault(str(t["jugador"]).strip().lower(), {"xtream": None, "titulos": []})
+            e["titulos"].append(f"Torneo {t['n']}" + (f" · {t['evento']}" if t.get("evento") else ""))
+        for l in ligas:
+            e = out.setdefault(str(l["jugador"]).strip().lower(), {"xtream": None, "titulos": []})
+            e["titulos"].append(f"Liga {l['liga']}")
+    except Exception:
+        pass
+    return out
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
 def _construir_tabla_jugadores() -> pd.DataFrame:
     df = ensure_fields(normalize_columns(load_data()))
     stats = compute_player_stats(df)  # Jugador, Partidas, Victorias, Derrotas, Winrate%
@@ -368,7 +396,9 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
       `Partidas: ${{p.partidas}}  |  Winrate total: ${{p.winrate}}%\\n` +
       `Últ. mes: ${{wrTxt(p.winrate_1m, p.partidas_1m)}}  |  Últ. 3 meses: ${{wrTxt(p.winrate_3m, p.partidas_3m)}}\\n` +
       `Últ. 6 meses: ${{wrTxt(p.winrate_6m, p.partidas_6m)}}  |  Últ. año: ${{wrTxt(p.winrate_12m, p.partidas_12m)}}\\n` +
-      `Score: ${{scoreTxt}}  |  Formato: ${{p.formato || '-'}}  |  País: ${{p.pais || '-'}}`;
+      `Score: ${{scoreTxt}}  |  Score Xtream: ${{p.xtream === null || p.xtream === undefined ? 's/d' : p.xtream}}\\n` +
+      `Formato: ${{p.formato || '-'}}  |  País: ${{p.pais || '-'}}\\n` +
+      ((p.titulos && p.titulos.length) ? `🏆 Títulos (${{p.titulos.length}}): ${{p.titulos.join(', ')}}` : '🏆 Sin títulos');
     if (p.img) {{
       card.innerHTML = `<img src="${{p.img}}"><div class="tm-name">${{p.nombre}}</div>`;
     }} else {{
@@ -577,6 +607,7 @@ def show():
         st.info("Ningún jugador cumple los filtros actuales.")
         return
 
+    extra = _xtream_y_titulos()
     jugadores_payload = []
     for _, r in tabla_f.iterrows():
         img_b64 = _imagen_base64(r['_img_path']) if r['_img_path'] else None
@@ -591,6 +622,8 @@ def show():
             'score':       (round(float(score), 2) if pd.notna(score) else None),
             'formato':     r['Formato'],
             'pais':        r['Pais'],
+            'xtream':      extra.get(str(r['Jugador']).strip().lower(), {}).get('xtream'),
+            'titulos':     extra.get(str(r['Jugador']).strip().lower(), {}).get('titulos', []),
         }
         for sufijo, _, _ in VENTANAS_WINRATE:
             wr = r[f'Winrate_{sufijo}']
