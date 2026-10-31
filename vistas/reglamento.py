@@ -50,8 +50,11 @@ DOBLES = [
     ("Metrónomo Battle",     "METRONOMO",          "Ambos lados usan clones con Metrónomo. Cada turno decide el azar."),
     ("Orre Colosseum",       "ORRE COLOSSEUM",     "Batallas 2 vs 2 bajo el estilo Pokémon Colosseum."),
     ("Random Dobles Champions","RANDOM DOBLES CHAMPIONS","Modalidad Champions jugada sobre Randoms Dobles."),
+    ("Champions Dobles",    "CHAMPIONS DOBLES",   "Modalidad Champions jugada en formato de dobles."),
     ("VGC 2010 (legacy)",    "VGC 2010",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
     ("VGC 2013 (legacy)",    "VGC 2013",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
+    ("VGC 2014 (legacy)",    "VGC 2014",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
+    ("VGC 2019 (legacy)",    "VGC 2019",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
 ]
 
 VGC = [
