@@ -36,6 +36,7 @@ SINGLES = [
     ("Stadium OU Gen 2",     "STADIUM OU GEN 2",   "OU jugado bajo las reglas de la 2ª generación."),
     ("Randbats Champions",   "RANDBATS CHAMPIONS", "Modalidad Champions jugada sobre Randoms."),
     ("BSS Champions",        "BSS CHAMPIONS",      "Modalidad Champions jugada sobre BSS."),
+    ("OU Champions",         "CHAMPIONS OU",       "Modalidad Champions jugada sobre OU."),
     ("Trademarked",          "TRADEMARKED",        "Reto especial de evento, con reglas propias definidas para esa edición."),
 ]
 
