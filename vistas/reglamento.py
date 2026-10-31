@@ -65,6 +65,7 @@ VGC = [
 ]
 
 REGULACIONES_VGC = ["REG A","REG B","REG C","REG D","REG E","REG F","REG G","REG H","REG I","REG J"]
+REGULACIONES_CHAMPIONS = ["M-A","M-B","M-C"]
 
 CAT_COLOR = {"SINGLES": "#3498DB", "DOBLES": "#E67E22", "VGC": "#E74C3C"}
 CAT_ICON  = {"SINGLES": "⚡", "DOBLES": "✦", "VGC": "🏆"}
@@ -235,6 +236,10 @@ def show():
         ) + '</div>', unsafe_allow_html=True)
         st.caption("Cada REG corresponde a una regulación oficial de VGC (reglas de legalidad de "
                    "Pokémon/objetos vigentes en ese periodo).")
+        st.markdown('<div class="regl-flow">' + "".join(
+            f'<span class="regl-flow-badge">{r}</span>' for r in REGULACIONES_CHAMPIONS
+        ) + '</div>', unsafe_allow_html=True)
+        st.caption("Regulaciones de la modalidad Champions (M-A, M-B y M-C).")
 
         st.info("ℹ️ Algunas batallas del historial figuran con el formato **PROCESO** — es una "
                 "etiqueta interna para partidas todavía en proceso de clasificación, no un formato "
