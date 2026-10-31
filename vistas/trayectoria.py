@@ -28,6 +28,10 @@ HITOS = [1, 10, 25, 50, 100, 200, 300, 500, 750, 1000]
 NOMBRE_COMP = {"TORNEO": "Torneo", "LIGA": "Liga", "ASCENSO": "Ascenso", "CYPHER": "Cypher"}
 ICONO_COMP = {"TORNEO": "⚔️", "LIGA": "🏟️", "ASCENSO": "🪜", "CYPHER": "🎤"}
 CAMPEON_MANUAL_TORNEO = {46: "darmanethan"}
+# colores de marca de cada liga (los mismos de la página Análisis); el 2.º valor es el color del texto sobre ese fondo
+COLOR_LIGA = {"PJS": ("#1359A0", "#fff"), "PSS": ("#E1C233", "#111"), "PES": ("#95C2EC", "#111"),
+              "PGS": ("#C60210", "#fff"), "PLS": ("#FFFFFF", "#111"), "PMS": ("#333333", "#fff")}
+COLOR_TIPO = {"TORNEO": ("#8e44ad", "#fff"), "ASCENSO": ("#27ae60", "#fff"), "CYPHER": ("#e84393", "#fff")}
 
 
 # ── imágenes ────────────────────────────────────────────────────────────────
@@ -158,6 +162,7 @@ def _construir_eventos(df_raw, jugador, camino):
     primero = True
     for clave, g in m.groupby("_clave", sort=False):
         tipo, ident = clave
+        liga = ""
         fecha = g["_f"].max()
         v, d_ = int(g["_gana"].sum()), int((~g["_gana"]).sum())
         info = tablas.get(clave, {}).get(low)
@@ -174,8 +179,10 @@ def _construir_eventos(df_raw, jugador, camino):
             titulo = f"Torneo {int(ident)}" + (f" · {ev}" if ev else "")
         elif tipo == "LIGA":
             titulo = f"Liga {ident}"
+            liga = "".join(c for c in str(ident) if c.isalpha())[:3].upper()
         else:
             titulo = NOMBRE_COMP[tipo]
+        color, texto = COLOR_LIGA.get(liga, ("#3498db", "#fff")) if tipo == "LIGA" else COLOR_TIPO.get(tipo, ("#3498db", "#fff"))
         pos = ""
         if campeon:
             pos = "🥇 Campeón"
@@ -200,7 +207,7 @@ def _construir_eventos(df_raw, jugador, camino):
         destacado = campeon or podio or invicto or primero or any(e.startswith("🚀") or e.startswith("⬆️") for e in etiquetas)
         eventos.append({
             "fecha": fecha, "orden": 0, "num": int(ident) if tipo == "TORNEO" else 0, "tipo": tipo,
-            "titulo": titulo, "pos": pos, "vd": (v, d_), "etiquetas": etiquetas,
+            "color": color, "texto": texto, "liga": liga, "titulo": titulo, "pos": pos, "vd": (v, d_), "etiquetas": etiquetas,
             "destacado": bool(destacado), "campeon": bool(campeon), "podio": bool(podio), "invicto": invicto,
             "primero": primero, "salto": any(e.startswith("🚀") for e in etiquetas),
             "ascenso": any(e.startswith("⬆️") for e in etiquetas), "finalista": finalista,
@@ -291,11 +298,13 @@ def _html_nodo(e):
     pos = f'<span class="tl-tag pos">{html.escape(e["pos"])}</span>' if e.get("pos") else ""
     tags = "".join(f'<span class="tl-tag">{html.escape(t)}</span>' for t in e.get("etiquetas", []))
     sub = f'<div class="tl-sub">{html.escape(e["sub"])}</div>' if e.get("sub") else ""
+    estilo = f' style="--c:{e["color"]};--t:{e["texto"]}"' if e.get("color") else ""
+    chip = f'<span class="tl-tag liga">{e["liga"]}</span>' if e.get("liga") else ""
     cinta = '<div class="tl-cinta">⭐ Momento destacado</div>' if e["destacado"] else ""
     img = f'<div class="tl-img"><img src="{src}"><div class="tl-frase">{html.escape(frase)}</div></div>' if src else ""
-    return (f'<div class="{cls}"><div class="tl-dot">{icono}</div><div class="tl-card">{cinta}'
+    return (f'<div class="{cls}"{estilo}><div class="tl-dot">{icono}</div><div class="tl-card">{cinta}'
             f'<div class="tl-fecha">{_fmt_fecha(e["fecha"])}</div><div class="tl-cuerpo"><div class="tl-txt">'
-            f'<div class="tl-titulo">{html.escape(e["titulo"])}</div>{sub}<div class="tl-tags">{pos}{vd}{tags}</div></div>{img}</div></div></div>')
+            f'<div class="tl-titulo">{html.escape(e["titulo"])}</div>{sub}<div class="tl-tags">{chip}{pos}{vd}{tags}</div></div>{img}</div></div></div>')
 
 
 CSS = """
@@ -319,9 +328,15 @@ CSS = """
 .tl-img{text-align:center;flex:0 0 auto;max-width:150px}
 .tl-img img{height:64px;width:auto;image-rendering:auto}
 .tl-frase{font-size:11px;font-style:italic;opacity:.75;line-height:1.2;margin-top:2px}
+.tl-item[style] .tl-dot{background:var(--c);color:var(--t);border-color:rgba(255,255,255,.75)}
+.tl-item[style] .tl-card{border:1px solid var(--c);border-left:10px solid var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.45),inset 0 0 0 1px rgba(255,255,255,.08)}
+.tl-tag.liga{background:var(--c);color:var(--t);font-weight:700;border:1px solid rgba(255,255,255,.45)}
 .tl-item.destacado .tl-card{border:2px solid #f1c40f;background:linear-gradient(135deg,rgba(241,196,15,.16),rgba(241,196,15,.04));
   box-shadow:0 0 14px rgba(241,196,15,.30)}
-.tl-item.destacado .tl-dot{border-color:#f1c40f;background:#3a2f0b}
+.tl-item.destacado .tl-dot{box-shadow:0 0 0 3px #f1c40f}
+.tl-item.destacado:not([style]) .tl-dot{border-color:#f1c40f;background:#3a2f0b}
+.tl-item.destacado[style] .tl-card{border:2px solid var(--c);border-left:10px solid var(--c);box-shadow:0 0 14px rgba(241,196,15,.35),inset 1px 0 0 rgba(255,255,255,.45)}
 .tl-item.destacado .tl-img img{height:84px}
 .tl-item.campeon .tl-card{box-shadow:0 0 22px rgba(241,196,15,.55)}
 .tl-cinta{display:inline-block;font-size:11px;font-weight:700;color:#3a2f0b;background:#f1c40f;border-radius:6px;
@@ -364,6 +379,10 @@ def mostrar_trayectoria(df_raw=None, jugador_actual=None):
     st.markdown(CSS + f'<div class="tl-head">{img_html}<div><div style="font-size:22px;font-weight:800">{html.escape(jugador)}</div>'
                 f'<div style="opacity:.75">Desde {_fmt_fecha(res["desde"])} hasta {_fmt_fecha(res["hasta"])} · {meses} meses en Poketubi</div></div></div>',
                 unsafe_allow_html=True)
+    leyenda = "".join(f'<span class="tl-tag" style="background:{c};color:{t};border:1px solid rgba(255,255,255,.4)">{n}</span> '
+                      for n, (c, t) in [(k, COLOR_LIGA[k]) for k in ("PJS", "PSS", "PES", "PMS", "PLS")] +
+                      [("Torneo", COLOR_TIPO["TORNEO"]), ("Ascenso", COLOR_TIPO["ASCENSO"]), ("Cypher", COLOR_TIPO["CYPHER"])])
+    st.markdown(f'<div style="margin:2px 0 8px 0">{leyenda}</div>', unsafe_allow_html=True)
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Competencias", res["competencias"])
     m2.metric("Títulos", res["titulos"])
