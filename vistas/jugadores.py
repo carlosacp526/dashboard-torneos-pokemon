@@ -1529,9 +1529,9 @@ def show():
         st.markdown("---")
 
         # Tabs del jugador
-        tab1,tab2,tab3,tab4,tab5,tab6,tab6b,tab7,tab8,tab9 = st.tabs([
+        tab1,tab2,tab3,tab4,tab5,tab6,tab6b,tab7,tab8,tab9,tab10 = st.tabs([
             "📋 Historial","📊 Generales","🏆 Por Evento","🎯 Por Tier",
-            "🎮 Por Formato","📅 Por Mes","📈 Mes Acumulado","📆 Por Año","⚔️ Por Rival","🏅 Logros"
+            "🎮 Por Formato","📅 Por Mes","📈 Mes Acumulado","📆 Por Año","⚔️ Por Rival","🏅 Logros","🧭 Trayectoria"
         ])
 
         with tab1:
@@ -1757,6 +1757,10 @@ def show():
                 generar_tabla_temporada = generar_tabla_temporada,
                 generar_tabla_torneo    = generar_tabla_torneo,
             )
+
+        with tab10:
+            from vistas.trayectoria import mostrar_trayectoria
+            mostrar_trayectoria(df_raw, player_query)
 
         # ── Exportar PDF ────────────────────────────────────────────────────
         st.markdown("---")
