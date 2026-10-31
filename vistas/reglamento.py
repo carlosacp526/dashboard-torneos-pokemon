@@ -52,6 +52,7 @@ DOBLES = [
     ("Orre Colosseum",       "ORRE COLOSSEUM",     "Batallas 2 vs 2 bajo el estilo Pokémon Colosseum."),
     ("Random Dobles Champions","RANDOM DOBLES CHAMPIONS","Modalidad Champions jugada sobre Randoms Dobles."),
     ("Champions Dobles",    "CHAMPIONS DOBLES",   "Modalidad Champions jugada en formato de dobles."),
+    ("Champions DUU",       "CHAMPIONS DUU",      "Modalidad Champions jugada sobre Dobles UU."),
     ("VGC 2010 (legacy)",    "VGC 2010",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
     ("VGC 2013 (legacy)",    "VGC 2013",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
     ("VGC 2014 (legacy)",    "VGC 2014",           "Regulación histórica de VGC jugada bajo reglas de dobles."),
