@@ -142,7 +142,10 @@ def nombres_con_variantes():
     except Exception:
         return pd.DataFrame()
     n = pd.concat([raw["player1"], raw["player2"], raw["winner"]]).dropna().astype(str)
-    grupos = n.groupby(n.str.strip().str.lower()).agg(lambda s: s.value_counts().to_dict())
+    # además de mayúsculas/espacios, une las grafías que solo cambian números por letras (Fur4nk0 / Fur4nko)
+    leet = str.maketrans("01345$", "oleass")
+    clave = n.str.strip().str.lower().str.translate(leet).str.replace(r"[^a-z0-9]", "", regex=True)
+    grupos = n.groupby(clave).agg(lambda s: s.value_counts().to_dict())
     filas = [{"Nombre": "  /  ".join(f"{k} ({v})" for k, v in d.items())} for d in grupos if len(d) > 1]
     return pd.DataFrame(filas)
 
@@ -279,7 +282,7 @@ CONTROLES = [
     ("Replays sin procesar", "Baja",
      "Replays del CSV que todavía no están en el caché. Se procesan con `python actualizar_replay_cache.py`."),
     ("Nombres con variantes", "Baja",
-     "Un mismo jugador escrito de dos formas en el archivo. La app los une al cargar, pero conviene dejarlos iguales en el CSV."),
+     "Un mismo jugador escrito de dos formas en el archivo (mayúsculas, espacios o un 0 por una o). La app los une al cargar, pero conviene dejarlos iguales en el CSV."),
 ]
 
 
