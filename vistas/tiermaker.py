@@ -132,6 +132,35 @@ def _jugadores_liga_vigente(df: pd.DataFrame) -> set:
     return jugadores
 
 
+COLOR_LIGA = {'PJS': ('#1359A0', '#fff'), 'PSS': ('#E1C233', '#111'), 'PES': ('#95C2EC', '#111'),
+              'PLS': ('#FFFFFF', '#111'), 'PMS': ('#333333', '#fff')}
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def _liga_vigente_por_jugador(df: pd.DataFrame) -> dict:
+    """jugador_lower -> [categorías (PJS/PES/...) cuya última temporada jugó]. Misma regla que _jugadores_liga_vigente."""
+    if 'league' not in df.columns or 'round' not in df.columns or 'date' not in df.columns:
+        return {}
+    liga = df[df['league'] == 'LIGA'].copy()
+    liga['Liga_Temporada'] = liga['round'].apply(
+        lambda x: str(x).split(' ')[0] + str(x).split(' ')[1]
+        if pd.notna(x) and len(str(x).split(' ')) > 1 else ''
+    )
+    liga = liga[liga['Liga_Temporada'] != '']
+    liga['_cat'] = liga['Liga_Temporada'].str[:3]
+    out = {}
+    for cat in LIGAS_CATEGORIAS:
+        sub = liga[liga['_cat'] == cat].dropna(subset=['date'])
+        if sub.empty:
+            continue
+        ultima_temp = sub.groupby('Liga_Temporada')['date'].max().idxmax()
+        vig = sub[sub['Liga_Temporada'] == ultima_temp]
+        for j in set(vig['player1'].astype(str).str.strip().str.lower()) | set(vig['player2'].astype(str).str.strip().str.lower()):
+            if j and j != 'nan':
+                out.setdefault(j, []).append(cat)
+    return out
+
+
 VENTANAS_WINRATE = [
     ('1m',  1,  'Último mes'),
     ('3m',  3,  'Últimos 3 meses'),
@@ -324,6 +353,13 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
       width: 100%; height: 56px; object-fit: cover; border-radius: 4px;
       background: #0d1b2a; display: block;
     }}
+    .tm-card {{ position: relative; }}
+    .tm-card.tm-liga {{ border: 2px solid var(--lc); box-shadow: 0 0 6px var(--lc); }}
+    .tm-liga-badge {{
+      position: absolute; top: 1px; left: 1px; font-size: 8.5px; font-weight: 800;
+      padding: 1px 4px; border-radius: 4px; border: 1px solid #8895a3;
+      letter-spacing: .3px; line-height: 1.2;
+    }}
     .tm-card .tm-noimg {{
       width: 100%; height: 56px; border-radius: 4px; background: #223145;
       display: flex; align-items: center; justify-content: center;
@@ -399,10 +435,23 @@ def _render_tiermaker_html(jugadores: list, formatos: list, paises: list) -> str
       `Score: ${{scoreTxt}}  |  Score Xtream: ${{p.xtream === null || p.xtream === undefined ? 's/d' : p.xtream}}\\n` +
       `Formato: ${{p.formato || '-'}}  |  País: ${{p.pais || '-'}}\\n` +
       ((p.titulos && p.titulos.length) ? `🏆 Títulos (${{p.titulos.length}}): ${{p.titulos.join(', ')}}` : '🏆 Sin títulos');
+    if (p.ligas && p.ligas.length) {{
+      card.classList.add('tm-liga');
+      card.style.setProperty('--lc', p.ligas[0].c);
+      card.title += `
+Liga vigente: ${{p.ligas.map(l => l.n).join(', ')}}`;
+    }}
     if (p.img) {{
       card.innerHTML = `<img src="${{p.img}}"><div class="tm-name">${{p.nombre}}</div>`;
     }} else {{
       card.innerHTML = `<div class="tm-noimg">${{p.nombre.slice(0,2).toUpperCase()}}</div><div class="tm-name">${{p.nombre}}</div>`;
+    }}
+    if (p.ligas && p.ligas.length) {{
+      const b = document.createElement('div');
+      b.className = 'tm-liga-badge';
+      b.textContent = p.ligas.map(l => l.n).join('/');
+      b.style.background = p.ligas[0].c; b.style.color = p.ligas[0].t;
+      card.appendChild(b);
     }}
     card.addEventListener('dragstart', e => {{
       e.dataTransfer.setData('text/plain', p.nombre);
@@ -591,6 +640,12 @@ def show():
              "(por fecha) de cualquiera de las 5 ligas.",
     )
 
+    st.markdown(
+        "**Liga vigente (borde y etiqueta en la foto):** "
+        + " ".join(f"<span style='background:{c};color:{t};border:1px solid #8895a3;border-radius:4px;padding:1px 7px;"
+                   f"font-weight:700;font-size:12px'>{k}</span>" for k, (c, t) in COLOR_LIGA.items()),
+        unsafe_allow_html=True)
+
     tabla_f = tabla[tabla['Partidas'] >= min_partidas].copy()
     if solo_con_imagen:
         tabla_f = tabla_f[tabla_f['tiene_imagen']]
@@ -608,6 +663,7 @@ def show():
         return
 
     extra = _xtream_y_titulos()
+    ligas_j = _liga_vigente_por_jugador(ensure_fields(normalize_columns(load_data())))
     jugadores_payload = []
     for _, r in tabla_f.iterrows():
         img_b64 = _imagen_base64(r['_img_path']) if r['_img_path'] else None
@@ -624,6 +680,8 @@ def show():
             'pais':        r['Pais'],
             'xtream':      extra.get(str(r['Jugador']).strip().lower(), {}).get('xtream'),
             'titulos':     extra.get(str(r['Jugador']).strip().lower(), {}).get('titulos', []),
+            'ligas':       [{'n': c, 'c': COLOR_LIGA[c][0], 't': COLOR_LIGA[c][1]}
+                            for c in ligas_j.get(str(r['Jugador']).strip().lower(), [])],
         }
         for sufijo, _, _ in VENTANAS_WINRATE:
             wr = r[f'Winrate_{sufijo}']
