@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import json
 import os, sys, base64
+import urllib.parse
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -837,6 +838,24 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
 
         st.markdown("---")
 
+        # Envío manual: la app arma el mensaje y tú lo mandas desde tu WhatsApp (sin API, sin riesgo de baneo)
+        st.markdown("**✋ Envío manual (recomendado):** abre el chat con el mensaje ya escrito y solo tocas Enviar.")
+        if not seleccionados:
+            st.caption("Selecciona jugadores arriba para ver sus botones.")
+        for jugador in seleccionados:
+            data_j = celulares.get(jugador.lower(), {})
+            tel_j = "".join(filter(str.isdigit, str(data_j.get('tel_completo', ''))))
+            if not tel_j:
+                continue
+            bats_j = fp_wa_msg[(fp_wa_msg['player1'] == jugador) | (fp_wa_msg['player2'] == jugador)]
+            msg_j = construir_mensaje(jugador, bats_j, celulares, data_j.get('pais', 'Peru'))
+            c_nom, c_btn = st.columns([3, 1])
+            c_nom.markdown(f"**{jugador}** · +{tel_j}")
+            c_btn.link_button("📲 Abrir chat", f"https://wa.me/{tel_j}?text={urllib.parse.quote(msg_j)}",
+                              use_container_width=True)
+
+        st.markdown("---")
+
         # Botón de envío
         api_url_s  = st.session_state.get('evo_url','')
         api_key_s  = st.session_state.get('evo_key','')
@@ -847,12 +866,15 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
         else:
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                delay_s = st.slider("Demora entre mensajes (seg)", 1, 10, 3, key="wa_delay")
+                delay_min, delay_max = st.slider(
+                    "Demora aleatoria entre mensajes (seg)", 5, 180, (30, 90), key="wa_delay_rango",
+                    help="Cada pausa se sortea entre el mínimo y el máximo, para no enviar a ritmo constante.")
             with col_btn2:
                 st.markdown(f"**{len(seleccionados)}** jugadores seleccionados")
 
             if st.button("🚀 Enviar mensajes", type="primary", disabled=not seleccionados):
                 import time
+                import random
                 resultados = []
                 progress = st.progress(0, text="Enviando...")
                 log_container = st.empty()
@@ -878,7 +900,8 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
                     progress.progress((idx+1)/len(seleccionados),
                                       text=f"Enviando {idx+1}/{len(seleccionados)}...")
                     log_container.code("\n".join(log_lines[-10:]), language=None)
-                    time.sleep(delay_s)
+                    if idx < len(seleccionados) - 1:
+                        time.sleep(random.uniform(delay_min, delay_max))
 
                 progress.empty()
                 st.success("✅ Envío completado")
