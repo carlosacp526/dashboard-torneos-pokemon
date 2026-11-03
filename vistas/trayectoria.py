@@ -76,6 +76,13 @@ def _tablas_finales(_df_raw):
     t_pend = set(pend[pend["league"] == "TORNEO"]["N_Torneo"].dropna().astype(int))
     l_pend = set(pend[pend["league"] == "LIGA"]["Llave_cat"].dropna().astype(str))
     out = {}
+    # finales de 2 jugadores ya jugadas: {n_torneo: (campeón, subcampeón)} — el puesto sale del resultado de la final, no de la tabla por victorias
+    from vistas.analisis import calcular_finales_torneos
+    finales = {}
+    fin = calcular_finales_torneos(df[df["league"] == "TORNEO"])
+    for nt, g in fin.groupby("N_Torneo"):
+        if len(g) == 2 and g["Gano"].sum() == 1:
+            finales[int(nt)] = (str(g[g["Gano"]]["Jugador"].iloc[0]).strip().lower(), str(g[~g["Gano"]]["Jugador"].iloc[0]).strip().lower())
     base_t, _ = build_base_torneo(_df_raw)
     if not base_t.empty:
         for n in base_t["Torneo_Temp"].dropna().unique():
@@ -85,8 +92,11 @@ def _tablas_finales(_df_raw):
             tabla = generar_tabla_torneo(base_t, n)
             if tabla is None or tabla.empty:
                 continue
-            out[("TORNEO", n)] = {str(r["AKA"]).strip().lower(): {"rank": int(r["RANK"]), "pos": str(r.get("POSICIÓN", "")),
-                                                                  "zona": ""} for _, r in tabla.iterrows()}
+            orden = [str(x).strip().lower() for x in tabla.sort_values("RANK")["AKA"]]
+            if n in finales and all(j in orden for j in finales[n]):
+                orden = list(finales[n]) + [j for j in orden if j not in finales[n]]
+            nombres_pos = {1: "🥇 Campeón", 2: "🥈 Subcampeón", 3: "🥉 Tercer Lugar", 4: "4to Lugar"}
+            out[("TORNEO", n)] = {j: {"rank": i, "pos": nombres_pos.get(i, ""), "zona": ""} for i, j in enumerate(orden, 1)}
     base_l, _ = build_base_liga(_df_raw)
     if not base_l.empty and "Liga_Temporada" in base_l.columns:
         for lt in base_l["Liga_Temporada"].dropna().unique():
