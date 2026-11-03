@@ -26,6 +26,25 @@ def _highlight_ladder(row):
     return [""] * len(row)
 
 
+def _pngs_ranking_monotype():
+    """{nombre: bytes PNG} del ranking Monotype I con los puntajes actuales: los 3 formatos juntos y cada formato en vertical."""
+    import io
+    import generar_ranking_monotype_png as gr
+    rankings = gr._ranking(load_data())
+    out = {}
+
+    def _bytes(img):
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
+    out["Todos"] = _bytes(gr.dibujar_combinado(rankings))
+    for fmt, filas in rankings.items():
+        if filas:
+            out[f"{fmt if fmt == 'VGC' else fmt.title()} vertical"] = _bytes(gr.dibujar(fmt, filas, columnas=1, ancho=1080))
+    return out
+
+
 def _render_ranking_csv(path_csv, path_png, top_n=16, label_mundial=""):
     """Renderiza el ranking desde un CSV con puntajes ya calculados."""
     tab_rank, tab_pts = st.tabs(["🏆 Ranking del Mundial", "📊 Puntajes para el Mundial"])
@@ -361,8 +380,8 @@ MONOTYPE1_TIPOS = {
     73: "GRANDE",
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
     ,81:"GRANDE",82:"MEDIANO",83:"GRANDE",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
-    ,87:"MEDIANO"
-    ,89:"MEDIANO"   # CHAMPIONS BSS M-C, 16 jugadores
+    ,87:"MEDIANO",88:"SPECIAL",
+    89:"MEDIANO" ,92:"MEDIANO"  # CHAMPIONS BSS M-C, 16 jugadores
 }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -896,7 +915,59 @@ MONOTYPE1_POSICIONES = {
             "D'AllFather":     "Top8",
     
     
-            }},
+            }}   ,
+
+                  88: {
+              "SINGLES": {
+       "Draco axel":   "Campeón",
+      "Chris FPS": "Subcampeón",
+        "Ger":     "Top4",
+        "Jupiter":     "Top4",
+
+        "Bloody Cheese":     "Top8",
+        "Joscake":     "Top8",
+        "Saga":     "Top8",
+        "ShinkaHMA":     "Top8",
+
+        "CaradeCoso":     "Top16",
+        "D'AllFather":     "Top16",
+        "EmperorGambit":     "Top16",
+        "Necroz":     "Top16",
+        "Nigga Chan":     "Top16",
+        "Okari958":     "Top16",
+        "Samibaisito":     "Top16",
+        "skll02":     "Top16",
+
+        "mathixd1":     "Top24",
+        "The.Ultracheese":     "Top24",
+        "Edenking":     "Top24",
+        "Chonarthas":     "Top24",
+        "darkam580":     "Top24",
+        "Blazing":     "Top24",
+        "Nitr0kill3r":     "Top24",
+        "Porygon Z":     "Top24",
+
+        "MafiaPolar6242":     "Top32",
+        "Roy Kasoy":     "Top32",
+        "Minipapus":     "Top32",
+        "Jers512":     "Top32",
+        "Monstruonio":     "Top32",
+        "Blazcoh":     "Top32",
+        "JaLax":     "Top32",
+        "A25":     "Top32",
+
+
+        "gbrielzzzs":     "Top40",
+        "LABIAMG":     "Top40",
+        "Angelowos":     "Top40",
+        "Angello77":     "Top40",
+        "Tronchi":     "Top40",
+        "MaskWolf":     "Top40",
+        "Eduarena":     "Top40",
+        "Fur4nko":     "Top40",
+        
+        
+                }}   ,
     # T89 CHAMPIONS BSS M-C (Singles, 16 jugadores, llave: octavos -> final). Posiciones tomadas de la llave real del CSV.
     89: {
           "SINGLES": {
@@ -908,7 +979,23 @@ MONOTYPE1_POSICIONES = {
             "skll02":          "Top8",
             "Jaspersd25":      "Top8",
             "Fur4nko":         "Top8",
-            }}
+            }} ,
+
+        
+                 92: {
+      "DOBLES": {
+        "EmperorGambit":   "Campeón",
+        "Saga": "Subcampeón",
+        "SasoriVzla7":     "Top4",
+        "Porygon Z":     "Top4",
+
+        "Yabadaba":     "Top8",
+        "D'AllFather":     "Top8",
+        "mathixd1":     "Top8",
+        "Angelowos":     "Top8"
+
+
+        }}   
         }
 MONOTYPE1_LIGAS = {
         "GUERRA DE MAFIAS 3": {
@@ -1030,6 +1117,19 @@ def show():
         with sub_rank_mono:
             _render_puntajes_monotype(MONOTYPE1_TIPOS, MONOTYPE1_POSICIONES,
                                         MONOTYPE1_LIGAS, df_raw, key_prefix="tab1", penalidades=MONOTYPE1_PENALIDADES)
+
+            st.markdown("---")
+            st.subheader("📥 Descargar el ranking como imagen")
+            st.caption("Se generan al momento con los puntajes actuales (los mismos PNG de `rankings_monotype/`).")
+            if st.button("Preparar imágenes actualizadas", key="mono_png_preparar"):
+                with st.spinner("Generando imágenes..."):
+                    st.session_state["mono_pngs"] = _pngs_ranking_monotype()
+            pngs = st.session_state.get("mono_pngs")
+            if pngs:
+                cols = st.columns(len(pngs))
+                for col, (nombre, datos) in zip(cols, pngs.items()):
+                    col.download_button(f"⬇️ {nombre}", data=datos, file_name=f"ranking_monotype_{nombre.lower().replace(' ', '_')}.png",
+                                        mime="image/png", key=f"mono_png_{nombre}", use_container_width=True)
 
     # ══════════════════════════════════════════════════════════════
     # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
