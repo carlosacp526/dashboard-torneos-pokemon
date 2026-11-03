@@ -37,8 +37,19 @@ PALETAS = {
 }
 
 
+_AQUI = os.path.dirname(os.path.abspath(__file__))
+
+
 def _f(size, bold=False):
-    return ImageFont.truetype(FUENTE_B if bold else FUENTE, int(size))
+    """Bahnschrift/Arial en Windows; en Linux (Streamlit Cloud) la DejaVu incluida en fonts/."""
+    dv = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+    for ruta in (FUENTE_B if bold else FUENTE, os.path.join(_AQUI, "fonts", dv),
+                 f"/usr/share/fonts/truetype/dejavu/{dv}"):
+        try:
+            return ImageFont.truetype(ruta, int(size))
+        except OSError:
+            continue
+    return ImageFont.load_default()
 
 
 def _gradiente(c1, c2, ancho, alto):
