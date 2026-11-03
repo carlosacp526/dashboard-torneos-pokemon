@@ -465,9 +465,26 @@ def show():
             # el conteo agregado por categoria.
             dist = participantes_por_torneo.sort_values('Participantes').reset_index(drop=True)
             dist['Torneo_idx'] = range(1, len(dist) + 1)
+
+            def _nombre_torneo(g):
+                for col in ('Aka_evento', 'Formato_esp'):
+                    if col in g.columns:
+                        v = g[col].dropna().astype(str).str.strip()
+                        v = v[~v.str.lower().isin(['', 'nan'])]
+                        if len(v):
+                            n = v.iloc[0]
+                            try:   # algunos nombres del CSV traen tildes mal codificadas (cumpleaÃ±os)
+                                n = n.encode('latin-1').decode('utf-8')
+                            except (UnicodeEncodeError, UnicodeDecodeError):
+                                pass
+                            return n
+                return ''
+            nombres_t = {n: _nombre_torneo(g) for n, g in df_torneo_all.groupby('N_Torneo')}
+            dist['Torneo'] = [f"Torneo {int(n)}" + (f" · {nombres_t[n]}" if nombres_t.get(n) else "")
+                              for n in dist['N_Torneo']]
             fig = px.bar(dist, x='Torneo_idx', y='Participantes', color='Categoría',
                          color_discrete_map=COLORS_TAM, category_orders={'Categoría': orden_cat},
-                         hover_data={'N_Torneo': True, 'Torneo_idx': False},
+                         hover_name='Torneo', hover_data={'N_Torneo': False, 'Torneo_idx': False},
                          title=f"Distribución de participantes por torneo ({len(dist)} torneos, ordenados de menor a mayor)")
             fig.update_layout(**_PLOTLY_BASE)
             fig.add_hline(y=13, line_dash='dot', line_color='#3498DB', annotation_text='13')
