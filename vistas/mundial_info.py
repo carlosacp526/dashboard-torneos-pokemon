@@ -382,7 +382,7 @@ MONOTYPE1_TIPOS = {
     ,81:"GRANDE",82:"MEDIANO",83:"GRANDE",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
     ,87:"MEDIANO",88:"SPECIAL",
     89:"MEDIANO" ,92:"MEDIANO"  # CHAMPIONS BSS M-C, 16 jugadores
-}
+,93:"MEDIANO" ,94:"MEDIANO" }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
     # Un mismo torneo puede tener SINGLES, DOBLES y/o VGC.
@@ -995,7 +995,41 @@ MONOTYPE1_POSICIONES = {
         "Angelowos":     "Top8"
 
 
-        }}   
+        }} ,
+
+ 93: {
+      "DOBLES": {
+        "Chonarthas":   "Campeón",
+        "The.Ultrachees": "Subcampeón",
+        "mathixd1":     "Top4",
+        "darkam580":     "Top4",
+
+        "Draco axel":     "Top8",
+        "Fur4nk0":     "Top8",
+        "Elin beacil":     "Top8",
+        "Porygon Z":     "Top8"
+
+
+        }},
+
+        94: {
+              "SINGLES": {
+                "Angello77":   "Campeón",
+                "mathixd1": "Subcampeón",
+                "Mr.Shadowdusk":     "Top4",
+                "AerosmithJR":     "Top4",
+        
+                "Aikauwu":     "Top8",
+                "MafiaPolar6242":     "Top8",
+                "Jers512":     "Top8",
+                "SasoriVzla7":     "Top8"
+        
+        
+                }}
+        
+
+
+
         }
 MONOTYPE1_LIGAS = {
         "GUERRA DE MAFIAS 3": {
