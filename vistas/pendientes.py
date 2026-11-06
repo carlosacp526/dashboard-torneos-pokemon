@@ -186,23 +186,42 @@ def construir_mensaje(jugador: str, batallas: pd.DataFrame,
         # indicando cuántas partidas tiene la serie.
         vistos = {}
         orden_partidos = []
+        eventos_ids = []          # eventos distintos (torneo/liga) contra este rival
         for row in filas_rival:
             evento  = _nombre_evento(row)
             formato = str(row.get('Tier', ''))
             fecha_m = str(row.get('Fecha_max', ''))[:10] if 'Fecha_max' in row.index else ''
             ronda   = str(row.get('round', ''))
-            key = (evento, ronda, formato, fecha_m)
+            n_t     = str(row.get('N_Torneo', '')).replace('.0', '') if pd.notna(row.get('N_Torneo')) else ''
+            ev_id   = (str(row.get('league', '')), n_t, evento)
+            if ev_id not in eventos_ids:
+                eventos_ids.append(ev_id)
+            key = (evento, ronda, formato, fecha_m, n_t)
             if key not in vistos:
                 vistos[key] = 0
                 orden_partidos.append(key)
             vistos[key] += 1
 
+        # Mismo rival en 2+ torneos/ligas distintos: se resalta en negrita + cursiva
+        # (*_texto_* en WhatsApp) para que no se confundan con una sola serie.
+        varios_eventos = len(eventos_ids) > 1
+        nombres_ev = [e[2] for e in eventos_ids]
+        if varios_eventos:
+            lineas.append(f"*_⚠️ Ojo: con {rival} tienes {len(eventos_ids)} eventos DISTINTOS "
+                          f"(son torneos/ligas diferentes, no la misma serie)_*")
+
         # ── Mensaje compacto: sin líneas en blanco entre el detalle y la
         # fecha, para que WhatsApp no colapse el mensaje por ser demasiado
         # largo en cantidad de líneas ────────────────────────────────────
-        for evento, ronda, formato, fecha_m in orden_partidos:
-            n_partidas = vistos[(evento, ronda, formato, fecha_m)]
-            detalle = f"   • {evento} | {ronda}"
+        for evento, ronda, formato, fecha_m, n_t in orden_partidos:
+            n_partidas = vistos[(evento, ronda, formato, fecha_m, n_t)]
+            if varios_eventos:
+                etiqueta = evento
+                if nombres_ev.count(evento) > 1 and n_t:     # mismo nombre, torneos distintos
+                    etiqueta += f" (Torneo {n_t})"
+                detalle = f"   • *_{etiqueta}_* | {ronda}"
+            else:
+                detalle = f"   • {evento} | {ronda}"
             if formato and formato not in ('nan', ''):
                 detalle += f" | Formato: {formato}"
             if n_partidas > 1:
