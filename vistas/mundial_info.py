@@ -1000,12 +1000,12 @@ MONOTYPE1_POSICIONES = {
  93: {
       "DOBLES": {
         "Chonarthas":   "Campeón",
-        "The.Ultrachees": "Subcampeón",
+        "The.Ultracheese": "Subcampeón",
         "mathixd1":     "Top4",
         "darkam580":     "Top4",
 
         "Draco axel":     "Top8",
-        "Fur4nk0":     "Top8",
+        "Fur4nko":     "Top8",
         "Elin beacil":     "Top8",
         "Porygon Z":     "Top8"
 
