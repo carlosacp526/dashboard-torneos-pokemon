@@ -603,7 +603,7 @@ def generar_pdf_jugador(
             RY -= ROW_H
 
     # FOOTER pág 1
-    txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pág. 1 / 2",
+    txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pág. 1",
         PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
     # ══════════════════════════════════════════════════════════════
@@ -627,7 +627,7 @@ def generar_pdf_jugador(
             b = _get_img_bytes(num)
             return _io.BytesIO(b) if b else None
 
-        def _draw_header_logros(cv, player_query, rar_name, rar_col_hex, pag_num, total_pag=5):
+        def _draw_header_logros(cv, player_query, rar_name, rar_col_hex, pag_num, total_pag=5, compacto=False, subtitulo=None):
             HDR2 = 44
             rrect(cv, 0, PH-HDR2, PW, HDR2, r=0, fill_col=C_PANEL)
             sf(cv, C_ACCENT); cv.rect(0, PH-HDR2-2, PW, 2, fill=1, stroke=0)
@@ -639,10 +639,12 @@ def generar_pdf_jugador(
                     except Exception: pass
                     break
             txt(cv, player_query.upper(), 56, PH-22, size=16, col=C_TEXT, font="Helvetica-Bold")
-            txt(cv, f"LOGROS {rar_name.upper()}  ·  POKETUBI", 56, PH-36, size=7, col=C_SUBTEXT, font="Helvetica")
+            txt(cv, subtitulo or f"LOGROS {rar_name.upper()}  ·  POKETUBI", 56, PH-36, size=7, col=C_SUBTEXT, font="Helvetica")
             txt(cv, datetime.now().strftime("%d/%m/%Y"), PW-MARGIN, PH-26,
                 size=8, col=C_SUBTEXT, font="Helvetica", anchor="right")
 
+            if compacto:   # páginas de rareza: sin barra global ni pastillas (van en la portada y el resumen)
+                return
             # barra progreso general
             PR_X = MARGIN; PR_Y = PH-HDR2-15; PR_W = PW-MARGIN*2; PR_H = 8
             rrect(cv, PR_X, PR_Y, PR_W, PR_H, r=3, fill_col=C_PANEL2)
@@ -676,193 +678,148 @@ def generar_pdf_jugador(
         # (le llegaron a faltar 7 logros). Ahora nunca puede quedar desactualizada.
         LOGROS_GUIA = [(l['num'], l['name'], l['cat'], l['rareza'], l['xp'], l['desc']) for l in LOGROS]
 
-        # ── PÁGINAS DE RAREZA — una por rareza, salvo Bronce que ahora tiene
-        # tantos logros (109 hoy) que se parte en 2 páginas para que se vea bien
-        # (medallas e íconos no quedan microscópicos ni se corta la guía) ──
-        _rareza_pages = []
+        # ── PÁGINAS DE RAREZA ─────────────────────────────────────────────────────
+        # Tamaños FIJOS y legibles, y se pagina lo que haga falta. Antes cada rareza se forzaba
+        # a UNA hoja: la fuente de la guía se encogía hasta 4 pt, la descripción quedaba montada
+        # sobre el nombre de la fila siguiente y las tarjetas eran miniaturas de 18 columnas.
+        # Por rareza: 1+ páginas de galería de tarjetas y 1+ páginas de guía (tabla con estado).
+        from reportlab.pdfbase.pdfmetrics import stringWidth as _sw
+
+        def _fit(texto, font, size, maxw):
+            texto = str(texto)
+            if _sw(texto, font, size) <= maxw:
+                return texto
+            while texto and _sw(texto + "…", font, size) > maxw:
+                texto = texto[:-1]
+            return texto.rstrip() + "…"
+
+        HDR2 = 44
+        CONT_TOP = PH - HDR2 - 10          # inicio del contenido (cabecera compacta)
+        CONT_BOT = MARGIN + 8              # sobre el pie de página
+        FRANJA_H = 13
+        GAL_COLS, GAL_ROWS = 11, 5
+        GUIA_ROW_H, GUIA_COLS = 15.0, 2
+        guia_rows_col = max(1, int((CONT_TOP - FRANJA_H - 4 - CONT_BOT - 4) / GUIA_ROW_H))
+        GAL_PP  = GAL_COLS * GAL_ROWS
+        GUIA_PP = guia_rows_col * GUIA_COLS
+
+        def _paginar(lista, n):
+            return [lista[i:i + n] for i in range(0, len(lista), n)] or [[]]
+
+        _paginas = []   # (tipo, rareza, items, parte, n_partes)
         for _rn in RAREZA_ORDEN_PDF:
             _lista_r = sorted([l for l in LOGROS if l['rareza'] == _rn], key=lambda x: x['num'])
-            if _rn == "Bronce" and len(_lista_r) > 1:
-                _mid = -(-len(_lista_r) // 2)  # mitad redondeada hacia arriba
-                _rareza_pages.append((_rn, _lista_r[:_mid], " (1/2)"))
-                _rareza_pages.append((_rn, _lista_r[_mid:], " (2/2)"))
-            else:
-                _rareza_pages.append((_rn, _lista_r, ""))
+            if not _lista_r:
+                continue
+            _gal = _paginar(_lista_r, GAL_PP)
+            for _i, _parte in enumerate(_gal):
+                _paginas.append(("galeria", _rn, _parte, _i + 1, len(_gal)))
+            _gu = _paginar(_lista_r, GUIA_PP)
+            for _i, _parte in enumerate(_gu):
+                _paginas.append(("guia", _rn, _parte, _i + 1, len(_gu)))
 
-        TOTAL_PAGINAS_LOGROS = 1 + len(_rareza_pages) + 1  # portada/stats + rareza + resumen final
+        TOTAL_PAGINAS_LOGROS = 1 + len(_paginas) + 1  # portada/stats + rareza + resumen final
 
-        for pag_idx, (rar_name, rar_list, _pag_suffix) in enumerate(_rareza_pages):
+        def _franja(y_top, texto, col_fill, col_txt):
+            rrect(cv, MARGIN, y_top - FRANJA_H, PW - MARGIN*2, FRANJA_H, r=4, fill_col=col_fill)
+            txt(cv, texto, PW/2, y_top - FRANJA_H + 3.8, size=7, col=col_txt, font="Helvetica-Bold", anchor="center")
+
+        for pag_idx, (tipo, rar_name, items, parte_i, n_partes) in enumerate(_paginas):
             cv.showPage()
             sf(cv, C_BG); cv.rect(0, 0, PW, PH, fill=1, stroke=0)
-
-            _draw_header_logros(cv, player_query, rar_name + _pag_suffix,
-                                RAR_COL[rar_name], pag_idx+2, TOTAL_PAGINAS_LOGROS)
-
-            HDR2     = 44
-            GRID_TOP = PH - HDR2 - 52
-            GRID_BOT = MARGIN + 6
-            GRID_H   = GRID_TOP - GRID_BOT
-            GRID_W   = PW - MARGIN*2
-            HEADER_SEC = 11
-
-            # Stats del header (n_ok_r/xp_r) siempre sobre el TOTAL de la
-            # rareza, no solo esta mitad -- para que "82/106" tenga sentido
-            # aunque esta página solo dibuje la primera mitad de los íconos.
             rar_list_full = sorted([l for l in LOGROS if l['rareza'] == rar_name], key=lambda x: x['num'])
-            rar_col  = colors.HexColor(RAR_COL[rar_name])
-            rar_bg   = colors.HexColor(RAR_BG[rar_name])
+            n_ok_r  = sum(1 for l in rar_list_full if desbloqueados.get(l['id']))
+            xp_r    = sum(l['xp'] for l in rar_list_full if desbloqueados.get(l['id']))
+            rar_col = colors.HexColor(RAR_COL[rar_name])
+            rar_bg  = colors.HexColor(RAR_BG[rar_name])
+            sufijo  = f" ({parte_i}/{n_partes})" if n_partes > 1 else ""
+            que     = "TARJETAS" if tipo == "galeria" else "GUÍA"
+            _draw_header_logros(cv, player_query, rar_name, RAR_COL[rar_name], pag_idx + 2, TOTAL_PAGINAS_LOGROS,
+                                compacto=True, subtitulo=f"LOGROS {rar_name.upper()}  ·  {que}{sufijo}  ·  POKETUBI")
+            _franja(CONT_TOP, f"{que} — {rar_name.upper()}{sufijo}   ·   {n_ok_r} / {len(rar_list_full)} obtenidos   ·   {xp_r:,} XP",
+                    rar_col, C_BG)
+            area_top = CONT_TOP - FRANJA_H - 4
+            area_h   = area_top - CONT_BOT
+            area_w   = PW - MARGIN*2
 
-            # ── PARTE SUPERIOR: iconos de logros ─────────────────
-            # Bronce tiene más logros → menos zona iconos, más guía
-            ICON_RATIO = {"Bronce": 0.38, "Plata": 0.45, "Oro": 0.48, "Legendario": 0.40}
-            ICON_ZONE_H = GRID_H * ICON_RATIO.get(rar_name, 0.48)
-            ICON_TOP    = GRID_TOP
-            ICON_BOT    = GRID_TOP - ICON_ZONE_H
+            if tipo == "galeria":
+                rrect(cv, MARGIN, CONT_BOT, area_w, area_h, r=4, fill_col=rar_bg)
+                cell_w = (area_w - 8) / GAL_COLS
+                cell_h = (area_h - 8) / GAL_ROWS
+                card_w = min(cell_w - 8, (cell_h - 10) * 0.84)
+                card_h = card_w / 0.84
+                for idx, logro in enumerate(items):
+                    ci, ri = idx % GAL_COLS, idx // GAL_COLS
+                    cx_ = MARGIN + 4 + ci*cell_w + cell_w/2
+                    cy_ = area_top - 4 - ri*cell_h - cell_h/2
+                    x0, y0 = cx_ - card_w/2, cy_ - card_h/2
+                    unlocked = bool(desbloqueados.get(logro['id'], False))
+                    dibujada = False
+                    img_buf = _load_img_pdf(logro['num'])
+                    if img_buf is not None:
+                        try:
+                            img_buf.seek(0)
+                            cv.drawImage(ImageReader(img_buf), x0, y0, width=card_w, height=card_h,
+                                         preserveAspectRatio=True, mask='auto')
+                            dibujada = True
+                        except Exception:
+                            dibujada = False
+                    if not dibujada:   # sin tarjeta PNG: placeholder con número y nombre
+                        RC = RAREZA_COLORS.get(rar_name, RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
+                        rrect(cv, x0, y0, card_w, card_h, r=4, fill_col=colors.HexColor(RC['c1']))
+                        txt(cv, f"#{logro['num']:03d}", cx_, cy_ + 4, size=7, col=C_WHITE, font="Helvetica-Bold", anchor="center")
+                        txt(cv, _fit(logro['name'], "Helvetica", 5, card_w - 6), cx_, cy_ - 6, size=5, col=C_WHITE,
+                            font="Helvetica", anchor="center")
+                    if not unlocked:   # velo más suave que antes (0.5 en vez de 0.7): se sigue leyendo cuál es
+                        cv.saveState()
+                        cv.setFillColorRGB(0.03, 0.03, 0.05)
+                        if hasattr(cv, 'setFillAlpha'):
+                            cv.setFillAlpha(0.5)
+                        cv.roundRect(x0, y0, card_w, card_h, 4, fill=1, stroke=0)
+                        cv.restoreState()
+                    else:              # tick en la esquina, fuera de la franja de categoría de la tarjeta
+                        bx, by, br = x0 + card_w - 1, y0 + card_h - 1, 5.2
+                        sf(cv, C_BG);    cv.circle(bx, by, br + 1.3, fill=1, stroke=0)
+                        sf(cv, C_GREEN); cv.circle(bx, by, br, fill=1, stroke=0)
+                        txt(cv, "V", bx, by - 2.2, size=6, col=C_WHITE, font="Helvetica-Bold", anchor="center")
+            else:
+                rrect(cv, MARGIN, CONT_BOT, area_w, area_h, r=4, fill_col=colors.HexColor("#0d1117"))
+                col_w = (area_w - 12) / GUIA_COLS
+                B_W, XP_W, EST_W = 22, 34, 44
+                columnas = _paginar(items, guia_rows_col)
+                for col_i in range(GUIA_COLS):
+                    col_items = columnas[col_i] if col_i < len(columnas) else []
+                    x_off = MARGIN + 4 + col_i*(col_w + 4)
+                    y_cur = area_top - 4
+                    for logro in col_items:
+                        row_y = y_cur - GUIA_ROW_H
+                        if row_y < CONT_BOT:
+                            break
+                        unlocked = bool(desbloqueados.get(logro['id'], False))
+                        rrect(cv, x_off, row_y + 0.6, col_w, GUIA_ROW_H - 1.2, r=2,
+                              fill_col=colors.HexColor("#1b2230") if unlocked else colors.HexColor("#131821"))
+                        if unlocked:
+                            rrect(cv, x_off, row_y + 0.6, 2.2, GUIA_ROW_H - 1.2, r=1, fill_col=rar_col)
+                        rrect(cv, x_off + 5, row_y + 3, B_W, GUIA_ROW_H - 6, r=2,
+                              fill_col=rar_col if unlocked else colors.HexColor("#3a4150"))
+                        txt(cv, f"#{logro['num']:03d}", x_off + 5 + B_W/2, row_y + GUIA_ROW_H/2 - 2.1, size=5.5,
+                            col=C_BG if unlocked else C_SUBTEXT, font="Helvetica-Bold", anchor="center")
+                        tx = x_off + 5 + B_W + 6
+                        tw = col_w - (tx - x_off) - XP_W - EST_W - 10
+                        txt(cv, _fit(logro['name'], "Helvetica-Bold", 6.5, tw), tx, row_y + GUIA_ROW_H - 6.8, size=6.5,
+                            col=C_TEXT if unlocked else colors.HexColor("#8a93a3"), font="Helvetica-Bold")
+                        txt(cv, _fit(logro['desc'], "Helvetica", 5.3, tw), tx, row_y + 2.8, size=5.3,
+                            col=C_SUBTEXT if unlocked else colors.HexColor("#5c6472"), font="Helvetica")
+                        txt(cv, f"{logro['xp']:,} xp", x_off + col_w - EST_W - 8, row_y + GUIA_ROW_H/2 - 2.3, size=6,
+                            col=C_GOLD if unlocked else colors.HexColor("#7a6b3a"), font="Helvetica-Bold", anchor="right")
+                        ex = x_off + col_w - EST_W - 3
+                        rrect(cv, ex, row_y + 3.2, EST_W, GUIA_ROW_H - 6.4, r=3,
+                              fill_col=C_GREEN if unlocked else colors.HexColor("#2a3040"))
+                        txt(cv, "OBTENIDO" if unlocked else "PENDIENTE", ex + EST_W/2, row_y + GUIA_ROW_H/2 - 2.0, size=4.8,
+                            col=C_WHITE if unlocked else C_SUBTEXT, font="Helvetica-Bold", anchor="center")
+                        y_cur -= GUIA_ROW_H
 
-            # header rareza
-            rrect(cv, MARGIN, ICON_TOP - HEADER_SEC, GRID_W, HEADER_SEC,
-                  r=4, fill_col=rar_col)
-            n_ok_r = sum(1 for l in rar_list_full if desbloqueados.get(l['id']))
-            xp_r   = sum(l['xp'] for l in rar_list_full if desbloqueados.get(l['id']))
-            txt(cv, f"{rar_name.upper()}{_pag_suffix}   {n_ok_r} / {len(rar_list_full)}   ·   {xp_r:,} XP obtenidos",
-                MARGIN + GRID_W/2, ICON_TOP - HEADER_SEC + 3,
-                size=6.5, col=C_BG, font="Helvetica-Bold", anchor="center")
-
-            # fondo zona iconos
-            rrect(cv, MARGIN, ICON_BOT, GRID_W, ICON_ZONE_H - HEADER_SEC,
-                  r=4, fill_col=rar_bg)
-
-            N_L      = len(rar_list)
-            AVAIL_H  = ICON_ZONE_H - HEADER_SEC - 4
-            AVAIL_W  = GRID_W - 4
-            MAX_COLS = {"Bronce":18,"Plata":12,"Oro":14,"Legendario":14}
-            cap      = MAX_COLS.get(rar_name, N_L)
-            best_cols = max(1, min(cap, N_L))
-            for try_cols in range(min(cap, N_L), 0, -1):
-                cw = AVAIL_W / try_cols
-                ch = AVAIL_H / (-(-N_L // try_cols))
-                if cw >= 11 and ch >= 11:
-                    best_cols = try_cols
-                    break
-            NCOLS  = best_cols
-            NROWS  = -(-N_L // NCOLS)
-            CELL_W = AVAIL_W / NCOLS
-            CELL_H = AVAIL_H / NROWS
-            MEDAL_R = min(CELL_W, CELL_H) * 0.36
-
-            for idx, logro in enumerate(rar_list):
-                col_i = idx % NCOLS
-                row_i = idx // NCOLS
-                cx_   = MARGIN + 2 + col_i*CELL_W + CELL_W/2
-                cy_   = ICON_TOP - HEADER_SEC - 2 - row_i*CELL_H - CELL_H/2
-
-                unlocked = desbloqueados.get(logro['id'], False)
-                RC = RAREZA_COLORS.get(rar_name, RAREZA_COLORS['Bronce']) if unlocked else BW_COLORS
-
-                img_drawn = False
-                img_buf = _load_img_pdf(logro['num'])
-                if img_buf is not None:
-                    try:
-                        iw = MEDAL_R * 2.1 * 0.88; ih = MEDAL_R * 2.5 * 0.88
-                        img_buf.seek(0)
-                        cv.drawImage(ImageReader(img_buf), cx_-iw/2, cy_-ih*0.52,
-                                     width=iw, height=ih, preserveAspectRatio=True, mask='auto')
-                        if not unlocked:
-                            cv.saveState()
-                            cv.setFillColorRGB(0.05, 0.05, 0.05)
-                            cv.setFillAlpha(0.7) if hasattr(cv,'setFillAlpha') else None
-                            cv.rect(cx_-iw/2, cy_-ih*0.52, iw, ih, fill=1, stroke=0)
-                            cv.restoreState()
-                        img_drawn = True
-                    except Exception:
-                        img_drawn = False
-
-                if not img_drawn:
-                    rrect(cv, cx_-MEDAL_R*0.2, cy_+MEDAL_R*0.52,
-                          MEDAL_R*0.4, MEDAL_R*0.48, r=1,
-                          fill_col=colors.HexColor(RC['ribbon']))
-                    sf(cv, colors.HexColor(RC['ring']))
-                    cv.circle(cx_, cy_, MEDAL_R, fill=1, stroke=0)
-                    sf(cv, colors.HexColor(RC['c1']))
-                    cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
-                    if not unlocked:
-                        sf(cv, colors.HexColor("#2a2a2a"))
-                        cv.circle(cx_, cy_, MEDAL_R*0.86, fill=1, stroke=0)
-
-                if unlocked and CELL_H > 13:
-                    sf(cv, C_GREEN)
-                    cv.circle(cx_+MEDAL_R*0.58, cy_+MEDAL_R*0.58, MEDAL_R*0.22, fill=1, stroke=0)
-                    txt(cv, "V", cx_+MEDAL_R*0.58, cy_+MEDAL_R*0.50,
-                        size=max(2.5, MEDAL_R*0.25), col=C_WHITE,
-                        font="Helvetica-Bold", anchor="center")
-
-            # ── PARTE INFERIOR: guía de logros de esta rareza ─────
-            GUIA_TOP = ICON_BOT - 4
-            GUIA_BOT = GRID_BOT
-            GUIA_H   = GUIA_TOP - GUIA_BOT
-            GUIA_W   = GRID_W
-
-            _nums_pagina = {l['num'] for l in rar_list}
-            guia_rar = sorted([l for l in LOGROS_GUIA if l[3]==rar_name and l[0] in _nums_pagina], key=lambda x: x[0])
-
-            # header guía
-            rrect(cv, MARGIN, GUIA_TOP - HEADER_SEC, GUIA_W, HEADER_SEC,
-                  r=4, fill_col=colors.HexColor("#1a2a3a"))
-            txt(cv, f"GUÍA — {rar_name.upper()}{_pag_suffix}",
-                MARGIN + GUIA_W/2, GUIA_TOP - HEADER_SEC + 3,
-                size=6.5, col=C_ACCENT, font="Helvetica-Bold", anchor="center")
-
-            # fondo guía
-            rrect(cv, MARGIN, GUIA_BOT, GUIA_W, GUIA_H - HEADER_SEC,
-                  r=4, fill_col=colors.HexColor("#0d1117"))
-
-            # layout 2 columnas para la guía
-            COL_W   = (GUIA_W - 6) / 2
-            ROW_H2  = max(7.5, (GUIA_H - HEADER_SEC - 4) / max(-(-len(guia_rar)//2), 1))
-            ROW_H2  = min(ROW_H2, 13.0)
-            B_W = 18; B_H = ROW_H2 - 3
-            NAME_X = B_W + 18; XP_X = COL_W - 3
-            NAME_Y = ROW_H2 * 0.28; DESC_Y = ROW_H2 * 0.65
-
-            mid_g    = -(-len(guia_rar) // 2)
-            col_data = [guia_rar[:mid_g], guia_rar[mid_g:]]
-
-            for col_i, col_items in enumerate(col_data):
-                cx_off = MARGIN + col_i * (COL_W + 6)
-                cy_cur = GUIA_TOP - HEADER_SEC - 2
-
-                for logro in col_items:
-                    num, name, cat, rareza, xp, desc = logro
-                    row_y = cy_cur - ROW_H2
-                    if row_y < GUIA_BOT: break
-
-                    rrect(cv, cx_off, row_y, COL_W, ROW_H2 - 0.4,
-                          r=1, fill_col=colors.HexColor("#161c28"))
-
-                    rar_hex = RAR_COL_G.get(rareza, "#888")
-                    rar_txt = colors.white
-                    rrect(cv, cx_off+1, row_y+1.2, B_W, B_H,
-                          r=1, fill_col=colors.HexColor(rar_hex))
-                    txt(cv, f"#{num:03d}", cx_off+1+B_W/2, row_y+ROW_H2*0.42,
-                        size=3.2, col=rar_txt, font="Helvetica-Bold", anchor="center")
-
-                    max_name = int((COL_W - NAME_X - 28) / 2.85)
-                    name_s = name if len(name) <= max_name else name[:max_name-1]+"…"
-                    txt(cv, name_s, cx_off+NAME_X, row_y+NAME_Y,
-                        size=4.8, col=C_TEXT, font="Helvetica-Bold", anchor="left")
-
-                    max_desc = int((COL_W - NAME_X - 28) / 2.45)
-                    desc_s = desc if len(desc) <= max_desc else desc[:max_desc-1]+"…"
-                    txt(cv, desc_s, cx_off+NAME_X, row_y+DESC_Y,
-                        size=3.9, col=C_SUBTEXT, font="Helvetica", anchor="left")
-
-                    txt(cv, f"{xp:,}xp", cx_off+XP_X, row_y+NAME_Y,
-                        size=4.0, col=C_GOLD, font="Helvetica-Bold", anchor="right")
-
-                    cy_cur -= ROW_H2
-
-            # footer
-            txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pag. {pag_idx+2} / {TOTAL_PAGINAS_LOGROS}",
+            txt(cv, f"Poketubi  ·  {datetime.now().strftime('%d/%m/%Y %H:%M')}  ·  {player_query}  ·  Pág. {pag_idx+2} / {TOTAL_PAGINAS_LOGROS}",
                 PW/2, 4, size=6, col=C_SUBTEXT, font="Helvetica", anchor="center")
 
         # ══════════════════════════════════════════════════════════

@@ -177,6 +177,17 @@ def _cards_grid(items):
     st.markdown(f'<div class="regl-grid">{cards}</div>', unsafe_allow_html=True)
 
 
+def _regla_links_en_vivo(contexto):
+    """Regla común a Torneos y Ligas: no se comparte el link de una batalla mientras se está jugando."""
+    st.warning(
+        "🚫 **Prohibido compartir el link de una partida en vivo.** Mientras una batalla de "
+        f"{contexto} se está jugando, ni los jugadores ni terceros pueden compartir el enlace de la sala "
+        "de Showdown (en el grupo, por privado, en estados o en stream de otro). Así nadie puede ver el "
+        "equipo o las jugadas y pasarle información al rival. El replay se comparte recién cuando la "
+        "batalla terminó. Si pasa, avisale al staff: se trata como una falta de fair play."
+    )
+
+
 def _step(num, title, body, tag=None):
     tag_html = f'<div class="regl-tag">{tag}</div>' if tag else ""
     st.markdown(f"""
@@ -306,6 +317,9 @@ def show():
               "o doble) para definir al campeón. Se usa en los eventos más grandes del circuito.",
               "Lo más común en torneos Grande / Special Event / Regional")
 
+        st.markdown("#### Juego limpio durante la partida")
+        _regla_links_en_vivo("torneo")
+
     # ══════════════════════════════════════════════════════════════
     # TAB — LIGAS Y ASCENSO
     # ══════════════════════════════════════════════════════════════
@@ -327,6 +341,9 @@ def show():
                  "**Jornadas** (fechas). Dentro de cada Jornada te enfrentás a rivales de tu misma "
                  "división — todos contra todos a lo largo de la temporada — y tu posición final se "
                  "calcula por puntos y score acumulado.")
+
+        st.markdown("#### Juego limpio durante la partida")
+        _regla_links_en_vivo("liga")
 
         st.markdown("#### El Ascenso y el Descenso")
         c1, c2, c3 = st.columns(3)
