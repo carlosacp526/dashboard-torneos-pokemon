@@ -26,6 +26,23 @@ from vistas.prediccion import load_model, make_pred_row
 from vistas.elo import get_round_order
 from vistas.seeding import _standard_seed_order
 
+
+def _firma_datos():
+    """Huella de los datos de entrada (historial) para la caché de simulaciones."""
+    try:
+        return int(os.path.getmtime("archivo_preuba1.csv"))
+    except OSError:
+        return 0
+
+
+@st.cache_data(ttl=3600, show_spinner=False, max_entries=24)
+def _sim_cacheada(clave, _fn, _args):
+    """Memoiza una simulación Monte Carlo. Son deterministas (seed fija), así que el resultado solo depende
+    de `clave` = (modo, código, modelo, n_sims, huella del historial, cruces pendientes): antes se volvían a
+    correr las 1000 temporadas/torneos en CADA recarga de la página (cualquier widget), varios segundos cada vez."""
+    return _fn(*_args)
+
+
 # Ronda de eliminación directa más temprana que reconocemos como parte del
 # bracket (ver ROUND_ORDER en vistas/elo.py): todo lo que esté POR DEBAJO de
 # este valor es fase de grupos/suiza — ahí "Pendiente" no significa "esperando
@@ -910,7 +927,7 @@ def _mostrar_expander_cruces(prob_df):
         st.dataframe(
             disp[["player1", "player2", "% J1", "% J2", "n"]].rename(
                 columns={"player1": "Jugador 1", "player2": "Jugador 2", "n": "Cruces pendientes"}),
-            use_container_width=True, hide_index=True)
+            width="stretch", hide_index=True)
 
 
 def _mostrar_resultado(odds_df, zonas, colores, titulo, n_sims, nombre_archivo):
@@ -921,9 +938,9 @@ def _mostrar_resultado(odds_df, zonas, colores, titulo, n_sims, nombre_archivo):
                  color_discrete_map=colores,
                  title=f"{titulo} — {n_sims} simulaciones")
     fig.update_layout(barmode="stack", xaxis_tickangle=-45, legend_title="Resultado", yaxis_title="Probabilidad %")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
-    st.dataframe(odds_df, use_container_width=True, hide_index=True, height=420)
+    st.dataframe(odds_df, width="stretch", hide_index=True, height=420)
     st.download_button("📥 Descargar odds (CSV)", odds_df.to_csv(index=False).encode("utf-8"),
                         nombre_archivo, "text/csv")
 
@@ -1033,7 +1050,7 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
         tabla_actual["ZONA"] = tabla_actual["RANK"].apply(lambda r: asignar_zona(r, len(tabla_actual), lt) or "Sin zona")
         st.dataframe(tabla_actual[["RANK", "Participante", "Victorias", "score_completo", "ZONA"]]
                      .rename(columns={"Participante": "Jugador", "score_completo": "Score"}),
-                     use_container_width=True, hide_index=True)
+                     width="stretch", hide_index=True)
         return
 
     st.metric("🎯 Cruces pendientes con rival conocido", len(pend_lt))
@@ -1059,12 +1076,16 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
         )
         pares_ya_jugados = _historial_pares_liga(df_liga_raw_todas, lt)
         with st.spinner(f"Simulando {n_sims} temporadas completas (cruces conocidos + emparejamiento suizo)..."):
-            odds_df = _simular_liga_suiza_hibrida(base_lt, prob_df.to_dict("records"), jornadas_sin_emparejar,
-                                                    avg_pokes, lt, model, latest_stats, top_feat,
-                                                    pares_ya_jugados, n_sims)
+            odds_df = _sim_cacheada(
+                ("liga_suiza", lt, mod_sel, n_sims, _firma_datos(), len(pend_lt)),
+                _simular_liga_suiza_hibrida,
+                (base_lt, prob_df.to_dict("records"), jornadas_sin_emparejar, avg_pokes, lt, model,
+                 latest_stats, top_feat, pares_ya_jugados, n_sims))
     else:
         with st.spinner(f"Simulando {n_sims} temporadas..."):
-            odds_df = simulate_bracket_odds(base_lt, prob_df.to_dict("records"), avg_pokes, "liga", lt, n_sims)
+            odds_df = _sim_cacheada(
+                ("liga", lt, mod_sel, n_sims, _firma_datos(), len(pend_lt)),
+                simulate_bracket_odds, (base_lt, prob_df.to_dict("records"), avg_pokes, "liga", lt, n_sims))
 
     _mostrar_resultado(odds_df, ZONAS_LIGA, COLORS_LIGA, f"Probabilidad por zona — {lt}", n_sims, f"playoff_odds_{lt}.csv")
 
@@ -1184,7 +1205,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
         tabla_actual["POSICIÓN"] = tabla_actual["RANK"].apply(lambda r: _posicion_torneo(r, len(tabla_actual)))
         st.dataframe(tabla_actual[["RANK", "Participante", "Victorias", "score_completo", "POSICIÓN"]]
                      .rename(columns={"Participante": "Jugador", "score_completo": "Score"}),
-                     use_container_width=True, hide_index=True)
+                     width="stretch", hide_index=True)
         return
 
     st.caption(f"📌 {nombre_torneo}")
@@ -1220,7 +1241,9 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
 def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombre_torneo, nt, mod_sel, prob_df, pend_nt):
     """Simula el bracket real de eliminación directa (ver _parse_bracket/_simular_torneo_bracket)."""
     with st.spinner(f"Simulando {n_sims} torneos..."):
-        odds_df, etapas_cols = _simular_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims)
+        odds_df, etapas_cols = _sim_cacheada(
+            ("torneo_bracket", str(nt), mod_sel, n_sims, _firma_datos(), len(pend_nt)),
+            _simular_torneo_bracket, (rondas, model, latest_stats, top_feat, n_sims))
 
     if odds_df.empty:
         st.warning("No se pudo armar el bracket restante (faltan datos de alguna rama) — no hay nada que simular.")
@@ -1236,8 +1259,8 @@ def _mostrar_torneo_bracket(rondas, model, latest_stats, top_feat, n_sims, nombr
     fig = px.bar(odds_df, x="Jugador", y=etapas_cols, color_discrete_map=colores,
                  title=f"Etapa máxima alcanzada — {n_sims} torneos simulados")
     fig.update_layout(barmode="stack", xaxis_tickangle=-45, legend_title="Etapa", yaxis_title="Probabilidad %")
-    st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(odds_df, use_container_width=True, hide_index=True, height=420)
+    st.plotly_chart(fig, width="stretch")
+    st.dataframe(odds_df, width="stretch", hide_index=True, height=420)
     st.download_button("📥 Descargar odds (CSV)", odds_df.to_csv(index=False).encode("utf-8"),
                         f"torneo_bracket_odds_{nt}.csv", "text/csv")
 
@@ -1304,8 +1327,10 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
         )
         avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
         with st.spinner(f"Simulando {n_sims} torneos completos (fase de grupos + bracket con byes)..."):
-            odds_df, etapas_cols = _simular_torneo_hibrido_grupos(
-                base_nt, prob_df, avg_pokes, rondas, grupos, model, latest_stats, top_feat, n_sims)
+            odds_df, etapas_cols = _sim_cacheada(
+                ("torneo_hibrido_grupos", str(nt), mod_sel, n_sims, _firma_datos(), len(pend_nt)),
+                _simular_torneo_hibrido_grupos,
+                (base_nt, prob_df, avg_pokes, rondas, grupos, model, latest_stats, top_feat, n_sims))
     else:
         n_clasificados = n_series_r1 * 2
         aviso_bye = (
@@ -1329,8 +1354,10 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
 
         avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
         with st.spinner(f"Simulando {n_sims} torneos completos (fase de grupos + bracket)..."):
-            odds_df, etapas_cols = _simular_torneo_hibrido(
-                base_nt, prob_df, avg_pokes, rondas, model, latest_stats, top_feat, n_sims)
+            odds_df, etapas_cols = _sim_cacheada(
+                ("torneo_hibrido", str(nt), mod_sel, n_sims, _firma_datos(), len(pend_nt)),
+                _simular_torneo_hibrido,
+                (base_nt, prob_df, avg_pokes, rondas, model, latest_stats, top_feat, n_sims))
 
     if odds_df.empty:
         st.warning(
@@ -1349,7 +1376,7 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
     fig_clasif = px.bar(clasif_df, x="Jugador", y="Clasifica a eliminatoria",
                          title=f"Probabilidad de clasificar a {rondas[0]['nombre']} — {n_sims} simulaciones")
     fig_clasif.update_layout(xaxis_tickangle=-45, yaxis_title="Probabilidad %")
-    st.plotly_chart(fig_clasif, use_container_width=True)
+    st.plotly_chart(fig_clasif, width="stretch")
 
     st.markdown("---")
     st.subheader(f"Probabilidad de podio — {nombre_torneo}")
@@ -1359,8 +1386,8 @@ def _mostrar_torneo_hibrido(base_nt, prob_df, rondas, model, latest_stats, top_f
     fig = px.bar(odds_df, x="Jugador", y=etapas_cols, color_discrete_map=colores,
                  title=f"Resultado final (incluye 'No clasifica') — {n_sims} torneos simulados")
     fig.update_layout(barmode="stack", xaxis_tickangle=-45, legend_title="Resultado", yaxis_title="Probabilidad %")
-    st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(odds_df, use_container_width=True, hide_index=True, height=420)
+    st.plotly_chart(fig, width="stretch")
+    st.dataframe(odds_df, width="stretch", hide_index=True, height=420)
     st.download_button("📥 Descargar odds (CSV)", odds_df.to_csv(index=False).encode("utf-8"),
                         f"torneo_hibrido_odds_{nt}.csv", "text/csv")
 
@@ -1405,7 +1432,9 @@ def _mostrar_torneo_tabla_plana(base_nt, prob_df, nombre_torneo, nt, mod_sel, n_
     )
     avg_pokes = {p: _avg_pokes(p, latest_stats) for p in base_nt["Participante"]}
     with st.spinner(f"Simulando {n_sims} torneos..."):
-        odds_df = simulate_bracket_odds(base_nt, prob_df.to_dict("records"), avg_pokes, "torneo", str(nt), n_sims)
+        odds_df = _sim_cacheada(
+            ("torneo_plano", str(nt), mod_sel, n_sims, _firma_datos(), len(pend_nt)),
+            simulate_bracket_odds, (base_nt, prob_df.to_dict("records"), avg_pokes, "torneo", str(nt), n_sims))
 
     st.markdown("---")
     ganador = odds_df.sort_values("Campeón", ascending=False).iloc[0]

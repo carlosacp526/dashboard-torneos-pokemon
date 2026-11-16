@@ -94,7 +94,7 @@ def show():
     st.subheader("Ranking de entrada")
     st.dataframe(
         ranking[["Seed", "Participantes", "Elo"]].rename(columns={"Participantes": "Jugador"}),
-        use_container_width=True, hide_index=True,
+        width="stretch", hide_index=True,
     )
     if faltantes:
         st.caption(f"⚠️ Sin historial de Elo en este universo (asignados 1000 por defecto): {', '.join(faltantes)}")
@@ -151,7 +151,7 @@ def show():
         filas.append({"Cruce": f"Seed {s1} vs Seed {s2}", "Jugador 1": p1, "Jugador 2": p2,
                        "Favorito": favorito, "Prob.": prob_txt})
 
-    st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(filas), width="stretch", hide_index=True)
 
     with st.expander("📖 Cómo funciona el seeding"):
         st.markdown("""

@@ -318,7 +318,7 @@ def ranking_race(pivot, titulo="", top_n=10, velocidad_ms=900, solo=None):
     row_h, bar_h = 34, 22
     board_h = top_n * row_h + 24
     html = (_RACE_HTML
-            .replace("__DATA__", json.dumps(frames, ensure_ascii=False).replace("</", "<\/"))
+            .replace("__DATA__", json.dumps(frames, ensure_ascii=False).replace("</", "<\\/"))
             .replace("__TITLE__", titulo).replace("__TOPN__", str(top_n)).replace("__SPEED__", str(velocidad_ms))
             .replace("__ROWH__", str(row_h)).replace("__BARH__", str(bar_h)).replace("__BOARDH__", str(board_h)))
     components.html(html, height=board_h + 110)

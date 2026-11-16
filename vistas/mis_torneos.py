@@ -6,6 +6,7 @@ ronda/etapa, desempates manuales, exportar. Motor en torneos_engine.py, datos en
 """
 import base64
 import hashlib
+import hmac
 import html
 import math
 import os
@@ -125,7 +126,7 @@ def _login():
         with st.form("torneos_login"):
             pwd = st.text_input("Clave de organizador", type="password")
             if st.form_submit_button("Ingresar"):
-                if hashlib.sha256(pwd.encode("utf-8")).hexdigest() == h:
+                if hmac.compare_digest(hashlib.sha256(pwd.encode("utf-8")).hexdigest(), h):
                     st.session_state["torneos_admin"] = True
                     st.rerun()
                 else:
@@ -592,7 +593,7 @@ def _sec_partidos(torneo, parts, matches):
         df = df[(df["Jugador 1"] == jug) | (df["Jugador 2"] == jug)]
     if est != "Todos":
         df = df[df["Estado"].str.startswith(est)]
-    st.dataframe(df, hide_index=True, use_container_width=True)
+    st.dataframe(df, hide_index=True, width="stretch")
 
 
 def _sec_participantes(torneo, parts):
@@ -679,7 +680,7 @@ def _org_participantes(torneo, parts):
                          key=f"tb_hist_{tid}_{nonce}")
     with c2:
         st.write("")
-        with st.popover("🆕 Nuevo", use_container_width=True):
+        with st.popover("🆕 Nuevo", width="stretch"):
             st.caption("Para jugadores que todavía no existen. Si el nombre ya existe, se usa el existente.")
             texto = st.text_area("Nombre(s) nuevo(s), uno por línea", key=f"tb_new_{tid}_{nonce}")
             if st.button("Crear y agregar", key=f"tb_newbtn_{tid}_{nonce}", type="primary"):
@@ -700,7 +701,7 @@ def _org_participantes(torneo, parts):
     st.markdown("##### Seeds y orden")
     df = pd.DataFrame({"Seed": [p.get("seed") for p in parts], "Jugador": [p["nombre"] for p in parts],
                        "Quitar": [False] * len(parts)})
-    ed = st.data_editor(df, hide_index=True, use_container_width=True, key=f"tb_seeds_{tid}",
+    ed = st.data_editor(df, hide_index=True, width="stretch", key=f"tb_seeds_{tid}",
                         column_config={"Seed": st.column_config.NumberColumn(min_value=1, step=1)})
     b1, b2, b3, b4 = st.columns(4)
     if b1.button("💾 Guardar cambios"):
@@ -978,7 +979,7 @@ def _sec_ajustes(torneo, parts, matches):
             st.caption("Solo se usa si 'Desempate manual' está entre los desempates. Número menor = mejor posición.")
             man = cfg0.get("manual") or {}
             df = pd.DataFrame({"Jugador": [p["nombre"] for p in parts], "Orden": [man.get(p["id"]) for p in parts]})
-            ed = st.data_editor(df, hide_index=True, use_container_width=True, disabled=["Jugador"], key=f"aj_man_{tid}",
+            ed = st.data_editor(df, hide_index=True, width="stretch", disabled=["Jugador"], key=f"aj_man_{tid}",
                                 column_config={"Orden": st.column_config.NumberColumn(min_value=1, step=1)})
             if st.button("Guardar desempates manuales", key=f"aj_sman_{tid}"):
                 nuevo = {p["id"]: int(r["Orden"]) for p, (_, r) in zip(parts, ed.iterrows()) if pd.notna(r["Orden"])}
@@ -1160,7 +1161,7 @@ def _lista():
                    f'<span class="ch-badge" style="background:{col}">{etq}</span>{" 🔒" if t.get("privado") else ""}<br>'
                    f'<span style="opacity:.75;font-size:.85rem">{html.escape(_formato_txt(t))} · {n} participantes'
                    f'{" · " + html.escape(extra) if extra else ""}</span></div>', unsafe_allow_html=True)
-        if b.button("Abrir", key=f"open_{t['id']}", use_container_width=True):
+        if b.button("Abrir", key=f"open_{t['id']}", width="stretch"):
             st.query_params["torneo"] = t["slug"]
             st.rerun()
 

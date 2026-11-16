@@ -194,7 +194,7 @@ def show():
                  color=col_score, color_continuous_scale="Viridis",
                  title=f"Top 10 Tiers recomendados — {contexto}")
     fig.update_layout(height=420, yaxis_title="", coloraxis_showscale=False)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     disp = ranked.copy()
     disp[col_recencia] = disp[col_recencia].apply(lambda m: "Nunca" if m >= 999 else f"{m} mes(es)")
@@ -206,7 +206,7 @@ def show():
     st.dataframe(
         disp[list(disp_cols.keys())].rename(columns=disp_cols).assign(
             Score=lambda d: d["Score"].round(1)),
-        use_container_width=True, hide_index=True, height=420,
+        width="stretch", hide_index=True, height=420,
     )
     st.download_button("📥 Descargar ranking completo (CSV)",
                         ranked.to_csv(index=False).encode("utf-8"),

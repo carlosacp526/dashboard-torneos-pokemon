@@ -152,7 +152,7 @@ def show():
             )
 
             st.markdown("#### 🎯 Pokémon más usados")
-            st.dataframe(resumen_replay["pokemon_top"], use_container_width=True, hide_index=True)
+            st.dataframe(resumen_replay["pokemon_top"], width="stretch", hide_index=True)
 
             st.markdown("---")
             st.markdown("### 🕹️ Estilo de juego")
@@ -204,7 +204,7 @@ def show():
             with rcol_lead:
                 st.markdown("#### 🚀 Lead preferido")
                 if not resumen_replay["lead_top"].empty:
-                    st.dataframe(resumen_replay["lead_top"], use_container_width=True, hide_index=True)
+                    st.dataframe(resumen_replay["lead_top"], width="stretch", hide_index=True)
                 else:
                     st.caption("Sin datos de lead detectados.")
             with rcol_mt:
@@ -214,13 +214,13 @@ def show():
 
             st.markdown("#### 🤝 Duplas de Pokémon más frecuentes")
             if not resumen_replay["duplas_top"].empty:
-                st.dataframe(resumen_replay["duplas_top"], use_container_width=True, hide_index=True)
+                st.dataframe(resumen_replay["duplas_top"], width="stretch", hide_index=True)
             else:
                 st.caption("Sin suficientes replays para calcular duplas.")
 
             st.markdown("#### ⚔️ Pokémon rivales más enfrentados")
             if not resumen_replay["rivales_top"].empty:
-                st.dataframe(resumen_replay["rivales_top"], use_container_width=True, hide_index=True)
+                st.dataframe(resumen_replay["rivales_top"], width="stretch", hide_index=True)
             else:
                 st.caption("Sin datos de rivales detectados.")
 

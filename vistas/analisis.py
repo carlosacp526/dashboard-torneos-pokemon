@@ -420,7 +420,7 @@ def show():
                 fig.update_layout(**_PLOTLY_BASE)
                 fig.update_traces(textposition='outside', marker_line_color='#333333', marker_line_width=1.2)
                 fig.update_layout(showlegend=False, yaxis_title='', xaxis_title='Temporadas')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             with col_cards:
                 st.markdown("##### Resumen")
                 for _, row in temp_liga.sort_values('Temporadas', ascending=False).iterrows():
@@ -493,7 +493,7 @@ def show():
             fig.add_hline(y=80, line_dash='dot', line_color='#E67E22', annotation_text='80')
             fig.update_layout(xaxis_title='Torneos (ordenados por cantidad de participantes)',
                                yaxis_title='Participantes', legend_title='Categoría')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png (por participantes): "
                        "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event >= 45 · Regional >= 80. "
                        "Cada torneo cae en la categoría más alta que supera (un torneo de 90 participantes "
@@ -540,13 +540,13 @@ def show():
                 barmode='group', title='Batallas por torneo — mínimo / promedio / máximo por categoría de tamaño',
                 xaxis_title='Categoría de tamaño', yaxis_title='Batallas por torneo', legend_title='',
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             st.markdown("##### Detalle por categoría")
             tabla_batallas = resumen_batallas.reset_index()[
                 ['Categoría', 'Torneos', 'Mínimo', 'Promedio', 'Máximo', 'Total']]
             tabla_batallas[['Mínimo', 'Máximo', 'Total']] = tabla_batallas[['Mínimo', 'Máximo', 'Total']].astype(int)
-            st.dataframe(tabla_batallas, use_container_width=True, hide_index=True)
+            st.dataframe(tabla_batallas, width="stretch", hide_index=True)
             st.caption(
                 "Batallas = filas de partida (incluye pendientes sin jugar, `Walkover == -1`, igual criterio que "
                 "'Participantes' en la pestaña anterior) dentro de cada torneo, agrupadas por la misma categoría "
@@ -565,11 +565,11 @@ def show():
             fig.update_layout(**_PLOTLY_BASE)
             fig.update_traces(textposition='outside', textfont=dict(color='#e8e8ee', size=13))
             fig.update_layout(showlegend=False, xaxis_title='', yaxis_title='Torneos')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             tabla_gen = gen_counts[['Generación', 'Torneos', 'N_Torneos']].copy()
             tabla_gen['N_Torneos'] = tabla_gen['N_Torneos'].apply(lambda l: ', '.join(f'T{n}' for n in l) or '—')
-            st.dataframe(tabla_gen, use_container_width=True, hide_index=True)
+            st.dataframe(tabla_gen, width="stretch", hide_index=True)
             st.caption(
                 "Basado en la columna `Generaciones` real del dataset (no en una lista fija a mano) — cubre "
                 "todos los torneos con ese dato cargado. Casi todos tienen una única generación consistente en "
@@ -597,7 +597,7 @@ def show():
                     fig.update_layout(**_PLOTLY_BASE)
                     fig.update_traces(textposition='outside')
                     fig.update_layout(showlegend=False)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
                 else:
                     st.info("No se encontró la columna 'Formato'.")
             with col2:
@@ -608,7 +608,7 @@ def show():
                                  title='Torneos por Tier')
                     fig.update_layout(**_PLOTLY_BASE)
                     fig.update_layout(height=altura, yaxis_title='')
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
                 else:
                     st.info("No se encontró la columna 'Tier'.")
 
@@ -645,10 +645,10 @@ def show():
         fig_c.update_layout(**_PLOTLY_BASE)
         fig_c.update_layout(barmode='stack', title='Campeones Poketubi', xaxis_tickangle=-45, legend_title='Tipo',
                             yaxis_title='Liga / Torneo', xaxis_title='', height=480)
-        st.plotly_chart(fig_c, use_container_width=True)
+        st.plotly_chart(fig_c, width="stretch")
         with st.expander("📋 Ver detalle de títulos"):
             st.dataframe(campeones_df[['Participante', 'Total', 'Ligas', 'Torneos', 'Ligas ganadas', 'Torneos ganados']],
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
         st.caption("Solo cuentan ligas y torneos terminados. Torneo 61: dos campeones (Chris FPS y Mr.Shadowdusk).")
 
     # Capítulo 4 — quiénes llegan a las finales
@@ -686,8 +686,8 @@ def show():
                         text=top['Perdidas'], textposition='inside')
             fig.update_layout(barmode='stack', title='Finales jugadas (top 15)', xaxis_title='Finales', yaxis_title='',
                               height=max(380, len(top) * 30), legend=dict(orientation='h', y=1.08))
-            st.plotly_chart(fig, use_container_width=True)
-            st.dataframe(vis, use_container_width=True, hide_index=True, height=360)
+            st.plotly_chart(fig, width="stretch")
+            st.dataframe(vis, width="stretch", hide_index=True, height=360)
 
         with st.expander("📖 Cómo se cuentan las finales"):
             st.markdown("""
@@ -717,7 +717,7 @@ def show():
             fig = px.line(pm, x='mes', y='Cantidad', title='Partidas jugadas por Mes', markers=True)
             fig.update_yaxes(range=[0, pm['Cantidad'].max()+50])
             fig.update_layout(xaxis_title='Mes', yaxis_title='Cantidad de partidas')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         with tab2:
             df_year = df.copy()
             df_year['año'] = df_year['date'].dt.year
@@ -726,7 +726,7 @@ def show():
                          color='Cantidad', color_continuous_scale='blues', text='Cantidad')
             fig.update_yaxes(range=[0, pa['Cantidad'].max()+500])
             fig.update_traces(texttemplate='%{text}', textposition='outside')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
     # ── Distribución ────────────────────────────────────────────────
     st.markdown('<div id="distribucion"></div>', unsafe_allow_html=True)
@@ -739,7 +739,7 @@ def show():
         fig = px.bar(tier_counts, x='Tier', y='Cantidad', title='Partidas por Tier',
                      color='Cantidad', color_continuous_scale='viridis')
         fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with tab2:
         if 'Formato' in df.columns:
@@ -748,7 +748,7 @@ def show():
             fig = px.bar(fc, x='Formato', y='Cantidad', title='Partidas por Formato',
                          color='Cantidad', color_continuous_scale='plasma')
             fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("No se encontró la columna 'Formato'")
 
@@ -758,7 +758,7 @@ def show():
         fig = px.bar(lc, x='Evento', y='Partidas', title='Top 10 Eventos por partidas',
                      color='Partidas', color_continuous_scale='sunset')
         fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 
@@ -823,7 +823,7 @@ def show():
             height=altura, showlegend=False,
             margin=dict(l=10, r=40, t=40, b=20)
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
 
         total_con_pais = df_cel_activos['Jugador'].nunique()
         total_jugadores = len(jugadores_csv)
@@ -887,7 +887,7 @@ def show():
                     height=altura_wr, showlegend=False,
                     margin=dict(l=10, r=40, t=40, b=20)
                 )
-                st.plotly_chart(fig_wr, use_container_width=True)
+                st.plotly_chart(fig_wr, width="stretch")
                 st.caption(f"Basado en **{int(resumen_pais['Partidas'].sum())}** partidas de "
                            f"**{stats_pais['Jugador_norm'].nunique()}** jugadores con país registrado"
                            + (f", tier **{tier_sel}**." if tier_sel != "Todos" else "."))
@@ -963,11 +963,11 @@ def show():
                     yaxis={'categoryorder': 'total ascending', 'title': ''},
                     height=altura_pt, margin=dict(l=10, r=40, t=40, b=20)
                 )
-                st.plotly_chart(fig_pt, use_container_width=True)
+                st.plotly_chart(fig_pt, width="stretch")
 
                 tabla_pt = seleccion[['País_flag', 'Jugadores', 'Partidas', 'Victorias', 'Winrate%', 'Títulos']]
                 tabla_pt = tabla_pt.rename(columns={'País_flag': 'País'})
-                st.dataframe(tabla_pt, use_container_width=True, hide_index=True)
+                st.dataframe(tabla_pt, width="stretch", hide_index=True)
     else:
         st.info("Sube **celulares.xlsx** a la raíz del proyecto para ver este análisis.")
 
@@ -993,7 +993,7 @@ def show():
     tab_g1, tab_g2 = st.tabs(["📊 Tabla","🏆 Top Winrate"])
     with tab_g1:
         if stats_global_f.empty: st.info("Nadie cumple ese mínimo de partidas.")
-        else: st.dataframe(stats_global_f, use_container_width=True)
+        else: st.dataframe(stats_global_f, width="stretch")
     with tab_g2:
         if stats_global_f.empty:
             st.info("Nadie cumple ese mínimo de partidas.")
@@ -1003,7 +1003,7 @@ def show():
                          color='Winrate%', color_continuous_scale='RdYlGn',
                          hover_data=['Partidas','Score'])
             fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
     # ── Clasificación por Evento ────────────────────────────────────
     st.markdown('<div id="clasificacion-evento"></div>', unsafe_allow_html=True)
@@ -1016,7 +1016,7 @@ def show():
     tab1, tab2, tab3 = st.tabs(["📊 Tabla","🏆 Top Winrate","👥 Más activos"])
     with tab1:
         if stats_df.empty: st.info("No hay estadísticas suficientes.")
-        else: st.dataframe(stats_df, use_container_width=True)
+        else: st.dataframe(stats_df, width="stretch")
     with tab2:
         if not stats_df.empty:
             stats_wr_liga = stats_df[stats_df['Partidas'] >= min_partidas_global]
@@ -1028,14 +1028,14 @@ def show():
                              color='Winrate%', color_continuous_scale='RdYlGn',
                              hover_data=['Partidas','Score'])
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
     with tab3:
         if not stats_df.empty:
             fig = px.bar(stats_df.nlargest(15,'Partidas'), x='Jugador', y='Partidas',
                          title=f"Top 15 por partidas — {selected_league}",
                          color='Partidas', color_continuous_scale='blues')
             fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 
     # ── Clasificación por Tier ──────────────────────────────────────
@@ -1050,7 +1050,7 @@ def show():
     tab1, tab2, tab3 = st.tabs(["📊 Tabla","🏆 Top Winrate","👥 Más activos"])
     with tab1:
         if stats_df.empty: st.info("No hay estadísticas suficientes.")
-        else: st.dataframe(stats_df, use_container_width=True)
+        else: st.dataframe(stats_df, width="stretch")
     with tab2:
         if not stats_df.empty:
             stats_wr_tier = stats_df[stats_df['Partidas'] >= min_partidas_global]
@@ -1062,12 +1062,12 @@ def show():
                              color='Winrate%', color_continuous_scale='RdYlGn',
                              hover_data=['Partidas','Score'])
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
     with tab3:
         if not stats_df.empty:
             fig = px.bar(stats_df.nlargest(15,'Partidas'), x='Jugador', y='Partidas',
                          title=f"Top 15 por partidas — {selected_tier}",
                          color='Partidas', color_continuous_scale='blues')
             fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import os, sys
+import os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (load_data, generar_tabla_temporada, generar_evolucion_posiciones, generar_mvps_jornada,
                    obtener_banner, obtener_logo_liga,
@@ -24,10 +24,13 @@ def show():
     if base2.empty:
         st.error("No hay datos de ligas disponibles")
     else:
-        ligas_temporadas = ['PJST1','PJST2','PJST3','PJST4','PJST5',"PJST6",
-                            'PEST1','PEST2',"PEST3",'PSST1','PSST2','PSST3','PSST4','PSST5','PSST6',
-                            'PMST1','PMST2','PMST3','PMST4','PMST5','PMST6','PMST7','PLST1']
-        ligas = ['PJS','PES','PSS','PMS','PLS']
+        # Temporadas tomadas de los datos (antes era una lista fija: una temporada nueva en el CSV no
+        # aparecía hasta editar este archivo). Orden numérico por temporada (T10 después de T9).
+        ligas_temporadas = sorted(
+            {str(x) for x in base2['Liga_Temporada'].dropna().unique() if str(x).strip()},
+            key=lambda t: (t[:3], int(re.search(r'(\d+)$', t).group(1)) if re.search(r'(\d+)$', t) else 0))
+        ligas = [l for l in ['PJS','PES','PSS','PMS','PLS'] if any(t.startswith(l) for t in ligas_temporadas)]
+        ligas += sorted({t[:3] for t in ligas_temporadas} - set(ligas))
         tabs_ligas = st.tabs(ligas)
 
         for idx, liga in enumerate(ligas):
@@ -41,7 +44,7 @@ def show():
                     st.markdown(f"# Liga {liga}")
                     st.markdown("---")
 
-                temporadas_liga = sorted([lt for lt in ligas_temporadas if lt.startswith(liga)])
+                temporadas_liga = [lt for lt in ligas_temporadas if lt.startswith(liga)]
                 if not temporadas_liga:
                     st.info(f"No hay temporadas para {liga}")
                     continue
@@ -79,7 +82,7 @@ def show():
 
                                 td = tabla[['RANK','AKA','PUNTOS','SCORE','ZONA','JORNADAS','DIF SOB','SOB']].copy()
                                 st.dataframe(td.style.apply(highlight_ranks,axis=1),
-                                             use_container_width=True, hide_index=True,
+                                             width="stretch", hide_index=True,
                                              height=min(600, len(tabla)*40+100))
                                 st.markdown("---")
                                 c1,c2,c3,c4 = st.columns(4)
@@ -113,14 +116,14 @@ def show():
                                                  color='Victorias', color_continuous_scale='Greens', text='Victorias')
                                     fig.update_traces(texttemplate='%{text}', textposition='outside')
                                     fig.update_layout(xaxis_tickangle=-45, showlegend=False)
-                                    st.plotly_chart(fig, use_container_width=True)
+                                    st.plotly_chart(fig, width="stretch")
                                 with cg2:
                                     fig = px.bar(tabla.head(10), x='AKA', y='SCORE',
                                                  title=f'Top 10 por Score — {temporada}',
                                                  color='SCORE', color_continuous_scale='RdYlGn', text='SCORE')
                                     fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
                                     fig.update_layout(xaxis_tickangle=-45, showlegend=False)
-                                    st.plotly_chart(fig, use_container_width=True)
+                                    st.plotly_chart(fig, width="stretch")
 
                                 csv = td.to_csv(index=False).encode('utf-8')
                                 st.download_button(f"📥 Descargar {temporada}", csv,
@@ -149,7 +152,7 @@ def show():
 
                                         tjd = tj[['RANK','AKA','PUNTOS','SCORE','PARTIDAS']].copy()
                                         st.dataframe(tjd.style.apply(highlight_jornada,axis=1),
-                                                     use_container_width=True, hide_index=True,
+                                                     width="stretch", hide_index=True,
                                                      height=min(500, len(tj)*40+100))
                                         st.markdown("---")
                                         c1,c2,c3,c4 = st.columns(4)
@@ -178,7 +181,7 @@ def show():
                                                         'background-color:#E74C3C;color:white',
                                                         'background-color:#34495E;color:white;font-weight:bold']
                                             st.dataframe(te.style.apply(hl_enf,axis=1),
-                                                         use_container_width=True, hide_index=True,
+                                                         width="stretch", hide_index=True,
                                                          height=min(400,len(te)*40+100))
 
                                         csv_j = tjd.to_csv(index=False).encode('utf-8')
@@ -219,7 +222,7 @@ def show():
                                 fig_evo.update_xaxes(type='category', title='')
                                 fig_evo.update_layout(height=max(450, n_pos * 48), legend_title='AKA',
                                                       margin=dict(l=10, r=10, t=30, b=10))
-                                st.plotly_chart(fig_evo, use_container_width=True)
+                                st.plotly_chart(fig_evo, width="stretch")
                                 st.download_button(f"📥 Descargar evolución {temporada}",
                                                    evo.to_csv(index=False).encode('utf-8'),
                                                    f"evolucion_posiciones_{temporada}.csv", "text/csv",
@@ -244,11 +247,11 @@ def show():
                                                "Si dos jugadores empatan en el máximo, ambos son MVP.")
                                     cm1, cm2 = st.columns([2, 3])
                                     with cm1:
-                                        st.dataframe(resumen_mvp[['Aka', 'MVPs', 'Jornadas']], use_container_width=True,
+                                        st.dataframe(resumen_mvp[['Aka', 'MVPs', 'Jornadas']], width="stretch",
                                                      hide_index=True, height=min(500, len(resumen_mvp) * 38 + 60))
                                     with cm2:
                                         st.dataframe(mvps.rename(columns={'AKA': 'MVP'})[['Jornada', 'MVP', 'SCORE', 'Victorias', 'Partidas']],
-                                                     use_container_width=True, hide_index=True,
+                                                     width="stretch", hide_index=True,
                                                      height=min(500, len(mvps) * 38 + 60))
                                     st.download_button(f"📥 Descargar MVPs {temporada}",
                                                        resumen_mvp.to_csv(index=False).encode('utf-8'),

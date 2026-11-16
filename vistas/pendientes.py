@@ -449,8 +449,8 @@ def show():
 
     fp = pending.copy()
     if player_filter:
-        fp = fp[fp['player1'].str.contains(player_filter, case=False, na=False) |
-                fp['player2'].str.contains(player_filter, case=False, na=False)]
+        fp = fp[fp['player1'].str.contains(player_filter, case=False, na=False, regex=False) |
+                fp['player2'].str.contains(player_filter, case=False, na=False, regex=False)]
     if tier_sel != "Todos":
         fp = fp[fp['Tier'] == tier_sel]
     if league_sel != "Todos":
@@ -676,7 +676,7 @@ def show():
             'Fecha_max':'Fecha límite','Aka_evento':'Evento',
         }
         tabla = fp[cols_exist].rename(columns=rename_map).reset_index(drop=True)
-        st.dataframe(tabla, use_container_width=True, hide_index=True, height=500)
+        st.dataframe(tabla, width="stretch", hide_index=True, height=500)
         st.download_button("📥 Descargar CSV", tabla.to_csv(index=False).encode(),
                            "pendientes.csv", "text/csv", key="dl_pend_csv")
 
@@ -686,20 +686,20 @@ def show():
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("**Por Rival**")
-                st.dataframe(conteos['rival'], use_container_width=True, hide_index=True, height=300)
+                st.dataframe(conteos['rival'], width="stretch", hide_index=True, height=300)
             with c2:
                 if 'aka_evento' in conteos:
                     st.markdown("**Por Evento (Aka_evento)**")
-                    st.dataframe(conteos['aka_evento'], use_container_width=True, hide_index=True, height=300)
+                    st.dataframe(conteos['aka_evento'], width="stretch", hide_index=True, height=300)
             c3, c4 = st.columns(2)
             with c3:
                 if 'formato' in conteos:
                     st.markdown("**Por Formato**")
-                    st.dataframe(conteos['formato'], use_container_width=True, hide_index=True, height=300)
+                    st.dataframe(conteos['formato'], width="stretch", hide_index=True, height=300)
             with c4:
                 if 'tier' in conteos:
                     st.markdown("**Por Tier**")
-                    st.dataframe(conteos['tier'], use_container_width=True, hide_index=True, height=300)
+                    st.dataframe(conteos['tier'], width="stretch", hide_index=True, height=300)
 
     # ── WHATSAPP ──────────────────────────────────────────────────────────────
     with tab_wa:
@@ -725,7 +725,7 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
 
         # ── Acceso protegido por contraseña (se compara por hash, nunca en
         #    texto plano) ────────────────────────────────────────────────
-        import hashlib
+        import hashlib, hmac
         try:
             wa_password_hash = st.secrets.get("whatsapp_password_hash", "")
         except Exception:
@@ -755,7 +755,7 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
                 pwd_input = st.text_input("🔒 Contraseña para acceder", type="password")
                 submitted = st.form_submit_button("Ingresar")
             if submitted:
-                if hashlib.sha256(pwd_input.encode("utf-8")).hexdigest() == wa_password_hash:
+                if hmac.compare_digest(hashlib.sha256(pwd_input.encode("utf-8")).hexdigest(), wa_password_hash):
                     st.session_state["wa_unlocked"] = True
                     st.rerun()
                 else:
@@ -819,7 +819,7 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
         col_cob, col_sel = st.columns([2,1])
         with col_cob:
             st.markdown("**Cobertura de teléfonos:**")
-            st.dataframe(df_cob, use_container_width=True, hide_index=True, height=300)
+            st.dataframe(df_cob, width="stretch", hide_index=True, height=300)
         with col_sel:
             con_numero = [j for j in todos_jugadores if celulares.get(j.lower())]
             sin_numero = [j for j in todos_jugadores if not celulares.get(j.lower())]
@@ -871,7 +871,7 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
             c_nom, c_btn = st.columns([3, 1])
             c_nom.markdown(f"**{jugador}** · +{tel_j}")
             c_btn.link_button("📲 Abrir chat", f"https://wa.me/{tel_j}?text={urllib.parse.quote(msg_j)}",
-                              use_container_width=True)
+                              width="stretch")
 
         st.markdown("---")
 
@@ -924,4 +924,4 @@ Al anotarte con tu número en la planilla de la liga, confirmas que leíste y ac
 
                 progress.empty()
                 st.success("✅ Envío completado")
-                st.dataframe(pd.DataFrame(resultados), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(resultados), width="stretch", hide_index=True)

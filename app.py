@@ -45,6 +45,13 @@ def _precalentar_scouting():
             estilo.build_huella_tactica(load_data())
         except Exception:
             pass
+        try:
+            from utils import load_data
+            from vistas import campeones_pixel
+            # retratos pixel del Salón de la Fama (Histórico): abre y pixela ~100 fotos, lento en frío.
+            campeones_pixel.precalentar(load_data())
+        except Exception:
+            pass
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()

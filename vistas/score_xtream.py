@@ -389,7 +389,7 @@ def _tab_categorias(tabla):
         fig = go.Figure(go.Bar(x=resumen.index, y=resumen["Jugadores"], marker_color=[colores[c] for c in resumen.index],
                                text=resumen["Jugadores"], textposition="outside"))
         fig.update_layout(title="Jugadores por categoría", height=360, yaxis_title="Jugadores", margin=dict(t=50, b=10))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with g2:
         fig = go.Figure()
         for nom in ORDEN_CATEGORIAS:
@@ -398,7 +398,7 @@ def _tab_categorias(tabla):
                 fig.add_trace(go.Box(y=x, name=nom, marker_color=colores[nom], boxmean=True))
         fig.update_layout(title="Dispersión del Score dentro de cada categoría", height=360, showlegend=False,
                           yaxis_title="Score_Xtream", margin=dict(t=50, b=10))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # De qué se compone cada categoría
     comp = v.groupby("Categoría")[GRUPOS + ["Fair Play"]].mean().reindex(ORDEN_CATEGORIAS).fillna(0)
@@ -407,7 +407,7 @@ def _tab_categorias(tabla):
         fig.add_bar(x=comp.index, y=comp[g], name=g, marker_color=COLORES_GRUPO[g])
     fig.update_layout(barmode="relative", title="Qué diferencia a cada categoría: puntos promedio por grupo",
                       yaxis_title="Puntos promedio", height=400, legend=dict(orientation="h", y=1.1), margin=dict(t=70, b=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Perfil comparado
     perfil = resumen[["Jugadores", "Score_prom", "Partidas_prom", "WinRate", "Camp_prom", "Torneos_prom",
@@ -415,7 +415,7 @@ def _tab_categorias(tabla):
     perfil.columns = ["Jugadores", "Score prom.", "Partidas prom.", "Win rate % prom.", "Campeonatos prom.",
                       "Torneos prom.", "Logros prom.", "Replays 2024+ prom.", "WO en contra prom."]
     st.markdown("**Perfil promedio de cada categoría**")
-    st.dataframe(perfil, use_container_width=True)
+    st.dataframe(perfil, width="stretch")
 
     tot_camp = int(resumen["Campeonatos"].sum())
     if tot_camp:
@@ -432,7 +432,7 @@ def _tab_categorias(tabla):
         st.info("Nadie en esta categoría con ese mínimo de partidas.")
     else:
         st.dataframe(lista[["Rank", "Jugador", "Score_Xtream", "Partidas", "Win rate %", "Campeonatos",
-                            "Torneos", "Logros obtenidos"]], use_container_width=True, hide_index=True, height=420)
+                            "Torneos", "Logros obtenidos"]], width="stretch", hide_index=True, height=420)
 
 
 def show():
@@ -483,13 +483,13 @@ def show():
             fig.update_layout(barmode="relative", title="Top 15 — de qué se compone el Score_Xtream (puntos por grupo)",
                               xaxis_title="Puntos", yaxis_title="", height=max(420, len(top) * 30),
                               legend=dict(orientation="h", y=1.08))
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             vis = v[v["Jugador"].str.contains(buscar, case=False, na=False, regex=False)] if buscar else v
             cols = ["Rank", "Jugador", "Categoría", "Score_Xtream"] + GRUPOS + ["Fair Play", "Partidas", "Win rate %", "Campeonatos", "Mundiales",
                                                                     "Torneos", "Jornadas liga", "Tiers", "Replays 2024+",
                                                                     "WO a favor", "WO en contra", "Logros obtenidos"]
-            st.dataframe(vis[cols], use_container_width=True, hide_index=True, height=520)
+            st.dataframe(vis[cols], width="stretch", hide_index=True, height=520)
             st.download_button("📥 Descargar ranking (CSV)",
                                vis[cols].to_csv(index=False, sep=";").encode("utf-8-sig"), "score_xtream.csv", "text/csv")
 
@@ -516,12 +516,12 @@ def show():
                                 text=[f"{x:.0f}%" for x in valores[::-1]], textposition="outside"))
         figj.update_layout(title=f"{sel} — qué tan cerca está del máximo en cada componente", xaxis=dict(range=[0, 110], title="% del máximo"),
                            height=470, margin=dict(l=10, r=10, t=50, b=10))
-        st.plotly_chart(figj, use_container_width=True)
+        st.plotly_chart(figj, width="stretch")
         crudo = {c: fila[c] for c in ["Partidas", "Victorias", "Win rate %", "Pokes sob./partida", "Pokes venc./partida",
                                        "Campeonatos", "Camp. liga", "Camp. torneo", "Mundiales", "Torneos", "Jornadas liga", "Tiers",
                                        "Replays 2024+", "WO a favor", "WO en contra", "Logros obtenidos"]}
         st.dataframe(pd.DataFrame({"Métrica": list(crudo), "Valor": [str(x) for x in crudo.values()]}),
-                     use_container_width=True, hide_index=True)
+                     width="stretch", hide_index=True)
 
     # ── Metodología ───────────────────────────────────────────────────
     with tab_met:
@@ -533,7 +533,7 @@ def show():
         )
         tm = pd.DataFrame([{"Componente": v[0], "Grupo": v[1], "Peso": f"{v[2]*100:.0f}%", "Cómo se mide": v[3]}
                            for v in COMPONENTES.values()])
-        st.dataframe(tm, use_container_width=True, hide_index=True)
+        st.dataframe(tm, width="stretch", hide_index=True)
         st.markdown(
             f"""
 - **Fair play (Walk Over):** cada Walk Over **a favor** (por ronda, no por partida: un Bo3 cuenta una vez; el rival no se presentó o no tenía rival, y figura como ganador) suma **{WO_FAVOR_PTS} puntos** (máx. +{WO_FAVOR_TOPE}); cada Walk Over

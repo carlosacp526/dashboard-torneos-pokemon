@@ -243,6 +243,6 @@ def show():
             for j, (col, (page_key, icono, titulo, bullets)) in enumerate(zip(cols, fila)):
                 _render_card(col, i + j + 1, titulo, bullets, grupo["color"])
                 with col:
-                    if st.button("Entrar →", use_container_width=True, key=f"btn_{page_key}"):
+                    if st.button("Entrar →", width="stretch", key=f"btn_{page_key}"):
                         if page_key in pages:
                             st.switch_page(pages[page_key])

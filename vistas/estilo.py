@@ -224,7 +224,7 @@ def show():
                            title="Distribución de arquetipos en la comunidad")
         fig_dist.update_traces(textposition='outside')
         fig_dist.update_layout(showlegend=False)
-        st.plotly_chart(fig_dist, use_container_width=True)
+        st.plotly_chart(fig_dist, width="stretch")
     with c2:
         st.metric("Jugadores con huella calculada", len(fp))
         if not dist.empty:
@@ -247,7 +247,7 @@ def show():
             fig.add_trace(_radar_trace(row, sel, "#E74C3C"))
             fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
                                title=f"Huella de Estilo — {sel}", height=450)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         with cB:
             st.markdown(f"### {row['arquetipo']}")
             st.write(row['arquetipo_desc'])
@@ -282,7 +282,7 @@ def show():
                     polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
                     title=f"Huella Táctica — {sel}", height=400
                 )
-                st.plotly_chart(fig_tac, use_container_width=True)
+                st.plotly_chart(fig_tac, width="stretch")
             with cT2:
                 st.metric("Replays analizados", int(row_tac['n_replays']))
                 ejes_validos = [e for e in TACTICA_EJES if pd.notna(row_tac[f'{e}_pct'])]
@@ -311,19 +311,19 @@ def show():
         fig.add_trace(_radar_trace(r2, f"{s2} ({r2['arquetipo']})", "#E74C3C"))
         fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), height=500,
                            title=f"{s1} vs {s2}")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         comp = pd.DataFrame({'Eje': [EJES_LABEL[e] for e in EJES],
                               s1: [r1[e] for e in EJES], s2: [r2[e] for e in EJES]})
-        st.dataframe(comp, use_container_width=True, hide_index=True)
+        st.dataframe(comp, width="stretch", hide_index=True)
 
     with tab3:
         tabla = fp[['jugador', 'arquetipo', 'partidas_totales'] + EJES].sort_values('dominancia', ascending=False)
         tabla = tabla.rename(columns={'jugador': 'Jugador', 'arquetipo': 'Arquetipo',
                                        'partidas_totales': 'Partidas', **EJES_LABEL})
         buscar = st.text_input("🔍 Buscar jugador", "", key="estilo_buscar")
-        vista = tabla[tabla['Jugador'].str.contains(buscar, case=False, na=False)] if buscar else tabla
-        st.dataframe(vista, use_container_width=True, hide_index=True, height=500)
+        vista = tabla[tabla['Jugador'].str.contains(buscar, case=False, na=False, regex=False)] if buscar else tabla
+        st.dataframe(vista, width="stretch", hide_index=True, height=500)
         st.download_button("📥 Descargar CSV", vista.to_csv(index=False).encode('utf-8'),
                             "estilos_jugadores.csv", "text/csv")
 
@@ -331,11 +331,11 @@ def show():
         st.subheader("Ranking de Confiabilidad (menos walkovers causados)")
         fair = fp[['jugador', 'confiabilidad', 'partidas_totales']].sort_values('confiabilidad', ascending=False)
         fair = fair.rename(columns={'jugador': 'Jugador', 'confiabilidad': 'Confiabilidad', 'partidas_totales': 'Partidas'})
-        st.dataframe(fair, use_container_width=True, hide_index=True, height=450)
+        st.dataframe(fair, width="stretch", hide_index=True, height=450)
         fig_fp = px.bar(fair.head(15), x='Jugador', y='Confiabilidad', color='Confiabilidad',
                          color_continuous_scale='RdYlGn', title="Top 15 más confiables")
         fig_fp.update_layout(xaxis_tickangle=-30, showlegend=False)
-        st.plotly_chart(fig_fp, use_container_width=True)
+        st.plotly_chart(fig_fp, width="stretch")
 
     with tab5:
         st.markdown(f"""

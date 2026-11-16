@@ -323,7 +323,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
                 tabla = generar_tabla_temporada(base2, lt)
                 if tabla is not None and not tabla.empty:
                     aka_l = tabla["AKA"].str.lower()
-                    j = tabla[(aka_l == jl) | aka_l.str.contains(jl, na=False)]
+                    j = tabla[(aka_l == jl) | aka_l.str.contains(jl, na=False, regex=False)]
                     if not j.empty and j["RANK"].iloc[0] == 1:
                         campeonatos_liga.append(lt)
 
@@ -353,7 +353,7 @@ def calcular_stats(df, jugador, fecha_corte=None):
                 tabla = generar_tabla_torneo(base_torneo_final, nt)
                 if tabla is not None and not tabla.empty:
                     aka_l = tabla["AKA"].str.lower()
-                    j = tabla[(aka_l == jl) | aka_l.str.contains(jl, na=False)]
+                    j = tabla[(aka_l == jl) | aka_l.str.contains(jl, na=False, regex=False)]
                     if not j.empty and j["RANK"].iloc[0] == 1:
                         campeonatos_torneo.append(int(nt))
     except Exception as e:
@@ -675,7 +675,7 @@ def show():
                 foto_path = tmp
 
     # ── Generar ───────────────────────────────────────────────────
-    if st.button("🃏 Generar Carta TCG", type="primary", use_container_width=True):
+    if st.button("🃏 Generar Carta TCG", type="primary", width="stretch"):
         with st.spinner("Generando carta..."):
             stats  = calcular_stats(df, jugador, fecha_corte)
             carta  = generar_carta(stats, pokemon_nombre, foto_path, fondo_path)
@@ -683,7 +683,7 @@ def show():
         # mostrar
         col_img, col_info = st.columns([1, 1])
         with col_img:
-            st.image(carta, caption=f"Carta de {jugador}", use_container_width=True)
+            st.image(carta, caption=f"Carta de {jugador}", width="stretch")
 
         with col_info:
             st.markdown("#### 📊 Stats calculadas")
@@ -712,7 +712,7 @@ def show():
             data=buf,
             file_name=f"tcg_{jugador.lower().replace(' ','_')}.png",
             mime="image/png",
-            use_container_width=True,
+            width="stretch",
         )
 
     # ── Leyenda: fechas de Torneos y Ligas (por Jornada) ────────────
@@ -732,7 +732,7 @@ def show():
                 leyenda_t["Torneo"] = "T" + leyenda_t["Torneo"].astype(int).astype(str)
                 leyenda_t["Desde"] = leyenda_t["Desde"].dt.strftime("%Y-%m-%d")
                 leyenda_t["Hasta"] = leyenda_t["Hasta"].dt.strftime("%Y-%m-%d")
-                st.dataframe(leyenda_t, use_container_width=True, hide_index=True, height=300)
+                st.dataframe(leyenda_t, width="stretch", hide_index=True, height=300)
             else:
                 st.caption("Sin fechas de torneos disponibles.")
 
@@ -753,6 +753,6 @@ def show():
                 leyenda_l["Jornada"] = "J" + leyenda_l["Jornada"].astype(int).astype(str)
                 leyenda_l["Desde"] = leyenda_l["Desde"].dt.strftime("%Y-%m-%d")
                 leyenda_l["Hasta"] = leyenda_l["Hasta"].dt.strftime("%Y-%m-%d")
-                st.dataframe(leyenda_l, use_container_width=True, hide_index=True, height=300)
+                st.dataframe(leyenda_l, width="stretch", hide_index=True, height=300)
             else:
                 st.caption("Sin fechas de ligas disponibles.")

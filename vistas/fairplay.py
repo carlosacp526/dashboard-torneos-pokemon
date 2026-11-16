@@ -75,7 +75,7 @@ def show():
     fig_tend.add_hline(y=wo_pct, line_dash='dot', line_color='gray',
                         annotation_text=f'Promedio global {wo_pct}%')
     fig_tend.update_layout(template='plotly_dark', margin=dict(l=10, r=10, t=10, b=10))
-    st.plotly_chart(fig_tend, use_container_width=True)
+    st.plotly_chart(fig_tend, width="stretch")
 
     st.markdown("---")
 
@@ -100,7 +100,7 @@ def show():
                           yaxis_title='% Walkover' if orientacion == 'v' else '')
         if orientacion == 'h':
             fig.update_layout(yaxis={'categoryorder': 'total ascending'})
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     def _resumen(d, col):
         t = d.groupby(col).agg(Total=('Walkover', 'size'), WO=('Walkover', lambda s: (s == 1).sum())).reset_index()
@@ -153,7 +153,7 @@ def show():
         fig_liga.update_traces(texttemplate='%{text}%', textposition='outside')
         fig_liga.update_layout(template='plotly_dark', margin=dict(l=10, r=10, t=10, b=10),
                                 xaxis_title='', yaxis_title='% Walkover')
-        st.plotly_chart(fig_liga, use_container_width=True)
+        st.plotly_chart(fig_liga, width="stretch")
 
     st.markdown("---")
 
@@ -175,7 +175,7 @@ def show():
                            color='Walkovers', color_continuous_scale='OrRd')
         fig_rank.update_layout(yaxis={'categoryorder': 'total ascending'}, height=max(350, top_n * 26),
                                 template='plotly_dark', margin=dict(l=10, r=10, t=10, b=10))
-        st.plotly_chart(fig_rank, use_container_width=True)
+        st.plotly_chart(fig_rank, width="stretch")
     else:
         st.info("No hay Walkovers registrados en el periodo.")
 
@@ -192,7 +192,7 @@ def show():
             det['WO%'] = (det['WO'] / det['Total'] * 100).round(1)
             det = det.sort_values('WO%', ascending=False)
             st.dataframe(det.rename(columns={'Ligas_categoria': 'Liga/Temporada'}),
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
         else:
             st.info("No hay datos de liga con Ligas_categoria en el periodo.")
     else:

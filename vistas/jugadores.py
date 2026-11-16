@@ -1072,9 +1072,9 @@ def show():
             cols = st.columns(min(3, len(top)))
             for idx, s in enumerate(top):
                 with cols[idx % 3]:
-                    cnt = df[(df['player1'].str.contains(s,case=False,na=False))|
-                             (df['player2'].str.contains(s,case=False,na=False))].shape[0]
-                    if st.button(f"🎮 {s} — {cnt} partidas", key=f"suggest_{idx}", use_container_width=True):
+                    cnt = df[(df['player1'].str.contains(s,case=False,na=False, regex=False))|
+                             (df['player2'].str.contains(s,case=False,na=False, regex=False))].shape[0]
+                    if st.button(f"🎮 {s} — {cnt} partidas", key=f"suggest_{idx}", width="stretch"):
                         st.session_state.selected_player = s
                         st.rerun()
 
@@ -1094,9 +1094,9 @@ def show():
         if exact_search:
             mask = (df['player1'].str.lower()==player_query.lower())|(df['player2'].str.lower()==player_query.lower())|(df['winner'].str.lower()==player_query.lower())
         else:
-            mask = (df['player1'].str.contains(player_query,case=False,na=False)|
-                    df['player2'].str.contains(player_query,case=False,na=False)|
-                    df['winner'].str.contains(player_query,case=False,na=False))
+            mask = (df['player1'].str.contains(player_query,case=False,na=False, regex=False)|
+                    df['player2'].str.contains(player_query,case=False,na=False, regex=False)|
+                    df['winner'].str.contains(player_query,case=False,na=False, regex=False))
         player_matches = df[mask].copy()
         if 'Walkover' in player_matches.columns:
             player_matches = player_matches[player_matches['Walkover'] != -1].copy()
@@ -1242,8 +1242,8 @@ def show():
                 (df_raw["player1"].str.lower().str.strip() == player_query.lower().strip()) |
                 (df_raw["player2"].str.lower().str.strip() == player_query.lower().strip())
                 if exact_search else
-                df_raw["player1"].str.contains(player_query, case=False, na=False) |
-                df_raw["player2"].str.contains(player_query, case=False, na=False)
+                df_raw["player1"].str.contains(player_query, case=False, na=False, regex=False) |
+                df_raw["player2"].str.contains(player_query, case=False, na=False, regex=False)
             )
         ].copy()
 
@@ -1294,7 +1294,7 @@ def show():
                 if wo_partidas.empty:
                     st.info("Sin walkovers.")
                 else:
-                    st.dataframe(formato_wo_tabla(wo_partidas), use_container_width=True, hide_index=True)
+                    st.dataframe(formato_wo_tabla(wo_partidas), width="stretch", hide_index=True)
 
 
 
@@ -1302,22 +1302,22 @@ def show():
                 if wo_recibidos.empty:
                     st.info("No tiene walkovers recibidos.")
                 else:
-                    st.dataframe(formato_wo_tabla(wo_recibidos), use_container_width=True, hide_index=True)
+                    st.dataframe(formato_wo_tabla(wo_recibidos), width="stretch", hide_index=True)
                     by_event = wo_recibidos.groupby(["league","N_Torneo","Ligas_categoria"]).size().reset_index(name="Cantidad")
                     if len(by_event) > 1:
                         st.markdown("**Distribución por evento:**")
-                        st.dataframe(by_event, use_container_width=True, hide_index=True)
+                        st.dataframe(by_event, width="stretch", hide_index=True)
 
             with tab_wo3:
                 if wo_dados.empty:
                     st.info("No tiene walkovers dados.")
                 else:
-                    st.dataframe(formato_wo_tabla(wo_dados), use_container_width=True, hide_index=True)
+                    st.dataframe(formato_wo_tabla(wo_dados), width="stretch", hide_index=True)
                     # Resumen por torneo/liga
                     by_event = wo_dados.groupby(["league","N_Torneo","Ligas_categoria"]).size().reset_index(name="Cantidad")
                     if len(by_event) > 1:
                         st.markdown("**Distribución por evento:**")
-                        st.dataframe(by_event, use_container_width=True, hide_index=True)
+                        st.dataframe(by_event, width="stretch", hide_index=True)
         st.markdown("---")
 
         # Campeonatos ganados
@@ -1336,7 +1336,7 @@ def show():
                     if tabla is not None and not tabla.empty:
                         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
                                   if exact_search else
-                                  tabla['AKA'].str.contains(player_query,case=False,na=False))
+                                  tabla['AKA'].str.contains(player_query,case=False,na=False, regex=False))
                         j = tabla[mask_c]
                         if not j.empty and j['RANK'].iloc[0] == 1:
                             campeonatos_liga.append({'Liga':lt,'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
@@ -1348,7 +1348,7 @@ def show():
                             ci, cd = st.columns([1,2])
                             with ci:
                                 b = obtener_banner(camp['Liga']) or obtener_logo_liga(pref)
-                                if b: st.image(b, use_container_width=True)
+                                if b: st.image(b, width="stretch")
                             with cd:
                                 st.markdown(f"**🏆 Campeón {camp['Liga']}**")
                                 m1,m2 = st.columns(2)
@@ -1376,7 +1376,7 @@ def show():
                 #     if tabla is not None and not tabla.empty:
                 #         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
                 #                   if exact_search else
-                #                   tabla['AKA'].str.contains(player_query,case=False,na=False))
+                #                   tabla['AKA'].str.contains(player_query,case=False,na=False, regex=False))
                 #         j = tabla[mask_c]
                 #         if not j.empty and j['RANK'].iloc[0] == 1:
                 #             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0]})
@@ -1417,7 +1417,7 @@ def show():
                         if tabla_m is not None and not tabla_m.empty:
                             mask_m = (tabla_m['AKA'].str.lower() == player_query.lower()
                                       if exact_search else
-                                      tabla_m['AKA'].str.contains(player_query, case=False, na=False))
+                                      tabla_m['AKA'].str.contains(player_query, case=False, na=False, regex=False))
                             j_m = tabla_m[mask_m]
                             score_m = float(j_m['SCORE'].iloc[0]) if not j_m.empty else 0
                             vict_m  = int(j_m['Victorias'].iloc[0]) if not j_m.empty else 0
@@ -1432,7 +1432,7 @@ def show():
                     if tabla_62 is not None and not tabla_62.empty:
                         mask_62 = (tabla_62['AKA'].str.lower()==player_query.lower()
                                    if exact_search else
-                                   tabla_62['AKA'].str.contains(player_query,case=False,na=False))
+                                   tabla_62['AKA'].str.contains(player_query,case=False,na=False, regex=False))
                         j_62 = tabla_62[mask_62]
                         score_62 = j_62['SCORE'].iloc[0] if not j_62.empty else 0
                         vict_62  = j_62['Victorias'].iloc[0] if not j_62.empty else 0
@@ -1449,7 +1449,7 @@ def show():
                     if tabla is not None and not tabla.empty:
                         mask_c = (tabla['AKA'].str.lower()==player_query.lower()
                                   if exact_search else
-                                  tabla['AKA'].str.contains(player_query,case=False,na=False))
+                                  tabla['AKA'].str.contains(player_query,case=False,na=False, regex=False))
                         j = tabla[mask_c]
                         if not j.empty and (j['RANK'].iloc[0] == 1 or (int(nt) == 61 and es_chris_fps)):
                             campeonatos_torneo.append({'Torneo':int(nt),'Score':j['SCORE'].iloc[0],'Victorias':j['Victorias'].iloc[0],'Partidas':j['PARTIDAS'].iloc[0]})
@@ -1484,12 +1484,12 @@ def show():
             if not base2.empty:
                 jl = (base2[base2['Participante'].str.lower()==player_query.lower()]
                       if exact_search else
-                      base2[base2['Participante'].str.contains(player_query,case=False,na=False)])
+                      base2[base2['Participante'].str.contains(player_query,case=False,na=False, regex=False)])
                 if not jl.empty:
                     t = jl.sort_values('score_completo',ascending=False)[['Liga_Temporada','Victorias','Derrotas','score_completo']].rename(
                         columns={'Liga_Temporada':'Liga','score_completo':'Score'})
                     t['Score'] = t['Score'].round(2)
-                    st.dataframe(t, use_container_width=True, hide_index=True)
+                    st.dataframe(t, width="stretch", hide_index=True)
                     c1,c2,c3 = st.columns(3)
                     c1.metric("Score Promedio", f"{jl['score_completo'].mean():.2f}")
                     c2.metric("Score Máximo",   f"{jl['score_completo'].max():.2f}")
@@ -1498,7 +1498,7 @@ def show():
                         fig = px.line(t, x='Liga', y='Score', title='Evolución Score en Ligas', markers=True, text='Score')
                         fig.update_traces(texttemplate='%{text:.2f}', textposition='top center')
                         fig.update_layout(xaxis_tickangle=-45)
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width="stretch")
                 else:
                     st.info("No se encontraron datos de score en ligas")
 
@@ -1507,13 +1507,13 @@ def show():
             if not base_torneo_final.empty:
                 jt = (base_torneo_final[base_torneo_final['Participante'].str.lower()==player_query.lower()]
                       if exact_search else
-                      base_torneo_final[base_torneo_final['Participante'].str.contains(player_query,case=False,na=False)])
+                      base_torneo_final[base_torneo_final['Participante'].str.contains(player_query,case=False,na=False, regex=False)])
                 if not jt.empty:
                     t = jt.sort_values('score_completo',ascending=False)[['Torneo_Temp','Victorias','Derrotas','score_completo']].rename(
                         columns={'Torneo_Temp':'Torneo','score_completo':'Score'})
                     t['Score'] = t['Score'].round(2)
                     t['Torneo'] = t['Torneo'].apply(lambda x: f"Torneo {int(x)}")
-                    st.dataframe(t, use_container_width=True, hide_index=True)
+                    st.dataframe(t, width="stretch", hide_index=True)
                     c1,c2,c3 = st.columns(3)
                     c1.metric("Score Promedio", f"{jt['score_completo'].mean():.2f}")
                     c2.metric("Score Máximo",   f"{jt['score_completo'].max():.2f}")
@@ -1522,7 +1522,7 @@ def show():
                         fig = px.line(t, x='Torneo', y='Score', title='Evolución Score en Torneos', markers=True, text='Score')
                         fig.update_traces(texttemplate='%{text:.2f}', textposition='top center')
                         fig.update_layout(xaxis_tickangle=-45)
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width="stretch")
                 else:
                     st.info("No se encontraron datos de score en torneos")
 
@@ -1537,7 +1537,7 @@ def show():
         with tab1:
             st.subheader("Historial de partidas")
             st.dataframe(player_matches[['date','player1','player2','winner','league','Tier','round','status','replay']].head(500),
-                         use_container_width=True)
+                         width="stretch")
 
         with tab2:
             p_stats = compute_player_stats(player_matches)
@@ -1548,7 +1548,7 @@ def show():
                     fig = px.pie(values=[wins,losses], names=['Victorias','Derrotas'],
                                  title=f"Resultados — {player_query}",
                                  color_discrete_sequence=['#2ecc71','#e74c3c'])
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
         with tab3:
             spe = []
@@ -1562,12 +1562,12 @@ def show():
                                     'Winrate%':js['Winrate%'].iloc[0]})
             if spe:
                 df_e = pd.DataFrame(spe).sort_values('Winrate%',ascending=False)
-                st.dataframe(df_e, use_container_width=True)
+                st.dataframe(df_e, width="stretch")
                 fig = px.bar(df_e, x='Evento', y='Winrate%', title=f'Winrate por Evento',
                              color='Winrate%', color_continuous_scale='RdYlGn', text='Winrate%')
                 fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.info("No hay estadísticas por evento.")
 
@@ -1583,12 +1583,12 @@ def show():
                                     'Winrate%':js['Winrate%'].iloc[0]})
             if spt:
                 df_t2 = pd.DataFrame(spt).sort_values('Winrate%',ascending=False)
-                st.dataframe(df_t2, use_container_width=True)
+                st.dataframe(df_t2, width="stretch")
                 fig = px.bar(df_t2, x='Tier', y='Winrate%', color='Winrate%',
                              color_continuous_scale='RdYlGn', text='Winrate%')
                 fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.info("No hay estadísticas por tier.")
 
@@ -1605,11 +1605,11 @@ def show():
                                         'Winrate%':js['Winrate%'].iloc[0]})
             if spf:
                 df_f = pd.DataFrame(spf).sort_values('Winrate%',ascending=False)
-                st.dataframe(df_f, use_container_width=True)
+                st.dataframe(df_f, width="stretch")
                 fig = px.bar(df_f, x='Formato', y='Winrate%', color='Winrate%',
                              color_continuous_scale='RdYlGn', text='Winrate%')
                 fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.info("No hay estadísticas por formato.")
 
@@ -1629,12 +1629,12 @@ def show():
                                         'Winrate%':js['Winrate%'].iloc[0]})
                 if spm:
                     df_m = pd.DataFrame(spm)
-                    st.dataframe(df_m, use_container_width=True)
+                    st.dataframe(df_m, width="stretch")
                     fig = px.line(df_m, x='Mes', y='Winrate%', markers=True, text='Winrate%',
                                   title=f'Winrate por Mes — {player_query}')
                     fig.update_traces(texttemplate='%{text:.1f}%', textposition='top center')
                     fig.add_hline(y=50, line_dash="dash", line_color="gray", annotation_text="50%")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
                 else:
                     st.info("No hay datos por mes.")
 
@@ -1653,14 +1653,14 @@ def show():
                               title=f'Winrate acumulado por Mes — {player_query}')
                 fig.update_traces(texttemplate='%{text:.1f}%', textposition='top center')
                 fig.add_hline(y=50, line_dash="dash", line_color="gray", annotation_text="50%")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
                 fig2 = px.line(df_ac, x='Mes', y=['Victorias acum.', 'Derrotas acum.'], markers=True,
                                color_discrete_map={'Victorias acum.': '#2ECC71', 'Derrotas acum.': '#E74C3C'},
                                title=f'Victorias y derrotas acumuladas — {player_query}')
                 fig2.update_layout(yaxis_title='Partidas', legend_title='')
-                st.plotly_chart(fig2, use_container_width=True)
-                st.dataframe(df_ac, use_container_width=True)
+                st.plotly_chart(fig2, width="stretch")
+                st.dataframe(df_ac, width="stretch")
 
         with tab7:
             if 'date' in player_matches.columns:
@@ -1677,13 +1677,13 @@ def show():
                                         'Winrate%':js['Winrate%'].iloc[0]})
                 if spa:
                     df_a = pd.DataFrame(spa)
-                    st.dataframe(df_a, use_container_width=True)
+                    st.dataframe(df_a, width="stretch")
                     fig = px.bar(df_a, x='Año', y='Winrate%', color='Winrate%',
                                  color_continuous_scale='RdYlGn', text='Winrate%',
                                  title=f'Winrate por Año — {player_query}')
                     fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                     fig.add_hline(y=50, line_dash="dash", line_color="gray")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
                 else:
                     st.info("No hay datos por año.")
 
@@ -1714,14 +1714,14 @@ def show():
                 c1.metric("Rivales frecuentes", len(df_r))
                 c2.metric("Mejor winrate", f"{df_r['Winrate%'].max():.1f}%")
                 c3.metric("Peor winrate",  f"{df_r['Winrate%'].min():.1f}%")
-                st.dataframe(df_r, use_container_width=True)
+                st.dataframe(df_r, width="stretch")
                 fig = px.bar(df_r.head(15), x='Rival', y='Winrate%', color='Winrate%',
                              color_continuous_scale='RdYlGn', text='Winrate%',
                              hover_data=['Partidas','Victorias','Derrotas'])
                 fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                 fig.update_layout(xaxis_tickangle=-45)
                 fig.add_hline(y=50, line_dash="dash", line_color="gray")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.info("No se encontraron rivales con al menos 4 partidas.")
 
@@ -1762,122 +1762,141 @@ def show():
         st.markdown("---")
         st.markdown("### 📄 Exportar Cartilla")
 
-        with st.spinner("Preparando PDF..."):
-            # Preparar score ligas
-            if not base2.empty:
-                jl = (base2[base2['Participante'].str.lower()==player_query.lower()]
-                      if exact_search else
-                      base2[base2['Participante'].str.contains(player_query,case=False,na=False)])
-                if not jl.empty:
-                    score_l = jl.sort_values('score_completo',ascending=False)[
-                        ['Liga_Temporada','Victorias','Derrotas','score_completo']
-                    ].rename(columns={'Liga_Temporada':'Liga','score_completo':'Score'})
-                    score_l['Score'] = score_l['Score'].round(2)
+        # El PDF (varias páginas con todos los logros) se arma SOLO cuando el usuario lo pide: antes se
+        # generaba en cada recarga del perfil (unos 20 s por rerun) solo para alimentar el botón de descarga.
+        _pdf_key = f"_pdf_{player_query.strip().lower()}"
+        if _pdf_key in st.session_state:
+            st.download_button(
+                label="📥 Descargar Cartilla PDF",
+                data=st.session_state[_pdf_key],
+                file_name=f"cartilla_{player_query.replace(' ','_')}.pdf",
+                mime="application/pdf",
+                width="stretch",
+                key="dl_pdf_cached",
+            )
+        elif not st.button("🧾 Generar cartilla PDF", key="btn_gen_pdf",
+                           help="Arma la cartilla de varias páginas con stats, rivales y logros (tarda unos segundos)."):
+            st.caption("La cartilla se genera solo cuando la pides, para que el perfil cargue rápido.")
+        else:
+            with st.spinner("Preparando PDF..."):
+                # Preparar score ligas
+                if not base2.empty:
+                    jl = (base2[base2['Participante'].str.lower()==player_query.lower()]
+                          if exact_search else
+                          base2[base2['Participante'].str.contains(player_query,case=False,na=False, regex=False)])
+                    if not jl.empty:
+                        score_l = jl.sort_values('score_completo',ascending=False)[
+                            ['Liga_Temporada','Victorias','Derrotas','score_completo']
+                        ].rename(columns={'Liga_Temporada':'Liga','score_completo':'Score'})
+                        score_l['Score'] = score_l['Score'].round(2)
+                    else:
+                        score_l = pd.DataFrame()
                 else:
                     score_l = pd.DataFrame()
-            else:
-                score_l = pd.DataFrame()
 
-            # Preparar score torneos
-            if not base_torneo_final.empty:
-                jt = (base_torneo_final[base_torneo_final['Participante'].str.lower()==player_query.lower()]
-                      if exact_search else
-                      base_torneo_final[base_torneo_final['Participante'].str.contains(player_query,case=False,na=False)])
-                if not jt.empty:
-                    score_t = jt.sort_values('score_completo',ascending=False)[
-                        ['Torneo_Temp','Victorias','Derrotas','score_completo']
-                    ].rename(columns={'Torneo_Temp':'Torneo','score_completo':'Score'})
-                    score_t['Score'] = score_t['Score'].round(2)
-                    score_t['Torneo'] = score_t['Torneo'].apply(lambda x: f"Torneo {int(x)}")
+                # Preparar score torneos
+                if not base_torneo_final.empty:
+                    jt = (base_torneo_final[base_torneo_final['Participante'].str.lower()==player_query.lower()]
+                          if exact_search else
+                          base_torneo_final[base_torneo_final['Participante'].str.contains(player_query,case=False,na=False, regex=False)])
+                    if not jt.empty:
+                        score_t = jt.sort_values('score_completo',ascending=False)[
+                            ['Torneo_Temp','Victorias','Derrotas','score_completo']
+                        ].rename(columns={'Torneo_Temp':'Torneo','score_completo':'Score'})
+                        score_t['Score'] = score_t['Score'].round(2)
+                        score_t['Torneo'] = score_t['Torneo'].apply(lambda x: f"Torneo {int(x)}")
+                    else:
+                        score_t = pd.DataFrame()
                 else:
                     score_t = pd.DataFrame()
-            else:
-                score_t = pd.DataFrame()
 
-            # Preparar walkovers
-            wo_pdf = df_raw[
-                (df_raw["Walkover"] == 1) & (
-                    _es_jugador(df_raw["player1"], player_query) |
-                    _es_jugador(df_raw["player2"], player_query)
-                )
-            ].copy()
-            if not wo_pdf.empty:
-                def _clasificar(row):
-                    p = player_query.lower().strip()
-                    winner = str(row.get("winner","")).lower().strip()
-                    return "Dado (ganó por WO)" if p in winner else "Recibido (perdió por WO)"
-                wo_pdf["Tipo WO"] = wo_pdf.apply(_clasificar, axis=1)
+                # Preparar walkovers
+                wo_pdf = df_raw[
+                    (df_raw["Walkover"] == 1) & (
+                        _es_jugador(df_raw["player1"], player_query) |
+                        _es_jugador(df_raw["player2"], player_query)
+                    )
+                ].copy()
+                if not wo_pdf.empty:
+                    def _clasificar(row):
+                        p = player_query.lower().strip()
+                        winner = str(row.get("winner","")).lower().strip()
+                        return "Dado (ganó por WO)" if p in winner else "Recibido (perdió por WO)"
+                    wo_pdf["Tipo WO"] = wo_pdf.apply(_clasificar, axis=1)
 
-            # Preparar rivales
-            rivales_pdf = []
-            for rival in player_matches[_es_jugador(player_matches['player1'], player_query)]['player2'].dropna().unique().tolist() +                           player_matches[_es_jugador(player_matches['player2'], player_query)]['player1'].dropna().unique().tolist():
-                rm = player_matches[
-                    _es_jugador(player_matches['player1'], rival) |
-                    _es_jugador(player_matches['player2'], rival)
-                ]
-                if len(rm) >= 4:
-                    v = rm[_es_jugador(rm['winner'], player_query)].shape[0]
-                    d = len(rm) - v
-                    wr = round(v/len(rm)*100, 1) if len(rm) > 0 else 0
-                    rivales_pdf.append({'Rival':rival,'Partidas':len(rm),'Victorias':v,'Derrotas':d,'Winrate%':wr,
-                                     'Formato': rm['Formato'].mode()[0] if 'Formato' in rm.columns and not rm['Formato'].dropna().empty else ''})
-            rivales_df_pdf = pd.DataFrame(rivales_pdf).drop_duplicates('Rival').sort_values('Partidas',ascending=False) if rivales_pdf else pd.DataFrame()
+                # Preparar rivales
+                rivales_pdf = []
+                for rival in player_matches[_es_jugador(player_matches['player1'], player_query)]['player2'].dropna().unique().tolist() +                           player_matches[_es_jugador(player_matches['player2'], player_query)]['player1'].dropna().unique().tolist():
+                    rm = player_matches[
+                        _es_jugador(player_matches['player1'], rival) |
+                        _es_jugador(player_matches['player2'], rival)
+                    ]
+                    if len(rm) >= 4:
+                        v = rm[_es_jugador(rm['winner'], player_query)].shape[0]
+                        d = len(rm) - v
+                        wr = round(v/len(rm)*100, 1) if len(rm) > 0 else 0
+                        rivales_pdf.append({'Rival':rival,'Partidas':len(rm),'Victorias':v,'Derrotas':d,'Winrate%':wr,
+                                         'Formato': rm['Formato'].mode()[0] if 'Formato' in rm.columns and not rm['Formato'].dropna().empty else ''})
+                rivales_df_pdf = pd.DataFrame(rivales_pdf).drop_duplicates('Rival').sort_values('Partidas',ascending=False) if rivales_pdf else pd.DataFrame()
 
-            # Ligas y torneos
-            ligas_j   = player_matches[player_matches['league']=='LIGA']['Ligas_categoria'].dropna().unique().tolist()
-            torneos_j = player_matches[player_matches['league']=='TORNEO']['N_Torneo'].dropna().unique().tolist()
+                # Ligas y torneos
+                ligas_j   = player_matches[player_matches['league']=='LIGA']['Ligas_categoria'].dropna().unique().tolist()
+                torneos_j = player_matches[player_matches['league']=='TORNEO']['N_Torneo'].dropna().unique().tolist()
 
-            # Calcular logros
-            try:
-                _camp_liga_pdf  = campeonatos_liga  if 'campeonatos_liga'  in dir() else []
-                _camp_torn_pdf  = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
+                # Calcular logros
                 try:
-                    _data_elo_pdf, _data_filas_pdf, _ = calcular_elo(df_raw)
+                    _camp_liga_pdf  = campeonatos_liga  if 'campeonatos_liga'  in dir() else []
+                    _camp_torn_pdf  = campeonatos_torneo if 'campeonatos_torneo' in dir() else []
+                    try:
+                        _data_elo_pdf, _data_filas_pdf, _ = calcular_elo(df_raw)
+                    except Exception:
+                        _data_elo_pdf   = pd.DataFrame()
+                        _data_filas_pdf = pd.DataFrame()
+                    desbloqueados_pdf = evaluar_logros(
+                        player_query        = player_query,
+                        player_matches      = player_matches,
+                        df_raw              = df_raw,
+                        data_elo            = _data_elo_pdf,
+                        data_filas          = _data_filas_pdf,
+                        base2               = base2,
+                        base_torneo_final   = base_torneo_final,
+                        campeonatos_liga    = _camp_liga_pdf,
+                        campeonatos_torneo  = _camp_torn_pdf,
+                        generar_tabla_temporada = generar_tabla_temporada,
+                        generar_tabla_torneo    = generar_tabla_torneo,
+                    )
                 except Exception:
-                    _data_elo_pdf   = pd.DataFrame()
-                    _data_filas_pdf = pd.DataFrame()
-                desbloqueados_pdf = evaluar_logros(
-                    player_query        = player_query,
-                    player_matches      = player_matches,
-                    df_raw              = df_raw,
-                    data_elo            = _data_elo_pdf,
-                    data_filas          = _data_filas_pdf,
-                    base2               = base2,
-                    base_torneo_final   = base_torneo_final,
-                    campeonatos_liga    = _camp_liga_pdf,
-                    campeonatos_torneo  = _camp_torn_pdf,
-                    generar_tabla_temporada = generar_tabla_temporada,
-                    generar_tabla_torneo    = generar_tabla_torneo,
-                )
-            except Exception:
-                desbloqueados_pdf = None
+                    desbloqueados_pdf = None
 
-            try:
-                pdf_bytes = generar_pdf_jugador(
-                    player_query      = player_query,
-                    player_matches    = player_matches,
-                    p_stats_quick     = p_stats_quick,
-                    ligas_jugador     = ligas_j,
-                    torneos_jugador   = torneos_j,
-                    campeonatos_liga  = campeonatos_liga if 'campeonatos_liga' in dir() else [],
-                    campeonatos_torneo= campeonatos_torneo if 'campeonatos_torneo' in dir() else [],
-                    wo_partidas       = wo_pdf,
-                    score_ligas_df    = score_l,
-                    score_torneos_df  = score_t,
-                    rivales_df        = rivales_df_pdf,
-                    desbloqueados     = desbloqueados_pdf,
-                )
-                nombre_archivo = f"cartilla_{player_query.replace(' ','_')}.pdf"
-                st.download_button(
-                    label="📥 Descargar Cartilla PDF",
-                    data=pdf_bytes,
-                    file_name=nombre_archivo,
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-            except Exception as e:
-                st.error(f"Error generando PDF: {e}")
-                import traceback; st.code(traceback.format_exc())
+                try:
+                    pdf_bytes = generar_pdf_jugador(
+                        player_query      = player_query,
+                        player_matches    = player_matches,
+                        p_stats_quick     = p_stats_quick,
+                        ligas_jugador     = ligas_j,
+                        torneos_jugador   = torneos_j,
+                        campeonatos_liga  = campeonatos_liga if 'campeonatos_liga' in dir() else [],
+                        campeonatos_torneo= campeonatos_torneo if 'campeonatos_torneo' in dir() else [],
+                        wo_partidas       = wo_pdf,
+                        score_ligas_df    = score_l,
+                        score_torneos_df  = score_t,
+                        rivales_df        = rivales_df_pdf,
+                        desbloqueados     = desbloqueados_pdf,
+                    )
+                    for _k in [k for k in st.session_state.keys() if str(k).startswith("_pdf_")]:
+                        del st.session_state[_k]
+                    st.session_state[_pdf_key] = pdf_bytes
+                    nombre_archivo = f"cartilla_{player_query.replace(' ','_')}.pdf"
+                    st.download_button(
+                        label="📥 Descargar Cartilla PDF",
+                        data=pdf_bytes,
+                        file_name=nombre_archivo,
+                        mime="application/pdf",
+                        width="stretch",
+                    )
+                except Exception as e:
+                    st.error(f"Error generando PDF: {e}")
+                    import traceback; st.code(traceback.format_exc())
 
 
     else:

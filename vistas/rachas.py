@@ -122,7 +122,7 @@ def _mostrar_vivo(df_raw):
         tabla['Racha'] = tabla.apply(lambda r: f"{'+' if r['Tipo']=='V' else '-'}{r['Racha']}", axis=1)
         st.dataframe(
             tabla[['Jugador', 'Racha', 'Forma reciente', 'Último rival', 'Última liga/evento', 'Última fecha', 'Partidas totales']],
-            use_container_width=True, hide_index=True
+            width="stretch", hide_index=True
         )
 
 
@@ -258,7 +258,7 @@ def _mostrar_historicas(df_raw):
         t_['Perdedora vigente'] = t_['Perdedora vigente'].map({True: 'Sí', False: ''})
         st.dataframe(t_[['Jugador', 'Racha Ganadora', 'Ganadora desde', 'Ganadora hasta', 'Ganadora evento', 'Ganadora vigente',
                          'Racha Perdedora', 'Perdedora desde', 'Perdedora hasta', 'Perdedora evento', 'Perdedora vigente', 'Partidas']],
-                     use_container_width=True, hide_index=True)
+                     width="stretch", hide_index=True)
 
 
 def show():

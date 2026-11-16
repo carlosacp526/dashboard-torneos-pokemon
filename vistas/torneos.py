@@ -80,7 +80,7 @@ def show():
                             else ['RANK','AKA','PUNTOS','SCORE','POSICIÓN','PARTIDAS','Winrate%']
                         td = tabla[cols_tabla].copy()
                         st.dataframe(td.style.apply(hl_torneo,axis=1).format({'Winrate%':'{:.2f}%'}),
-                                     use_container_width=True, hide_index=True,
+                                     width="stretch", hide_index=True,
                                      height=min(600,len(tabla)*40+100))
                         st.markdown("---")
                         c1,c2,c3,c4 = st.columns(4)
@@ -115,14 +115,14 @@ def show():
                                          title=f'Top 10 Victorias — Torneo {nt}')
                             fig.update_traces(texttemplate='%{text}', textposition='outside')
                             fig.update_layout(xaxis_tickangle=-45, showlegend=False)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width="stretch")
                         with cg2:
                             fig = px.bar(tabla.head(10), x='AKA', y='SCORE',
                                          color='SCORE', color_continuous_scale='RdYlGn', text='SCORE',
                                          title=f'Top 10 Score — Torneo {nt}')
                             fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
                             fig.update_layout(xaxis_tickangle=-45, showlegend=False)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width="stretch")
 
                         csv = td.to_csv(index=False).encode('utf-8')
                         st.download_button(f"📥 Descargar tabla Torneo {nt}", csv,

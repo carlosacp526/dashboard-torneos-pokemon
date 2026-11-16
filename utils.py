@@ -899,7 +899,7 @@ def obtener_elo_rank_historico(data_elo, data_filas, jugador, fecha_corte=None):
             return 1000, 0
         row = data_elo[data_elo['Participantes'].str.lower().str.strip() == jl]
         if row.empty:
-            row = data_elo[data_elo['Participantes'].str.lower().str.contains(jl, na=False)]
+            row = data_elo[data_elo['Participantes'].str.lower().str.contains(jl, na=False, regex=False)]
         if row.empty:
             return 1000, 0
         return int(round(row.iloc[0]['Elo'])), int(row.iloc[0]['RANK'])

@@ -113,13 +113,13 @@ def mostrar_competencia(league, titulo, icono, etiqueta, banner_path, con_finale
         cols = ['RANK', 'AKA', 'PUNTOS', 'SCORE'] + (['POSICIÓN'] if mostrar_pos else []) + ['PARTIDAS', 'Winrate%']
         td = tabla_vis[cols].copy()
         st.dataframe(td.style.apply(hl, axis=1).format({'Winrate%': '{:.2f}%'}),
-                     use_container_width=True, hide_index=True, height=min(600, len(tabla) * 40 + 100))
+                     width="stretch", hide_index=True, height=min(600, len(tabla) * 40 + 100))
 
         if con_finales:
             fin = _finales_por_tier(ev)
             if not fin.empty:
                 st.markdown("### 🏁 Finales por Tier")
-                st.dataframe(fin[['Tier', 'Formato', 'Ganador', 'Serie']], use_container_width=True, hide_index=True)
+                st.dataframe(fin[['Tier', 'Formato', 'Ganador', 'Serie']], width="stretch", hide_index=True)
                 st.caption("Detalle de cada llave: cada Tier se juega por separado. La tabla de arriba (y el campeón) "
                            "suman las victorias de todas las llaves.")
 
@@ -149,14 +149,14 @@ def mostrar_competencia(league, titulo, icono, etiqueta, banner_path, con_finale
                          title=f'Top 10 Victorias — {etiqueta} {nt}')
             fig.update_traces(texttemplate='%{text}', textposition='outside')
             fig.update_layout(xaxis_tickangle=-45, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         with cg2:
             fig = px.bar(tabla.head(10), x='AKA', y='SCORE', color='SCORE',
                          color_continuous_scale='RdYlGn', text='SCORE',
                          title=f'Top 10 Score — {etiqueta} {nt}')
             fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
             fig.update_layout(xaxis_tickangle=-45, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         st.download_button(f"📥 Descargar tabla {etiqueta} {nt}", td.to_csv(index=False).encode('utf-8'),
                            f"tabla_{league.lower()}_{nt}.csv", "text/csv", key=f"dl_{league}_{nt}")

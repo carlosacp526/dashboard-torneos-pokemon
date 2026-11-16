@@ -961,8 +961,8 @@ def obtener_resumen_jugador(
 
     pq = player_query.strip().lower()
     mask = (
-        df_raw["player1"].astype(str).str.lower().str.contains(pq, na=False) |
-        df_raw["player2"].astype(str).str.lower().str.contains(pq, na=False)
+        df_raw["player1"].astype(str).str.lower().str.contains(pq, na=False, regex=False) |
+        df_raw["player2"].astype(str).str.lower().str.contains(pq, na=False, regex=False)
     )
     df_filtrado = df_raw[mask].copy()
     if df_filtrado.empty:
@@ -1462,17 +1462,17 @@ def show():
         d1, d2 = st.columns(2)
         with d1:
             st.markdown("**Movimientos usados**")
-            st.dataframe(detalle["moves"], use_container_width=True) if not detalle["moves"].empty \
+            st.dataframe(detalle["moves"], width="stretch") if not detalle["moves"].empty \
                 else st.caption("Sin datos de movimientos.")
             st.markdown("**Habilidad**")
-            st.dataframe(detalle["abilities"], use_container_width=True) if not detalle["abilities"].empty \
+            st.dataframe(detalle["abilities"], width="stretch") if not detalle["abilities"].empty \
                 else st.caption("No se reveló ninguna habilidad en estos replays.")
         with d2:
             st.markdown("**Item**")
-            st.dataframe(detalle["items"], use_container_width=True) if not detalle["items"].empty \
+            st.dataframe(detalle["items"], width="stretch") if not detalle["items"].empty \
                 else st.caption("No se reveló ningún item en estos replays.")
             st.markdown("**Teratipo**")
-            st.dataframe(detalle["tera"], use_container_width=True) if not detalle["tera"].empty \
+            st.dataframe(detalle["tera"], width="stretch") if not detalle["tera"].empty \
                 else st.caption("No se registró Terastalización en estos replays.")
 
         st.caption(

@@ -5,6 +5,7 @@ recurso, el archivo .streamlit/secrets.toml). Comparte con Pendientes la marca d
 entró en una página queda dentro de la otra.
 """
 import hashlib
+import hmac
 import os
 
 import streamlit as st
@@ -38,7 +39,7 @@ def desbloqueado():
 def clave_correcta(pwd):
     """True (y deja la sesión desbloqueada) si la clave coincide con el hash configurado."""
     h = _hash_configurado()
-    if h and hashlib.sha256((pwd or "").encode("utf-8")).hexdigest() == h:
+    if h and hmac.compare_digest(hashlib.sha256((pwd or "").encode("utf-8")).hexdigest(), h):
         st.session_state[CLAVE_SESION] = True
         return True
     return False
@@ -58,7 +59,7 @@ def exigir_clave(clave_form="acceso_login"):
         pwd = st.text_input("Clave de acceso", type="password")
         enviado = st.form_submit_button("Ingresar")
     if enviado:
-        if hashlib.sha256(pwd.encode("utf-8")).hexdigest() == h:
+        if hmac.compare_digest(hashlib.sha256(pwd.encode("utf-8")).hexdigest(), h):
             st.session_state[CLAVE_SESION] = True
             st.rerun()
         else:

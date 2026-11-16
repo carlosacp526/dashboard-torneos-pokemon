@@ -575,16 +575,16 @@ def show():
                          color_discrete_map=BUCKET_COLORS)
             fig.update_traces(textposition='outside')
             fig.update_layout(showlegend=False, title=f"Distribución de recencia (referencia: {mes_ref})")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         with colt:
             buscar = st.text_input("🔍 Buscar jugador", "", key="ret_rec_buscar")
-            vista = recencia[recencia['jugador'].str.contains(buscar, case=False, na=False)] if buscar else recencia
+            vista = recencia[recencia['jugador'].str.contains(buscar, case=False, na=False, regex=False)] if buscar else recencia
             st.dataframe(
                 vista[['jugador', 'ultimo_mes', 'meses_recencia', 'segmento', 'pendientes']].rename(
                     columns={'jugador': 'Jugador', 'ultimo_mes': 'Último mes activo',
                              'meses_recencia': 'Meses sin jugar', 'segmento': 'Segmento',
                              'pendientes': 'Partidas pendientes'}),
-                use_container_width=True, hide_index=True, height=330,
+                width="stretch", hide_index=True, height=330,
             )
             st.caption(
                 "**Partidas pendientes** son llaves ya asignadas y aún sin jugar (Walkover = -1): cuentan "
@@ -603,9 +603,9 @@ def show():
         fig2.add_scatter(x=actividad['mes'], y=actividad['Activos'], mode='lines+markers',
                           name='Total activos', line=dict(color='white', width=2))
         fig2.update_layout(xaxis_tickangle=-45, barmode='stack', legend_title="")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width="stretch")
         with st.expander("Ver tabla"):
-            st.dataframe(actividad, use_container_width=True, hide_index=True)
+            st.dataframe(actividad, width="stretch", hide_index=True)
 
     # ── Roll Rate ─────────────────────────────────────────────────────────────
     st.markdown("---")
@@ -632,7 +632,7 @@ def show():
         fig_rr.update_layout(title="Matriz de transición mes a mes (%)", height=420,
                               xaxis_title="Estado el mes siguiente", yaxis_title="Estado este mes",
                               yaxis=dict(autorange='reversed'))
-        st.plotly_chart(fig_rr, use_container_width=True)
+        st.plotly_chart(fig_rr, width="stretch")
 
         prob_recuperar_reciente = mat.loc['Reciente', 'Activo'] if 'Reciente' in mat.index else 0
         prob_recuperar_riesgo = mat.loc['EnRiesgo', 'Activo'] if 'EnRiesgo' in mat.index else 0
@@ -650,7 +650,7 @@ def show():
             "es el punto donde, según los propios datos, ya casi no hay vuelta atrás."
         )
         with st.expander("Ver matriz en tabla"):
-            st.dataframe(mat_disp, use_container_width=True)
+            st.dataframe(mat_disp, width="stretch")
 
     # ── Vintage / Cosechas ───────────────────────────────────────────────────
     st.markdown("---")
@@ -668,7 +668,7 @@ def show():
                          hover_data=['n_jugadores'],
                          title="Curva de retención promedio por antigüedad (todas las cosechas)")
         fig_v.update_layout(xaxis_title="Meses desde el debut", yaxis_title="% de la cosecha activo ese mes")
-        st.plotly_chart(fig_v, use_container_width=True)
+        st.plotly_chart(fig_v, width="stretch")
 
         caida_m1 = curva.loc[curva['offset'] == 1, 'activo_%']
         estable = curva.loc[curva['offset'].between(6, 12), 'activo_%'].mean()
@@ -684,7 +684,7 @@ def show():
             heat = por_cohorte.pivot(index='primer_mes', columns='offset', values='activo_rate') * 100
             fig_h = px.imshow(heat, color_continuous_scale='RdYlGn', aspect='auto',
                                labels=dict(x="Meses desde el debut", y="Cosecha (mes de debut)", color="% activo"))
-            st.plotly_chart(fig_h, use_container_width=True)
+            st.plotly_chart(fig_h, width="stretch")
 
     # ── Ratio de fuga ─────────────────────────────────────────────────────────
     st.markdown("---")
@@ -709,9 +709,9 @@ def show():
         fig3.add_hline(y=churn_ts['ratio_fuga_%'].mean(), line_dash="dash", line_color="gray",
                         annotation_text="Promedio histórico")
         fig3.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width="stretch")
         with st.expander("Ver tabla"):
-            st.dataframe(churn_ts, use_container_width=True, hide_index=True)
+            st.dataframe(churn_ts, width="stretch", hide_index=True)
 
     # ── Predicción de fuga (XGBoost) ────────────────────────────────────────
     st.markdown("---")
@@ -770,7 +770,7 @@ def show():
                     'pendientes': 'Pendientes asignadas',
                 })
                 tabla_riesgo['Winrate histórico'] = (tabla_riesgo['Winrate histórico'] * 100).round(1)
-                st.dataframe(tabla_riesgo, use_container_width=True, hide_index=True, height=450)
+                st.dataframe(tabla_riesgo, width="stretch", hide_index=True, height=450)
                 st.download_button("📥 Descargar riesgo de fuga (CSV)",
                                     tabla_riesgo.to_csv(index=False).encode('utf-8'),
                                     "riesgo_fuga.csv", "text/csv")
@@ -780,7 +780,7 @@ def show():
             imp_df['Feature'] = imp_df['feature'].map(FEATURE_LABELS).fillna(imp_df['feature'])
             fig4 = px.bar(imp_df.sort_values('importancia'), x='importancia', y='Feature', orientation='h',
                           title="Qué variables pesan más en la predicción de fuga")
-            st.plotly_chart(fig4, use_container_width=True)
+            st.plotly_chart(fig4, width="stretch")
 
     # ── Watchlist — KPI compuesto de alerta temprana ─────────────────────────
     st.markdown("---")
@@ -812,7 +812,7 @@ def show():
                     'walkover_rate_last6': '% WO últ. 6m', 'winrate_acum': 'Winrate histórico %',
                     'pendientes': 'Pendientes asignadas', 'ligas_distintas': 'Ligas/torneos distintos (histórico)',
                 }),
-                use_container_width=True, hide_index=True, height=500,
+                width="stretch", hide_index=True, height=500,
             )
             st.download_button("📥 Descargar watchlist (CSV)",
                                 tabla_w.to_csv(index=False).encode('utf-8'),

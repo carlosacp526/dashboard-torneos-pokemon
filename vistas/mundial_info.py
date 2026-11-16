@@ -65,16 +65,16 @@ def _render_ranking_csv(path_csv, path_png, top_n=16, label_mundial=""):
 
             st.subheader(f"CLASIFICADOS TOP {top_n}")
             st.dataframe(clasificados.style.apply(_highlight_top3, axis=1),
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
 
             st.subheader("RANKING COMPLETO")
             p1 = resto.iloc[0:28].reset_index(drop=True)
             p2 = resto.iloc[28:56].reset_index(drop=True)
             p3 = resto.iloc[56:].reset_index(drop=True)
             c1, c2, c3 = st.columns(3)
-            with c1: st.dataframe(p1, use_container_width=True, hide_index=True, height=600)
-            with c2: st.dataframe(p2, use_container_width=True, hide_index=True, height=600)
-            with c3: st.dataframe(p3, use_container_width=True, hide_index=True, height=600)
+            with c1: st.dataframe(p1, width="stretch", hide_index=True, height=600)
+            with c2: st.dataframe(p2, width="stretch", hide_index=True, height=600)
+            with c3: st.dataframe(p3, width="stretch", hide_index=True, height=600)
         except Exception as e:
             st.error(f"No se pudo cargar {path_csv}: {e}")
 
@@ -352,12 +352,12 @@ def _render_puntajes_monotype(tipos, posiciones, ligas_list, df_raw, key_prefix=
             st.caption("Cada columna muestra el aporte del torneo/liga al total del jugador.")
             if not pivot.empty:
                 st.dataframe(pivot.style.apply(_highlight_top3, axis=1),
-                             use_container_width=True, height=900, hide_index=True)
+                             width="stretch", height=900, hide_index=True)
 
             with st.expander(f"🔍 Desglose lineal {fmt}"):
                 df_lineal = pd.DataFrame(det_list).sort_values(
                     ["Jugador","Puntos"], ascending=[True, False])
-                st.dataframe(df_lineal, use_container_width=True, height=500)
+                st.dataframe(df_lineal, width="stretch", height=500)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -1163,7 +1163,7 @@ def show():
                 cols = st.columns(len(pngs))
                 for col, (nombre, datos) in zip(cols, pngs.items()):
                     col.download_button(f"⬇️ {nombre}", data=datos, file_name=f"ranking_monotype_{nombre.lower().replace(' ', '_')}.png",
-                                        mime="image/png", key=f"mono_png_{nombre}", use_container_width=True)
+                                        mime="image/png", key=f"mono_png_{nombre}", width="stretch")
 
     # ══════════════════════════════════════════════════════════════
     # TAB 2 — GENERACIONES (MUNDIAL CERRADO)
@@ -1235,7 +1235,7 @@ def show():
                     ladder_df.index += 1
                     ladder_df.index.name = "Pos"
                     st.dataframe(ladder_df.style.apply(_highlight_ladder, axis=1),
-                                 use_container_width=True, height=500)
+                                 width="stretch", height=500)
 
                 st.markdown("---")
                 st.markdown("#### ⏳ Batallas Pendientes")
@@ -1245,7 +1245,7 @@ def show():
                     cols_show = [c for c in ["round","player1","player2","status","replay"]
                                  if c in df_pend.columns]
                     st.dataframe(df_pend[cols_show].reset_index(drop=True),
-                                 use_container_width=True, height=400)
+                                 width="stretch", height=400)
                     st.info(f"Total pendientes: **{len(df_pend)}**")
 
         # ── Sub-tab: Pokémon por Torneo Generacional ─────────────
@@ -1267,12 +1267,12 @@ def show():
                     col1, col2 = st.columns(2)
                     with col1:
                         if os.path.exists(img1):
-                            st.image(img1, use_container_width=True)
+                            st.image(img1, width="stretch")
                         else:
                             st.info(f"Coloca '{img1}' en la carpeta")
                     with col2:
                         if os.path.exists(img2):
-                            st.image(img2, use_container_width=True)
+                            st.image(img2, width="stretch")
                         else:
                             st.info(f"Coloca '{img2}' en la carpeta")
 
@@ -1312,7 +1312,7 @@ def show():
                 m2.metric("🏆 Puntaje máximo",       int(df_g["Puntaje"].max()))
                 m3.metric("📊 Total de puntos",      int(df_g["Puntaje"].sum()))
                 st.dataframe(df_g.style.apply(_highlight_top3, axis=1),
-                             use_container_width=True, height=600, hide_index=True)
+                             width="stretch", height=600, hide_index=True)
             except Exception as e:
                 st.error(f"No se pudo cargar score_mundial.csv: {e}")
 
@@ -1326,7 +1326,7 @@ def show():
                 m2.metric("🏆 Puntaje máximo",       int(df_o["Puntaje"].max()))
                 m3.metric("📊 Total de puntos",      int(df_o["Puntaje"].sum()))
                 st.dataframe(df_o.style.apply(_highlight_top3, axis=1),
-                             use_container_width=True, height=600, hide_index=True)
+                             width="stretch", height=600, hide_index=True)
             except Exception as e:
                 st.error(f"No se pudo cargar score_mundial2.csv: {e}")
 

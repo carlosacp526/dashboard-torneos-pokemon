@@ -215,6 +215,17 @@ def _tarjeta(arriba, nombre, trofeo=False):
             f'<div class="pxc-name"><span>{html.escape(nombre.upper())}</span>{_bandera(nombre)}</div></div>')
 
 
+def precalentar(df_raw):
+    """Arma (y deja en caché) los retratos de todos los campeones. Lo llama el precalentado de app.py en segundo
+    plano: el primer visitante del Histórico esperaba ~30 s mientras se abrían y pixelaban las fotos."""
+    torneos, ligas, _ = _datos_campeones(df_raw)
+    for nombre in {r["jugador"] for r in torneos} | {r["jugador"] for r in ligas}:
+        try:
+            _retrato(nombre)
+        except Exception:
+            pass
+
+
 def render(df_raw):
     """Pestañas por periodo con las tarjetas pixel de campeones de torneos y ligas."""
     torneos, ligas, inicio = _datos_campeones(df_raw)

@@ -444,7 +444,7 @@ def show():
                 .applymap(color_calidad, subset=['CALIDAD_LIGA'] if 'CALIDAD_LIGA' in tabla_display.columns else [])\
                 .applymap(color_score, subset=[c for c in id_cols_style if c in tabla_display.columns])
         styled = styled.format_index(lambda c: COLUMN_RENAME.get(c, c), axis=1)
-        st.dataframe(styled, use_container_width=True)
+        st.dataframe(styled, width="stretch")
         st.caption(
             "¿Qué significa cada columna? Revisa la pestaña **📖 Glosario e Interpretación** — "
             "cada indicador tiene su nombre técnico (ID1–ID7), qué mide y cómo se calcula."
@@ -505,7 +505,7 @@ def show():
             title="Heatmap — IDs (1=🟢 3=🔴) y Calidad General",
             height=380, xaxis_tickangle=-45, margin=dict(l=160)
         )
-        st.plotly_chart(fig_heat, use_container_width=True)
+        st.plotly_chart(fig_heat, width="stretch")
 
         # Barras — usar etiquetas de nivel
         niveles_map = {5:'🏆 Élite', 4:'🟢 Excelente', 3:'🟡 Buena', 2:'🟠 Regular', 1:'🔴 Débil'}
@@ -522,7 +522,7 @@ def show():
         )
         fig_bar.update_traces(textposition='outside')
         fig_bar.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
 
         # Radar
         fig_radar = go.Figure()
@@ -537,7 +537,7 @@ def show():
             polar=dict(radialaxis=dict(visible=True, range=[0, 3])),
             title="Comparativa de Calidad entre Temporadas", height=450
         )
-        st.plotly_chart(fig_radar, use_container_width=True)
+        st.plotly_chart(fig_radar, width="stretch")
 
     with tab3:
         st.markdown("""

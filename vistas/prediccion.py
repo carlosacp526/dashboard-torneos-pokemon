@@ -256,7 +256,7 @@ def _wr_bar(df_col, col, color, key):
         yaxis_title="",
         showlegend=False,
     )
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width="stretch", key=key)
 
 
 def _render_player_card(nombre, stats, color, df_j):
@@ -315,7 +315,7 @@ def _render_player_card(nombre, stats, color, df_j):
                           color_discrete_sequence=[color])
         fig_evo.update_layout(height=180, margin=dict(t=10,b=10,l=0,r=0),
                               xaxis_title="", yaxis_title="Score Ac.")
-        st.plotly_chart(fig_evo, use_container_width=True, key=f"evo_{nombre}")
+        st.plotly_chart(fig_evo, width="stretch", key=f"evo_{nombre}")
 
 
 def _bar_comparativa(label, val1, val2, nombre1, nombre2, fmt=None):
@@ -489,7 +489,7 @@ def show():
 
         # ── Botón de predicción ────────────────────────────────────────────
         st.markdown("---")
-        predecir = st.button("🔮 Predecir Combate", use_container_width=True, type="primary")
+        predecir = st.button("🔮 Predecir Combate", width="stretch", type="primary")
 
         if predecir:
             X_p      = make_pred_row(p1, p2, latest_stats, feature_cols, rep=rep_p)
@@ -623,7 +623,7 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier
                     shapes=[dict(type="line", x0=0, x1=0, y0=-0.5,
                                  y1=len(sv2df)-0.5, line=dict(color="white", width=1, dash="dot"))]
                 )
-                st.plotly_chart(fs, use_container_width=True)
+                st.plotly_chart(fs, width="stretch")
                 st.caption(f"🟢 Verde = favorece **{p1}** | 🔴 Rojo = favorece **{p2}** | _g = stats J1 | _p = stats J2")
 
                 top_pos = sv2df[sv2df["SHAP"] > 0].tail(3)["Feature"].tolist()
@@ -702,7 +702,7 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier
 
                 st.dataframe(
                     display_df.style.map(color_conf, subset=["Confianza %"]),
-                    use_container_width=True, hide_index=True, height=400
+                    width="stretch", hide_index=True, height=400
                 )
 
                 csv_pend = display_df.to_csv(index=False).encode("utf-8")
@@ -720,7 +720,7 @@ Stats: {p1} winrate {wr1t} vs {p2} winrate {wr2t} | Combate **{fmt_p}** — Tier
                     labels={"x":"Confianza %","y":"Batalla"},
                 )
                 fig_pend.update_layout(height=500, yaxis_title="")
-                st.plotly_chart(fig_pend, use_container_width=True)
+                st.plotly_chart(fig_pend, width="stretch")
 
     except ImportError as e:
         st.error(f"Librería no instalada: {e}")

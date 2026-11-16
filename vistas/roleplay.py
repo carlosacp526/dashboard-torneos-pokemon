@@ -210,7 +210,7 @@ def show():
         if tier_sel != 'Todos':
             df_eq_view = df_eq_view[df_eq_view['Tier_Equipo'] == tier_sel]
         if buscar_eq:
-            df_eq_view = df_eq_view[df_eq_view['Equipo'].str.contains(buscar_eq, case=False, na=False)]
+            df_eq_view = df_eq_view[df_eq_view['Equipo'].str.contains(buscar_eq, case=False, na=False, regex=False)]
 
         df_eq_view = df_eq_view.sort_values('Score_Equipo', ascending=False).reset_index(drop=True)
 
@@ -292,7 +292,7 @@ def show():
         if tier_p_sel != 'Todos':
             df_poke_rank = df_poke_rank[df_poke_rank['Tier'] == tier_p_sel]
         if buscar_p:
-            df_poke_rank = df_poke_rank[df_poke_rank['Pokemon'].str.contains(buscar_p, case=False, na=False)]
+            df_poke_rank = df_poke_rank[df_poke_rank['Pokemon'].str.contains(buscar_p, case=False, na=False, regex=False)]
 
         # Tabla con tiers coloreados
         for tier_name in ['S','A','B','C','D']:
@@ -334,7 +334,7 @@ def show():
             cols_show = ['player1','player2','winner','round','date','Walkover']
             cols_exist = [c for c in cols_show if c in df_torneo.columns]
             st.dataframe(df_torneo[cols_exist].reset_index(drop=True),
-                        use_container_width=True, hide_index=True)
+                        width="stretch", hide_index=True)
 
             # Stats rápidas
             completadas = df_torneo[df_torneo['winner'].notna()]
@@ -369,4 +369,4 @@ def show():
                 df_stand.index = df_stand.index + 1
 
                 st.markdown("### 📋 Standings")
-                st.dataframe(df_stand, use_container_width=True, hide_index=False)
+                st.dataframe(df_stand, width="stretch", hide_index=False)

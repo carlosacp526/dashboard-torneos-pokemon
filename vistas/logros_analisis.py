@@ -232,7 +232,7 @@ def _calcular_logros_comunidad_pesado(_df_raw):
 # calculado y se recalcula en segundo plano. Regenerarlo a mano: python precalcular_logros.py
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGROS_CACHE_PATH = os.path.join(PROJECT_ROOT, "data", "logros_comunidad.pkl")
-LOGROS_SCHEMA = 2          # subir si cambia la forma del pkl o la lógica del cálculo
+LOGROS_SCHEMA = 3          # subir si cambia la forma del pkl o la lógica del cálculo
 _REFRESCO = {"activo": False, "ultimo_intento": 0.0}
 _REFRESCO_LOCK = threading.Lock()
 
@@ -413,7 +413,7 @@ def show():
                     "XP total": xp_por_jugador.reindex(tienen).astype(int).values,
                 }).sort_values(["XP total", "Jugador"], ascending=[False, True]).reset_index(drop=True)
                 tabla_j.insert(0, "#", range(1, len(tabla_j) + 1))
-                st.dataframe(tabla_j, use_container_width=True, hide_index=True,
+                st.dataframe(tabla_j, width="stretch", hide_index=True,
                              height=min(600, 40 + 35 * len(tabla_j)))
                 st.download_button("Descargar lista (CSV)", tabla_j.to_csv(index=False).encode("utf-8"),
                                    f"jugadores_logro_{lid_sel}.csv", "text/csv", key="buscar_logro_csv")
@@ -446,8 +446,8 @@ def show():
         if busqueda:
             b = busqueda.lower()
             filtrada = filtrada[
-                filtrada["name"].str.lower().str.contains(b, na=False)
-                | filtrada["desc"].str.lower().str.contains(b, na=False)
+                filtrada["name"].str.lower().str.contains(b, na=False, regex=False)
+                | filtrada["desc"].str.lower().str.contains(b, na=False, regex=False)
             ]
         if f_cat:
             filtrada = filtrada[filtrada["cat"].isin(f_cat)]
@@ -468,7 +468,7 @@ def show():
             filtrada[["num", "name", "cat", "rareza", "xp", "Jugadores", "% desbloqueo", "desc"]]
             .rename(columns={"num": "#", "name": "Logro", "cat": "Categoría", "rareza": "Rareza",
                               "xp": "XP", "desc": "Descripción"}),
-            use_container_width=True, hide_index=True, height=560,
+            width="stretch", hide_index=True, height=560,
         )
 
     # ═══════════════════════ Por categoría ═══════════════════════
@@ -499,7 +499,7 @@ def show():
         fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
         fig.update_layout(yaxis={"categoryorder": "total ascending"}, showlegend=False,
                            height=max(350, len(cat_df) * 45), margin=dict(l=10, r=40, t=40, b=20))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         cat_umbral_long = cat_df.melt(
             id_vars=["Categoría"], value_vars=["% con ≥1", "% con ≥50%", "% con ≥75%", "% completo (100%)"],
@@ -510,9 +510,9 @@ def show():
                                          "Categoría": cat_df["Categoría"].tolist()},
                        title="Niveles de completitud dentro de cada categoría")
         fig_u.update_layout(height=max(400, len(cat_df) * 70), margin=dict(l=10, r=10, t=40, b=20))
-        st.plotly_chart(fig_u, use_container_width=True)
+        st.plotly_chart(fig_u, width="stretch")
 
-        st.dataframe(cat_df, use_container_width=True, hide_index=True)
+        st.dataframe(cat_df, width="stretch", hide_index=True)
 
     # ═══════════════════════ Por rareza ═══════════════════════
     with tabs[2]:
@@ -547,13 +547,13 @@ def show():
                             title="% de jugadores por umbral de completitud, dentro de cada rareza")
             fig_r.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
             fig_r.update_layout(margin=dict(l=10, r=10, t=40, b=20), legend_title="")
-            st.plotly_chart(fig_r, use_container_width=True)
+            st.plotly_chart(fig_r, width="stretch")
         with c2:
             fig_r2 = px.funnel(rar_df, x="Jugadores con ≥1", y="Rareza",
                                 category_orders={"Rareza": RAREZA_ORDEN[::-1]},
                                 title="Embudo: cuántos jugadores llegan a cada nivel (≥1 logro)")
-            st.plotly_chart(fig_r2, use_container_width=True)
-        st.dataframe(rar_df, use_container_width=True, hide_index=True)
+            st.plotly_chart(fig_r2, width="stretch")
+        st.dataframe(rar_df, width="stretch", hide_index=True)
 
     # ═══════════════════════ Dificultad (más raros / más comunes) ═══════════════════════
     with tabs[3]:
@@ -567,7 +567,7 @@ def show():
         st.dataframe(
             mas_dificiles[["num", "name", "cat", "rareza", "xp", "Jugadores", "% desbloqueo", "desc"]]
             .rename(columns={"num": "#", "name": "Logro", "cat": "Categoría", "rareza": "Rareza", "desc": "Descripción"}),
-            use_container_width=True, hide_index=True,
+            width="stretch", hide_index=True,
         )
 
         st.markdown("### 🌱 Los 15 logros más comunes (mayor % de desbloqueo)")
@@ -575,7 +575,7 @@ def show():
         st.dataframe(
             mas_comunes[["num", "name", "cat", "rareza", "xp", "Jugadores", "% desbloqueo", "desc"]]
             .rename(columns={"num": "#", "name": "Logro", "cat": "Categoría", "rareza": "Rareza", "desc": "Descripción"}),
-            use_container_width=True, hide_index=True,
+            width="stretch", hide_index=True,
         )
 
         st.markdown("### 🎯 Dificultad real vs. rareza asignada")
@@ -588,7 +588,7 @@ def show():
                            hover_data=["name", "cat"], stripmode="overlay")
         fig_sc.update_traces(marker=dict(size=9, opacity=0.75))
         fig_sc.update_layout(showlegend=False, margin=dict(l=10, r=10, t=20, b=20))
-        st.plotly_chart(fig_sc, use_container_width=True)
+        st.plotly_chart(fig_sc, width="stretch")
 
     # ═══════════════════════ Nunca obtenidos ═══════════════════════
     with tabs[4]:
@@ -602,7 +602,7 @@ def show():
             st.dataframe(
                 nunca[["num", "name", "cat", "rareza", "xp", "desc"]]
                 .rename(columns={"num": "#", "name": "Logro", "cat": "Categoría", "rareza": "Rareza", "desc": "Descripción"}),
-                use_container_width=True, hide_index=True,
+                width="stretch", hide_index=True,
             )
             por_rareza_nunca = nunca["rareza"].value_counts().reindex(RAREZA_ORDEN).fillna(0).astype(int)
             st.caption("Por rareza: " + " · ".join(f"{RAREZA_ICON[r]} {r}: {int(por_rareza_nunca[r])}" for r in RAREZA_ORDEN))
@@ -622,12 +622,12 @@ def show():
             st.markdown("### 🏅 Top 15 — más logros")
             top_logros = rank_df.sort_values("Logros", ascending=False).head(15).reset_index(drop=True)
             top_logros.index += 1
-            st.dataframe(top_logros[["Jugador", "Logros"] + RAREZA_ORDEN], use_container_width=True)
+            st.dataframe(top_logros[["Jugador", "Logros"] + RAREZA_ORDEN], width="stretch")
         with c2:
             st.markdown("### ⚡ Top 15 — más XP")
             top_xp = rank_df.sort_values("XP", ascending=False).head(15).reset_index(drop=True)
             top_xp.index += 1
-            st.dataframe(top_xp[["Jugador", "XP", "Logros"]], use_container_width=True)
+            st.dataframe(top_xp[["Jugador", "XP", "Logros"]], width="stretch")
 
     # ═══════════════════════ Distribución ═══════════════════════
     with tabs[6]:
@@ -637,7 +637,7 @@ def show():
                               title="Distribución de logros por jugador")
         fig_h.update_layout(showlegend=False, margin=dict(l=10, r=10, t=40, b=20),
                              yaxis_title="Cantidad de jugadores")
-        st.plotly_chart(fig_h, use_container_width=True)
+        st.plotly_chart(fig_h, width="stretch")
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Mínimo", int(logros_por_jugador.min()))
         c2.metric("Mediana", f"{logros_por_jugador.median():.0f}")
@@ -752,7 +752,7 @@ def show():
                     })
                 ok_df = pd.DataFrame(filas_ok).sort_values(["Categoría", "Rareza"]).reset_index(drop=True)
                 ok_disp = ok_df[ok_df["Categoría"].isin(cat_filtro)] if cat_filtro else ok_df
-                st.dataframe(ok_disp, use_container_width=True, hide_index=True, height=420)
+                st.dataframe(ok_disp, width="stretch", hide_index=True, height=420)
                 st.download_button(
                     f"📥 Descargar conseguidos de {jugador_sel} (CSV)",
                     ok_disp.to_csv(index=False).encode("utf-8"),
@@ -774,7 +774,7 @@ def show():
                     })
                 falta_df = pd.DataFrame(filas_falta).sort_values(["Categoría", "Rareza"]).reset_index(drop=True)
                 falta_disp = falta_df[falta_df["Categoría"].isin(cat_filtro)] if cat_filtro else falta_df
-                st.dataframe(falta_disp, use_container_width=True, hide_index=True, height=420)
+                st.dataframe(falta_disp, width="stretch", hide_index=True, height=420)
                 st.download_button(
                     f"📥 Descargar pendientes de {jugador_sel} (CSV)",
                     falta_disp.to_csv(index=False).encode("utf-8"),

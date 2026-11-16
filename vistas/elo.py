@@ -226,7 +226,7 @@ def get_player_elo_history(player_query, data_filas, exact=False):
     def _match(col):
         if exact:
             return col.str.lower() == player_query.lower()
-        return col.str.contains(player_query, case=False, na=False)
+        return col.str.contains(player_query, case=False, na=False, regex=False)
 
     mask = _match(data_filas['Jugador_A']) | _match(data_filas['Jugador_B'])
 
@@ -400,7 +400,7 @@ def show():
     fig.update_traces(texttemplate='%{text}', textposition='outside')
     fig.update_layout(xaxis_tickangle=-30, showlegend=False,
                       yaxis_range=[top10['Elo'].min()-50, top10['Elo'].max()+100])
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.markdown("---")
 
@@ -408,11 +408,11 @@ def show():
     with st.expander("📋 Ranking Elo completo"):
         tab_act, tab_todo = st.tabs(["✅ Activos","🌐 Todos"])
         with tab_act:
-            st.dataframe(activos[cols_show], use_container_width=True, hide_index=True, height=500)
+            st.dataframe(activos[cols_show], width="stretch", hide_index=True, height=500)
             csv = activos[cols_show].to_csv(index=False).encode('utf-8')
             st.download_button("📥 Descargar ranking activos", csv, "ranking_elo_activos.csv", "text/csv")
         with tab_todo:
-            st.dataframe(data_elo[cols_show], use_container_width=True, hide_index=True, height=500)
+            st.dataframe(data_elo[cols_show], width="stretch", hide_index=True, height=500)
             csv2 = data_elo[cols_show].to_csv(index=False).encode('utf-8')
             st.download_button("📥 Descargar ranking completo", csv2, "ranking_elo_completo.csv", "text/csv")
 
@@ -513,9 +513,9 @@ def show():
 
             st.subheader(f"Ranking Elo acumulado — {mes_sel}")
             buscar_m = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_mes")
-            tabla_m = (rank_mes[rank_mes['Participantes'].str.contains(buscar_m, case=False, na=False)]
+            tabla_m = (rank_mes[rank_mes['Participantes'].str.contains(buscar_m, case=False, na=False, regex=False)]
                        if buscar_m else rank_mes)
-            st.dataframe(tabla_m, use_container_width=True, hide_index=True, height=450)
+            st.dataframe(tabla_m, width="stretch", hide_index=True, height=450)
             st.download_button(f"📥 Descargar ranking {mes_sel}", rank_mes.to_csv(index=False).encode('utf-8'),
                                 f"ranking_elo_{mes_sel}.csv", "text/csv", key="dl_rank_mes")
 
@@ -536,9 +536,9 @@ def show():
 
             st.subheader(f"Ranking Elo acumulado — {anio_sel}")
             buscar_a = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_anio")
-            tabla_a = (rank_anio[rank_anio['Participantes'].str.contains(buscar_a, case=False, na=False)]
+            tabla_a = (rank_anio[rank_anio['Participantes'].str.contains(buscar_a, case=False, na=False, regex=False)]
                        if buscar_a else rank_anio)
-            st.dataframe(tabla_a, use_container_width=True, hide_index=True, height=450)
+            st.dataframe(tabla_a, width="stretch", hide_index=True, height=450)
             st.download_button(f"📥 Descargar ranking {anio_sel}", rank_anio.to_csv(index=False).encode('utf-8'),
                                 f"ranking_elo_{anio_sel}.csv", "text/csv", key="dl_rank_anio")
 
@@ -588,9 +588,9 @@ def show():
 
                 st.subheader(f"Ranking Elo acumulado — hasta Torneo #{int(torneo_sel)}")
                 buscar_t = st.text_input("🔍 Buscar jugador", "", key="buscar_rank_torneo")
-                tabla_t = (rank_torneo[rank_torneo['Participantes'].str.contains(buscar_t, case=False, na=False)]
+                tabla_t = (rank_torneo[rank_torneo['Participantes'].str.contains(buscar_t, case=False, na=False, regex=False)]
                            if buscar_t else rank_torneo)
-                st.dataframe(tabla_t, use_container_width=True, hide_index=True, height=450)
+                st.dataframe(tabla_t, width="stretch", hide_index=True, height=450)
                 st.download_button(f"📥 Descargar ranking hasta Torneo {int(torneo_sel)}",
                                     rank_torneo.to_csv(index=False).encode('utf-8'),
                                     f"ranking_elo_torneo_{int(torneo_sel)}.csv", "text/csv",
@@ -636,14 +636,14 @@ def show():
                     fig_f.update_traces(texttemplate='%{text}', textposition='outside')
                     fig_f.update_layout(xaxis_tickangle=-30, showlegend=False,
                                         yaxis_range=[top10_fmt['Elo'].min()-50, top10_fmt['Elo'].max()+100])
-                    st.plotly_chart(fig_f, use_container_width=True)
+                    st.plotly_chart(fig_f, width="stretch")
                 with st.expander(f"📋 Ranking completo {formato}"):
                     tab_a, tab_t = st.tabs(["✅ Activos","🌐 Todos"])
                     with tab_a:
-                        st.dataframe(activos_fmt[['RANK','Participantes','Elo','Actividad']], use_container_width=True, hide_index=True, height=400)
+                        st.dataframe(activos_fmt[['RANK','Participantes','Elo','Actividad']], width="stretch", hide_index=True, height=400)
                         st.download_button(f"📥 {formato} activos", activos_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode(), f"elo_{formato.lower()}_activos.csv","text/csv",key=f"dl_{formato}_act")
                     with tab_t:
-                        st.dataframe(elo_fmt[['RANK','Participantes','Elo','Actividad']], use_container_width=True, hide_index=True, height=400)
+                        st.dataframe(elo_fmt[['RANK','Participantes','Elo','Actividad']], width="stretch", hide_index=True, height=400)
                         st.download_button(f"📥 {formato} completo", elo_fmt[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode(), f"elo_{formato.lower()}.csv","text/csv",key=f"dl_{formato}_all")
                 merged = pd.merge(
                     elo_fmt[['Participantes','Elo']].rename(columns={'Elo':f'Elo_{formato}'}),
@@ -658,7 +658,7 @@ def show():
                     fig_cmp.update_traces(texttemplate='%{text:+.0f}', textposition='outside')
                     fig_cmp.update_layout(xaxis_tickangle=-30, showlegend=False)
                     fig_cmp.add_hline(y=0, line_dash="dash", line_color="gray")
-                    st.plotly_chart(fig_cmp, use_container_width=True)
+                    st.plotly_chart(fig_cmp, width="stretch")
 
     st.markdown("---")
 
@@ -700,14 +700,14 @@ def show():
                     fig_t.update_traces(texttemplate='%{text}', textposition='outside')
                     fig_t.update_layout(xaxis_tickangle=-30, showlegend=False,
                                         yaxis_range=[top10_tier['Elo'].min()-50, top10_tier['Elo'].max()+100])
-                    st.plotly_chart(fig_t, use_container_width=True)
+                    st.plotly_chart(fig_t, width="stretch")
                 with st.expander(f"📋 Ranking completo {tier}"):
                     tab_a2, tab_t2 = st.tabs(["✅ Activos","🌐 Todos"])
                     with tab_a2:
-                        st.dataframe(activos_tier[['RANK','Participantes','Elo','Actividad']], use_container_width=True, hide_index=True, height=400)
+                        st.dataframe(activos_tier[['RANK','Participantes','Elo','Actividad']], width="stretch", hide_index=True, height=400)
                         st.download_button(f"📥 {tier} activos", activos_tier[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode(), f"elo_{tier.lower()}_activos.csv","text/csv",key=f"dl_tier_{tier}_act")
                     with tab_t2:
-                        st.dataframe(elo_tier[['RANK','Participantes','Elo','Actividad']], use_container_width=True, hide_index=True, height=400)
+                        st.dataframe(elo_tier[['RANK','Participantes','Elo','Actividad']], width="stretch", hide_index=True, height=400)
                         st.download_button(f"📥 {tier} completo", elo_tier[['RANK','Participantes','Elo','Actividad']].to_csv(index=False).encode(), f"elo_{tier.lower()}.csv","text/csv",key=f"dl_tier_{tier}_all")
                 merged_tier = pd.merge(
                     elo_tier[['Participantes','Elo']].rename(columns={'Elo':f'Elo_{tier}'}),
@@ -722,7 +722,7 @@ def show():
                     fig_cmp_t.update_traces(texttemplate='%{text:+.0f}', textposition='outside')
                     fig_cmp_t.update_layout(xaxis_tickangle=-30, showlegend=False)
                     fig_cmp_t.add_hline(y=0, line_dash="dash", line_color="gray")
-                    st.plotly_chart(fig_cmp_t, use_container_width=True)
+                    st.plotly_chart(fig_cmp_t, width="stretch")
 
     st.markdown("---")
     st.header("Evolución Elo por Jugador")
@@ -743,7 +743,7 @@ def show():
             for idx, s in enumerate(top_s):
                 with cols_s[idx % 4]:
                     elo_s = int(data_elo.loc[data_elo['Participantes']==s, 'Elo'].values[0]) if s in data_elo['Participantes'].values else 0
-                    if st.button(f"{s} — {elo_s}", key=f"elo_sug_{idx}", use_container_width=True):
+                    if st.button(f"{s} — {elo_s}", key=f"elo_sug_{idx}", width="stretch"):
                         st.session_state['elo_selected'] = s
                         st.rerun()
 
@@ -770,9 +770,9 @@ def show():
                     st.info("📷 Sin imagen")
 
             with col_info:
-                elo_actual = int(data_elo.loc[data_elo['Participantes'].str.contains(pq, case=False, na=False), 'Elo'].values[0]) if not data_elo[data_elo['Participantes'].str.contains(pq, case=False, na=False)].empty else 0
-                rank_actual = int(data_elo.loc[data_elo['Participantes'].str.contains(pq, case=False, na=False), 'RANK'].values[0]) if not data_elo[data_elo['Participantes'].str.contains(pq, case=False, na=False)].empty else 0
-                actividad = data_elo.loc[data_elo['Participantes'].str.contains(pq, case=False, na=False), 'Actividad'].values[0] if not data_elo[data_elo['Participantes'].str.contains(pq, case=False, na=False)].empty else "?"
+                elo_actual = int(data_elo.loc[data_elo['Participantes'].str.contains(pq, case=False, na=False, regex=False), 'Elo'].values[0]) if not data_elo[data_elo['Participantes'].str.contains(pq, case=False, na=False, regex=False)].empty else 0
+                rank_actual = int(data_elo.loc[data_elo['Participantes'].str.contains(pq, case=False, na=False, regex=False), 'RANK'].values[0]) if not data_elo[data_elo['Participantes'].str.contains(pq, case=False, na=False, regex=False)].empty else 0
+                actividad = data_elo.loc[data_elo['Participantes'].str.contains(pq, case=False, na=False, regex=False), 'Actividad'].values[0] if not data_elo[data_elo['Participantes'].str.contains(pq, case=False, na=False, regex=False)].empty else "?"
                 wins  = hist['Win'].sum()
                 losses = len(hist) - wins
                 wr = round(wins / len(hist) * 100, 1) if len(hist) > 0 else 0
@@ -824,7 +824,7 @@ def show():
                 fig.update_layout(title=f'Evolución Elo por Partida — {pq}',
                                   xaxis_title='Partida', yaxis_title='Elo',
                                   hovermode='x unified')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
             with tab2:
                 hist_m = hist.copy()
@@ -837,7 +837,7 @@ def show():
                                   line=dict(color='#FF4B4B', width=2))
                 fig.add_hline(y=1000, line_dash="dash", line_color="gray")
                 fig.update_layout(xaxis_tickangle=-30)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
                 # Winrate por mes
                 wr_mes = hist_m.groupby('Mes').agg(
@@ -850,7 +850,7 @@ def show():
                 fig2.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                 fig2.add_hline(y=50, line_dash="dash", line_color="gray")
                 fig2.update_layout(xaxis_tickangle=-30)
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, width="stretch")
 
             with tab3:
                 hist_a = hist.copy()
@@ -862,7 +862,7 @@ def show():
                              title=f'Elo Final por Año — {pq}')
                 fig.update_traces(texttemplate='%{text}', textposition='outside')
                 fig.update_layout(xaxis_type='category')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
                 # Winrate por año
                 wr_año = hist_a.groupby('Año').agg(
@@ -875,14 +875,14 @@ def show():
                               title=f'Winrate por Año — {pq}')
                 fig2.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
                 fig2.add_hline(y=50, line_dash="dash", line_color="gray")
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, width="stretch")
 
             with tab4:
                 st.dataframe(
                     hist[['Partida','Fecha','Jugador_A','Rating_A','Rating_A_NEW','Rival','Rating_B','Rating_B_NEW','Resultado']]\
                     .rename(columns={'Jugador_A':'Jugador','Rating_A':'Elo Antes','Rating_A_NEW':'Elo Después',
                                      'Rating_B':'Elo Rival Antes','Rating_B_NEW':'Elo Rival Después'}),
-                    use_container_width=True, hide_index=True, height=500
+                    width="stretch", hide_index=True, height=500
                 )
                 csv_h = hist.to_csv(index=False).encode('utf-8')
                 st.download_button("📥 Descargar historial Elo", csv_h, f"elo_{pq}.csv", "text/csv")

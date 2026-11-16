@@ -469,7 +469,7 @@ def evaluar_logros(
 
     # ── métricas base ──────────────────────────────────────────────────────
     total = len(pm)
-    victorias = int(pm['winner'].str.lower().str.contains(pq, na=False).sum()) if 'winner' in pm.columns else 0
+    victorias = int(pm['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()) if 'winner' in pm.columns else 0
     derrotas  = total - victorias
 
     # rivales únicos
@@ -587,7 +587,7 @@ def evaluar_logros(
         best = 0.0
         for _, grp in pm.groupby('_mes'):
             if len(grp) >= 5:
-                w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+                w = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
                 best = max(best, w/len(grp)*100)
         return best
 
@@ -599,7 +599,7 @@ def evaluar_logros(
         for mes, sub in pm2.groupby('_mes'):
             for fmt, grp in sub.groupby('Formato'):
                 if len(grp) > 5:
-                    w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+                    w = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
                     if w/len(grp)*100 >= min_pct:
                         return True
         return False
@@ -613,7 +613,7 @@ def evaluar_logros(
         for m in meses:
             g = pm[pm['_mes2'] == m]
             if len(g) >= 3:
-                w = g['winner'].str.lower().str.contains(pq, na=False).sum()
+                w = g['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
                 wr_list.append(w/len(g)*100)
         for i in range(1, len(wr_list)):
             if wr_list[i] - wr_list[i-1] >= delta:
@@ -623,24 +623,24 @@ def evaluar_logros(
     # score_completo máximo del jugador
     score_max = 0.0
     if not base2.empty and 'score_completo' in base2.columns and 'Participante' in base2.columns:
-        jl = base2[base2['Participante'].str.lower().str.contains(pq, na=False)]
+        jl = base2[base2['Participante'].str.lower().str.contains(pq, na=False, regex=False)]
         if not jl.empty:
             score_max = float(jl['score_completo'].max())
     if not base_torneo_final.empty and 'score_completo' in base_torneo_final.columns and 'Participante' in base_torneo_final.columns:
-        jt = base_torneo_final[base_torneo_final['Participante'].str.lower().str.contains(pq, na=False)]
+        jt = base_torneo_final[base_torneo_final['Participante'].str.lower().str.contains(pq, na=False, regex=False)]
         if not jt.empty:
             score_max = max(score_max, float(jt['score_completo'].max()))
 
     # Elo máximo histórico — usa data_filas si está disponible, sino elo actual
     elo_maximo = 1000
     if data_filas is not None and not data_filas.empty:
-        _hist_a = data_filas[data_filas['Jugador_A'].str.lower().str.contains(pq, na=False)]['Rating_A_NEW']
-        _hist_b = data_filas[data_filas['Jugador_B'].str.lower().str.contains(pq, na=False)]['Rating_B_NEW']
+        _hist_a = data_filas[data_filas['Jugador_A'].str.lower().str.contains(pq, na=False, regex=False)]['Rating_A_NEW']
+        _hist_b = data_filas[data_filas['Jugador_B'].str.lower().str.contains(pq, na=False, regex=False)]['Rating_B_NEW']
         _max_a  = _hist_a.max() if not _hist_a.empty else 1000
         _max_b  = _hist_b.max() if not _hist_b.empty else 1000
         elo_maximo = int(max(_max_a, _max_b))
     elif data_elo is not None and not data_elo.empty and 'Participantes' in data_elo.columns:
-        row_elo = data_elo[data_elo['Participantes'].str.lower().str.contains(pq, na=False)]
+        row_elo = data_elo[data_elo['Participantes'].str.lower().str.contains(pq, na=False, regex=False)]
         if not row_elo.empty:
             elo_maximo = int(row_elo['Elo'].iloc[0])
 
@@ -652,8 +652,8 @@ def evaluar_logros(
     if 'Walkover' in df_raw.columns:
         wo_part = df_raw[
             (df_raw['Walkover'] == 1) & (
-                df_raw['player1'].str.lower().str.contains(pq, na=False) |
-                df_raw['player2'].str.lower().str.contains(pq, na=False)
+                df_raw['player1'].str.lower().str.contains(pq, na=False, regex=False) |
+                df_raw['player2'].str.lower().str.contains(pq, na=False, regex=False)
             )
         ]
         for _, r in wo_part.iterrows():
@@ -746,7 +746,7 @@ def evaluar_logros(
             return False
         d['N_Torneo'] = d['N_Torneo'].astype(int)
         torneos_con_wo = set(
-            d[(d['Walkover'] == 1) & (~d['winner'].str.contains(pq, case=False, na=False))]['N_Torneo'].unique()
+            d[(d['Walkover'] == 1) & (~d['winner'].str.contains(pq, case=False, na=False, regex=False))]['N_Torneo'].unique()
         )
         torneos_limpios = set(d['N_Torneo'].unique()) - torneos_con_wo
         return len(torneos_limpios) >= min_torneos
@@ -774,7 +774,7 @@ def evaluar_logros(
         if 'pokemons Sob' not in df_raw.columns or 'winner' not in df_raw.columns:
             return False
         mis_victorias = df_raw[
-            df_raw['winner'].str.lower().str.contains(pq, na=False)
+            df_raw['winner'].str.lower().str.contains(pq, na=False, regex=False)
         ]
         return any(mis_victorias['pokemons Sob'].astype(str).str.strip() == str(n_sob_exacto))
 
@@ -783,8 +783,8 @@ def evaluar_logros(
         if 'N_Torneo' not in df_raw.columns or 'league' not in df_raw.columns: return False
         torneos_jugados = df_raw[
             (df_raw['league'] == 'TORNEO') & (
-                df_raw['player1'].str.lower().str.contains(pq, na=False) |
-                df_raw['player2'].str.lower().str.contains(pq, na=False)
+                df_raw['player1'].str.lower().str.contains(pq, na=False, regex=False) |
+                df_raw['player2'].str.lower().str.contains(pq, na=False, regex=False)
             )
         ]['N_Torneo'].dropna().unique()
         for nt in torneos_jugados:
@@ -792,12 +792,12 @@ def evaluar_logros(
                 continue
             sub = df_raw[
                 (df_raw['N_Torneo'] == nt) & (
-                    df_raw['player1'].str.lower().str.contains(pq, na=False) |
-                    df_raw['player2'].str.lower().str.contains(pq, na=False)
+                    df_raw['player1'].str.lower().str.contains(pq, na=False, regex=False) |
+                    df_raw['player2'].str.lower().str.contains(pq, na=False, regex=False)
                 )
             ]
             if len(sub) < 2: continue
-            ganadas = sub['winner'].str.lower().str.contains(pq, na=False).sum()
+            ganadas = sub['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
             llego_final = sub['round'].str.lower().str.contains('final', na=False).any()
             if ganadas == len(sub) and llego_final:
                 return True
@@ -1001,7 +1001,7 @@ def evaluar_logros(
         r[_id] = n_liga_jugadas >= _u
 
     n_liga_ganadas = (
-        int(pm_liga['winner'].str.lower().str.contains(pq, na=False).sum())
+        int(pm_liga['winner'].str.lower().str.contains(pq, na=False, regex=False).sum())
         if not pm_liga.empty and 'winner' in pm_liga.columns else 0
     )
     for _id, _u in [("LI07", 10), ("LI08", 20), ("LI09", 30)]:
@@ -1123,8 +1123,8 @@ def evaluar_logros(
         if 'date' not in df_raw.columns: return 0
         if 'Walkover' not in df_raw.columns: return float('inf')
         df2 = df_raw[
-            df_raw['player1'].str.lower().str.contains(pq, na=False) |
-            df_raw['player2'].str.lower().str.contains(pq, na=False)
+            df_raw['player1'].str.lower().str.contains(pq, na=False, regex=False) |
+            df_raw['player2'].str.lower().str.contains(pq, na=False, regex=False)
         ].copy()
         df2['date'] = pd.to_datetime(df2['date'], errors='coerce')
         df2 = df2.dropna(subset=['date'])
@@ -1135,7 +1135,7 @@ def evaluar_logros(
             sub    = df2[df2['_mes'] == _mes]
             wo_sub = sub[sub['Walkover'] == 1]
             # solo cuenta WO si el jugador es el perdedor (no está en winner)
-            wo_dado = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False)]
+            wo_dado = wo_sub[~wo_sub['winner'].str.contains(pq, case=False, na=False, regex=False)]
             if wo_dado.empty:
                 meses_limpios += 1
         return meses_limpios
@@ -1150,15 +1150,15 @@ def evaluar_logros(
     _so08 = False
     if 'date' in df_raw.columns and 'Walkover' in df_raw.columns:
         _df2 = df_raw[
-            df_raw['player1'].str.lower().str.contains(pq, na=False) |
-            df_raw['player2'].str.lower().str.contains(pq, na=False)
+            df_raw['player1'].str.lower().str.contains(pq, na=False, regex=False) |
+            df_raw['player2'].str.lower().str.contains(pq, na=False, regex=False)
         ].copy()
         _df2['date'] = pd.to_datetime(_df2['date'], errors='coerce')
         _df2 = _df2.dropna(subset=['date'])
         for _anio in _df2['date'].dt.year.dropna().unique():
             _sub    = _df2[_df2['date'].dt.year == _anio]
             _wo     = _sub[_sub['Walkover'] == 1]
-            wo_dado = _wo[~_wo['winner'].str.contains(pq, case=False, na=False)]
+            wo_dado = _wo[~_wo['winner'].str.contains(pq, case=False, na=False, regex=False)]
             if wo_dado.empty:
                 _so08 = True
                 break
@@ -1242,7 +1242,7 @@ def evaluar_logros(
         torneos_pm['_mes'] = torneos_pm['date'].dt.to_period('M')
         for mes, grp in torneos_pm.groupby('_mes'):
             if len(grp) < 10: continue
-            ganadas = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            ganadas = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
             if ganadas == len(grp):
                 return True
         return False
@@ -1272,7 +1272,7 @@ def evaluar_logros(
         pm2['date'] = pd.to_datetime(pm2['date'], errors='coerce')
         pm2['_yr'] = pm2['date'].dt.year
         for yr, grp in pm2.groupby('_yr'):
-            wins = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            wins = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
             if wins >= 50:
                 return True
         return False
@@ -1297,7 +1297,7 @@ def evaluar_logros(
     def _max_derrotas_liga():
         """Retorna el mínimo de derrotas que tuvo el jugador en alguna temporada de liga."""
         if base2.empty or 'Participante' not in base2.columns: return 999
-        mis = base2[base2['Participante'].str.lower().str.contains(pq, na=False)]
+        mis = base2[base2['Participante'].str.lower().str.contains(pq, na=False, regex=False)]
         if mis.empty: return 999
         if 'Derrotas' not in mis.columns: return 999
         min_d = mis.groupby('Liga_Temporada')['Derrotas'].sum().min()
@@ -1408,7 +1408,7 @@ def evaluar_logros(
         if data_filas is None or data_filas.empty or 'Jugador_A' not in data_filas.columns:
             return []
         dfj = data_filas
-        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
         return list(zip(dfj.loc[es_a, 'Rating_A'], dfj.loc[es_a, 'Rating_B']))
     _pares_elo_victorias = _pares_elo_en_victorias()
     r["VI21"] = any((rb - ra) >= 200 for ra, rb in _pares_elo_victorias)
@@ -1457,8 +1457,8 @@ def evaluar_logros(
     def _comeback_elo(dias_max=90, salto_min=200):
         if data_filas is None or data_filas.empty: return False
         dfj = data_filas
-        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
-        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False)
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
+        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
         puntos = list(zip(dfj.loc[es_a, 'Fecha'], dfj.loc[es_a, 'Rating_A_NEW'])) + \
                  list(zip(dfj.loc[es_b, 'Fecha'], dfj.loc[es_b, 'Rating_B_NEW']))
         if len(puntos) < 2: return False
@@ -1483,8 +1483,8 @@ def evaluar_logros(
     def _elo_acero(meses_seguidos=6, umbral=1300, requiere_consecutivo=True):
         if data_filas is None or data_filas.empty: return False
         dfj = data_filas
-        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
-        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False)
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
+        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
         puntos = list(zip(dfj.loc[es_a, 'Fecha'], dfj.loc[es_a, 'Rating_A_NEW'])) + \
                  list(zip(dfj.loc[es_b, 'Fecha'], dfj.loc[es_b, 'Rating_B_NEW']))
         if not puntos: return False
@@ -1532,7 +1532,7 @@ def evaluar_logros(
         d = pm.dropna(subset=['date']).copy()
         if d.empty: return False
         d['_mes'] = d['date'].dt.to_period('M')
-        d_gan = d[d['winner'].str.lower().str.contains(pq, na=False)]
+        d_gan = d[d['winner'].str.lower().str.contains(pq, na=False, regex=False)]
         for _, grp in d_gan.groupby('_mes'):
             fmts = {str(f).upper() for f in grp['Formato'].dropna().unique()}
             if {'SINGLES', 'DOBLES', 'VGC'}.issubset(fmts):
@@ -1552,7 +1552,7 @@ def evaluar_logros(
             if solo_random and not any(k in str(tier).upper() for k in ('RANDOM', 'RANDBATS')):
                 continue
             if len(grp) < min_partidas: continue
-            w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            w = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
             if w / len(grp) * 100 >= min_pct:
                 return True
         return False
@@ -1573,7 +1573,7 @@ def evaluar_logros(
             tabla = generar_tabla_torneo(base_torneo_final, nt)
             rank_j = None
             if tabla is not None and not tabla.empty:
-                fila = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
+                fila = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False, regex=False)]
                 if not fila.empty:
                     rank_j = int(fila['RANK'].iloc[0])
             if rank_j is not None and rank_j <= top:
@@ -1603,7 +1603,7 @@ def evaluar_logros(
         for nt, grp in finales.groupby('N_Torneo'):
             n_juegos = len(grp)
             if n_juegos < 3: continue
-            ganadas = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            ganadas = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
             if abs(ganadas - (n_juegos - ganadas)) == 1:
                 return True
         return False
@@ -1629,13 +1629,13 @@ def evaluar_logros(
             fase_inicial = grp[grp['round'].str.lower().str.contains('ronda suiza|fase de grupos', na=False, regex=True)]
             if fase_inicial.empty:
                 continue
-            perdio_fase_inicial = (~fase_inicial['winner'].str.lower().str.contains(pq, na=False)).any()
+            perdio_fase_inicial = (~fase_inicial['winner'].str.lower().str.contains(pq, na=False, regex=False)).any()
             if not perdio_fase_inicial:
                 continue
             tabla = generar_tabla_torneo(base_torneo_final, nt)
             if tabla is None or tabla.empty:
                 continue
-            fila = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False)]
+            fila = tabla[tabla['AKA'].str.lower().str.contains(pq, na=False, regex=False)]
             if not fila.empty and int(fila['RANK'].iloc[0]) <= top:
                 return True
         return False
@@ -1705,7 +1705,7 @@ def evaluar_logros(
         d = pm[
             (pm['league'] == 'TORNEO') &
             pm['round'].str.lower().str.contains('octavos de final|cuartos de final', na=False, regex=True) &
-            pm['winner'].str.lower().str.contains(pq, na=False)
+            pm['winner'].str.lower().str.contains(pq, na=False, regex=False)
         ]
         return d['N_Torneo'].dropna().nunique() >= min_torneos
     r["TO25"] = _sobreviviente_bracket()
@@ -1764,7 +1764,7 @@ def evaluar_logros(
     def _rival_incomodo():
         if pm.empty or 'league' not in pm.columns or 'Formato' not in pm.columns:
             return False
-        d = pm[(pm['league'] == 'TORNEO') & pm['winner'].str.lower().str.contains(pq, na=False)]
+        d = pm[(pm['league'] == 'TORNEO') & pm['winner'].str.lower().str.contains(pq, na=False, regex=False)]
         formatos_por_rival = {}
         for _, row in d.iterrows():
             p1 = str(row.get('player1', '')).strip().lower()
@@ -1918,7 +1918,7 @@ def evaluar_logros(
     r["TO27"] = bool(
         not pm.empty and 'round' in pm.columns and 'league' in pm.columns and 'winner' in pm.columns and
         ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains('fase de grupos', na=False) &
-         pm['winner'].str.lower().str.contains(pq, na=False)).any()
+         pm['winner'].str.lower().str.contains(pq, na=False, regex=False)).any()
     )
     r["TO28"] = bool(
         not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
@@ -1927,7 +1927,7 @@ def evaluar_logros(
     r["TO29"] = bool(
         not pm.empty and 'round' in pm.columns and 'league' in pm.columns and 'winner' in pm.columns and
         ((pm['league'] == 'TORNEO') & pm['round'].str.lower().str.contains(_regex_elim_bronce, na=False, regex=True) &
-         pm['winner'].str.lower().str.contains(pq, na=False)).any()
+         pm['winner'].str.lower().str.contains(pq, na=False, regex=False)).any()
     )
     r["TO30"] = bool(
         not pm.empty and 'round' in pm.columns and 'league' in pm.columns and
@@ -2018,8 +2018,8 @@ def evaluar_logros(
         if data_filas is None or data_filas.empty:
             return pd.Series(dtype=float)
         dfj = data_filas
-        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False)
-        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False)
+        es_a = dfj['Jugador_A'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
+        es_b = dfj['Jugador_B'].astype(str).str.lower().str.contains(pq, na=False, regex=False)
         puntos = list(zip(dfj.loc[es_a, 'Fecha'], dfj.loc[es_a, 'Rating_A_NEW'])) + \
                  list(zip(dfj.loc[es_b, 'Fecha'], dfj.loc[es_b, 'Rating_B_NEW']))
         if not puntos:
@@ -2063,7 +2063,7 @@ def evaluar_logros(
         for _mes, grp in d.groupby('_mes'):
             if len(grp) < min_partidas:
                 continue
-            w = grp['winner'].str.lower().str.contains(pq, na=False).sum()
+            w = grp['winner'].str.lower().str.contains(pq, na=False, regex=False).sum()
             if w / len(grp) == 0.5:
                 return True
         return False
@@ -2080,7 +2080,7 @@ def evaluar_logros(
         _torneos_monotype_todos |= _s_mono
     r["ES24"] = bool(
         not pm.empty and 'N_Torneo' in pm.columns and 'winner' in pm.columns and
-        (pm['N_Torneo'].isin(_torneos_monotype_todos) & pm['winner'].str.lower().str.contains(pq, na=False)).any()
+        (pm['N_Torneo'].isin(_torneos_monotype_todos) & pm['winner'].str.lower().str.contains(pq, na=False, regex=False)).any()
     )
 
     # ── PA12, PR12-13, SP23 ──────────────────────────────────────────────
@@ -2486,7 +2486,7 @@ div[data-testid="stImage"]{margin-bottom:-14px !important}
                                     arr[...,0] = gray; arr[...,1] = gray; arr[...,2] = gray
                                     arr[...,3] = (arr[...,3] * 0.35).astype("uint8")
                                     img = _PIL.fromarray(arr, "RGBA")
-                                st.image(img, use_container_width=True)
+                                st.image(img, width="stretch")
                             except Exception as _e:
                                 st.caption(f"err:{_e}")
                         else:

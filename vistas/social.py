@@ -278,14 +278,14 @@ def show():
         else:
             st.caption(f"Mostrando {n_nodos} jugadores y {n_edges} rivalidades. "
                        "Los jugadores están ordenados por Elo alrededor del círculo (los de arriba del ranking quedan más juntos).")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         st.markdown("#### 🤝 Rivalidades más parejas de la comunidad")
         parejas = rivalidades_mas_parejas(h2h)
         if parejas.empty:
             st.info("No hay rivalidades con suficientes partidas todavía.")
         else:
-            st.dataframe(parejas, use_container_width=True, hide_index=True)
+            st.dataframe(parejas, width="stretch", hide_index=True)
 
     with tab2:
         jugadores_disp = sorted(long_df['jugador'].unique())
@@ -295,13 +295,13 @@ def show():
         if fig_focus is None:
             st.info("Sin rivales suficientes con ese filtro.")
         else:
-            st.plotly_chart(fig_focus, use_container_width=True)
+            st.plotly_chart(fig_focus, width="stretch")
 
         detalle = long_df[long_df['jugador'] == sel].sort_values('partidas', ascending=False)
         detalle_show = detalle[['rival', 'partidas', 'wins', 'wins_rival', 'winrate']].rename(
             columns={'rival': 'Rival', 'partidas': 'Partidas', 'wins': f'Ganó {sel}',
                      'wins_rival': 'Ganó rival', 'winrate': 'Winrate'})
-        st.dataframe(detalle_show, use_container_width=True, hide_index=True)
+        st.dataframe(detalle_show, width="stretch", hide_index=True)
 
     with tab3:
         st.caption(f"Solo se calcula con rivales que se hayan enfrentado al menos {MIN_PARTIDAS_NEMESIS} veces.")
@@ -310,8 +310,8 @@ def show():
             st.info("No hay suficientes rivalidades repetidas todavía.")
         else:
             buscar = st.text_input("🔍 Buscar jugador", "", key="soc_np_buscar")
-            vista = tabla_np[tabla_np['jugador'].str.contains(buscar, case=False, na=False)] if buscar else tabla_np
-            st.dataframe(vista.rename(columns={'jugador': 'Jugador'}), use_container_width=True, hide_index=True, height=500)
+            vista = tabla_np[tabla_np['jugador'].str.contains(buscar, case=False, na=False, regex=False)] if buscar else tabla_np
+            st.dataframe(vista.rename(columns={'jugador': 'Jugador'}), width="stretch", hide_index=True, height=500)
 
     with tab4:
         st.markdown("#### 🔌 Los más y menos conectados")
@@ -321,14 +321,14 @@ def show():
             st.dataframe(conectividad.head(10)[['jugador', 'rivales_distintos', 'partidas_totales']]
                          .rename(columns={'jugador': 'Jugador', 'rivales_distintos': 'Rivales distintos',
                                           'partidas_totales': 'Partidas totales'}),
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
         with colc2:
             st.caption("Menos rivales distintos (con al menos 5 partidas jugadas) — círculo cerrado de oponentes.")
             aislados = conectividad[conectividad['partidas_totales'] >= 5].sort_values('rivales_distintos').head(10)
             st.dataframe(aislados[['jugador', 'rivales_distintos', 'partidas_totales']]
                          .rename(columns={'jugador': 'Jugador', 'rivales_distintos': 'Rivales distintos',
                                           'partidas_totales': 'Partidas totales'}),
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
 
         st.markdown("---")
         st.markdown("#### 🆕 Duelos por estrenar")
@@ -345,7 +345,7 @@ def show():
             if faltan.empty:
                 st.success("¡Ya se han enfrentado todos contra todos en esta liga!")
             else:
-                st.dataframe(faltan, use_container_width=True, hide_index=True, height=400)
+                st.dataframe(faltan, width="stretch", hide_index=True, height=400)
 
     with tab5:
         st.markdown("#### 😲 Índice de Sorpresas (Upsets)")
@@ -367,19 +367,19 @@ def show():
             top_upsets = upsets.head(15)[['Fecha', 'Jugador_A', 'Rating_A', 'Jugador_B', 'Rating_B', 'Prob esperada del ganador', 'Sorpresa']]
             top_upsets = top_upsets.rename(columns={'Jugador_A': 'Ganó', 'Rating_A': 'Elo (antes)',
                                                       'Jugador_B': 'Perdió (favorito)', 'Rating_B': 'Elo rival (antes)'})
-            st.dataframe(top_upsets, use_container_width=True, hide_index=True)
+            st.dataframe(top_upsets, width="stretch", hide_index=True)
 
             colg, cols = st.columns(2)
             with colg:
                 st.markdown("##### 🗡️ Giant Killers — más sorpresas provocadas")
                 gk = upsets.groupby('Jugador_A').size().reset_index(name='Sorpresas provocadas').sort_values(
                     'Sorpresas provocadas', ascending=False).head(10)
-                st.dataframe(gk.rename(columns={'Jugador_A': 'Jugador'}), use_container_width=True, hide_index=True)
+                st.dataframe(gk.rename(columns={'Jugador_A': 'Jugador'}), width="stretch", hide_index=True)
             with cols:
                 st.markdown("##### 😵 Más sorprendidos — perdieron siendo favoritos")
                 ms = upsets.groupby('Jugador_B').size().reset_index(name='Veces sorprendido').sort_values(
                     'Veces sorprendido', ascending=False).head(10)
-                st.dataframe(ms.rename(columns={'Jugador_B': 'Jugador'}), use_container_width=True, hide_index=True)
+                st.dataframe(ms.rename(columns={'Jugador_B': 'Jugador'}), width="stretch", hide_index=True)
 
             fig_sc = px.scatter(
                 todas, x=todas['Rating_B'] - todas['Rating_A'], y='Prob esperada del ganador',
@@ -388,7 +388,7 @@ def show():
                 labels={'x': 'Elo rival − Elo ganador (antes de la partida)'},
             )
             fig_sc.add_hline(y=umbral, line_dash="dash", line_color="red", annotation_text="Umbral de sorpresa")
-            st.plotly_chart(fig_sc, use_container_width=True)
+            st.plotly_chart(fig_sc, width="stretch")
 
     st.markdown("---")
     with st.expander("📖 Glosario — cómo se calcula todo en esta sección"):

@@ -95,7 +95,7 @@ def show():
                 va = int(_pertenece(sub['winner'], jugador_a).sum())
                 vb = len(sub) - va
                 filas_fmt.append({'Formato': fmt, f'{jugador_a}': va, f'{jugador_b}': vb, 'Total': len(sub)})
-            st.dataframe(pd.DataFrame(filas_fmt), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(filas_fmt), width="stretch", hide_index=True)
 
         # ── Historial de partidas ──────────────────────────────────────
         st.subheader("Historial de enfrentamientos")
@@ -112,7 +112,7 @@ def show():
             'date': 'Fecha', 'league': 'Tipo', 'Ligas_categoria': 'Liga',
             'N_Torneo': 'N° Torneo', 'round': 'Ronda', 'Match_replays': 'Replay',
         }).sort_values('Fecha', ascending=False).reset_index(drop=True)
-        st.dataframe(hist, use_container_width=True, hide_index=True, height=min(400, len(hist)*40+60))
+        st.dataframe(hist, width="stretch", hide_index=True, height=min(400, len(hist)*40+60))
         st.download_button("📥 Descargar historial CSV", hist.to_csv(index=False).encode('utf-8'),
                             f"h2h_{jugador_a}_vs_{jugador_b}.csv", "text/csv")
 
@@ -159,7 +159,7 @@ def show():
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=450,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         st.caption(
             "Nota: esta curva es el Elo GLOBAL de cada jugador (contra todo rival), no solo los puntos "
             "ganados/perdidos en los enfrentamientos directos de arriba — sirve para comparar en qué "

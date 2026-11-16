@@ -189,7 +189,7 @@ def show():
         st.markdown(_matriz_html(lad), unsafe_allow_html=True)
 
         st.subheader("Ladder de todos los jugadores")
-        st.dataframe(_con_foto(lad), use_container_width=True, column_config=_cfg(), row_height=44)
+        st.dataframe(_con_foto(lad), width="stretch", column_config=_cfg(), row_height=44)
 
         st.subheader("Posiciones por grupo")
         st.caption("V/D se calculan con las batallas registradas; Puntos es el puntaje anotado por el organizador.")
@@ -200,13 +200,13 @@ def show():
                 with col:
                     st.markdown(f"**{nombre}**")
                     st.dataframe(_con_foto(_standings(bat, pts, nombre, [j for j, _m in js])),
-                                 use_container_width=True, column_config=_cfg(), row_height=44)
+                                 width="stretch", column_config=_cfg(), row_height=44)
 
     with tab_bat:
         st.subheader("Batallas de la fase de grupos")
         sel = st.selectbox("Grupo", ["Todos"] + list(GRUPOS), key="gm_grupo")
         v = bat if sel == "Todos" else bat[bat["Grupo"] == sel]
         v = v[["Grupo", "player1", "player2", "winner", "date", "Formato_esp", "Match_replays"]]
-        st.dataframe(v.reset_index(drop=True), use_container_width=True, hide_index=True,
+        st.dataframe(v.reset_index(drop=True), width="stretch", hide_index=True,
                      column_config={"Match_replays": st.column_config.LinkColumn("Replay", display_text="Ver replay")})
         st.caption(f"{len(v)} batallas registradas.")

@@ -172,10 +172,10 @@ def show():
             if exact:
                 return ((df['player1'].str.lower()==query.lower())|
                         (df['player2'].str.lower()==query.lower()))
-            return (df['player1'].str.contains(query,case=False,na=False)|
-                    df['player2'].str.contains(query,case=False,na=False))
+            return (df['player1'].str.contains(query,case=False,na=False, regex=False)|
+                    df['player2'].str.contains(query,case=False,na=False, regex=False))
         if exact: return df[col_only].str.lower()==query.lower()
-        return df[col_only].str.contains(query,case=False,na=False)
+        return df[col_only].str.contains(query,case=False,na=False, regex=False)
 
     m1 = player_mask(player1_filter, player1_exact, 'player1')
     m2 = player_mask(player2_filter, player2_exact, 'player2')
@@ -191,10 +191,10 @@ def show():
     cm1,cm2,cm3,cm4 = st.columns(4)
     cm1.metric("📊 Partidas encontradas", len(hist_df))
     if player1_filter:
-        w1 = hist_df[hist_df['winner'].str.contains(player1_filter,case=False,na=False)].shape[0]
+        w1 = hist_df[hist_df['winner'].str.contains(player1_filter,case=False,na=False, regex=False)].shape[0]
         cm2.metric(f"🏆 Victorias {player1_filter}", w1)
     if player2_filter:
-        w2 = hist_df[hist_df['winner'].str.contains(player2_filter,case=False,na=False)].shape[0]
+        w2 = hist_df[hist_df['winner'].str.contains(player2_filter,case=False,na=False, regex=False)].shape[0]
         cm3.metric(f"🏆 Victorias {player2_filter}", w2)
     cm4.metric("🎮 Eventos únicos", hist_df['league'].nunique())
 
@@ -232,7 +232,7 @@ def show():
         # )
 
 
-        # ##st.dataframe(tabla_h, use_container_width=True)
+        # ##st.dataframe(tabla_h, width="stretch")
         # st.dataframe(
         #     tabla_h,
         #     column_config={
@@ -241,7 +241,7 @@ def show():
         #             display_text="Replay"
         #         )
         #     },
-        #     use_container_width=True
+        #     width="stretch"
         # )
         csv = tabla_h.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Descargar CSV", csv,
