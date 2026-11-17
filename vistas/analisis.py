@@ -638,9 +638,13 @@ def show():
     for k in set(camp_liga) | set(camp_torneo):
         ligas_g = sorted(c['Liga'] for c in camp_liga.get(k, []))
         torneos_g = sorted(int(c['Torneo']) for c in camp_torneo.get(k, []))
+        mundiales_g = [t for t in torneos_g if t in MUNDIAL_TORNEOS]
+        torneos_g = [t for t in torneos_g if t not in MUNDIAL_TORNEOS]   # los Mundiales van en su propia barra
         filas_c.append({'Participante': nombre_real.get(k, k), 'Ligas': len(ligas_g), 'Torneos': len(torneos_g),
-                        'Total': len(ligas_g) + len(torneos_g),
-                        'Ligas ganadas': ", ".join(ligas_g), 'Torneos ganados': ", ".join(f"T{t}" for t in torneos_g)})
+                        'Mundiales': len(mundiales_g),
+                        'Total': len(ligas_g) + len(torneos_g) + len(mundiales_g),
+                        'Ligas ganadas': ", ".join(ligas_g), 'Torneos ganados': ", ".join(f"T{t}" for t in torneos_g),
+                        'Mundiales ganados': ", ".join(MUNDIAL_TORNEOS[t] for t in mundiales_g)})
     campeones_df = pd.DataFrame(filas_c)
     if campeones_df.empty:
         st.info("Todavía no hay campeones registrados.")
@@ -652,17 +656,20 @@ def show():
         fig_c = go.Figure()
         fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Ligas'], name='Ligas', marker_color='#D64550')
         fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Torneos'], name='Torneos', marker_color='#7A4FC4')
+        fig_c.add_bar(x=campeones_df['Participante'], y=campeones_df['Mundiales'], name='Mundiales', marker_color='#F1C40F')
         fig_c.add_scatter(x=campeones_df['Participante'], y=campeones_df['Total'], mode='text', text=campeones_df['Total'],
                           textposition='top center', textfont=dict(color='white', size=13),
                           showlegend=False, hoverinfo='skip')
         fig_c.update_layout(**_PLOTLY_BASE)
         fig_c.update_layout(barmode='stack', title='Campeones Poketubi', xaxis_tickangle=-45, legend_title='Tipo',
-                            yaxis_title='Liga / Torneo', xaxis_title='', height=480)
+                            yaxis_title='Liga / Torneo / Mundial', xaxis_title='', height=480)
         st.plotly_chart(fig_c, width="stretch")
         with st.expander("📋 Ver detalle de títulos"):
-            st.dataframe(campeones_df[['Participante', 'Total', 'Ligas', 'Torneos', 'Ligas ganadas', 'Torneos ganados']],
+            st.dataframe(campeones_df[['Participante', 'Total', 'Ligas', 'Torneos', 'Mundiales',
+                                       'Ligas ganadas', 'Torneos ganados', 'Mundiales ganados']],
                          width="stretch", hide_index=True)
-        st.caption("Solo cuentan ligas y torneos terminados. Torneo 61: dos campeones (Chris FPS y Mr.Shadowdusk).")
+        st.caption("Solo cuentan ligas y torneos terminados. Los Mundiales (Origins y Generations) se muestran aparte "
+                   "en dorado y suman al total. Torneo 61: dos campeones (Chris FPS y Mr.Shadowdusk).")
 
     # Capítulo 4 — quiénes llegan a las finales
     st.markdown("---")
