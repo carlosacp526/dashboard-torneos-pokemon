@@ -280,11 +280,15 @@ def show():
 
     df_torneo_all = df[df['league'] == 'TORNEO'].copy()
     participantes_por_torneo = pd.DataFrame(columns=['N_Torneo', 'Participantes', 'Categoría'])
+    # Los dos Mundiales (Origins y Generations) son eventos propios: no se comparan por tamaño con el resto,
+    # así que van en su categoría aparte (mismos N_Torneo que MUNDIALES de campeones_pixel.py).
+    MUNDIAL_TORNEOS = {46: 'Mundial Origins', 68: 'Mundial Generations'}
+    CAT_MUNDIAL = 'Mundial (2 torneos)'
     orden_cat = ['Pequeño (< 13)', 'Mediano (<= 24)', 'Grande (> 24)',
-                 'Special Event (>= 45)', 'Regional (>= 80)']
+                 'Special Event (>= 45)', 'Regional (>= 80)', CAT_MUNDIAL]
     COLORS_TAM = {
         'Pequeño (< 13)': '#3498DB', 'Mediano (<= 24)': '#2ECC71', 'Grande (> 24)': '#F1C40F',
-        'Special Event (>= 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C',
+        'Special Event (>= 45)': '#E67E22', 'Regional (>= 80)': '#E74C3C', CAT_MUNDIAL: '#9B59B6',
     }
     if not df_torneo_all.empty and 'N_Torneo' in df_torneo_all.columns:
         p1 = df_torneo_all[['N_Torneo', 'player1']].rename(columns={'player1': 'Jugador'})
@@ -308,6 +312,7 @@ def show():
             if n < 13: return 'Pequeño (< 13)'
             return 'Mediano (<= 24)'
         participantes_por_torneo['Categoría'] = participantes_por_torneo['Participantes'].apply(_categoria_torneo)
+        participantes_por_torneo.loc[participantes_por_torneo['N_Torneo'].isin(MUNDIAL_TORNEOS), 'Categoría'] = CAT_MUNDIAL
 
     # Batallas (filas = partidas) por torneo, con la MISMA categoría de tamaño
     # que ya se calculó arriba por cantidad de participantes — así "tamaño" es
@@ -451,12 +456,13 @@ def show():
                 .astype(int).reset_index()
             cat_counts.columns = ['Categoría', 'Torneos']
 
-            cols_tam = st.columns(5)
+            cols_tam = st.columns(len(orden_cat))
             for c, cat in zip(cols_tam, orden_cat):
                 valor = int(cat_counts.loc[cat_counts['Categoría'] == cat, 'Torneos'].iloc[0])
                 with c:
                     nombre_corto, umbral = cat.split(' (')
-                    st.markdown(_kpi_card("🥊", valor, nombre_corto, sublabel=umbral.rstrip(')'),
+                    st.markdown(_kpi_card("🌎" if cat == CAT_MUNDIAL else "🥊", valor, nombre_corto,
+                                           sublabel=umbral.rstrip(')'),
                                            accent=COLORS_TAM[cat]), unsafe_allow_html=True)
 
             # Barplot de la distribucion real de participantes por torneo (1
@@ -482,6 +488,8 @@ def show():
             nombres_t = {n: _nombre_torneo(g) for n, g in df_torneo_all.groupby('N_Torneo')}
             dist['Torneo'] = [f"Torneo {int(n)}" + (f" · {nombres_t[n]}" if nombres_t.get(n) else "")
                               for n in dist['N_Torneo']]
+            dist['Torneo'] = [(f"🌎 {MUNDIAL_TORNEOS[int(n)]} — " + t) if int(n) in MUNDIAL_TORNEOS else t
+                              for n, t in zip(dist['N_Torneo'], dist['Torneo'])]
             fig = px.bar(dist, x='Torneo_idx', y='Participantes', color='Categoría',
                          color_discrete_map=COLORS_TAM, category_orders={'Categoría': orden_cat},
                          hover_name='Torneo', hover_data={'N_Torneo': False, 'Torneo_idx': False},
@@ -493,11 +501,16 @@ def show():
             fig.add_hline(y=80, line_dash='dot', line_color='#E67E22', annotation_text='80')
             fig.update_layout(xaxis_title='Torneos (ordenados por cantidad de participantes)',
                                yaxis_title='Participantes', legend_title='Categoría')
+            for _, r in dist[dist['N_Torneo'].isin(MUNDIAL_TORNEOS)].iterrows():
+                fig.add_annotation(x=r['Torneo_idx'], y=r['Participantes'], text=MUNDIAL_TORNEOS[int(r['N_Torneo'])],
+                                   showarrow=True, arrowhead=2, ax=0, ay=-46, font=dict(size=11, color='#9B59B6'),
+                                   bordercolor='#9B59B6', bgcolor='rgba(155,89,182,0.15)')
             st.plotly_chart(fig, width="stretch")
             st.caption("Categorías oficiales de PUNTAJES_MUNDIAL3.png (por participantes): "
                        "Pequeño < 13 · Mediano <= 24 · Grande > 24 · Special Event >= 45 · Regional >= 80. "
                        "Cada torneo cae en la categoría más alta que supera (un torneo de 90 participantes "
-                       "cuenta como Regional, no como Grande).")
+                       "cuenta como Regional, no como Grande). Los dos Mundiales (Origins y Generations) se "
+                       "muestran aparte, en morado, porque son eventos propios y no se miden por tamaño.")
 
     # -- Batallas por Tamaño ------------------------------------------------
     with tab_batallas:
