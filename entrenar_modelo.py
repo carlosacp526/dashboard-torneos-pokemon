@@ -84,6 +84,27 @@ def _instancia_key(row, lcat):
     return f"{lcat}_{torneo_id}"
 
 
+CTX_FMT = ["singles", "dobles", "vgc"]
+CTX_CAT = ["liga", "torneo", "ascenso", "cypher"]
+CTX_FASE = ["elim", "grupos", "jornadas", "rondas"]
+CTX_KINDS = ["fmt", "tier", "cat", "fase"]      # contextos de la batalla puntual que se cruzan con el historial de cada jugador
+
+
+def _fase_key(fase_raw):
+    """Fase del cruce (elim / grupos / jornadas / rondas) a partir del texto de la fase."""
+    fase_raw = str(fase_raw).lower()
+    for k, v in [("jornada", "jornadas"), ("grupos", "grupos"), ("suiza", "rondas")]:
+        if k in fase_raw:
+            return v
+    return "elim"
+
+
+def _cat_key(lcat, league):
+    if "ST" in lcat or str(league) == "LIGA":
+        return "liga"
+    return {"TORNEO": "torneo", "ASCENSO": "ascenso", "CYPHER": "cypher"}.get(lcat, "otro")
+
+
 def _fase_final_literal(row):
     """True solo si la fase es la GRAN FINAL (no semis/cuartos/octavos, que hoy
     se agrupan todos en 'eliminatorias'). Disponible tanto para partidas jugadas
@@ -148,6 +169,14 @@ def add_match_context(df, typical_max_rep):
     df["ctx_es_decisivo"] = (rep_num >= typ).astype(int)
 
     df["ctx_es_final_torneo"] = df.apply(_fase_final_literal, axis=1).astype(int)
+    # contexto de ESTA batalla (texto): se cruza con cómo le va a cada jugador en ese mismo formato/tier/competencia/fase
+    # (variables ctxwr_* / ctxefecto_* de modelo_v2_runtime). No son variables del modelo: solo ayudan a calcularlas.
+    df["ctx_fmt"] = fmt_up.str.lower()
+    df["ctx_tier"] = df["Tier"].fillna("").astype(str).str.strip() if "Tier" in df.columns else ""
+    lig = df["league"] if "league" in df.columns else pd.Series([""] * len(df), index=df.index)
+    df["ctx_cat"] = [_cat_key(_liga_cat(r), l) for (_, r), l in zip(df.iterrows(), lig)]
+    fase_col = df["Fase_completo"] if "Fase_completo" in df.columns else df["round"]
+    df["ctx_fase"] = [_fase_key(x) for x in fase_col]
     return df
 
 
@@ -223,6 +252,15 @@ def build_historial(df, tiers=None):
             }
             for t in tiers:
                 row_base[f"wr_tier_{t}"] = (1 if es_g else 0) if tier == t else np.nan
+            _res = 1 if es_g else 0
+            _cat = _cat_key(lcat, r.get("league", ""))
+            _fk = _fase_key(fase_raw)
+            for k in CTX_FMT:
+                row_base[f"wr_fmt_{k}"] = _res if fmt.lower() == k else np.nan
+            for k in CTX_CAT:
+                row_base[f"wr_cat_{k}"] = _res if _cat == k else np.nan
+            for k in CTX_FASE:
+                row_base[f"wr_fase_{k}"] = _res if _fk == k else np.nan
             for b in REP_BUCKETS:
                 row_base[f"wr_rep_{b}"] = (1 if es_g else 0) if rep_bucket == b else np.nan
             row_base.update(ligas_flags)
@@ -243,7 +281,11 @@ def _cosecha_base_cols(tiers):
         "pokes_sob","pokes_venc","participo_liga","rep_actual",
     ] + [f"liga_{l.lower()}" for l in LIGAS_STD] \
       + [f"wr_tier_{t}" for t in tiers] \
+      + [f"wr_fmt_{k}" for k in CTX_FMT] + [f"wr_cat_{k}" for k in CTX_CAT] + [f"wr_fase_{k}" for k in CTX_FASE] \
       + [f"wr_rep_{b}" for b in REP_BUCKETS]
+
+
+_N_PREF = ("wr_tier_", "wr_fmt_", "wr_cat_", "wr_fase_")   # de estos se guarda además cuántas batallas hay (para suavizar)
 
 
 def _cosecha_ventanas(h_j, ym, ventanas, base_cols):
@@ -272,6 +314,7 @@ def _cosecha_ventanas(h_j, ym, ventanas, base_cols):
                 if col == "gano": continue
                 if col.startswith("wr_"):
                     row_cos[f"{col}_m{n}"] = np.nan
+                    if col.startswith(_N_PREF): row_cos[f"{col}_n_m{n}"] = 0
                 else:
                     row_cos[f"{col}_sum_m{n}"]  = 0
                     row_cos[f"{col}_mean_m{n}"] = np.nan
@@ -286,6 +329,7 @@ def _cosecha_ventanas(h_j, ym, ventanas, base_cols):
                 if col.startswith("wr_"):
                     sub = ventana[col].dropna()
                     row_cos[f"{col}_m{n}"] = sub.mean() if len(sub) > 0 else np.nan
+                    if col.startswith(_N_PREF): row_cos[f"{col}_n_m{n}"] = len(sub)
                 else:
                     row_cos[f"{col}_sum_m{n}"]  = ventana[col].fillna(0).sum()
                     row_cos[f"{col}_mean_m{n}"] = ventana[col].fillna(0).mean()
@@ -375,11 +419,14 @@ CTX_COLS = ["ctx_rep_bucket", "ctx_es_decisivo", "ctx_es_final_torneo"]
 
 
 REP_VENT = [12, 24, 36]    # ventanas (meses) de las variables de n° de batalla de la v2
+CTX_STR = ["ctx_fmt", "ctx_tier", "ctx_cat", "ctx_fase"]
+# variables de contexto: rendimiento de cada jugador EN el formato / tier / competencia / fase de esta batalla
+CTX_VARS = [f"{p}_{k}_m{n}" for k in CTX_KINDS for n in REP_VENT for p in ("ctxwr", "ctxefecto", "ctxn")]
 
 
 def es_extra_v2(c):
     """Variables que solo existen para la v2 (modelado_v2.py): winrate en el mismo n° de Rep y diferencias A-B."""
-    return c.startswith(("wr_rep_actual_", "rep_efecto_", "dif_"))
+    return c.startswith(("wr_rep_actual_", "rep_efecto_", "dif_", "ctxwr_", "ctxefecto_", "ctxn_"))
 
 
 def build_dataset(df_battles, cos, rep_features=False, keep_nan=False, extended=False):
@@ -389,7 +436,8 @@ def build_dataset(df_battles, cos, rep_features=False, keep_nan=False, extended=
     df_ok = df_battles[df_battles["Walkover"] == 0].copy()
     feat_cols = [c for c in cos.columns if c not in ["jugador", "ym"]]
     ctx_cols = [c for c in CTX_COLS if c in df_ok.columns]
-    extra_base = [f"wr_rep_actual_m{n}" for n in REP_VENT] + [f"rep_efecto_m{n}" for n in REP_VENT] if rep_features else []
+    extra_base = [f"wr_rep_actual_m{n}" for n in REP_VENT] + [f"rep_efecto_m{n}" for n in REP_VENT] + CTX_VARS if rep_features else []
+    from modelo_v2_runtime import _valor_lado
 
     cos_idx = cos.set_index(["jugador", "ym"])
 
@@ -413,7 +461,7 @@ def build_dataset(df_battles, cos, rep_features=False, keep_nan=False, extended=
             fila[f"{c}_p"] = cos_p[c] if c in cos_p.index else np.nan
         # contexto de ESTA batalla puntual (Rep/fase) — igual para ambos jugadores,
         # no se ve afectado por el swap _g/_p de abajo porque describe el cruce, no a un jugador
-        for c in ctx_cols:
+        for c in ctx_cols + [c for c in CTX_STR if c in df_ok.columns]:
             fila[c] = r[c]
         if rep_features:
             rb = int(r["ctx_rep_bucket"]) if "ctx_rep_bucket" in r.index and pd.notna(r["ctx_rep_bucket"]) else 1
@@ -423,6 +471,8 @@ def build_dataset(df_battles, cos, rep_features=False, keep_nan=False, extended=
                     wr_all = cs.get(f"winrate_m{n_v}", np.nan)
                     fila[f"wr_rep_actual_m{n_v}_{lado}"] = wr_rep
                     fila[f"rep_efecto_m{n_v}_{lado}"] = wr_rep - wr_all
+                for c in CTX_VARS:
+                    fila[f"{c}_{lado}"] = _valor_lado(c, cs, rb, r)
         rows.append(fila)
 
     data = pd.DataFrame(rows)
@@ -445,7 +495,7 @@ def build_dataset(df_battles, cos, rep_features=False, keep_nan=False, extended=
     full = pd.concat([d0, d1], ignore_index=True)
     if rep_features:
         # diferencias A-B (antisimétricas: al espejar la batalla cambian de signo) para que el modelo compare jugadores
-        for base in ["winrate_m12", "winrate_m36"] + extra_base:
+        for base in ["winrate_m12", "winrate_m36"] + [b for b in extra_base if not b.startswith("ctxn_")]:
             if f"{base}_g" in full.columns:
                 full[f"dif_{base}"] = full[f"{base}_g"] - full[f"{base}_p"]
                 all_feat.append(f"dif_{base}")
@@ -575,7 +625,7 @@ def build_pred_features(df_pend, cos, top_feat):
                   "round":      r.get("round",""),
                   "N_Torneo":   r.get("N_Torneo","")}
         # contexto de esta batalla puntual (Rep/fase de ESTE cruce pendiente)
-        for c in CTX_COLS:
+        for c in CTX_COLS + CTX_STR:
             if c in r.index:
                 fila[c] = r[c]
         rep_b = pd.to_numeric(r.get("ctx_rep_bucket", 1), errors="coerce")
@@ -617,7 +667,7 @@ def verificar_serving(data_all, cos, finales, n=300):
                 esperado = r[f"{b}_g"] - r[f"{b}_p"] if f"{b}_g" in r.index else np.nan
             else:
                 esperado = r[v] if v in r.index else np.nan
-            obtenido = valor_variable(v, cg, cp, rep_b)
+            obtenido = valor_variable(v, cg, cp, rep_b, ctx=r)
             total += 1
             if not ((pd.isna(esperado) and pd.isna(obtenido)) or (pd.notna(esperado) and pd.notna(obtenido) and abs(esperado - obtenido) < 1e-9)):
                 malos[v] = malos.get(v, 0) + 1

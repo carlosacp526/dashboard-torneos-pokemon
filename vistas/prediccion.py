@@ -96,7 +96,18 @@ def blend_h2h(model_prob_a, victorias_a, victorias_b, prior_weight=6):
     return (h2h_wr_a * n + model_prob_a * prior_weight) / (n + prior_weight)
 
 
-def make_pred_row(j1, j2, latest_stats, feature_cols, rep=1):
+def contexto_batalla(fmt=None, tier=None, lcat=None, fase=None):
+    """Contexto de una batalla (formato, tier, competencia, fase) en el formato que usa el modelo (ctx_fmt, ctx_tier, ctx_cat, ctx_fase)."""
+    from entrenar_modelo import _cat_key, _fase_key
+    ctx = {}
+    if fmt: ctx["ctx_fmt"] = str(fmt).lower()
+    if tier: ctx["ctx_tier"] = str(tier).strip()
+    if lcat: ctx["ctx_cat"] = _cat_key(str(lcat).upper(), "LIGA" if str(lcat).upper() == "LIGA" else "")
+    if fase: ctx["ctx_fase"] = _fase_key(fase)
+    return ctx
+
+
+def make_pred_row(j1, j2, latest_stats, feature_cols, rep=1, ctx=None):
     """Variables del cruce j1 (jugador A) vs j2 (jugador B) con la última cosecha de cada uno, para el modelo v2.
     Incluye las variables del n° de batalla (rep = n° de partida de la serie, 1..5) y las diferencias A-B. Lo que no se puede
     calcular (jugador sin historial en esa ventana) queda en NaN: el modelo lo trata como su propio tramo, igual que al entrenar."""
@@ -106,7 +117,7 @@ def make_pred_row(j1, j2, latest_stats, feature_cols, rep=1):
         r = latest_stats[latest_stats["Jugador"] == jug]
         return None if r.empty else r.iloc[0]
     s1, s2 = gs(j1), gs(j2)
-    return pd.DataFrame([{c: valor_variable(c, s1, s2, rep) for c in feature_cols}])[list(feature_cols)]
+    return pd.DataFrame([{c: valor_variable(c, s1, s2, rep, ctx=ctx) for c in feature_cols}])[list(feature_cols)]
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -439,13 +450,16 @@ def show():
             p2 = st.selectbox("🎮 Jugador 2", [p for p in all_players if p != p1], key="pp2")
 
         tiers_disp = sorted(df_j["Tier"].dropna().unique().tolist())
-        col_cfg1, col_cfg2, col_cfg3, col_cfg4, col_cfg5 = st.columns(5)
+        col_cfg1, col_cfg2, col_cfg3, col_cfg4, col_cfg5, col_cfg6 = st.columns(6)
         with col_cfg1:
             fmt_p  = st.selectbox("Formato", ["SINGLES","DOBLES","VGC"], key="pfmt")
         with col_cfg2:
             lcat_p = st.selectbox("Competencia", ["TORNEO","LIGA","ASCENSO","CYPHER"], key="plcat")
         with col_cfg3:
             tier_p = st.selectbox("Tier", tiers_disp, key="ptier")
+        with col_cfg6:
+            fase_p = st.selectbox("Fase", ["Eliminatorias", "Grupos", "Jornadas", "Rondas suizas"], key="pfase",
+                                  help="Etapa de la competencia. El modelo usa cómo le va a cada jugador en esa etapa.")
         with col_cfg4:
             best_idx = list(trained.keys()).index(best_name)
             mod_p = st.selectbox("Modelo ML", list(trained.keys()), index=best_idx, key="pmod")
@@ -492,7 +506,8 @@ def show():
         predecir = st.button("🔮 Predecir Combate", width="stretch", type="primary")
 
         if predecir:
-            X_p      = make_pred_row(p1, p2, latest_stats, feature_cols, rep=rep_p)
+            X_p      = make_pred_row(p1, p2, latest_stats, feature_cols, rep=rep_p,
+                                     ctx=contexto_batalla(fmt_p, tier_p, lcat_p, {'Eliminatorias': 'final', 'Grupos': 'grupos', 'Jornadas': 'jornada', 'Rondas suizas': 'suiza'}[fase_p]))
             prob     = trained[mod_p].predict_proba(X_p)[0]
             prob_j1, prob_j2 = prob[0], prob[1]
             conf     = max(prob_j1, prob_j2)

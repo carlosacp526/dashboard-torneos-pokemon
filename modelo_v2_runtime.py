@@ -78,10 +78,43 @@ def _f(v):
         return np.nan
 
 
-def _valor_lado(base, cs, rep):
+SUAVIZADO_K = 4   # batallas "virtuales" con el winrate general del jugador: con pocas partidas en un contexto manda su winrate general
+
+
+def _col_ctx(kind, ctx):
+    """Columna de cosecha del contexto de la batalla (formato / tier / competencia / fase) o None si se desconoce."""
+    if ctx is None:
+        return None
+    try:
+        v = ctx.get(f"ctx_{kind}")
+    except AttributeError:
+        return None
+    if v is None or (isinstance(v, float) and np.isnan(v)) or str(v) in ("", "nan", "otro"):
+        return None
+    return f"wr_tier_{v}" if kind == "tier" else f"wr_{kind}_{v}"
+
+
+def _valor_lado(base, cs, rep, ctx=None):
     """Valor de la variable 'base' (sin sufijo _g/_p) para UN jugador, desde su fila de cosecha cs (Series / dict / None)."""
     if cs is None:
         return np.nan
+    m = re.fullmatch(r"(ctxwr|ctxefecto|ctxn)_(fmt|tier|cat|fase)_m(\d+)", base)
+    if m:
+        # rendimiento del jugador en el MISMO formato / tier / competencia / fase que esta batalla (suavizado hacia su winrate general)
+        col = _col_ctx(m.group(2), ctx)
+        n = m.group(3)
+        wr_all = _f(cs.get(f"winrate_m{n}"))
+        cnt = _f(cs.get(f"{col}_n_m{n}")) if col else np.nan
+        cnt = 0.0 if np.isnan(cnt) else cnt
+        if m.group(1) == "ctxn":
+            return cnt if (col or ctx is None) else np.nan
+        if ctx is None:   # sin contexto de batalla (simulaciones de llaves): neutro = su winrate general, sin efecto
+            return (0.0 if m.group(1) == "ctxn" else (wr_all if m.group(1) == "ctxwr" else (0.0 if not np.isnan(wr_all) else np.nan)))
+        if col is None or np.isnan(wr_all):
+            return np.nan
+        wr_c = _f(cs.get(f"{col}_m{n}"))
+        suav = wr_all if cnt == 0 or np.isnan(wr_c) else (wr_c * cnt + SUAVIZADO_K * wr_all) / (cnt + SUAVIZADO_K)
+        return suav if m.group(1) == "ctxwr" else suav - wr_all
     m = re.fullmatch(r"wr_rep_actual_m(\d+)", base)
     if m:
         return _f(cs.get(f"wr_rep_{rep}_m{m.group(1)}"))
@@ -96,11 +129,11 @@ def valor_variable(var, cs_g, cs_p, rep=1, ctx=None):
     """Valor de la variable final 'var' para el cruce (jugador A = cs_g, jugador B = cs_p) con n° de batalla 'rep'."""
     if var.startswith("dif_"):
         base = var[4:]
-        return _valor_lado(base, cs_g, rep) - _valor_lado(base, cs_p, rep)
+        return _valor_lado(base, cs_g, rep, ctx) - _valor_lado(base, cs_p, rep, ctx)
     if var.endswith("_g"):
-        return _valor_lado(var[:-2], cs_g, rep)
+        return _valor_lado(var[:-2], cs_g, rep, ctx)
     if var.endswith("_p"):
-        return _valor_lado(var[:-2], cs_p, rep)
+        return _valor_lado(var[:-2], cs_p, rep, ctx)
     if ctx is not None and var in ctx:
         return _f(ctx[var])
     return np.nan
