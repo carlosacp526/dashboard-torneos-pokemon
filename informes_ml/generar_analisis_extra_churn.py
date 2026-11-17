@@ -115,13 +115,18 @@ resumen.update({
 
 # ── 4. SHAP: beeswarm, bar, waterfall ────────────────────────────────────────
 print("Calculando SHAP...")
-explainer = shap.TreeExplainer(model)
-exp = explainer(X_te)
-if exp.values.ndim == 3:
-    exp = exp[..., 1]
+if hasattr(model, "shap_valores"):      # modelo v2 (ModeloV2): SHAP del modelo interno sobre las variables categorizadas
+    _Xf = X_te[model.finales]
+    _base = float(np.ravel(shap.TreeExplainer(model.modelo).expected_value)[-1])
+    exp = shap.Explanation(values=model.shap_valores(_Xf), base_values=np.full(len(_Xf), _base), data=_Xf.to_numpy(dtype=float), feature_names=list(_Xf.columns))
+else:
+    explainer = shap.TreeExplainer(model)
+    exp = explainer(X_te)
+    if exp.values.ndim == 3:
+        exp = exp[..., 1]
 
 FEATURE_LABELS = ret.FEATURE_LABELS
-exp.feature_names = [FEATURE_LABELS.get(f, f) for f in X_te.columns]
+exp.feature_names = [FEATURE_LABELS.get(f, f) for f in exp.feature_names]
 
 plt.figure()
 shap.plots.beeswarm(exp, show=False, max_display=13)
@@ -160,10 +165,12 @@ from PIL import Image as PILImage, ImageDraw as PILImageDraw
 
 pdp_data = {}
 for feat in ret.FEATURE_COLS:
-    pd_result = partial_dependence(model, X_tr.astype({feat: "float64"}), features=[feat],
-                                    kind="average", grid_resolution=20)
-    grid_vals = pd_result["grid_values"][0].tolist()
-    avg_proba = pd_result["average"][0].tolist()
+    _vals = X_tr[feat].dropna()
+    grid_vals = sorted(set(np.round(np.quantile(_vals, np.linspace(0.02, 0.98, 20)), 6).tolist()))
+    avg_proba = []
+    for _g in grid_vals:
+        _Xg = X_tr.copy(); _Xg[feat] = _g
+        avg_proba.append(float(model.predict_proba(_Xg)[:, 1].mean()))
     pdp_data[feat] = {"grid": grid_vals, "avg_proba": avg_proba}
 
 COLS = 5
