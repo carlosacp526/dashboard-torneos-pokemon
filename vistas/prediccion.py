@@ -96,6 +96,10 @@ def blend_h2h(model_prob_a, victorias_a, victorias_b, prior_weight=6):
     return (h2h_wr_a * n + model_prob_a * prior_weight) / (n + prior_weight)
 
 
+# Contexto por defecto de make_pred_row cuando no se pasa uno (lo fija playoff_odds para la liga/torneo que simula)
+CTX_DEFECTO = {}
+
+
 def contexto_batalla(fmt=None, tier=None, lcat=None, fase=None):
     """Contexto de una batalla (formato, tier, competencia, fase) en el formato que usa el modelo (ctx_fmt, ctx_tier, ctx_cat, ctx_fase)."""
     from entrenar_modelo import _cat_key, _fase_key
@@ -117,7 +121,7 @@ def make_pred_row(j1, j2, latest_stats, feature_cols, rep=1, ctx=None):
         r = latest_stats[latest_stats["Jugador"] == jug]
         return None if r.empty else r.iloc[0]
     s1, s2 = gs(j1), gs(j2)
-    return pd.DataFrame([{c: valor_variable(c, s1, s2, rep, ctx=ctx) for c in feature_cols}])[list(feature_cols)]
+    return pd.DataFrame([{c: valor_variable(c, s1, s2, rep, ctx=(ctx if ctx is not None else (CTX_DEFECTO or None))) for c in feature_cols}])[list(feature_cols)]
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

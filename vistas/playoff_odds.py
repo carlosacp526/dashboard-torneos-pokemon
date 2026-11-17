@@ -35,8 +35,28 @@ def _firma_datos():
         return 0
 
 
-@st.cache_data(ttl=3600, show_spinner=False, max_entries=24)
 def _sim_cacheada(clave, _fn, _args):
+    """Igual que _sim_cacheada_i, pero el contexto (formato/tier/competencia) de la simulación entra en la clave."""
+    from vistas import prediccion as _pred
+    return _sim_cacheada_i((clave, tuple(sorted(_pred.CTX_DEFECTO.items()))), _fn, _args)
+
+
+def _fijar_contexto(pend, competencia, fase):
+    """El modelo usa cómo le va a cada jugador en el formato/tier/competencia/fase del cruce: se toma el más frecuente
+    entre los cruces pendientes de la liga/torneo que se simula. Sin pendientes queda neutro."""
+    from vistas import prediccion as _pred
+    ctx = {}
+    try:
+        def moda(col):
+            return pend[col].dropna().astype(str).mode().iloc[0] if col in pend.columns and not pend[col].dropna().empty else None
+        ctx = _pred.contexto_batalla(moda("Formato"), moda("Tier"), competencia, fase)
+    except Exception:
+        ctx = {}
+    _pred.CTX_DEFECTO = ctx
+
+
+@st.cache_data(ttl=3600, show_spinner=False, max_entries=24)
+def _sim_cacheada_i(clave, _fn, _args):
     """Memoiza una simulación Monte Carlo. Son deterministas (seed fija), así que el resultado solo depende
     de `clave` = (modo, código, modelo, n_sims, huella del historial, cruces pendientes): antes se volvían a
     correr las 1000 temporadas/torneos en CADA recarga de la página (cualquier widget), varios segundos cada vez."""
@@ -1036,6 +1056,7 @@ def _show_liga(df_raw, trained, results, top_feat, latest_stats, best_name):
     ].reset_index(drop=True)
 
     pend_lt = df_pend_all[df_pend_all["Liga_Temporada"] == lt] if not df_pend_all.empty else df_pend_all
+    _fijar_contexto(pend_lt, "LIGA", "jornada")
 
     jornadas_lt = _parse_jornadas_liga(df_liga_raw_todas, lt)
     jornadas_sin_emparejar = [j["nombre"] for j in jornadas_lt if j["sin_emparejar"]]
@@ -1174,6 +1195,7 @@ def _show_torneo(df_raw, trained, results, top_feat, latest_stats, best_name):
     ].reset_index(drop=True)
 
     pend_nt = df_pend_all[df_pend_all["N_Torneo"] == nt] if not df_pend_all.empty else df_pend_all
+    _fijar_contexto(pend_nt, "TORNEO", "final")
 
     # Jugadores con partidas pendientes pero SIN ninguna fila en base_nt: pasa
     # con un torneo recien cargado (bracket armado, CERO partidas jugadas
