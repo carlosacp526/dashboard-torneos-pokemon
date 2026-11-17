@@ -17,6 +17,7 @@ from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfgen import canvas as pdfcanvas
 from reportlab.graphics.shapes import Drawing, Rect, String, Line, Polygon
+import guia_modelos_v2 as _gm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(HERE))  # D:\power bi\webhook
@@ -346,8 +347,8 @@ def diagrama_ml():
     d = Drawing(480, 250)
     d.hAlign = 'CENTER'
     dbox(d, 10, 208, 220, 34, "CSV historico\n(archivo_preuba1.csv)", fill=DARK, fontsize=7.0)
-    dbox(d, 10, 148, 220, 50, "entrenar_modelo.py  (manual, offline)\ncosechas rolling + ratios/diffs\n+ tuning XGBoost / LightGBM / RF", fill=BLUE, fontsize=6.9)
-    dbox(d, 10, 96, 220, 40, "modelo_prediccion.pkl\n+ top_features.csv", fill=MAGENTA, fontsize=7.2)
+    dbox(d, 10, 148, 220, 50, "entrenar_modelo.py  (manual, offline)\ncosechas + contexto de batalla\n+ binning monotono, 6 modelos (v2)", fill=BLUE, fontsize=6.9)
+    dbox(d, 10, 96, 220, 40, "modelo_prediccion.pkl\n(modelos v2) + fichas", fill=MAGENTA, fontsize=7.2)
 
     dbox(d, 250, 148, 220, 40, "vistas/prediccion.py\nload_model()  (solo inferencia)", fill=BLUE, fontsize=6.9)
     dbox(d, 250, 88, 220, 40, "make_pred_row()\n+ snapshot latest_stats", fill=BLUE, fontsize=6.9)
@@ -367,8 +368,8 @@ def diagrama_churn():
     dbox(d, 30, 258, 260, 34, "CSV crudo -> panel mensual\njugador x mes (269 jugadores x 79 meses)", fill=DARK, fontsize=6.9)
     dbox(d, 30, 200, 260, 42, "build_feature_grid()\n13 features de comportamiento\n+ target 'fuga confirmada' (2 meses sin volver)", fill=BLUE, fontsize=6.7)
     dbox(d, 30, 148, 260, 36, "Split TEMPORAL 52m train / 13m test\n(nunca aleatorio)", fill=BLUE, fontsize=6.9)
-    dbox(d, 30, 96, 260, 36, "XGBoost unico\n(200 arboles, profundidad 4)", fill=MAGENTA, fontsize=7.2)
-    dbox(d, 30, 44, 260, 36, "AUC test = 0.860 | Accuracy = 0.844\n(cache 1h, se re-entrena solo)", fill=GOLD, fontsize=6.9)
+    dbox(d, 30, 96, 260, 36, f"Metodo v2: {_gm.GANADOR_F}\n({_gm.N_FINALES_F} variables finales)", fill=MAGENTA, fontsize=7.2)
+    dbox(d, 30, 44, 260, 36, f"Gini test = {_gm.GINI_F['test']} | Gini val = {_gm.GINI_F['val']}\n(robustez: Fragil)", fill=GOLD, fontsize=6.9)
 
     darrow(d, 160, 258, 160, 242)
     darrow(d, 160, 200, 160, 184)
@@ -488,16 +489,16 @@ def build_story():
     story.append(Spacer(1, 1.2*cm))
     story.append(kpi_row([
         ("20", "Paginas del\ndashboard"), ("122", "Logros\ngamificados"),
-        ("2", "Modelos de\nMachine Learning"), ("0.86", "AUC modelo\nde fuga"),
+        ("2", "Modelos de\nMachine Learning"), (_gm.GINI_C["test"], "Gini test modelo\nde combates"),
     ]))
     story.append(Spacer(1, 1.6*cm))
     story.append(Paragraph("Arquitectura, diccionario de datos, las 20 paginas del dashboard, el sistema "
                             "de logros, y los dos modelos de Machine Learning documentados de punta a "
-                            "punta bajo metodologia CRISP-DM (con metricas reales de la ultima corrida) "
+                            "punta con el metodo v2 (con metricas reales de la ultima corrida) "
                             "- mas el pipeline completo de generacion y publicacion de clips en TikTok.",
                             styles["MetaPortada"]))
     story.append(Spacer(1, 3*cm))
-    story.append(Paragraph("Documento generado como referencia interna del proyecto - Septiembre 2026",
+    story.append(Paragraph("Documento generado como referencia interna del proyecto - Noviembre 2026",
                             styles["MetaPortada"]))
     story.append(PageBreak())
 
@@ -516,12 +517,12 @@ def build_story():
     story.append(styled_table([
         ["Modelo", "Pregunta que responde", "Metrica clave", "Como se despliega"],
         ["Prediccion de Combates", "Quien gana un enfrentamiento entre 2 jugadores?",
-         "AUC val. = 0.6597 (Random Forest)", "Modelo .pkl estatico, se reentrena a mano"],
+         f"Gini test = {_gm.GINI_C['test']} ({_gm.GANADOR_C})", "Modelo .pkl v2, se reentrena a mano"],
         ["Prediccion de Fuga (Churn)", "Que jugador activo esta por dejar de jugar?",
-         "AUC test = 0.860 (XGBoost)", "Se reentrena solo, en vivo, cada 1 hora"],
+         f"Gini test = {_gm.GINI_F['test']} ({_gm.GANADOR_F}, fragil)", "Se regenera con el historial (actualizar_todo.py)"],
     ], [4.6*cm, 6*cm, 3*cm, 2.4*cm]))
     story.append(Spacer(1, 8))
-    story.append(p("El detalle completo de ambos modelos -incluyendo el flujo CRISP-DM, todos los "
+    story.append(p("El detalle completo de ambos modelos -incluyendo el metodo v2, todos los "
                    "indicadores y el diccionario completo de variables de entrada- esta en las "
                    "secciones 1.8, 1.9 y 1.10 de este documento."))
     story.append(h2("Que cubre esta guia"))
@@ -529,7 +530,7 @@ def build_story():
         "<b>Parte 1</b> - El dashboard de Streamlit completo: arquitectura, diccionario de datos, las "
         "20 paginas agrupadas en 5 categorias (asi tambien esta organizado el menu lateral real de la "
         "app), el sistema de logros y su analisis agregado a nivel comunidad, el perfil de jugador con "
-        "exportacion a PDF, los dos modelos de ML (CRISP-DM completo) y la integracion de WhatsApp.",
+        "exportacion a PDF, los dos modelos de ML (v2) y la integracion de WhatsApp.",
         "<b>Parte 2</b> - El pipeline de automatizacion de clips para TikTok: seleccion de momentos, "
         "render con marca via ffmpeg, y publicacion automatizada con OAuth.",
         "<b>Parte 3</b> - Una guia operativa paso a paso para repetir todo el proceso de TikTok de "
@@ -934,11 +935,11 @@ def build_story():
 
     story.extend(seccion_pagina("ORGANIZADOR", GREEN, [
         ("Prediccion", "prediccion.py",
-         "Interfaz del modelo de Machine Learning de prediccion de resultados (CRISP-DM completo en "
+         "Interfaz del modelo de Machine Learning de prediccion de resultados (metodo v2 en "
          "la seccion 1.8).",
          ["Configurar Combate: elegir los dos jugadores a enfrentar.",
           "Perfiles de los Jugadores y Comparativa Directa de sus stats historicas.",
-          "Resultado de la Prediccion segun el modelo ganador (Random Forest en la ultima corrida).",
+          "Resultado de la Prediccion segun el modelo v2 ganador, que ahora tambien considera formato, tier, tipo de competencia, fase y n de batalla.",
           "Analisis SHAP: que features pesaron mas en esa prediccion puntual.",
           "Prediccion de Batallas Pendientes: corre el modelo sobre todas las pendientes a la vez."]),
         ("Pendientes", "pendientes.py",
@@ -948,14 +949,14 @@ def build_story():
           "Descarga de pendientes."]),
         ("Participacion y Retencion", "retencion.py",
          "El analisis mas 'data science' del dashboard: modela el riesgo de fuga (churn) de cada "
-         "jugador con un XGBoost propio, entrenado en vivo dentro de la misma pagina (CRISP-DM completo "
+         "jugador con el modelo de fuga v2 (data/modelo_fuga_v2.pkl) (documentado "
          "en la seccion 1.9).",
          ["Recencia: clasifica a cada jugador en 4 buckets de inactividad (Activo, Reciente, En "
           "riesgo, Inactivo).",
           "Jugadores por Mes: actividad mensual real (las pendientes sin fecha NO cuentan como actividad).",
           "Roll Rate: probabilidad de transicion entre buckets de un mes al siguiente.",
           "Vintage / Cosechas: retencion por cohorte de debut.",
-          "Ratio de Fuga simple a 1 mes, y Prediccion de Fuga Confirmada con XGBoost.",
+          "Ratio de Fuga simple a 1 mes, y Prediccion de Fuga Confirmada con el modelo v2.",
           "Watchlist de alertas: jugadores con score de riesgo alto que aun no se fueron del todo."]),
     ]))
 
@@ -1070,695 +1071,9 @@ def build_story():
     story.append(PageBreak())
 
     # ══════════════════════ 1.8 — MODELO DE COMBATES (CRISP-DM) ══════════════════════
-    story.append(h1("1.8 - Modelo de Prediccion de Combates (CRISP-DM completo)"))
-    story.append(p("El entrenamiento y la inferencia estan <b>totalmente separados</b>: uno corre a "
-                   "mano cuando hace falta (<font face='Courier'>entrenar_modelo.py</font>), el otro "
-                   "corre siempre que alguien abre la pagina de Prediccion "
-                   "(<font face='Courier'>vistas/prediccion.py</font>). Esta seccion documenta el "
-                   "pipeline completo bajo la metodologia CRISP-DM, con los numeros reales de la "
-                   "ultima corrida de entrenamiento (24-sep-2026, sobre 11.426 batallas)."))
-    story.append(diagrama_ml())
-    story.append(Paragraph("Figura 3 - Entrenamiento (offline, manual) vs. Inferencia (en vivo, dentro "
-                            "de Streamlit): el .pkl es el unico puente entre ambos.", styles["DiagCaption"]))
+    story.extend(_gm.seccion_modelos(h1, h2, p, pchico, nota, styled_table, bullets, styles['DiagCaption'], diagrama_ml))
 
-    story.append(h2("1.8.1 - Comprension del negocio"))
-    story.append(p("<b>Objetivo:</b> dado un enfrentamiento entre dos jugadores (pendiente o "
-                   "hipotetico), predecir quien tiene mas probabilidad de ganar, para alimentar la "
-                   "pagina de Prediccion (probabilidad + explicacion SHAP) y la prediccion automatica "
-                   "de todas las batallas pendientes a la vez. Es un problema de <b>clasificacion "
-                   "binaria</b>."))
-
-    story.append(h2("1.8.2 - Comprension de los datos"))
-    story.append(bullets([
-        "Fuente unica: <font face='Courier'>archivo_preuba1.csv</font> - 11.426 filas en la corrida "
-        "de referencia.",
-        "Solo se usan las batallas <b>completadas</b> (Walkover == 0) para entrenar; las pendientes "
-        "(Walkover == -1) se apartan aparte para ser predichas, nunca para entrenar.",
-        "32 tiers distintos detectados en el historico al momento de esa corrida (OU, UBERS, VGC, "
-        "LC, DOU, NAT DEX y sus variantes, formatos Random Battle, Stadium de generaciones antiguas, "
-        "etc. - el numero actual en el CSV ya subio a 35, ver 1.4; reentrenar tomaria los nuevos) - cada uno "
-        "termina siendo una feature de winrate por tier.",
-    ], space_after=6))
-
-    story.append(h2("1.8.3 - Preparacion de datos: limpieza"))
-    story.append(numlist([
-        "<b>Normalizacion defensiva</b>: <font face='Courier'>normalize_columns()</font> + "
-        "<font face='Courier'>ensure_fields()</font> tapan columnas faltantes o con nombre alternativo.",
-        "<b>Parseo de fecha</b> con <font face='Courier'>errors='coerce'</font>; las filas sin fecha "
-        "valida se descartan - pero <b>solo entre las jugadas</b>: las pendientes se separan ANTES de "
-        "este paso porque por definicion no tienen fecha.",
-        "<b>Historial por jugador</b>: cada batalla completada genera 2 filas (una por jugador) con "
-        "flags de formato, categoria (liga/torneo/ascenso/cypher), fase, Pokemon sobrevivientes/"
-        "vencidos, participacion en liga, y el bucket de repeticion del cruce (Rep, 1 a \"5 o mas\").",
-        "<b>Deduplicacion de series</b>: el contador de Rep es incremental y cronologico dentro de cada "
-        "cruce+instancia+formato, para no tratar el juego 2 de un Bo3 como si fuera una batalla nueva "
-        "sin relacion con el juego 1.",
-    ], indent=18))
-
-    story.append(h2("1.8.4 - Preparacion de datos: ingenieria de variables"))
-    story.append(bullets([
-        "<b>Cosechas temporales (rolling features)</b>: 10 ventanas de tiempo hacia atras (1, 3, 5, 7, "
-        "9, 12, 15, 18, 24 y 36 meses) calculadas por jugador y por mes - para cada ventana: numero de "
-        "batallas, winrate, meses activo, y suma/promedio de cada columna base.",
-        "<b>Features derivadas</b>: 8 pares de ventanas comparadas entre si (ej. 1 vs 3, 3 vs 12, 12 vs "
-        "36 meses) generan ratios y diferencias de winrate/actividad; mas transformaciones log1p para "
-        "las variables de conteo, que vienen muy sesgadas.",
-        "<b>Contexto de la batalla puntual</b> (no del historial): bucket de Rep de esa batalla, si es "
-        "el juego decisivo de la serie (umbral = percentil 90 de duracion historica por formato, para "
-        "no mirar el resultado final de la serie en curso y evitar fuga de informacion), y si la fase "
-        "es literalmente la gran final del torneo.",
-        "<b>Balanceo simetrico del target</b>: por cada batalla completada se arma una fila con target "
-        "aleatorio 0/1, intercambiando las features de ganador/perdedor segun corresponda - asi el "
-        "modelo nunca aprende un sesgo de \"quien aparece primero en la fila\", solo patrones reales.",
-        "<b>Total de variables generadas antes de seleccionar</b>: 1.743 columnas. Los valores faltantes "
-        "(jugador sin historial en esa ventana) se rellenan con 0.",
-    ], space_after=6))
-
-    story.append(h2("1.8.5 - Validacion de datos: split temporal (anti fuga de informacion)"))
-    story.append(p("El split de entrenamiento/validacion es <b>dinamico y temporal</b>, nunca "
-                   "aleatorio: se calcula a partir del mes mas reciente presente en los datos, "
-                   "reservando los ultimos 2 meses calendario para validacion y todo lo anterior para "
-                   "entrenar - asi el modelo nunca ve el futuro durante el entrenamiento."))
-    story.append(styled_table([
-        ["Corte", "Valor real (corrida del 24-sep-2026)"],
-        ["Entrenamiento hasta (train_end)", "202607 (julio 2026)"],
-        ["Validacion desde (val_start)", "202608 (agosto 2026 en adelante)"],
-        ["Filas de entrenamiento", "usadas para construir 1.743 features x N batallas completas"],
-        ["Fallback si no hay validacion nueva", "split aleatorio estratificado 80/20 interno"],
-    ], [6*cm, 9.4*cm]))
-    story.append(p("Antes de entrenar los modelos finales, se hace <b>seleccion de variables</b>: un "
-                   "XGBoost simple (100 arboles, profundidad 4) entrenado solo sobre el set de "
-                   "entrenamiento rankea las 1.743 variables por importancia, y se seleccionan las "
-                   "<b>15 mejores</b> (guardando el ranking completo en <font face='Courier'>"
-                   "top_features.csv</font>)."))
-
-    story.append(h2("1.8.6 - Modelado: 6 algoritmos comparados"))
-    story.append(p("Sobre las 15 variables finales se entrenan y comparan 6 configuraciones distintas "
-                   "de 3 familias de modelos:"))
-    story.append(styled_table([
-        ["Modelo", "Accuracy (val.)", "AUC (val.)", "Accuracy (CV)", "AUC (CV)"],
-        ["XGBoost", "58.50%", "0.6403", "60.06%", "0.6430"],
-        ["XGBoost (tuned)", "60.08%", "0.6539", "59.98%", "0.6417"],
-        ["LightGBM", "60.08%", "0.6540", "59.83%", "0.6424"],
-        ["LightGBM (tuned)", "60.87%", "0.6462", "59.93%", "0.6434"],
-        ["Random Forest  -  GANADOR", "61.07%", "0.6597", "60.08%", "0.6431"],
-        ["Random Forest (deep)", "60.67%", "0.6509", "60.68%", "0.6506"],
-    ], [4.6*cm, 2.8*cm, 2.4*cm, 2.6*cm, 2.4*cm], cell_colors={(5,0): GREEN, (5,1): GREEN, (5,2): GREEN}))
-    story.append(pchico("Datos reales extraidos de modelo_prediccion.pkl (ultima corrida verificada, "
-                         "24-sep-2026). El criterio de seleccion del modelo ganador es el AUC de "
-                         "validacion (holdout temporal) mas alto - las columnas de CV (validacion "
-                         "cruzada 5-fold) son informativas: notese que Random Forest (deep, no el "
-                         "ganador) es el mas alto en ambas columnas de CV - el ganador real solo domina "
-                         "el holdout temporal, que es la metrica oficial por respetar el orden "
-                         "cronologico de los datos."))
-    story.append(p("<b>Modelo ganador: Random Forest</b> (200 arboles, profundidad maxima 8, minimo 5 "
-                   "muestras por hoja) con <b>AUC de validacion = 0.6597</b> y <b>accuracy = 61.07%</b>."))
-    story.append(nota("Un AUC de ~0.64 indica una capacidad predictiva moderada -claramente mejor que "
-                       "el azar (0.50), pero lejos de ser deterministica-, algo coherente con el "
-                       "dominio: un combate 1v1 de Pokemon tiene alta variabilidad inherente (aleatoriedad "
-                       "del propio juego, matchup especifico de equipos) que ninguna feature historica "
-                       "agregada puede capturar del todo."))
-
-    story.append(h2("1.8.7 - Variables finales (las 15 que usa el modelo en produccion)"))
-    story.append(styled_table([
-        ["#", "Variable", "Importancia"],
-        ["1", "winrate_m18_g  (winrate en los ultimos 18 meses, jugador 'ganador')", "0.0157"],
-        ["2", "pokes_sob_mean_m36_p  (promedio de Pokemon sobrevivientes, ult. 36 meses, rival)", "0.0112"],
-        ["3", "winrate_m36_g  (winrate acumulado en los ultimos 36 meses, jugador)", "0.0091"],
-        ["4", "wr_rep_1_m36_p  (winrate del rival en el 1er juego (Rep=1) de una serie, ult. 36 meses)", "0.0071"],
-        ["5", "pokes_sob_mean_m12_p  (promedio de Pokemon sobrevivientes, ult. 12 meses, rival)", "0.0069"],
-        ["6", "pokes_sob_mean_m36_g  (promedio de Pokemon sobrevivientes, ult. 36 meses, jugador)", "0.0068"],
-        ["7", "pokes_sob_mean_m15_p  (promedio de Pokemon sobrevivientes, ult. 15 meses, rival)", "0.0060"],
-        ["8", "wr_rep_1_m36_g  (winrate del jugador en el 1er juego (Rep=1) de una serie, ult. 36 meses)", "0.0058"],
-        ["9", "rep_actual_mean_m24_g  (promedio del numero de juego (Rep) de la serie en que participa el jugador, ult. 24 meses)", "0.0057"],
-        ["10", "wr_rep_1_m18_p  (winrate del rival en el 1er juego (Rep=1) de una serie, ult. 18 meses)", "0.0055"],
-        ["11", "winrate_m7_p  (winrate del rival en los ultimos 7 meses)", "0.0054"],
-        ["12", "pokes_venc_sum_m12_g  (Pokemon vencidos acumulados, ult. 12 meses, jugador)", "0.0052"],
-        ["13", "pokes_sob_sum_m18_p  (suma de Pokemon sobrevivientes, ult. 18 meses, rival)", "0.0052"],
-        ["14", "wr_rep_1_m24_g  (winrate del jugador en el 1er juego (Rep=1) de una serie, ult. 24 meses)", "0.0051"],
-        ["15", "wr_tier_RANDOM SINGLES_m18_g  (winrate en tier Random Singles, 18 meses)", "0.0046"],
-    ], [1*cm, 12*cm, 2.4*cm]))
-    story.append(pchico("Sufijo _g = estadistica del jugador tratado como 'ganador' en esa fila de "
-                         "entrenamiento balanceada; _p = del jugador tratado como 'perdedor'. No implica "
-                         "que ese jugador haya ganado o perdido realmente esa batalla puntual - es solo "
-                         "la etiqueta de columna del esquema de balanceo (ver 1.8.4)."))
-    story.append(p("El patron cambio frente a corridas anteriores: ahora <b>las variables de winrate "
-                   "dominan en cantidad</b> (8 de las 15 - incluyendo winrate directo y su variante "
-                   "wr_rep_1, el winrate especifico del 1er juego de una serie), seguidas por la "
-                   "capacidad de sobrevivir con Pokemon del jugador y del rival (5 variables, entre "
-                   "promedio y suma), mas una variable de Pokemon vencidos, una del numero de juego "
-                   "(Rep) tipico de la serie, y una de tier jugado."))
-    story.append(nota("Esta tabla es la importancia del <b>XGBoost usado para seleccionar</b> las 15 "
-                       "variables entre las 1.743 candidatas (paso 1.8.5) - no es la importancia del "
-                       "modelo que finalmente queda en produccion (Random Forest). Esa segunda medicion, "
-                       "mas relevante para entender COMO decide el modelo real, esta en la seccion 1.8.8.",
-                       tipo="info"))
-
-    story.append(h2("1.8.8 - Importancia real del modelo ganador (Random Forest)"))
-    story.append(p("Analisis adicional hecho directamente sobre el <font face='Courier'>RandomForestClassifier</font> "
-                   "ya entrenado (el que realmente corre en produccion), usando su propio atributo "
-                   "<font face='Courier'>feature_importances_</font> sobre las 15 variables finales - "
-                   "a diferencia de la tabla anterior, estos 15 valores suman 1.0 entre si."))
-    story.append(styled_table([
-        ["#", "Variable", "Importancia (RF)"],
-        ["1", "pokes_sob_mean_m36_p", "8.62%"],
-        ["2", "winrate_m18_g", "8.55%"],
-        ["3", "pokes_sob_mean_m15_p", "8.37%"],
-        ["4", "winrate_m36_g", "8.36%"],
-        ["5", "pokes_sob_mean_m36_g", "8.33%"],
-        ["6", "pokes_sob_mean_m12_p", "7.54%"],
-        ["7", "wr_rep_1_m36_g", "6.37%"],
-        ["8", "wr_rep_1_m36_p", "6.31%"],
-        ["9", "rep_actual_mean_m24_g", "6.24%"],
-        ["10", "wr_rep_1_m24_g", "6.02%"],
-        ["11", "wr_rep_1_m18_p", "5.98%"],
-        ["12", "pokes_venc_sum_m12_g", "5.62%"],
-        ["13", "winrate_m7_p", "5.49%"],
-        ["14", "pokes_sob_sum_m18_p", "5.09%"],
-        ["15", "wr_tier_RANDOM SINGLES_m18_g", "3.12%"],
-    ], [1*cm, 10.4*cm, 4*cm]))
-    story.append(p("El orden cambia frente a la tabla de seleccion: <b>pokes_sob_mean_m36_p</b> "
-                   "(promedio de Pokemon sobrevivientes del rival, ult. 36 meses) sube al puesto 1 en "
-                   "importancia real del Random Forest, a pesar de haber quedado en el puesto 2 en el "
-                   "ranking de seleccion del XGBoost auxiliar (tabla 1.8.7) - pero la historia de fondo "
-                   "es la misma: <b>capacidad de sobrevivir con Pokemon + winrate reciente</b> explican "
-                   "la gran mayoria del poder predictivo - entre las top 6 variables ya se concentra "
-                   "cerca del 50% de la importancia total."))
-
-    story.append(h2("1.8.9 - Dependencia parcial (PDP) de las 15 variables"))
-    story.append(p("La Dependencia Parcial (Partial Dependence) muestra, variable por variable, como "
-                   "cambia la probabilidad promedio predicha de ganar a medida que esa variable se "
-                   "mueve de su minimo a su maximo, manteniendo todas las demas fijas en sus valores "
-                   "reales - es la forma estandar de \"abrir la caja negra\" de un modelo de ensamble "
-                   "como Random Forest, que no tiene coeficientes interpretables como una regresion."))
-    _pdp_img_path = os.path.join(BUILD, "pdp_grid.png")
-    if os.path.exists(_pdp_img_path):
-        _pdp_w = 16*cm
-        _pdp_h = _pdp_w * (656/1384)
-        story.append(RLImage(_pdp_img_path, width=_pdp_w, height=_pdp_h, hAlign='CENTER'))
-        story.append(Paragraph("Figura 3b - PDP de las 15 variables finales, ordenadas por importancia "
-                                "del Random Forest. Linea gris horizontal = 50% de probabilidad.",
-                                styles["DiagCaption"]))
-    story.append(p("Lecturas destacadas:"))
-    story.append(bullets([
-        "<b>El promedio de Pokemon sobrevivientes tiene signo opuesto segun de quien se trate</b>: las "
-        "variantes del RIVAL (pokes_sob_mean_m36_p #1, m15_p #3, m12_p #6) son CRECIENTES - a mas "
-        "Pokemon sobrevive tipicamente el rival, mayor la probabilidad de ganar del jugador, con un "
-        "salto tipo umbral bien marcado en #1 y #3 -, mientras que la variante propia "
-        "pokes_sob_mean_m36_g (#5) es DECRECIENTE. Es contraintuitivo en ambos sentidos (uno esperaria "
-        "que sobrevivir mas Pokemon, propio o rival, favorezca a quien lo hace) y sugiere que la "
-        "variable esta capturando algo distinto a \"fortaleza\" en sentido directo (posiblemente nivel/"
-        "formato de la competencia en la que ambos suelen sobrevivir mucho) - no se debe leer como una "
-        "relacion causal directa.",
-        "<b>Las dos variables de winrate directo en el top 5</b> (winrate_m18_g #2, winrate_m36_g #4) "
-        "son planas en la mayor parte del rango y CAEN de forma abrupta en el extremo mas alto - "
-        "consistente con que son pocos los jugadores con winrate historico tan alto (la cola del grid "
-        "tiene poca densidad real de datos, asi que el Random Forest extrapola con mas ruido ahi) - el "
-        "mismo patron que se viene observando en corridas anteriores con variables de winrate.",
-        "<b>Las variables wr_rep_1 (winrate en el 1er juego de una serie)</b> son mayormente crecientes "
-        "(wr_rep_1_m36_p #8, wr_rep_1_m18_p #11) o muestran un salto tipo umbral cerca del maximo "
-        "(rep_actual_mean_m24_g #9) - la excepcion es wr_rep_1_m24_g (#10), que sube, oscila y luego "
-        "CAE de forma pronunciada en el extremo final, un patron no monotonico distinto al de sus "
-        "variables hermanas y sobre el que no tenemos una explicacion de dominio firme.",
-        "<b>pokes_venc_sum_m12_g</b> (#12) muestra un pico temprano marcado seguido de una caida "
-        "sostenida - curva no monotonica tipica de una variable de conteo acumulado con cola larga, "
-        "donde ya un pequeno numero de Pokemon vencidos captura la mayor parte de la senal.",
-    ]))
-    story.append(nota("Las curvas de PDP de un Random Forest se calculan promediando sobre el dataset "
-                       "de entrenamiento y pueden ser ruidosas en los extremos donde hay pocos casos "
-                       "reales (como se ve en varios de los graficos) - se deben leer como tendencia "
-                       "general, no como una funcion exacta.", tipo="info"))
-
-    story.append(h2("1.8.10 - KS, Gini y tabla de deciles (validacion real)"))
-    story.append(p("Evaluacion adicional del modelo, calculada sobre el set de validacion real "
-                   "(los ultimos meses reservados en el split temporal - ver 1.8.5), con las metricas "
-                   "estandar de scorecards de riesgo crediticio adaptadas a este contexto."))
-    story.append(styled_table([
-        ["Metrica", "Valor", "Lectura"],
-        ["n (validacion)", "506", "Casos reales usados para esta evaluacion."],
-        ["AUC", "0.6622", "Muy cercano al 0.6597 reportado en el entrenamiento original (seccion "
-         "1.8.6), pero no identico: esta cifra sale de reconstruir el pipeline completo de forma "
-         "independiente (mismo modelo Random Forest ya entrenado, mismo split temporal) en vez de "
-         "leer el valor persistido en el .pkl - la pequena diferencia (+0.0025) es coherente con "
-         "no-determinismo de punto flotante en la reconstruccion del dataset (balanceo simetrico "
-         "ganador/perdedor), no con un cambio real de desempeno."],
-        ["Gini", "0.3245", "= 2 x AUC - 1. Escala 0 a 1; valores de scoring de riesgo tipicos rondan "
-         "0.3-0.6, asi que este modelo queda en el piso de ese rango - discrimina, pero con margen "
-         "moderado."],
-        ["KS (Kolmogorov-Smirnov)", "0.2609", "Maxima separacion entre las curvas acumuladas de "
-         "ganadores y perdedores. Ocurre en el umbral de probabilidad 0.488."],
-    ], [4.2*cm, 2.6*cm, 8.6*cm]))
-    story.append(p("<b>Tabla de deciles</b>: se ordenan las 287 batallas pendientes actuales por "
-                   "probabilidad de victoria predicha, se agrupan en deciles (grupos de tamano "
-                   "similar), y se calcula un <b>score</b> por caso: <font face='Courier'>score = "
-                   "1000 x (1 - probabilidad)</font> - a mayor probabilidad de ganar, MENOR score "
-                   "(convencion tipica de scorecards, donde score bajo = mejor)."))
-    story.append(styled_table([
-        ["Decil", "n", "Proba. prom.", "Score prom.", "Rango de score", "Odds (decimal)"],
-        ["1", "29", "69.3%", "307", "233 - 355", "2.26"],
-        ["2", "29", "61.1%", "389", "357 - 413", "1.57"],
-        ["3", "29", "55.6%", "444", "415 - 490", "1.25"],
-        ["4", "29", "48.4%", "516", "492 - 532", "0.94"],
-        ["5", "84", "46.1%", "539", "536 - 539", "0.86"],
-        ["6", "1", "46.0%", "540", "540 - 540", "0.85"],
-        ["7", "29", "44.1%", "559", "542 - 570", "0.79"],
-        ["8", "28", "41.7%", "583", "572 - 609", "0.72"],
-        ["9", "29", "32.6%", "674", "610 - 811", "0.48"],
-    ], [1.6*cm, 1.4*cm, 2.4*cm, 2.4*cm, 3.2*cm, 3*cm]))
-    story.append(nota("Salen 9 deciles en vez de 10 porque hay probabilidades repetidas (el caso mas "
-                       "extremo es el decil 5, con 84 casos identicos en 46.1% y el decil 6 con un "
-                       "unico caso separado en 46.0% - jugadores sin historial suficiente que el "
-                       "modelo trata de forma casi identica por el fillna(0) de 1.8.4) - al agrupar "
-                       "por probabilidad unica en vez de por percentil fijo, esos empates colapsan "
-                       "varios deciles en uno solo. El decil 1 (menor score, mayor probabilidad real "
-                       "de ganar) tiene 29 casos con 69.3% de probabilidad promedio; el decil 9 (peor "
-                       "score) cae a 32.6%."))
-
-    story.append(h2("1.8.11 - Despliegue"))
-    story.append(p("El resultado del entrenamiento se serializa completo en "
-                   "<font face='Courier'>modelo_prediccion.pkl</font>: los 6 modelos entrenados, sus "
-                   "resultados de validacion (ahora incluyendo AUC de validacion cruzada, ver 1.8.6), "
-                   "las 15 variables finales y las 1.743 originales, los tiers detectados, un snapshot "
-                   "liviano de la ultima cosecha por jugador (<font face='Courier'>latest_stats</font>, "
-                   "usado para predicciones nuevas sin recalcular todo), las batallas pendientes ya "
-                   "pre-calculadas, y la fecha/hash de la corrida. "
-                   "<font face='Courier'>vistas/prediccion.py</font> unicamente lee este archivo."))
-    story.append(nota("Cualquier feature nueva agregada al entrenamiento en "
-                       "<font face='Courier'>entrenar_modelo.py</font> necesita tambien un default/"
-                       "lookup correspondiente en <font face='Courier'>make_pred_row</font> (el camino "
-                       "de prediccion manual de un solo enfrentamiento), o las predicciones manuales "
-                       "caen silenciosamente a 0. Y cambiar el feature engineering no tiene efecto hasta "
-                       "que alguien vuelve a correr el script y se redepliega el .pkl junto con la app."))
-    story.append(nota("<b>Hallazgo corregido:</b> <font face='Courier'>vistas/prediccion.py</font> "
-                       "preseleccionaba el modelo por defecto del selector de la UI ordenando por "
-                       "<font face='Courier'>cv_accuracy</font> - un criterio DISTINTO al que este "
-                       "script usa para declarar el 'ganador' (<font face='Courier'>val_auc</font>, "
-                       "ver 1.8.6). En corridas reales esto llego a preseleccionar por defecto un "
-                       "modelo distinto al documentado como ganador. Se corrigio: ahora el .pkl "
-                       "persiste explicitamente el nombre del ganador "
-                       "(<font face='Courier'>cache['best']</font>) y la UI lo usa directo.",
-                       tipo="info"))
-    story.append(nota("<b>Reproducibilidad:</b> se observo que reentrenar el pipeline completo sobre "
-                       "el mismo CSV fuente en distintos momentos del dia puede dar un AUC y un "
-                       "conjunto de 15 variables finales ligeramente distintos (la causa mas probable "
-                       "es no-determinismo de punto flotante en el entrenamiento multi-hilo de "
-                       "XGBoost, usado para el ranking de seleccion, al desempatar variables con "
-                       "importancia casi identica cerca del corte de las 15 mejores). No invalida el "
-                       "modelo -el desempeno se mantiene en el mismo rango entre corridas-, pero "
-                       "significa que las tablas de esta seccion reflejan la corrida mas reciente "
-                       "verificada, no un valor fijo para siempre.", tipo="warn"))
-
-    story.append(PageBreak())
-
-    # ══════════════════════ 1.9 — MODELO DE CHURN (CRISP-DM) ══════════════════════
-    story.append(h1("1.9 - Modelo de Prediccion de Fuga / Churn (CRISP-DM completo)"))
-    story.append(p("A diferencia del modelo de combates, este vive <b>dentro</b> de la pagina de "
-                   "Retencion (<font face='Courier'>vistas/retencion.py</font>) y se reentrena solo, en "
-                   "vivo, cada vez que cambian los datos (cache de 1 hora) - no hay un .pkl fijo que "
-                   "redesplegar a mano. Los numeros de esta seccion son de una corrida real ejecutada "
-                   "contra los datos actuales del proyecto."))
-    story.append(diagrama_churn())
-    story.append(Paragraph("Figura 4 - Del panel mensual jugador x mes al Watchlist de alertas: "
-                            "pipeline completo del modelo de fuga.", styles["DiagCaption"]))
-
-    story.append(h2("1.9.1 - Comprension del negocio"))
-    story.append(p("<b>Objetivo:</b> detectar, entre los jugadores activos hoy, cuales tienen mayor "
-                   "probabilidad de dejar de participar en los proximos meses -antes de que efectivamente "
-                   "falten- para poder intervenir a tiempo (recordatorios, contacto directo via la "
-                   "pagina de Pendientes/WhatsApp). Es tambien un problema de <b>clasificacion "
-                   "binaria</b>, pero a nivel jugador-mes, no a nivel batalla."))
-
-    story.append(h2("1.9.2 - Comprension de los datos"))
-    story.append(p("La unidad de analisis cambia por completo respecto al modelo de combates: en vez "
-                   "de una fila por batalla, es <b>una fila por jugador y por mes</b> (panel de "
-                   "actividad). En la corrida real: <b>269 jugadores unicos x 79 meses</b> de historia "
-                   "= 8.390 filas en la grilla de features final."))
-    story.append(bullets([
-        "Las partidas <b>pendientes</b> (Walkover == -1, sin fecha jugada) SI cuentan como senal de "
-        "actividad del mes actual -el jugador esta enrolado en una llave/jornada en curso- aunque no "
-        "sumen a partidas jugadas ni a winrate.",
-        "Se excluyen nombres placeholder del CSV que no son jugadores reales (\"walk over (w.o)\", "
-        "\"pendiente\") antes de construir el panel.",
-    ], space_after=6))
-
-    story.append(h2("1.9.3 - Preparacion de datos: limpieza y grilla completa"))
-    story.append(numlist([
-        "Se separan partidas completadas (con fecha) de pendientes (sin fecha) - igual principio que "
-        "en el modelo de combates.",
-        "Se reconstruye un registro <b>largo</b> jugador-partida (cada batalla aporta una fila por "
-        "cada uno de los 2 jugadores), luego se agrega a jugador-mes: partidas, victorias, walkovers.",
-        "Se rellena una <b>grilla completa</b> jugador x mes con reindexado (fill 0) desde el primer "
-        "mes de actividad de cada jugador -asi los meses sin actividad quedan explicitos en 0, no "
-        "ausentes, lo cual es indispensable para que las ventanas rolling (last3, last6, etc.) sean "
-        "correctas.",
-        "Se define \"activo\" ese mes = jugo una partida O tiene una pendiente asignada.",
-    ], indent=18))
-
-    story.append(h2("1.9.4 - Ingenieria de variables (13 features finales)"))
-    story.append(styled_table([
-        ["Variable", "Que mide"],
-        ["tenure_meses", "Antiguedad: meses desde la primera partida del jugador."],
-        ["partidas_acum / meses_activos_acum", "Partidas y meses activos acumulados en toda su historia."],
-        ["winrate_acum", "Winrate historico completo."],
-        ["partidas_last3 / partidas_last6", "Partidas jugadas en los ultimos 3 y 6 meses."],
-        ["winrate_last3", "Winrate en los ultimos 3 meses."],
-        ["activos_last6 / activos_last12", "Cuantos de los ultimos 6 y 12 meses estuvo activo."],
-        ["walkover_rate_last6", "% de sus partidas recientes que fueron walkover."],
-        ["racha_actual", "Meses consecutivos activo, contando hacia atras desde el mes actual."],
-        ["tendencia", "Partidas ultimos 3 meses menos partidas de los 3 anteriores a esos."],
-        ["gap_ratio", "Meses activos / antiguedad total - que tan consistente fue desde que debuto."],
-    ], [4.6*cm, 11.4*cm]))
-    story.append(h3("El target: \"fuga confirmada\", no la primera ausencia"))
-    story.append(p("El horizonte de fuga se fijo en <b>2 meses</b> de ausencia sostenida, calibrado "
-                   "empiricamente con el propio analisis de Roll Rate (ver 1.9.6): la probabilidad de "
-                   "volver a jugar el mes siguiente desde el bucket \"Reciente\" (1-2 meses ausente) es "
-                   "todavia ~39%, pero se desploma a ~12% al llegar a \"En riesgo\" (3+ meses). "
-                   "Etiquetar la primera ausencia como fuga daria una falsa alarma en unos 4 de cada 10 "
-                   "casos, asi que el target exige ausencia sostenida."))
-
-    story.append(h2("1.9.5 - Validacion de datos: split temporal (52 vs. 13 meses)"))
-    story.append(p("Igual principio anti-fuga-de-informacion que el modelo de combates: se ordenan los "
-                   "meses calendario y el <b>ultimo ~20%</b> se aparta como test, nunca al azar."))
-    story.append(styled_table([
-        ["Corte (corrida real, datos actuales)", "Valor"],
-        ["Meses de entrenamiento", "52"],
-        ["Meses de test", "13"],
-        ["Filas de entrenamiento (n_train)", "1.733"],
-        ["Filas de test (n_test)", "904"],
-        ["Tasa de fuga en entrenamiento", "18.0%"],
-        ["Tasa de fuga en test", "16.8%"],
-    ], [8*cm, 7.4*cm]))
-
-    story.append(h2("1.9.6 - Modelado"))
-    story.append(p("A diferencia del modelo de combates (6 algoritmos comparados), aca se entrena "
-                   "<b>un unico modelo</b>: XGBoost (200 arboles, profundidad 4, learning rate 0.05, "
-                   "subsample y colsample en 0.8), cacheado por hash de los datos para no reentrenar "
-                   "en cada clic."))
-    story.append(nota("<b>Actualizacion:</b> se agrego validacion cruzada real a este modelo (antes "
-                       "solo tenia el holdout temporal de abajo) - "
-                       "<font face='Courier'>cross_val_score(model, X_train, y_train, cv=5, "
-                       "scoring='roc_auc')</font> corre ahora dentro de "
-                       "<font face='Courier'>train_churn_model()</font> y se muestra en la UI de "
-                       "Retencion junto al AUC de siempre. Ver 1.9.7.", tipo="info"))
-
-    story.append(h2("1.9.7 - Indicadores del modelo (corrida real)"))
-    story.append(styled_table([
-        ["Metrica", "Valor", "Lectura"],
-        ["AUC (test, holdout temporal)", "0.860", "Muy buena capacidad de discriminacion. Metrica "
-         "principal: respeta el orden cronologico de los datos."],
-        ["AUC (CV 5-fold)", "0.786", "Verificacion adicional, agregada en esta actualizacion - mas "
-         "baja que el holdout porque el 5-fold mezcla datos de distintas epocas dentro de cada fold. "
-         "No reemplaza al holdout como metrica principal."],
-        ["Accuracy (test)", "0.844", "84.4% de las clasificaciones fueron correctas."],
-        ["n_train / n_test", "1.733 / 904", "Split temporal, nunca aleatorio."],
-        ["Tasa de fuga real (test)", "16.8%", "1 de cada 6 jugadores activos termina en fuga confirmada."],
-    ], [3.6*cm, 3.2*cm, 8.6*cm], cell_colors={(1,0): GREEN, (1,1): GREEN, (1,2): GREEN}))
-    story.append(nota("El AUC de este modelo (0.860) es sensiblemente mas alto que el del modelo de "
-                       "combates. Tiene sentido: la desercion de un jugador deja un rastro "
-                       "conductual mucho mas fuerte y consistente en el tiempo (frecuencia decreciente, "
-                       "rachas, tasa de walkovers) que el resultado de una sola batalla, que depende de "
-                       "factores puntuales (equipo, suerte, dia)."))
-
-    story.append(h2("1.9.8 - Variables mas importantes (ranking real)"))
-    story.append(styled_table([
-        ["#", "Variable", "Importancia"],
-        ["1", "partidas_last3", "15.1%"],
-        ["2", "racha_actual", "10.1%"],
-        ["3", "partidas_last6", "9.9%"],
-        ["4", "partidas_acum", "7.3%"],
-        ["5", "activos_last12", "7.0%"],
-        ["6", "activos_last6", "6.7%"],
-        ["7", "winrate_last3", "6.6%"],
-        ["8", "walkover_rate_last6", "6.6%"],
-        ["9", "tendencia", "6.5%"],
-        ["10", "meses_activos_acum", "6.5%"],
-        ["11", "winrate_acum", "6.0%"],
-        ["12", "tenure_meses", "5.9%"],
-        ["13", "gap_ratio", "5.8%"],
-    ], [1*cm, 8*cm, 6.4*cm]))
-    story.append(p("La actividad reciente (partidas de los ultimos 3 y 6 meses, y la racha actual de "
-                   "meses consecutivos jugando) domina el modelo por lejos - sumadas, esas 3 variables "
-                   "explican mas de un tercio de la importancia total. El winrate y la antiguedad pesan, "
-                   "pero mucho menos que el simple hecho de seguir apareciendo a jugar."))
-
-    story.append(h2("1.9.9 - Outputs de negocio (corrida real, septiembre 2026)"))
-    story.append(p("<b>Semaforo de riesgo</b> - clasifica a cada jugador activo hoy segun su "
-                   "probabilidad de fuga en los proximos 2 meses:"))
-    story.append(styled_table([
-        ["Nivel de riesgo", "Umbral", "Jugadores (de 94 activos evaluados)"],
-        ["Alto", ">= 60% de probabilidad", "5"],
-        ["Medio", "30% - 59%", "8"],
-        ["Bajo", "< 30%", "81"],
-    ], [4*cm, 5.4*cm, 6*cm], cell_colors={(1,0): RED, (2,0): ORANGE, (3,0): GREEN}))
-
-    story.append(p("<b>Roll Rate</b> - matriz de transicion real entre estados de recencia (probabilidad "
-                   "de pasar de un bucket a otro el mes siguiente):"))
-    story.append(styled_table([
-        ["Desde \\ Hacia", "Activo", "Reciente", "En riesgo", "Inactivo"],
-        ["Activo", "69.0%", "31.0%", "0.0%", "0.0%"],
-        ["Reciente", "39.3%", "36.0%", "24.7%", "0.0%"],
-        ["En riesgo", "12.0%", "0.0%", "62.7%", "25.3%"],
-        ["Inactivo", "1.8%", "0.0%", "0.0%", "98.2%"],
-    ], [3.4*cm, 3*cm, 3*cm, 3*cm, 3*cm]))
-    story.append(pchico("Lectura: un jugador \"Reciente\" (1-2 meses sin jugar) todavia tiene 39.3% de "
-                         "chance de volver a estar Activo el mes siguiente; una vez que cruza a \"En "
-                         "riesgo\" (3-5 meses) esa chance de recuperacion cae a 12.0%, y el estado "
-                         "\"Inactivo\" es practicamente irreversible (98.2% de probabilidad de seguir "
-                         "inactivo)."))
-
-    story.append(p("<b>Vintage / Cosechas</b> - retencion segun antiguedad, sin importar cuando debuto "
-                   "cada jugador: cae de <b>100% a 33.2%</b> ya en el primer mes de vida, y luego se "
-                   "estabiliza entre 25% y 31% hasta el mes 12. El punto critico de fuga esta al "
-                   "principio, no despues de meses jugando."))
-
-    story.append(p("<b>Watchlist compuesta</b> (modelo + Roll Rate combinados) - corrida real: "
-                   "<b>126 alertas totales</b>:"))
-    story.append(styled_table([
-        ["Tipo de alerta", "Cantidad"],
-        ["Activo con riesgo de fuga proxima (modelo XGBoost)", "94"],
-        ["Ya ausente 3-5 meses - ultima ventana de recuperacion", "18"],
-        ["Ya ausente 1-2 meses - todavia recuperable", "14"],
-    ], [10.4*cm, 5*cm]))
-
-    story.append(PageBreak())
-
-    story.append(h2("1.9.10 - Dependencia parcial (PDP) de las 13 variables"))
-    story.append(p("Mismo analisis de interpretabilidad que se hizo para el modelo de combates "
-                   "(seccion 1.8.9), aplicado ahora al modelo de fuga: como cambia la probabilidad "
-                   "promedio de fuga a medida que se mueve una sola variable, dejando las demas "
-                   "fijas en sus valores reales."))
-    _pdp_fuga_path = os.path.join(BUILD, "pdp_grid_fuga.png")
-    if os.path.exists(_pdp_fuga_path):
-        _pf_w = 16*cm
-        _pf_h = _pf_w * (656/1384)
-        story.append(RLImage(_pdp_fuga_path, width=_pf_w, height=_pf_h, hAlign='CENTER'))
-        story.append(Paragraph("Figura 4b - PDP de las 13 variables del modelo de fuga, ordenadas por "
-                                "importancia real del XGBoost.", styles["DiagCaption"]))
-    story.append(p("A diferencia del modelo de combates (curvas bastante ruidosas), ac\u00e1 la mayoria "
-                   "de las curvas son mucho mas limpias y monotonicas - consistente con el AUC mucho "
-                   "mas alto de este modelo:"))
-    story.append(bullets([
-        "<b>partidas_last3</b> (#1, la variable mas importante) es fuertemente DECRECIENTE: jugar "
-        "aunque sea una partida mas en los ultimos 3 meses baja mucho la probabilidad de fuga - la "
-        "caida mas pronunciada de las 13 curvas.",
-        "<b>racha_actual</b> (#2) tiene un efecto de \"salto\": pasar de 0 a 1 mes de racha activa "
-        "corta el riesgo de fuga a la mitad de un salto; de ahi en mas, sumar mas meses de racha "
-        "aporta poco extra.",
-        "<b>walkover_rate_last6</b> (#8) es la contracara: claramente CRECIENTE - a mas walkovers "
-        "recientes, mayor probabilidad de fuga. Es la unica variable de \"falta de compromiso\" "
-        "directo entre las top 10, y el modelo la usa de forma coherente con la intuicion.",
-        "El patron general: <b>el modelo de fuga aprendio relaciones mucho mas simples y directas</b> "
-        "que el de combates - la mayoria de sus variables mas importantes son practicamente "
-        "monotonicas, lo que ayuda a explicar por que discrimina tanto mejor (AUC 0.86 vs 0.66).",
-    ]))
-
-    story.append(h2("1.9.11 - KS y Gini (detalle completo)"))
-    story.append(p("Version ampliada de la metrica ya reportada en 1.9.7, con el detalle de cada "
-                   "decil de la curva KS (necesario para saber EN QUE punto de corte se da la maxima "
-                   "separacion entre jugadores que se van y jugadores que se quedan)."))
-    story.append(styled_table([
-        ["Metrica", "Valor", "Lectura"],
-        ["n (test)", "904", "Casos reales usados para esta evaluacion."],
-        ["AUC", "0.8604", "Identico al 0.860 ya reportado en 1.9.7 (misma corrida, mas decimales)."],
-        ["Gini", "0.7209", "= 2 x AUC - 1. Mas del doble del Gini del modelo de combates (0.32) - "
-         "discriminacion fuerte, propia de un problema con senal de comportamiento clara."],
-        ["AUC (CV 5-fold)", "0.786", "Verificacion adicional agregada en esta actualizacion - mas "
-         "baja que el holdout temporal, ver nota en 1.9.6."],
-        ["KS (Kolmogorov-Smirnov)", "0.5904", "Mas del doble del KS del modelo de combates (0.261). "
-         "Ocurre en el umbral de probabilidad 0.068 - muy bajo, porque la fuga es un evento poco "
-         "frecuente (~17% de la muestra) y el modelo ya separa bien desde probabilidades chicas."],
-    ], [4.2*cm, 2.6*cm, 8.6*cm]))
-    story.append(nota("Un KS de ~0.59 es considerado MUY BUENO para estandares de scoring de riesgo "
-                       "(la regla practica habitual: KS < 0.20 modelo debil, 0.20-0.40 aceptable, "
-                       "0.40-0.60 bueno, > 0.60 sospechosamente alto / posible fuga de informacion). "
-                       "Este modelo esta en el techo del rango \"bueno\" - conviene vigilar que no "
-                       "haya leakage temporal si en el futuro el numero sigue subiendo.", tipo="info"))
-
-    story.append(h2("1.9.12 - Tabla de deciles / score de riesgo (jugadores activos hoy)"))
-    story.append(p("Igual logica que la tabla de deciles del modelo de combates (1.8.10), pero "
-                   "aplicada a los <b>94 jugadores activos en el mes actual</b> "
-                   "(septiembre 2026), ordenados de mayor a menor riesgo de fuga. "
-                   "<font face='Courier'>score = 1000 x (1 - probabilidad_de_fuga)</font> - en este "
-                   "caso, <b>score BAJO = jugador de ALTO riesgo</b> (probabilidad de fuga alta). "
-                   "Odds = probabilidad de fuga / (1 - probabilidad de fuga)."))
-    story.append(styled_table([
-        ["Decil", "n", "Proba. fuga prom.", "Score prom.", "Rango de score", "Odds (decimal)"],
-        ["1 (mas riesgo)", "9", "62.7%", "373", "96 - 522", "1.68"],
-        ["2", "9", "31.0%", "690", "607 - 733", "0.45"],
-        ["3", "10", "20.8%", "792", "749 - 840", "0.26"],
-        ["4", "9", "10.3%", "897", "847 - 923", "0.11"],
-        ["5", "10", "5.1%", "949", "932 - 963", "0.05"],
-        ["6", "9", "3.0%", "970", "963 - 975", "0.03"],
-        ["7", "9", "2.1%", "979", "975 - 982", "0.02"],
-        ["8", "10", "1.3%", "987", "984 - 990", "0.01"],
-        ["9", "9", "0.9%", "991", "990 - 993", "0.01"],
-        ["10 (menos riesgo)", "10", "0.5%", "995", "993 - 998", "0.01"],
-    ], [2.6*cm, 1*cm, 2.6*cm, 2.2*cm, 3*cm, 2.6*cm]))
-    story.append(p("El contraste con el decil 1 es marcado: los <b>9 jugadores del decil 1</b> "
-                   "concentran una probabilidad promedio de fuga de <b>62.7%</b> (hasta 90.4% en el "
-                   "peor caso), mientras que <b>52 de los 94 jugadores activos</b> (mas de la mitad) "
-                   "tienen una probabilidad por debajo del 5% - a diferencia del modelo de combates, "
-                   "ac\u00e1 la cola de riesgo esta clarisimamente identificada y concentrada en un grupo "
-                   "chico y accionable."))
-
-    story.append(PageBreak())
-
-    story.append(h1("Comparacion entre los dos modelos"))
-    story.append(styled_table([
-        ["", "Prediccion de Combates", "Prediccion de Fuga (Churn)"],
-        ["Unidad de analisis", "1 fila = 1 batalla", "1 fila = 1 jugador-mes"],
-        ["Algoritmos comparados", "6 (XGBoost, LightGBM, Random Forest x2 c/u)", "1 (solo XGBoost)"],
-        ["Variables finales", "15 de 1.743 generadas", "13, fijas de origen"],
-        ["Split", "Temporal (ult. 2 meses = validacion)", "Temporal (ult. ~20% de meses = test)"],
-        ["Validacion cruzada", "Si - 5-fold, AUC-CV 0.6431", "Si - 5-fold, AUC-CV 0.786"],
-        ["Mejor AUC (holdout, oficial del .pkl)", "0.6597", "0.8604"],
-        ["Gini / KS (recalculados en 1.8.10 / 1.9.11)", "0.3245 / 0.2609", "0.7209 / 0.5904"],
-        ["Despliegue", ".pkl estatico, reentrenar es manual", "Se reentrena solo cada 1 hora (cache)"],
-        ["Por que la diferencia de AUC/Gini/KS", "El resultado de una batalla puntual tiene mucha "
-         "varianza propia del juego, y sus 15 PDP salen ruidosas", "La desercion deja un patron de "
-         "comportamiento mucho mas estable, y sus PDP salen mucho mas limpias/monotonicas (ver 1.8.9 y 1.9.10)"],
-    ], [3.6*cm, 6*cm, 5.8*cm]))
-
-    story.append(PageBreak())
-
-    # ══════════════════ 1.10 — DICCIONARIO COMPLETO DE VARIABLES (AMBOS MODELOS) ══════════════════
-    story.append(h1("1.10 - Diccionario completo de variables de los modelos de ML"))
-    story.append(p("Esta seccion documenta el 100% de las senales de entrada de ambos modelos: no "
-                   "solo las que terminaron seleccionadas para produccion (secciones 1.8.7 y 1.9.8), "
-                   "sino <b>todas</b> las variables candidatas y la regla exacta con la que se "
-                   "generan, verificada contra el contenido real de "
-                   "<font face='Courier'>modelo_prediccion.pkl</font>."))
-
-    story.append(h2("1.10.1 - Modelo de Prediccion de Combates"))
-    story.append(p("El modelo de combates NO recibe columnas del CSV directamente: primero las "
-                   "reduce a <b>20 columnas base de comportamiento</b> por batalla, y luego las "
-                   "replica automaticamente contra <b>10 ventanas de tiempo</b>, <b>32 tiers</b> y "
-                   "<b>5 buckets de repeticion de cruce</b>. Esa combinatoria es lo que genera las "
-                   "870 variables por jugador-mes, que despues se duplican para ambos lados del "
-                   "enfrentamiento (+3 de contexto) hasta llegar a las 1.743 candidatas finales."))
-
-    story.append(h3("A. Las 20 columnas base de comportamiento (antes de expandir por ventana)"))
-    story.append(styled_table([
-        ["Columna base", "Tipo", "Que mide"],
-        ["fmt_singles / fmt_dobles / fmt_vgc", "Dummy 0/1", "Formato jugado en esa batalla."],
-        ["cat_liga / cat_torneo / cat_ascenso / cat_cypher", "Dummy 0/1", "Categoria de la competencia."],
-        ["fase_elim / fase_grupos / fase_jornadas / fase_rondas", "Dummy 0/1", "Fase de la competencia."],
-        ["pokes_sob", "Entero 0-6", "Pokemon propios sobrevivientes en esa batalla."],
-        ["pokes_venc", "Entero 0-6", "Pokemon propios vencidos por el rival en esa batalla."],
-        ["participo_liga", "Dummy 0/1", "Jugo alguna de las 5 ligas estandar (PMS/PSS/PES/PJS/PLS)."],
-        ["rep_actual", "Entero 1-5", "Bucket de repeticion del cruce (1o, 2o... 5o+ juego de la serie)."],
-        ["liga_pms / liga_pss / liga_pes / liga_pjs / liga_pls", "Dummy 0/1", "Jugo esa liga especifica."],
-    ], [5.4*cm, 2.6*cm, 8*cm]))
-
-    story.append(h3("B. Los 32 tiers detectados (una winrate por tier, por ventana)"))
-    story.append(p("BABY RANDOM SINGLES, BSS, BSS CHAMPIONS, CHAMPIONS, DOBLES LC, DOU, DUBERS, "
-                   "Free For all, Free For all Randoms, LC, LEYENDAS Z-A OU, METRONOMO, MONOTYPE "
-                   "RANDOM BATTLE, MultiRandomBattle, NAT DEX, NAT DEX DOBLES, NAT DEX DUBERS, NAT "
-                   "DEX MONOTYPE, NAT DEX UBERS, NAT DEX UBERS UU, ORRE COLOSSEUM, OU, RANDBATS "
-                   "CHAMPIONS, RANDOM DOBLES CHAMPIONS, RANDOM DOUBLES, RANDOM SINGLES, STADIUM OU "
-                   "GEN 1, STADIUM OU GEN 2, TRADEMARKED, UBERS, VGC, VGC 2010."))
-
-    story.append(h3("C. Los 5 buckets de repeticion, y las 10 ventanas de tiempo"))
-    story.append(styled_table([
-        ["Dimension", "Valores"],
-        ["Buckets de Rep (wr_rep_*)", "1, 2, 3, 4, 5 (\"5\" = quinto juego de la serie o mas)."],
-        ["Ventanas temporales (sufijo _m{N})", "1, 3, 5, 7, 9, 12, 15, 18, 24 y 36 meses hacia atras."],
-    ], [5*cm, 11*cm]))
-
-    story.append(h3("D. Gramatica de generacion de nombres (870 columnas por jugador-mes, verificado)"))
-    story.append(p("Cada una de las 10 ventanas produce, para cada jugador y cada mes, este set fijo "
-                   "de columnas (conteo real extraido de <font face='Courier'>latest_stats</font>):"))
-    story.append(styled_table([
-        ["Patron de nombre", "Ejemplo real", "Cuantas produce", "Que es"],
-        ["n_batallas_m{N}", "n_batallas_m1", "10  (1 x 10 ventanas)", "Cantidad de batallas en esa ventana."],
-        ["winrate_m{N}", "winrate_m1", "10  (1 x 10 ventanas)", "Winrate en esa ventana."],
-        ["meses_activo_m{N}", "meses_activo_m1", "10  (1 x 10 ventanas)", "Meses con actividad en esa ventana."],
-        ["{base}_sum_m{N} / _mean_m{N}", "fmt_singles_sum_m1", "400  (20 base x 2 stats x 10 ventanas)", "Suma y promedio de cada una de las 20 columnas base."],
-        ["wr_tier_{TIER}_m{N}", "wr_tier_OU_m1", "320  (32 tiers x 10 ventanas)", "Winrate en ese tier especifico."],
-        ["wr_rep_{BUCKET}_m{N}", "wr_rep_1_m1", "50  (5 buckets x 10 ventanas)", "Winrate segun el numero de juego de la serie."],
-        ["wr_ratio / wr_diff _m{N1}_vs_m{N2}", "wr_ratio_m1_vs_m3", "16  (8 pares x 2)", "Comparacion de winrate entre 2 ventanas."],
-        ["nb_ratio / nb_diff _m{N1}_vs_m{N2}", "nb_ratio_m1_vs_m3", "16  (8 pares x 2)", "Comparacion de cantidad de batallas entre 2 ventanas."],
-        ["ma_ratio_m{N1}_vs_m{N2}", "ma_ratio_m1_vs_m3", "8  (8 pares)", "Comparacion de meses activo entre 2 ventanas."],
-        ["log_n_batallas_m{N} / log_meses_activo_m{N}", "log_n_batallas_m1", "20  (2 x 10 ventanas)", "Transformacion log1p (variables de conteo sesgadas)."],
-        ["log1p_wr_winrate_m{N}", "log1p_wr_winrate_m1", "10  (1 x 10 ventanas)", "Transformacion log1p del winrate."],
-    ], [5.2*cm, 3.2*cm, 3.6*cm, 4*cm]))
-    story.append(pchico("Suma verificada: 10+10+10+400+320+50+16+16+8+20+10 = 870 columnas por "
-                         "jugador-mes - coincide exacto con las 870 columnas reales de "
-                         "latest_stats (872 menos las columnas identificadoras jugador/ym)."))
-
-    story.append(h3("E. Las 3 columnas de contexto de la batalla puntual (no dependen del historial)"))
-    story.append(styled_table([
-        ["Columna", "Tipo", "Que mide"],
-        ["ctx_rep_bucket", "Entero 1-5", "Bucket de repeticion de ESTA batalla (no del historial)."],
-        ["ctx_es_decisivo", "Dummy 0/1", "Si esta batalla alcanza la duracion tipica (percentil 90) de "
-         "una serie de ese formato - ej. juego 3 de un Bo3."],
-        ["ctx_es_final_torneo", "Dummy 0/1", "Si la fase es literalmente la gran final del torneo."],
-    ], [3.6*cm, 2.4*cm, 10*cm]))
-
-    story.append(nota("Total real de variables candidatas al modelo: <b>870 (por jugador-mes) x 2 "
-                       "lados del enfrentamiento (_g / _p) + 3 de contexto = 1.743</b>. De esas "
-                       "1.743, XGBoost selecciona las <b>15 mejores por importancia</b> para el "
-                       "modelo de produccion (tabla completa en la seccion 1.8.7)."))
-
-    story.append(PageBreak())
-
-    story.append(h2("1.10.2 - Modelo de Prediccion de Fuga (Churn)"))
-    story.append(p("A diferencia del modelo de combates, este NO expande sus variables por ventanas "
-                   "combinatorias - nace con un set fijo y acotado de <b>13 variables</b>, todas "
-                   "calculadas directamente sobre el panel jugador-mes. Estas son las 13, completas, "
-                   "sin recorte:"))
-    story.append(styled_table([
-        ["Variable", "Tipo / Rango", "Formula de calculo", "Que mide (negocio)"],
-        ["tenure_meses", "Entero >= 1", "Contador acumulado de meses desde la 1a partida.",
-         "Antiguedad del jugador en la comunidad."],
-        ["partidas_acum", "Entero >= 0", "Suma acumulada (cumsum) de partidas jugadas por mes.",
-         "Volumen total de partidas en toda su historia."],
-        ["meses_activos_acum", "Entero >= 0", "Suma acumulada del flag 'activo' mes a mes.",
-         "Cuantos meses distintos estuvo activo en total."],
-        ["winrate_acum", "Decimal 0-1", "victorias_acum / partidas_acum.",
-         "Winrate historico completo."],
-        ["partidas_last3", "Entero >= 0", "Suma movil (rolling) de partidas en una ventana de 3 meses.",
-         "Actividad reciente de corto plazo."],
-        ["partidas_last6", "Entero >= 0", "Suma movil de partidas en una ventana de 6 meses.",
-         "Actividad reciente de mediano plazo."],
-        ["winrate_last3", "Decimal 0-1", "victorias_last3 / partidas_last3.",
-         "Rendimiento reciente (ultimos 3 meses)."],
-        ["activos_last6", "Entero 0-6", "Suma movil del flag 'activo' en 6 meses.",
-         "Cuantos de los ultimos 6 meses estuvo activo."],
-        ["activos_last12", "Entero 0-12", "Suma movil del flag 'activo' en 12 meses.",
-         "Cuantos de los ultimos 12 meses estuvo activo."],
-        ["walkover_rate_last6", "Decimal 0-1", "walkovers_last6 / partidas_last6.",
-         "Que tan seguido falta a sus partidas, en lo reciente."],
-        ["racha_actual", "Entero >= 0", "Meses consecutivos activo, contando hacia atras (se corta en "
-         "el primer mes inactivo).", "Racha de continuidad vigente."],
-        ["tendencia", "Entero (+/-)", "partidas_last3 - partidas_prev3 (los 3 meses anteriores a esos).",
-         "Si esta acelerando o frenando su actividad."],
-        ["gap_ratio", "Decimal 0-1", "meses_activos_acum / tenure_meses.",
-         "Que tan consistente fue desde que debuto (1 = nunca falto un mes)."],
-    ], [3.1*cm, 2.6*cm, 5*cm, 5.3*cm]))
-    story.append(nota("Estas 13 son el 100% de las variables candidatas de este modelo - no hay una "
-                       "seleccion posterior como en el modelo de combates. El ranking real de cuales "
-                       "pesan mas en la prediccion esta en la seccion 1.9.8.", tipo="info"))
+    story.extend(_gm.seccion_diccionario(h1, h2, p, nota, styled_table))
 
     story.append(PageBreak())
 
@@ -1944,7 +1259,7 @@ def build_story():
         "de resolucion o de camara requiere recalibrar a mano.",
         "El modelo de prediccion de combates no se reentrena solo: cualquier cambio exige correr "
         "entrenar_modelo.py de nuevo y redesplegar el .pkl junto con la app.",
-        "El AUC del modelo de combates (0.6597) es moderado - util como senal adicional, no como "
+        f"El Gini del modelo de combates (test {_gm.GINI_C['test']}) es moderado - util como senal adicional, no como "
         "oraculo; el margen de mejora esta limitado por la variabilidad propia del juego.",
         "No hay repositorio git en la raiz del proyecto de streams/clips - solo Produccion/ esta "
         "versionada.",
