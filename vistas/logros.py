@@ -812,9 +812,16 @@ def evaluar_logros(
         "Mr.Shadowdusk","Chris FPS","Adpg","SasoriVzla7","skll02","EmperorGambit","ShinkaHMA","Rainer","huevo_pipipi","HaoSigismondi" ,"Bloody Cheese","Chonarthas",
         "Hydreigon_chelas" ,"Porygon Z",
         # agregados: campeones de torneo (RANK 1 en Final) que faltaban en la lista
-        "Pandu","Ricomam","Elin beacil","Akaru","Peruano Tactico","MafiaPolar6242",
-        # agregar más aquí
+        "Pandu","Ricomam","Elin beacil","Akaru","Peruano Tactico",
+        "Draco Axel","mathixd1",
+        # agregar más aquí (ya no es obligatorio: abajo se suman solos los campeones del historial)
     ]
+    # Campeones de torneo calculados desde el historial (RANK 1 de torneos terminados): los nuevos entran sin editar la lista.
+    try:
+        from vistas.logros_analisis import _precalcular_campeones
+        CAMPEONES_TORNEO = CAMPEONES_TORNEO + list(_precalcular_campeones(df_raw, base2, base_torneo_final)[1].keys())
+    except Exception:
+        pass
     def _verdugo_elite_set():
         rivales_campeon_derrotados = set()
         for _, row in pm.iterrows():
