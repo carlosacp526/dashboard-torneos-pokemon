@@ -64,6 +64,7 @@ def main():
                 pass
 
         ventana.events.shown += poner_icono
+        webview.settings["ALLOW_DOWNLOADS"] = True  # sin esto pywebview ignora los st.download_button (PNG del ranking, PDF, etc.)
         webview.start()
     finally:
         proc.terminate()
