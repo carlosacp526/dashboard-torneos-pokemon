@@ -381,7 +381,7 @@ MONOTYPE1_TIPOS = {
     74: "GRANDE",75: "SPECIAL",76: "GRANDE",78:"GRANDE",79:"MEDIANO",80:"GRANDE"
     ,81:"GRANDE",82:"MEDIANO",83:"GRANDE",77:"SPECIAL",84: "GRANDE",85:"MEDIANO",86:"SPECIAL"
     ,87:"MEDIANO",88:"SPECIAL",
-    89:"MEDIANO" ,92:"MEDIANO"  # CHAMPIONS BSS M-C, 16 jugadores
+    89:"MEDIANO",90:"GRANDE",91:"SPECIAL" ,92:"MEDIANO"  # CHAMPIONS BSS M-C, 16 jugadores
 ,93:"MEDIANO" ,94:"MEDIANO" }
 MONOTYPE1_POSICIONES = {
     # >>> Estructura: N_Torneo → { "FORMATO": {jugador: "Posición", ...}, ... }
@@ -981,7 +981,84 @@ MONOTYPE1_POSICIONES = {
             "Fur4nko":         "Top8",
             }} ,
 
+90: {
+              "SINGLES": {
+                "Chris FPS":   "Campeón",
+                "Joscake": "Subcampeón",
+                "Peruano Tactico":     "Top4",
+                "Porygon Z":     "Top4",
         
+                "Arnau":     "Top8",
+                "Draco axel":     "Top8",
+                "SasoriVzla7":     "Top8",
+                "The.Ultracheese":     "Top8",
+        
+        
+                "afroier":     "Top16",
+                "Angello77":     "Top16",
+                "Bloody Cheese":     "Top16",
+                "CaradeCoso":     "Top16",
+                "DarkM17":     "Top16",
+                "JaLax":     "Top16",
+                "shotper":     "Top16",
+                "ZapeohDev":     "Top16",
+        
+                }} 
+
+
+        ,
+
+                  91: {
+              "VGC": {
+       "Akaru":   "Campeón",
+      "Wiwi": "Subcampeón",
+        "Jayr":     "Top4",
+        "SasoriVzla7":     "Top4",
+
+        "Fur4nko":     "Top8",
+        "MilanesaVGC":     "Top8",
+        "mtdrumr":     "Top8",
+        "Okari958":     "Top8",
+
+        "Chris FPS":     "Top16",
+        "darkam580":     "Top16",
+        "EmperorGambit":     "Top16",
+        "Ger":     "Top16",
+        "mathixd1":     "Top16",
+        "Moirix":     "Top16",
+        "Monstruonio":     "Top16",
+        "ShinkaHMA":     "Top16",
+
+        "Joscake":     "Top24",
+        "skll02":     "Top24",
+        "Necroz":     "Top24",
+        "A25":     "Top24",
+        "David Wong":     "Top24",
+        "Chonarthas":     "Top24",
+        "Saga":     "Top24",
+        "Peruano Tactico":     "Top24",
+
+        "Bloody Cheese":     "Top32",
+        "Lolo":     "Top32",
+        "Yabadaba":     "Top32",
+        "The Glenko":     "Top32",
+        "Ricomam":     "Top32",
+        "JaLax":     "Top32",
+        "Draco axel":     "Top32",
+        "Porygon Z":     "Top32",
+
+
+        "MafiaPolar6242":     "Top40",
+        "Tronchi":     "Top40",
+        "Chechin":     "Top40",
+        "LABIAMG":     "Top40",
+        "Pandu":     "Top40",
+        "Angelowos":     "Top40",
+        "The.Ultracheese":     "Top40",
+        "O'Fenomenon't":     "Top40",
+        
+        
+                }}  ,
                  92: {
       "DOBLES": {
         "EmperorGambit":   "Campeón",
