@@ -576,6 +576,7 @@ def show():
                     <style>
                     .raidcard{position:relative;background:#1B2B3B;border-radius:16px;
                         overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+                    .raidcard.final{box-shadow:0 0 0 3px #FFD700, 0 0 18px 4px rgba(255,215,0,.55)}
                     .raidcard .poster{width:100%;height:130px;background-size:cover;background-position:center}
                     .raidcard .datebadge{position:absolute;top:9px;left:9px;color:white;font-weight:900;
                         font-size:1.35em;line-height:1;border-radius:10px;padding:6px 11px;
@@ -639,8 +640,16 @@ def show():
                     )
                     tiers_label = f"🎯 {len(tiers)} tiers" if len(tiers) > 1 else "🎯 1 tier"
 
+                    # Borde resaltante si ese día se juega la Final (no semifinal/cuartos/octavos)
+                    def _es_final(f):
+                        s = str(f).lower()
+                        return 'final' in s and not any(
+                            k in s for k in ('semi', 'cuartos', 'octavos', 'dieciseis', '16avos', '32avos'))
+                    toca_final = any(_es_final(f) for f in _fases)
+                    final_cls = " final" if toca_final else ""
+
                     cards += (
-                        "<div class='raidcard'>"
+                        f"<div class='raidcard{final_cls}'>"
                         f"{poster_html}"
                         f"<div class='datebadge' style='background:{fecha_bg}'>{dia_num}<span>{mes_str}</span></div>"
                         "</div>"
