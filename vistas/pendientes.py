@@ -592,7 +592,7 @@ def show():
                     .raidcard .pend{display:inline-block;border-radius:10px;
                         padding:4px 10px;font-size:0.85em;font-weight:bold}
                     .raidrow{display:grid;grid-template-columns:repeat(5, minmax(165px, 1fr));
-                        gap:14px;margin:8px 0 4px 0;overflow-x:auto;padding-bottom:6px}
+                        gap:14px;margin:0;overflow-x:auto;padding:14px}
                     </style>
                 """, unsafe_allow_html=True)
 
