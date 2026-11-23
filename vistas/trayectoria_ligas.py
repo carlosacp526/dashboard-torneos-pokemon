@@ -478,19 +478,50 @@ def show():
         ["🌳 Árboles por liga de inicio", "🌊 Mapa de flujos", "📋 Jugadores", "🛤️ Ruta individual", "📊 Resumen"])
 
     with t_arbol:
-        st.info("**Cómo leerlo:** de izquierda a derecha. A la izquierda la liga donde empezaron; el primer corte es "
-                "**cómo entraron** (🪜 por Ascenso o ✉️ por invitación, o sea directo); después cada rama es la liga "
-                "a la que pasaron. El número es cuántos jugadores siguen ese camino y entre paréntesis cuántos se "
-                "quedan ahí hoy. 🟢 rama que sube, 🔴 rama que baja de liga, 🟠 punteada = sale de las ligas y vuelve al Ascenso (por ejemplo, un jugador de Junior que no sigue). Si un jugador vuelve a una liga donde ya había "
-                "estado, esa liga reaparece más a la derecha: así se ven las ramas que vuelven. Pasa el mouse por un "
-                "nodo para ver los nombres.")
-        _leyenda([k for k in ["ASC", "PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"]
-                  if k in {x for sq in r["seq"] for x in sq}])
+        st.info("**Cómo leerlo:** elige la liga donde empezaron. Cada barra son los jugadores que entraron de esa "
+                "forma (🪜 por Ascenso o ✉️ por invitación, o sea directo) y los colores dicen **en qué liga están hoy**. "
+                "Pasa el mouse por un color para ver los nombres.")
+        _leyenda([k for k in ["PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"]
+                  if k in set(r["actual"]) | set(r["inicio"])])
         inicios = [k for k in ["PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"] if k in set(r["inicio"])]
         tabs_i = st.tabs([f"Empezó en {LIGAS[k]} ({int((r['inicio'] == k).sum())})" for k in inicios])
         for k, tb in zip(inicios, tabs_i):
             with tb:
-                st.plotly_chart(_arbol(r, k), width="stretch")
+                sub = r[r["inicio"] == k].copy()
+                sub["entrada"] = sub["seq"].map(lambda q: "🪜 Por Ascenso" if q[0] == "ASC" else "✉️ Por invitación")
+                fig = go.Figure()
+                for lg in sorted(sub["actual"].unique(), key=lambda x: NIVEL.get(x, 9)):
+                    cnt, nombres = [], []
+                    for e in ["🪜 Por Ascenso", "✉️ Por invitación"]:
+                        g = sub[(sub["entrada"] == e) & (sub["actual"] == lg)]["jugador"].tolist()
+                        cnt.append(len(g))
+                        nombres.append(", ".join(sorted(g)[:15]) + (f" (+{len(g) - 15})" if len(g) > 15 else ""))
+                    fig.add_trace(go.Bar(
+                        y=["🪜 Por Ascenso", "✉️ Por invitación"], x=cnt, orientation="h", name=f"Hoy en {LIGAS.get(lg, lg)}",
+                        marker=dict(color=COLOR.get(lg, "#888"), line=dict(color="rgba(0,0,0,.5)", width=1)),
+                        text=[str(c) if c else "" for c in cnt], textposition="inside",
+                        textfont=dict(size=18, color="#111" if lg in ("PSS", "PES", "PLS") else "white"),
+                        customdata=nombres, hovertemplate="Hoy en " + LIGAS.get(lg, lg) +
+                        ": %{x} jugadores<br>%{customdata}<extra></extra>"))
+                fig.update_layout(barmode="stack", template="plotly_dark", height=250, paper_bgcolor="rgba(0,0,0,0)",
+                                  plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.25), yaxis=dict(autorange="reversed"),
+                                  xaxis=dict(title="jugadores"))
+                st.plotly_chart(fig, width="stretch")
+                for e in ["🪜 Por Ascenso", "✉️ Por invitación"]:
+                    g = sub[sub["entrada"] == e]
+                    if g.empty:
+                        continue
+                    arriba = int(g["actual"].map(lambda x: NIVEL[x]).gt(NIVEL[k]).sum())
+                    igual = int(g["actual"].eq(k).sum())
+                    abajo = int(g["actual"].map(lambda x: NIVEL[x]).lt(NIVEL[k]).sum())
+                    st.markdown(f"**{e} ({len(g)}):** 🟢 {arriba} subieron · ⚪ {igual} siguen en {LIGAS[k]} · "
+                                f"🔴 {abajo} bajaron")
+                with st.expander("Ver el árbol completo (recorrido paso a paso, con ramas que vuelven)"):
+                    st.caption("De izquierda a derecha: liga de inicio → cómo entraron → cada liga a la que pasaron "
+                               "después. El número bajo cada nodo es cuántos jugadores siguen ese camino y 'hoy' cuántos "
+                               "se quedan ahí. 🟢 sube · 🔴 baja de liga · 🟠 punteada = sale de las ligas y vuelve al Ascenso.")
+                    st.plotly_chart(_arbol(r, k), width="stretch")
 
     with t_mapa:
         usadas = {k for sq in r["seq"] for k in sq}
