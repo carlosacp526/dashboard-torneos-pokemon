@@ -187,7 +187,7 @@ def _resumen(_temporadas, _ascensos, firma):
             "jugador": j, "camino": " → ".join(("Ascenso" if k == "ASC" else k) for k in seq if k != "DIR"),
             "seq": seq, "sent": sent, "ligas": len(set(ligas)), "temporadas": len(temps),
             "ascensos": sent.count("sube"), "descensos": sent.count("baja"), "salidas": sent.count("sale"),
-            "inicio": ligas[0], "actual": ligas[-1], "via_ascenso": any(x["liga"] == "ASC" for x in t),
+            "inicio": ligas[0], "actual": ligas[-1], "via_ascenso": t[0]["liga"] == "ASC",
             "campeon": bool(temps["campeon"].any()), "titulos": int(temps["campeon"].sum()),
             "primera": temps["fecha"].min(), "ultima_temp": t[-1]["ultima"],
         })
@@ -198,17 +198,24 @@ def _resumen(_temporadas, _ascensos, firma):
 
 def _transiciones(tr, jugadores):
     """Una fila por cambio entre tramos consecutivos: jugador, de, a, sentido ('entra' | 'sube' | 'baja' | 'sale'),
-    y la temporada/evento donde ocurrió. Entrada: 'ASC' si el jugador pasó por algún Ascenso en cualquier fecha
-    (aunque haya sido después de su primera liga), 'DIR' = por invitación (nunca jugó un Ascenso)."""
+    y la temporada/evento donde ocurrió. Entrada por Ascenso solo si jugó un Ascenso ANTES de su primera liga; los
+    Ascensos con fecha posterior se ignoran. 'DIR' = por invitación (directo a una liga)."""
     filas = []
     for j in jugadores:
         t = tr.get(j, [])
         if not t:
             continue
+        # desde una liga no se vuelve al Ascenso: un Ascenso con fecha posterior a su primera liga no se considera
+        t = [x for i, x in enumerate(t) if not (x["liga"] == "ASC" and any(y["liga"] != "ASC" for y in t[:i]))]
+        # tramos iguales que quedaron juntos al quitar el Ascenso (PJS, ASC, PJS -> PJS)
+        fus = []
+        for x in t:
+            if fus and fus[-1]["liga"] == x["liga"]:
+                continue
+            fus.append(x)
+        t = fus
         if t[0]["liga"] != "ASC":
-            # si pasó por algún Ascenso en cualquier fecha, cuenta como entrada por Ascenso; si no, por invitación
-            ev_asc = any(x["liga"] == "ASC" for x in t)
-            filas.append({"jugador": j, "de": "ASC" if ev_asc else "DIR", "a": t[0]["liga"], "sentido": "entra", "cuando": t[0]["temps"][0],
+            filas.append({"jugador": j, "de": "DIR", "a": t[0]["liga"], "sentido": "entra", "cuando": t[0]["temps"][0],
                           "fecha": t[0]["desde"]})
         for a, b in zip(t[:-1], t[1:]):
             filas.append({"jugador": j, "de": a["liga"], "a": b["liga"], "sentido": _sentido(a["liga"], b["liga"]),
@@ -305,18 +312,16 @@ def show():
 
     with t_desc:
         baja = tx[tx["sentido"] == "baja"]
-        sale = tx[tx["sentido"] == "sale"]
-        k1, k2, k3 = st.columns(3)
+        k1, k2 = st.columns(2)
         k1.metric("Descensos de liga", len(baja))
         k2.metric("Jugadores que descendieron", baja["jugador"].nunique())
-        k3.metric("Volvieron al Ascenso", len(sale), help="Salieron de las ligas y volvieron a competir en el Ascenso.")
-        st.info("**Cómo leerlo:** cada cinta roja va de una liga a otra más baja. La cinta 🟠 naranja es distinta: "
-                "son jugadores que **salieron de las ligas** y volvieron al 🪜 Ascenso (no es un descenso de liga). "
+        st.info("**Cómo leerlo:** cada cinta va de una liga a otra más baja y su ancho es la cantidad de jugadores. "
+                "Desde una liga no se vuelve al Ascenso, así que solo cuentan los descensos entre ligas. "
                 "Pasa el mouse para ver los nombres.")
-        fig = _flujo(tx, ("baja", "sale"), "")
+        fig = _flujo(tx, ("baja",), "")
         if fig is None:
             st.caption("Con estos filtros nadie descendió.")
         else:
             st.plotly_chart(fig, width="stretch")
             st.markdown("**Quién bajó**")
-            st.dataframe(_tabla(pd.concat([baja, sale])), hide_index=True, width="stretch", height=380)
+            st.dataframe(_tabla(baja), hide_index=True, width="stretch", height=380)
