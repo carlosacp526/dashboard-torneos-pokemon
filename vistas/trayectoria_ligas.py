@@ -73,7 +73,7 @@ def _leyenda(ligas):
 
 
 def _nombre(k):
-    return {"ASC": "Ascenso", "DIR": "Entrada directa"}.get(k, f"{LIGAS.get(k, k)} ({k})")
+    return {"ASC": "Torneo de Ascenso", "DIR": "Entrada directa"}.get(k, f"{LIGAS.get(k, k)} ({k})")
 
 
 def _hex_rgba(h, a):
@@ -237,19 +237,43 @@ def _flujo(tx, sentidos, titulo_vacio):
     fig = go.Figure(go.Sankey(
         arrangement="snap",
         node=dict(pad=22, thickness=24, line=dict(color="rgba(0,0,0,0.4)", width=0.5), color=[COLOR.get(k, "#7f8c8d") for k in claves],
-                  label=[{"ASC": "🪜 Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves]),
+                  label=[{"ASC": "🪜 Torneo de Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves]),
         link=dict(source=[idx[de] for de, _, _ in pares.index], target=[idx[a] for _, a, _ in pares.index],
                   value=[len(v) for v in pares.values], color=[col[sn] for _, _, sn in pares.index],
                   customdata=[", ".join(sorted(v)[:15]) + (f" (+{len(v) - 15})" if len(v) > 15 else "") for v in pares.values],
                   hovertemplate="%{source.label} → %{target.label}<br>%{value} jugadores<br>%{customdata}<extra></extra>")))
-    fig.update_layout(template="plotly_dark", height=460, margin=dict(l=10, r=10, t=10, b=10),
+    fig.update_layout(template="plotly_dark", height=420, margin=dict(l=10, r=10, t=10, b=10),
                       paper_bgcolor="rgba(0,0,0,0)", font=dict(size=15))
+    return fig
+
+
+def _entradas(tx):
+    """Barras: en qué liga empezó cada jugador y cómo entró (Ascenso o invitación)."""
+    d = tx[tx["sentido"] == "entra"]
+    if d.empty:
+        return None
+    ligas = sorted(d["a"].unique(), key=lambda k: NIVEL.get(k, 9))
+    fig = go.Figure()
+    for de, nombre, color in [("ASC", "🪜 Por torneo de Ascenso", "#27ae60"), ("DIR", "✉️ Por invitación", "#7f8c8d")]:
+        cnt, quien = [], []
+        for lg in ligas:
+            g = d[(d["de"] == de) & (d["a"] == lg)]["jugador"].tolist()
+            cnt.append(len(g))
+            quien.append(", ".join(sorted(g)[:15]) + (f" (+{len(g) - 15})" if len(g) > 15 else ""))
+        fig.add_trace(go.Bar(y=[LIGAS.get(k, k) for k in ligas], x=cnt, orientation="h", name=nombre,
+                             marker_color=color, text=[str(c) if c else "" for c in cnt], textposition="inside",
+                             textfont=dict(size=16, color="white"), customdata=quien,
+                             hovertemplate=nombre + ": %{x} jugadores<br>%{customdata}<extra></extra>"))
+    fig.update_layout(barmode="stack", template="plotly_dark", height=60 * len(ligas) + 90,
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                      margin=dict(l=10, r=10, t=10, b=10), legend=dict(orientation="h", y=-0.2),
+                      yaxis=dict(autorange="reversed"), xaxis=dict(title="jugadores que empezaron ahí"))
     return fig
 
 
 def _tabla(d):
     v = d.copy()
-    nm = lambda k: {"ASC": "Ascenso", "DIR": "Invitación"}.get(k, LIGAS.get(k, k))
+    nm = lambda k: {"ASC": "Torneo de Ascenso", "DIR": "Invitación"}.get(k, LIGAS.get(k, k))
     v["De"], v["A"] = v["de"].map(nm), v["a"].map(nm)
     v["Cuándo"] = v["cuando"]
     v["_f"] = v["fecha"].fillna(pd.Timestamp.min)
@@ -275,13 +299,13 @@ def show():
     c1, c2, c3 = st.columns(3)
     ligas_ini = sorted(res["inicio"].unique(), key=lambda k: NIVEL.get(k, 9))
     f_ini = c1.multiselect("Empezó en", ligas_ini, format_func=lambda k: LIGAS.get(k, k))
-    f_asc = c2.selectbox("Cómo entró", ["Todos", "Por Ascenso", "Por invitación"])
+    f_asc = c2.selectbox("Cómo entró", ["Todos", "Por torneo de Ascenso", "Por invitación"])
     f_busca = c3.text_input("Buscar jugador")
     m = pd.Series(True, index=res.index)
     if f_ini:
         m &= res["inicio"].isin(f_ini)
     if f_asc != "Todos":
-        m &= res["via_ascenso"] == (f_asc == "Por Ascenso")
+        m &= res["via_ascenso"] == (f_asc == "Por torneo de Ascenso")
     if f_busca.strip():
         m &= res["jugador"].str.contains(f_busca.strip(), case=False, regex=False)
     r = res[m]
@@ -298,13 +322,20 @@ def show():
         k1, k2 = st.columns(2)
         k1.metric("Ascensos de liga", len(sube))
         k2.metric("Jugadores que ascendieron", sube["jugador"].nunique())
-        st.info("**Cómo leerlo:** cada cinta va de una liga a la siguiente y su ancho es la cantidad de jugadores. "
-                "Las cintas que salen de 🪜 Ascenso o ✉️ Invitación son las **entradas** (cómo llegaron a su primera "
-                "liga); las verdes son **subidas** de una liga a otra más alta. Pasa el mouse para ver los nombres.")
-        fig = _flujo(tx, ("entra", "sube"), "")
-        if fig is not None:
+        st.subheader("1 · Cómo entraron")
+        st.caption("En qué liga empezó cada jugador y si llegó jugando un torneo de Ascenso o por invitación (directo a la liga).")
+        fe = _entradas(tx)
+        if fe is not None:
+            st.plotly_chart(fe, width="stretch")
+        st.subheader("2 · Cómo subieron después")
+        st.caption("Cada cinta va de una liga a otra más alta; su ancho es la cantidad de jugadores. "
+                   "Pasa el mouse para ver los nombres.")
+        fig = _flujo(tx, ("sube",), "")
+        if fig is None:
+            st.caption("Con estos filtros nadie subió de liga.")
+        else:
             st.plotly_chart(fig, width="stretch")
-        st.markdown("**Quién subió**")
+        st.subheader("3 · Quién subió")
         if sube.empty:
             st.caption("Con estos filtros nadie subió de liga.")
         else:
@@ -323,5 +354,5 @@ def show():
             st.caption("Con estos filtros nadie descendió.")
         else:
             st.plotly_chart(fig, width="stretch")
-            st.markdown("**Quién bajó**")
+            st.subheader("Quién bajó")
             st.dataframe(_tabla(baja), hide_index=True, width="stretch", height=380)
