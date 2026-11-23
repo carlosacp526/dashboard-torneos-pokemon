@@ -350,18 +350,29 @@ def _arbol(res, inicio):
         hov.append(f"<b>{nom}</b><br>{d['n']} jugadores pasan por aquí<br>Hoy se quedan aquí: {hoy}<br>"
                    f"Recorrido: {recorrido}<br>Jugadores: {quien}")
     fig.add_trace(go.Scatter(
-        x=xs, y=ys, mode="markers+text", text=txt, textposition="top center", textfont=dict(size=12),
+        x=xs, y=ys, mode="markers",
         marker=dict(size=tam, color=colr, line=dict(color="rgba(255,255,255,.7)", width=2)),
         customdata=hov, hovertemplate="%{customdata}<extra></extra>", showlegend=False))
     for k, (x, y) in pos.items():
         lg = liga_de(k)
+        d = nodos[k]
+        c = COLOR.get(k[0] if len(k) == 1 else lg, "#888")
+        # cantidad de jugadores en una etiqueta bien visible debajo del nodo
+        fig.add_annotation(x=x, y=y, xref="x", yref="y", yshift=-40, showarrow=False,
+                           text=f"<b>{d['n']}</b>" + (f"<br><span style='font-size:11px'>{d['fin']} hoy</span>"
+                                                       if d["fin"] and k else ""),
+                           font=dict(size=17, color="white"), bgcolor="rgba(20,24,36,0.92)", bordercolor=c,
+                           borderwidth=2, borderpad=3)
+        if (len(k) == 1) or (k and lg == "ASC"):
+            fig.add_annotation(x=x, y=y, xref="x", yref="y", yshift=34, showarrow=False,
+                               text=("✉️ Invitación" if k[0] == "DIR" else "🪜 Ascenso"), font=dict(size=14, color="white"))
         if len(k) != 1 and lg != "ASC":
             uri = _logo_uri(lg)
             if uri:
                 fig.add_layout_image(source=uri, x=x, y=y, xref="x", yref="y", sizex=0.42, sizey=0.62,
                                      xanchor="center", yanchor="middle", sizing="contain", layer="above")
     fig.update_layout(
-        template="plotly_dark", height=int(max(380, 70 * hojas + 90)), margin=dict(l=10, r=10, t=10, b=10),
+        template="plotly_dark", height=int(max(420, 90 * hojas + 100)), margin=dict(l=10, r=10, t=10, b=10),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(visible=False, range=[-0.4, prof + 0.7]),
         yaxis=dict(visible=False, range=[hojas - 0.4, -0.8]))
