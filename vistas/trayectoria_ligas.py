@@ -1,4 +1,4 @@
-"""Trayectoria de ligas: el mapa de TODA la comunidad, no de un solo jugador (para uno solo ver `trayectoria.py`).
+"""Trayectoria de ligas: rutas de ascenso y de descenso de TODA la comunidad (para un solo jugador ver `trayectoria.py`).
 
 Para cada jugador se arma su carrera por las ligas (Junior -> Evolution -> Senior -> Master -> Legends; Ascenso como
 puerta de entrada) y se clasifica cada cambio entre tramos como ascenso o descenso comparando el nivel de la liga.
@@ -194,238 +194,65 @@ def _resumen(_temporadas, _ascensos, firma):
     return pd.DataFrame(filas), tr
 
 
-# ── gráficos ────────────────────────────────────────────────────────────────
+# ── transiciones ────────────────────────────────────────────────────────────
 
-def _sankey(res):
-    nodos, idx = [], {}
+def _transiciones(tr, jugadores):
+    """Una fila por cambio entre tramos consecutivos: jugador, de, a, sentido ('entra' | 'sube' | 'baja' | 'sale'),
+    y la temporada/evento donde ocurrió. 'DIR' = entrada por invitación (directo a una liga)."""
+    filas = []
+    for j in jugadores:
+        t = tr.get(j, [])
+        if not t:
+            continue
+        if t[0]["liga"] != "ASC":
+            filas.append({"jugador": j, "de": "DIR", "a": t[0]["liga"], "sentido": "entra", "cuando": t[0]["temps"][0],
+                          "fecha": t[0]["desde"]})
+        for a, b in zip(t[:-1], t[1:]):
+            filas.append({"jugador": j, "de": a["liga"], "a": b["liga"], "sentido": _sentido(a["liga"], b["liga"]),
+                          "cuando": b["temps"][0], "fecha": b["desde"]})
+    return pd.DataFrame(filas)
 
-    def nodo(etapa, liga):
-        k = (etapa, liga)
-        if k not in idx:
-            idx[k] = len(nodos)
-            nodos.append(k)
-        return idx[k]
 
-    enlaces = {}
-    for _, r in res.iterrows():
-        seq, sent = r["seq"][:MAX_ETAPAS + 1], r["sent"]
-        for i in range(len(seq) - 1):
-            a, b = nodo(i, seq[i]), nodo(i + 1, seq[i + 1])
-            e = enlaces.setdefault((a, b, sent[i]), [])
-            e.append(r["jugador"])
-    if not enlaces:
+def _flujo(tx, sentidos, titulo_vacio):
+    """Sankey de ligas (un nodo por liga: los cambios de una misma dirección nunca forman ciclos)."""
+    d = tx[tx["sentido"].isin(sentidos) & (tx["de"] != tx["a"])]
+    if d.empty:
         return None
-    col = {"sube": SUBE, "baja": BAJA, "igual": IGUAL, "entra": "rgba(39,174,96,0.45)", "sale": SALE}
+    pares = d.groupby(["de", "a", "sentido"])["jugador"].apply(list)
+    claves = sorted({k for de, a, _ in pares.index for k in (de, a)},
+                    key=lambda k: (-1 if k == "DIR" else NIVEL.get(k, 9)))
+    idx = {k: i for i, k in enumerate(claves)}
+    n_de, n_a = d.groupby("de").size(), d.groupby("a").size()
+    col = {"entra": "rgba(39,174,96,0.5)", "sube": SUBE, "baja": BAJA, "sale": SALE}
     fig = go.Figure(go.Sankey(
         arrangement="snap",
-        node=dict(pad=16, thickness=18, line=dict(color="rgba(0,0,0,0.4)", width=0.5),
-                  label=[f"{_nombre(l)}" for _, l in nodos],
-                  color=[COLOR.get(l, "#7f8c8d") for _, l in nodos],
-                  customdata=[f"Etapa {e}" if e else "Inicio" for e, _ in nodos],
-                  hovertemplate="%{label}<br>%{customdata}<br>%{value} jugadores<extra></extra>"),
-        link=dict(source=[k[0] for k in enlaces], target=[k[1] for k in enlaces],
-                  value=[len(v) for v in enlaces.values()],
-                  color=[col[k[2]] for k in enlaces],
-                  customdata=[", ".join(sorted(v)[:12]) + (f" (+{len(v) - 12})" if len(v) > 12 else "")
-                              for v in enlaces.values()],
-                  label=[{"sube": "Ascenso", "baja": "Descenso", "igual": "Misma liga", "entra": "Entrada",
-                                           "sale": "Sale de las ligas (vuelve al Ascenso)"}[k[2]]
-                         for k in enlaces],
-                  hovertemplate="%{label}: %{value} jugadores<br>%{customdata}<extra></extra>")))
-    fig.update_layout(template="plotly_dark", height=620, margin=dict(l=10, r=10, t=10, b=10),
-                      paper_bgcolor="rgba(0,0,0,0)", font=dict(size=13))
+        node=dict(pad=22, thickness=24, line=dict(color="rgba(0,0,0,0.4)", width=0.5), color=[COLOR.get(k, "#7f8c8d") for k in claves],
+                  label=[{"ASC": "🪜 Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves]),
+        link=dict(source=[idx[de] for de, _, _ in pares.index], target=[idx[a] for _, a, _ in pares.index],
+                  value=[len(v) for v in pares.values], color=[col[sn] for _, _, sn in pares.index],
+                  customdata=[", ".join(sorted(v)[:15]) + (f" (+{len(v) - 15})" if len(v) > 15 else "") for v in pares.values],
+                  hovertemplate="%{source.label} → %{target.label}<br>%{value} jugadores<br>%{customdata}<extra></extra>")))
+    fig.update_layout(template="plotly_dark", height=460, margin=dict(l=10, r=10, t=10, b=10),
+                      paper_bgcolor="rgba(0,0,0,0)", font=dict(size=15))
     return fig
 
 
-def _sankey_simple(res):
-    """Dos columnas: liga donde empezó -> liga donde está hoy. Verde = terminó más arriba, rojo = más abajo."""
-    ini = sorted(res["inicio"].unique(), key=lambda k: NIVEL.get(k, 9))
-    act = sorted(res["actual"].unique(), key=lambda k: NIVEL.get(k, 9))
-    nodos = [("i", k) for k in ini] + [("a", k) for k in act]
-    idx = {n: i for i, n in enumerate(nodos)}
-    ci, ca = res["inicio"].value_counts(), res["actual"].value_counts()
-    pares = {}
-    for _, r in res.iterrows():
-        pares.setdefault((r["inicio"], r["actual"]), []).append(r["jugador"])
-    col = lambda a, b: SUBE if NIVEL[b] > NIVEL[a] else BAJA if NIVEL[b] < NIVEL[a] else IGUAL
-    fig = go.Figure(go.Sankey(
-        arrangement="snap",
-        node=dict(pad=18, thickness=22, line=dict(color="rgba(0,0,0,0.4)", width=0.5),
-                  label=[f"Empezó en {LIGAS.get(k, k)} ({ci[k]})" if t == "i" else f"Hoy en {LIGAS.get(k, k)} ({ca[k]})"
-                         for t, k in nodos],
-                  color=[COLOR.get(k, "#7f8c8d") for _, k in nodos]),
-        link=dict(source=[idx[("i", a)] for a, b in pares], target=[idx[("a", b)] for a, b in pares],
-                  value=[len(v) for v in pares.values()], color=[col(a, b) for a, b in pares],
-                  customdata=[", ".join(sorted(v)[:15]) + (f" (+{len(v) - 15})" if len(v) > 15 else "")
-                              for v in pares.values()],
-                  hovertemplate="%{value} jugadores<br>%{customdata}<extra></extra>")))
-    fig.update_layout(template="plotly_dark", height=520, margin=dict(l=10, r=10, t=10, b=10),
-                      paper_bgcolor="rgba(0,0,0,0)", font=dict(size=14))
-    return fig
-
-
-def _arbol(res, inicio):
-    """Árbol de ramificaciones de quienes EMPEZARON en `inicio`: raíz -> cómo entraron (Ascenso / invitación) ->
-    cada liga a la que pasaron después, en orden. Si un jugador vuelve a una liga que ya pisó, la rama la vuelve a
-    mostrar (por eso las ramas pueden 'volver'). Un nodo = un recorrido igual; su tamaño = cuántos jugadores."""
-    import math
-    sub = res[res["inicio"] == inicio]
-    nodos = {}                                   # clave -> {"n": jugadores que pasan, "fin": se quedan aquí, "jug": [...]}
-
-    def nodo(k):
-        return nodos.setdefault(k, {"n": 0, "fin": 0, "jug": [], "hoy": []})
-
-    nodo(())
-    for _, r in sub.iterrows():
-        seq = r["seq"][:MAX_ETAPAS + 1]
-        clave = (seq[0],) + tuple(seq[2:])        # seq[1] es la liga de inicio (la raíz)
-        for i in range(0, len(clave) + 1):
-            d = nodo(clave[:i])
-            d["n"] += 1
-            d["jug"].append(r["jugador"])
-        nodos[clave]["fin"] += 1
-        nodos[clave]["hoy"].append(r["jugador"])
-
-    hijos = {}
-    for k in nodos:
-        if k:
-            hijos.setdefault(k[:-1], []).append(k)
-
-    def liga_de(k):
-        return inicio if len(k) <= 1 else k[-1]
-
-    for k in hijos:
-        hijos[k].sort(key=lambda c: (-nodos[c]["n"], NIVEL.get(liga_de(c), 9)))
-
-    pos, cont = {}, [0]
-
-    def poner(k):
-        h = hijos.get(k, [])
-        if not h:
-            pos[k] = (len(k), cont[0])
-            cont[0] += 1
-            return
-        for c in h:
-            poner(c)
-        pos[k] = (len(k), sum(pos[c][1] for c in h) / len(h))
-
-    poner(())
-    hojas = cont[0]
-    prof = max(len(k) for k in nodos)
-
-    fig = go.Figure()
-    for k, h in hijos.items():
-        for c in h:
-            (x0, y0), (x1, y1) = pos[k], pos[c]
-            if len(c) == 1:                         # raíz -> entrada
-                col = _hex_rgba(COLOR[c[0]], 0.8)
-            else:
-                prev = inicio if len(c) == 2 else c[-2]
-                nuevo = c[-1]
-                col = IGUAL if NIVEL[nuevo] == NIVEL[prev] else (SUBE if NIVEL[nuevo] > NIVEL[prev] else BAJA)
-                if "ASC" in (prev, nuevo):
-                    col = "rgba(39,174,96,0.55)" if prev == "ASC" else SALE
-            ts = [i / 16 for i in range(17)]
-            fig.add_trace(go.Scatter(
-                x=[x0 + (x1 - x0) * t for t in ts], y=[y0 + (y1 - y0) * (1 - math.cos(math.pi * t)) / 2 for t in ts],
-                mode="lines", hoverinfo="skip",
-                line=dict(color=col, width=2 + 2.2 * math.sqrt(nodos[c]["n"]),
-                          dash="dot" if (col == SALE) else "solid"),
-                showlegend=False))
-
-    xs, ys, tam, colr, txt, hov = [], [], [], [], [], []
-    for k, d in nodos.items():
-        x, y = pos[k]
-        lg = liga_de(k)
-        if len(k) == 1:
-            nom = "Entró por Ascenso" if k[0] == "ASC" else "Entró por invitación"
-            colr.append(COLOR[k[0]])
-            etiqueta = ("🪜 Ascenso" if k[0] == "ASC" else "✉️ Invitación")
-        else:
-            nom = f"Empezó en {LIGAS.get(inicio, inicio)}" if not k else _nombre(lg)
-            colr.append(COLOR.get(lg, "#888"))
-            etiqueta = ""
-        xs.append(x); ys.append(y); tam.append(20 + 7 * math.sqrt(d["n"]))
-        txt.append((etiqueta + " " if etiqueta else "") + f"{d['n']}" + (f" ({d['fin']} hoy)" if d["fin"] and k else ""))
-        quien = ", ".join(sorted(d["jug"])[:14]) + (f" (+{len(d['jug']) - 14})" if len(d["jug"]) > 14 else "")
-        hoy = ", ".join(sorted(d["hoy"])[:10]) if d["hoy"] else "—"
-        nl = lambda a: "Ascenso" if a == "ASC" else "Invitación" if a == "DIR" else LIGAS.get(a, a)
-        recorrido = " → ".join([nl(k[0]), LIGAS.get(inicio, inicio)] + [nl(a) for a in k[1:]]) if k else             LIGAS.get(inicio, inicio)
-        hov.append(f"<b>{nom}</b><br>{d['n']} jugadores pasan por aquí<br>Hoy se quedan aquí: {hoy}<br>"
-                   f"Recorrido: {recorrido}<br>Jugadores: {quien}")
-    fig.add_trace(go.Scatter(
-        x=xs, y=ys, mode="markers",
-        marker=dict(size=tam, color=colr, line=dict(color="rgba(255,255,255,.7)", width=2)),
-        customdata=hov, hovertemplate="%{customdata}<extra></extra>", showlegend=False))
-    for k, (x, y) in pos.items():
-        lg = liga_de(k)
-        d = nodos[k]
-        c = COLOR.get(k[0] if len(k) == 1 else lg, "#888")
-        # cantidad de jugadores en una etiqueta bien visible debajo del nodo
-        fig.add_annotation(x=x, y=y, xref="x", yref="y", yshift=-40, showarrow=False,
-                           text=f"<b>{d['n']}</b>" + (f"<br><span style='font-size:11px'>{d['fin']} hoy</span>"
-                                                       if d["fin"] and k else ""),
-                           font=dict(size=17, color="white"), bgcolor="rgba(20,24,36,0.92)", bordercolor=c,
-                           borderwidth=2, borderpad=3)
-        if (len(k) == 1) or (k and lg == "ASC"):
-            fig.add_annotation(x=x, y=y, xref="x", yref="y", yshift=34, showarrow=False,
-                               text=("✉️ Invitación" if k[0] == "DIR" else "🪜 Ascenso"), font=dict(size=14, color="white"))
-        if len(k) != 1 and lg != "ASC":
-            uri = _logo_uri(lg)
-            if uri:
-                fig.add_layout_image(source=uri, x=x, y=y, xref="x", yref="y", sizex=0.42, sizey=0.62,
-                                     xanchor="center", yanchor="middle", sizing="contain", layer="above")
-    fig.update_layout(
-        template="plotly_dark", height=int(max(420, 90 * hojas + 100)), margin=dict(l=10, r=10, t=10, b=10),
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(visible=False, range=[-0.4, prof + 0.7]),
-        yaxis=dict(visible=False, range=[hojas - 0.4, -0.8]))
-    return fig
-
-
-def _ruta(jugador, tr_j, temporadas):
-    t = temporadas[temporadas["jugador"] == jugador].copy()
-    t["_o"] = t["fecha"].fillna(pd.Timestamp.max)
-    t = t.sort_values(["_o", "num"]).reset_index(drop=True)
-    pts = [{"x": i, "lvl": NIVEL[r["liga"]], "liga": r["liga"], "temp": r["temp"], "rank": r["rank"],
-            "n": r["n"], "zona": r["zona"], "campeon": r["campeon"], "term": r["terminada"]}
-           for i, r in t.iterrows()]
-    fig = go.Figure()
-    for a, b in zip(pts[:-1], pts[1:]):
-        c = SUBE if b["lvl"] > a["lvl"] else BAJA if b["lvl"] < a["lvl"] else "rgba(150,150,150,0.6)"
-        fig.add_trace(go.Scatter(x=[a["x"], b["x"]], y=[a["lvl"], b["lvl"]], mode="lines", hoverinfo="skip",
-                                 line=dict(color=c, width=4), showlegend=False))
-    fig.add_trace(go.Scatter(
-        x=[p["x"] for p in pts], y=[p["lvl"] for p in pts], mode="markers+text",
-        text=["👑" if p["campeon"] else f"#{p['rank']}" for p in pts], textposition="top center",
-        marker=dict(size=22, color=[COLOR.get(p["liga"], "#888") for p in pts],
-                    line=dict(color=["#FFD700" if p["campeon"] else "rgba(255,255,255,.6)" for p in pts], width=3)),
-        customdata=[[p["temp"], p["rank"], p["n"], p["zona"] or ("En curso" if not p["term"] else "—")] for p in pts],
-        hovertemplate="<b>%{customdata[0]}</b><br>Puesto %{customdata[1]} de %{customdata[2]}<br>"
-                      "Zona: %{customdata[3]}<extra></extra>", showlegend=False))
-    for p in pts:
-        uri = _logo_uri(p["liga"])
-        if uri:
-            fig.add_layout_image(source=uri, x=p["x"], y=p["lvl"], xref="x", yref="y", sizex=0.7, sizey=0.7,
-                                 xanchor="center", yanchor="middle", sizing="contain", layer="above")
-    niv = sorted({(NIVEL[k], k) for k in LIGAS if k in NIVEL})
-    fig.update_layout(
-        template="plotly_dark", height=380, margin=dict(l=10, r=10, t=20, b=10),
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(tickmode="array", tickvals=[p["x"] for p in pts], ticktext=[p["temp"] for p in pts],
-                   tickangle=-45, showgrid=False),
-        yaxis=dict(tickmode="array", tickvals=[0] + [n for n, _ in niv if n % 1 == 0],
-                   ticktext=["Ascenso"] + [LIGAS[k] for n, k in niv if n % 1 == 0], range=[-0.5, 5.6],
-                   gridcolor="rgba(255,255,255,.08)"))
-    return fig, t
+def _tabla(d):
+    v = d.copy()
+    nm = lambda k: {"ASC": "Ascenso", "DIR": "Invitación"}.get(k, LIGAS.get(k, k))
+    v["De"], v["A"] = v["de"].map(nm), v["a"].map(nm)
+    v["Cuándo"] = v["cuando"]
+    v["_f"] = v["fecha"].fillna(pd.Timestamp.min)
+    v = v.sort_values("_f", ascending=False)
+    return v[["jugador", "De", "A", "Cuándo"]].rename(columns={"jugador": "Jugador"})
 
 
 # ── página ──────────────────────────────────────────────────────────────────
 
 def show():
     st.header("Trayectoria de Ligas")
-    st.caption("El mapa de toda la comunidad: cómo se mueven los jugadores entre ligas. Verde = ascenso, rojo = "
-               "descenso, gris = se queda en la misma liga. Una pausa larga entre temporadas no corta la carrera.")
+    st.caption("Cómo suben y bajan los jugadores entre ligas. Cuenta cada cambio de liga: una pausa larga entre "
+               "temporadas no corta la carrera.")
     df_raw = load_data()
     firma = (len(df_raw), str(pd.to_datetime(df_raw["date"], errors="coerce").max()),
              int((pd.to_numeric(df_raw["Walkover"], errors="coerce") < 0).sum()))
@@ -435,175 +262,58 @@ def show():
         return
     res, tr = _resumen(temporadas, ascensos, firma)
 
-    # filtros
     c1, c2, c3 = st.columns(3)
     ligas_ini = sorted(res["inicio"].unique(), key=lambda k: NIVEL.get(k, 9))
-    f_ini = c1.multiselect("Empezó en", ligas_ini, format_func=_nombre)
-    ligas_act = sorted(res["actual"].unique(), key=lambda k: NIVEL.get(k, 9))
-    f_act = c2.multiselect("Liga actual (última)", ligas_act, format_func=_nombre)
+    f_ini = c1.multiselect("Empezó en", ligas_ini, format_func=lambda k: LIGAS.get(k, k))
+    f_asc = c2.selectbox("Cómo entró", ["Todos", "Por Ascenso", "Por invitación"])
     f_busca = c3.text_input("Buscar jugador")
-    c4, c5, c6, c7 = st.columns(4)
-    f_min = c4.slider("Mínimo de ligas distintas", 1, int(res["ligas"].max()), 1)
-    f_desc = c5.checkbox("Solo con descensos")
-    f_camp = c6.checkbox("Solo campeones de liga")
-    f_asc = c7.selectbox("Entrada por Ascenso", ["Todos", "Sí", "No"])
-
     m = pd.Series(True, index=res.index)
     if f_ini:
         m &= res["inicio"].isin(f_ini)
-    if f_act:
-        m &= res["actual"].isin(f_act)
+    if f_asc != "Todos":
+        m &= res["via_ascenso"] == (f_asc == "Por Ascenso")
     if f_busca.strip():
         m &= res["jugador"].str.contains(f_busca.strip(), case=False, regex=False)
-    m &= res["ligas"] >= f_min
-    if f_desc:
-        m &= res["descensos"] > 0
-    if f_camp:
-        m &= res["campeon"]
-    if f_asc != "Todos":
-        m &= res["via_ascenso"] == (f_asc == "Sí")
-    r = res[m].reset_index(drop=True)
-
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Jugadores", len(r), help=f"de {len(res)} con partidas de liga")
-    k2.metric("Pasaron por 2+ ligas", int((r["ligas"] >= 2).sum()))
-    k3.metric("Con algún descenso", int((r["descensos"] > 0).sum()))
-    k4.metric("Con algún ascenso", int((r["ascensos"] > 0).sum()))
-
-    if r.empty:
+    r = res[m]
+    tx = _transiciones(tr, r["jugador"].tolist())
+    if tx.empty:
         st.warning("Ningún jugador cumple esos filtros.")
         return
 
-    t_arbol, t_mapa, t_tabla, t_ruta, t_res = st.tabs(
-        ["🌳 Árboles por liga de inicio", "🌊 Mapa de flujos", "📋 Jugadores", "🛤️ Ruta individual", "📊 Resumen"])
+    _leyenda([k for k in ["ASC", "PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"] if k in set(tx["de"]) | set(tx["a"])])
+    t_asc, t_desc = st.tabs(["⬆️ Rutas de ascenso", "⬇️ Rutas de descenso"])
 
-    with t_arbol:
-        st.info("**Cómo leerlo:** elige la liga donde empezaron. Cada barra son los jugadores que entraron de esa "
-                "forma (🪜 por Ascenso o ✉️ por invitación, o sea directo) y los colores dicen **en qué liga están hoy**. "
-                "Pasa el mouse por un color para ver los nombres.")
-        _leyenda([k for k in ["PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"]
-                  if k in set(r["actual"]) | set(r["inicio"])])
-        inicios = [k for k in ["PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"] if k in set(r["inicio"])]
-        tabs_i = st.tabs([f"Empezó en {LIGAS[k]} ({int((r['inicio'] == k).sum())})" for k in inicios])
-        for k, tb in zip(inicios, tabs_i):
-            with tb:
-                sub = r[r["inicio"] == k].copy()
-                sub["entrada"] = sub["seq"].map(lambda q: "🪜 Por Ascenso" if q[0] == "ASC" else "✉️ Por invitación")
-                fig = go.Figure()
-                for lg in sorted(sub["actual"].unique(), key=lambda x: NIVEL.get(x, 9)):
-                    cnt, nombres = [], []
-                    for e in ["🪜 Por Ascenso", "✉️ Por invitación"]:
-                        g = sub[(sub["entrada"] == e) & (sub["actual"] == lg)]["jugador"].tolist()
-                        cnt.append(len(g))
-                        nombres.append(", ".join(sorted(g)[:15]) + (f" (+{len(g) - 15})" if len(g) > 15 else ""))
-                    fig.add_trace(go.Bar(
-                        y=["🪜 Por Ascenso", "✉️ Por invitación"], x=cnt, orientation="h", name=f"Hoy en {LIGAS.get(lg, lg)}",
-                        marker=dict(color=COLOR.get(lg, "#888"), line=dict(color="rgba(0,0,0,.5)", width=1)),
-                        text=[str(c) if c else "" for c in cnt], textposition="inside",
-                        textfont=dict(size=18, color="#111" if lg in ("PSS", "PES", "PLS") else "white"),
-                        customdata=nombres, hovertemplate="Hoy en " + LIGAS.get(lg, lg) +
-                        ": %{x} jugadores<br>%{customdata}<extra></extra>"))
-                fig.update_layout(barmode="stack", template="plotly_dark", height=250, paper_bgcolor="rgba(0,0,0,0)",
-                                  plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=10, b=10),
-                                  legend=dict(orientation="h", y=-0.25), yaxis=dict(autorange="reversed"),
-                                  xaxis=dict(title="jugadores"))
-                st.plotly_chart(fig, width="stretch")
-                for e in ["🪜 Por Ascenso", "✉️ Por invitación"]:
-                    g = sub[sub["entrada"] == e]
-                    if g.empty:
-                        continue
-                    arriba = int(g["actual"].map(lambda x: NIVEL[x]).gt(NIVEL[k]).sum())
-                    igual = int(g["actual"].eq(k).sum())
-                    abajo = int(g["actual"].map(lambda x: NIVEL[x]).lt(NIVEL[k]).sum())
-                    st.markdown(f"**{e} ({len(g)}):** 🟢 {arriba} subieron · ⚪ {igual} siguen en {LIGAS[k]} · "
-                                f"🔴 {abajo} bajaron")
-                with st.expander("Ver el árbol completo (recorrido paso a paso, con ramas que vuelven)"):
-                    st.caption("De izquierda a derecha: liga de inicio → cómo entraron → cada liga a la que pasaron "
-                               "después. El número bajo cada nodo es cuántos jugadores siguen ese camino y 'hoy' cuántos "
-                               "se quedan ahí. 🟢 sube · 🔴 baja de liga · 🟠 punteada = sale de las ligas y vuelve al Ascenso.")
-                    st.plotly_chart(_arbol(r, k), width="stretch")
+    with t_asc:
+        sube = tx[tx["sentido"] == "sube"]
+        k1, k2 = st.columns(2)
+        k1.metric("Ascensos de liga", len(sube))
+        k2.metric("Jugadores que ascendieron", sube["jugador"].nunique())
+        st.info("**Cómo leerlo:** cada cinta va de una liga a la siguiente y su ancho es la cantidad de jugadores. "
+                "Las cintas que salen de 🪜 Ascenso o ✉️ Invitación son las **entradas** (cómo llegaron a su primera "
+                "liga); las verdes son **subidas** de una liga a otra más alta. Pasa el mouse para ver los nombres.")
+        fig = _flujo(tx, ("entra", "sube"), "")
+        if fig is not None:
+            st.plotly_chart(fig, width="stretch")
+        st.markdown("**Quién subió**")
+        if sube.empty:
+            st.caption("Con estos filtros nadie subió de liga.")
+        else:
+            st.dataframe(_tabla(sube), hide_index=True, width="stretch", height=380)
 
-    with t_mapa:
-        usadas = {k for sq in r["seq"] for k in sq}
-        _leyenda([k for k in ["ASC", "PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"] if k in usadas])
-        st.info("**Cómo leerlo:** cada barra de colores es una liga y el ancho de la cinta es la cantidad de "
-                "jugadores. Una cinta que va de *Empezó en Junior* a *Hoy en Master* son los jugadores que empezaron "
-                "en Junior y hoy juegan en Master. 🟢 verde = terminó en una liga más alta que donde empezó · "
-                "🔴 rojo = más baja · ⚪ gris = sigue en la misma.")
-        modo = st.radio("Vista", ["Simple: dónde empezó → dónde está hoy", "Carrera completa, paso a paso"],
-                        horizontal=True, label_visibility="collapsed")
-        fig = _sankey_simple(r) if modo.startswith("Simple") else _sankey(r)
+    with t_desc:
+        baja = tx[tx["sentido"] == "baja"]
+        sale = tx[tx["sentido"] == "sale"]
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Descensos de liga", len(baja))
+        k2.metric("Jugadores que descendieron", baja["jugador"].nunique())
+        k3.metric("Volvieron al Ascenso", len(sale), help="Salieron de las ligas y volvieron a competir en el Ascenso.")
+        st.info("**Cómo leerlo:** cada cinta roja va de una liga a otra más baja. La cinta 🟠 naranja es distinta: "
+                "son jugadores que **salieron de las ligas** y volvieron al 🪜 Ascenso (no es un descenso de liga). "
+                "Pasa el mouse para ver los nombres.")
+        fig = _flujo(tx, ("baja", "sale"), "")
         if fig is None:
-            st.info("Con estos filtros no hay movimientos entre ligas para dibujar.")
+            st.caption("Con estos filtros nadie descendió.")
         else:
             st.plotly_chart(fig, width="stretch")
-            if modo.startswith("Simple"):
-                st.caption("Pasa el mouse por una cinta para ver los nombres de los jugadores.")
-            else:
-                st.caption(f"Cada columna es un paso de la carrera: la 1.ª es cómo entró (por el Ascenso o directo), "
-                           f"la 2.ª su primera liga, la 3.ª la siguiente a la que pasó, etc. (hasta {MAX_ETAPAS}). "
-                           f"Si un jugador se queda varias temporadas en la misma liga cuenta como un solo paso.")
-
-    with t_tabla:
-        vista = r[["jugador", "camino", "ligas", "temporadas", "ascensos", "descensos", "titulos", "actual"]].copy()
-        vista["actual"] = vista["actual"].map(_nombre)
-        vista = vista.rename(columns={"jugador": "Jugador", "camino": "Camino", "ligas": "Ligas", "temporadas": "Temporadas",
-                                      "ascensos": "Ascensos", "descensos": "Descensos", "titulos": "Títulos",
-                                      "actual": "Liga actual"})
-        st.dataframe(vista.sort_values(["Ligas", "Temporadas"], ascending=False), hide_index=True,
-                     width="stretch", height=520)
-
-    with t_ruta:
-        orden = r.sort_values(["ligas", "temporadas"], ascending=False)["jugador"].tolist()
-        j = st.selectbox("Jugador", orden)
-        fig, tj = _ruta(j, tr[j], temporadas)
-        fila = r[r["jugador"] == j].iloc[0]
-        st.markdown(f"**{fila['camino']}** · {fila['temporadas']} temporadas · {fila['ascensos']} ascensos · "
-                    f"{fila['descensos']} descensos · {fila['titulos']} título(s)")
-        st.caption("Cada círculo es una temporada jugada (de izquierda a derecha, en orden). Qué tan alto está = en qué "
-                   "liga jugó. La línea es verde si subió de liga, roja si bajó y gris si siguió en la misma. "
-                   "El número es su puesto final en esa temporada y 👑 significa que fue campeón.")
-        st.plotly_chart(fig, width="stretch")
-        asc_j = ascensos[ascensos["jugador"] == j] if not ascensos.empty else ascensos
-        if not asc_j.empty:
-            st.caption("Ascenso: " + " · ".join(
-                f"{a['evento']} ({'campeón' if a['campeon'] else 'participó'})" for _, a in asc_j.iterrows()))
-        det = tj[["temp", "rank", "n", "victorias", "zona", "campeon"]].copy()
-        det["zona"] = det["zona"].replace("", "—")
-        det["campeon"] = det["campeon"].map({True: "👑", False: ""})
-        det.columns = ["Temporada", "Puesto", "Jugadores", "Victorias", "Zona", "Campeón"]
-        st.dataframe(det, hide_index=True, width="stretch")
-
-    with t_res:
-        a, b = st.columns(2)
-        top = r["camino"].value_counts().head(12).sort_values()
-        f1 = go.Figure(go.Bar(x=top.values, y=top.index, orientation="h", marker_color="#8e44ad",
-                              text=top.values, textposition="outside"))
-        f1.update_layout(template="plotly_dark", height=420, title="Recorridos más repetidos (cuántos jugadores hicieron cada uno)",
-                         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                         margin=dict(l=10, r=30, t=40, b=10))
-        a.plotly_chart(f1, width="stretch")
-
-        cuentas = {}
-        for _, x in r.iterrows():
-            for u, v in zip(x["seq"][:-1], x["seq"][1:]):
-                if u != v and u != "DIR":
-                    cuentas[(u, v)] = cuentas.get((u, v), 0) + 1
-        ks = sorted({k for p in cuentas for k in p}, key=lambda k: NIVEL.get(k, 9))
-        z = [[cuentas.get((u, v), 0) for v in ks] for u in ks]
-        f2 = go.Figure(go.Heatmap(z=z, x=[_nombre(k) for k in ks], y=[_nombre(k) for k in ks],
-                                  colorscale="Purples", text=z, texttemplate="%{text}", showscale=False))
-        f2.update_layout(template="plotly_dark", height=420, title="¿De qué liga a qué liga pasaron? (fila = de, columna = a)",
-                         paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=40, b=10),
-                         yaxis=dict(autorange="reversed"))
-        b.plotly_chart(f2, width="stretch")
-
-        st.markdown("**Más ascensos**")
-        c, d = st.columns(2)
-        c.dataframe(r.nlargest(8, "ascensos")[["jugador", "ascensos", "camino"]].rename(
-            columns={"jugador": "Jugador", "ascensos": "Ascensos", "camino": "Camino"}), hide_index=True,
-            width="stretch")
-        d.markdown("**Más descensos**")
-        d.dataframe(r.nlargest(8, "descensos")[["jugador", "descensos", "camino"]].rename(
-            columns={"jugador": "Jugador", "descensos": "Descensos", "camino": "Camino"}), hide_index=True,
-            width="stretch")
+            st.markdown("**Quién bajó**")
+            st.dataframe(_tabla(pd.concat([baja, sale])), hide_index=True, width="stretch", height=380)
