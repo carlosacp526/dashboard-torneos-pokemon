@@ -224,31 +224,29 @@ def _transiciones(tr, jugadores):
 
 
 def _flujo(tx, sentidos, titulo_vacio):
-    """Sankey de ligas (un nodo por liga: los cambios de una misma dirección nunca forman ciclos)."""
+    """Barras horizontales, una por cada cambio de liga ('Junior → Evolution'), con la cantidad de jugadores. Reemplaza
+    al mapa de cintas: las cintas que se saltaban una liga pasaban por detrás de ella y se veían superpuestas."""
     d = tx[tx["sentido"].isin(sentidos) & (tx["de"] != tx["a"])]
     if d.empty:
         return None
-    pares = d.groupby(["de", "a", "sentido"])["jugador"].apply(list)
-    claves = sorted({k for de, a, _ in pares.index for k in (de, a)},
-                    key=lambda k: (-1 if k == "DIR" else NIVEL.get(k, 9)))
-    idx = {k: i for i, k in enumerate(claves)}
-    n_de, n_a = d.groupby("de").size(), d.groupby("a").size()
-    col = {"entra": "rgba(39,174,96,0.5)", "sube": SUBE, "baja": BAJA, "sale": SALE}
-    fig = go.Figure(go.Sankey(
-        arrangement="snap",
-        node=dict(pad=26, thickness=26, line=dict(color="white", width=2), color=[COLOR.get(k, "#7f8c8d") for k in claves],
-                  label=[{"ASC": "🪜 Torneo de Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves],
-                  customdata=[f"Llegan: {int(n_a.get(k, 0))} jugadores<br>Salen: {int(n_de.get(k, 0))} jugadores" for k in claves],
-                  hovertemplate="<b>%{label}</b><br>%{customdata}<extra></extra>"),
-        link=dict(source=[idx[de] for de, _, _ in pares.index], target=[idx[a] for _, a, _ in pares.index],
-                  value=[len(v) for v in pares.values],
-                  # cada cinta toma el color de la liga a la que llega y lleva borde propio, para distinguirlas
-                  color=[_hex_rgba(COLOR.get(a, "#888888"), 0.55) for _, a, _ in pares.index],
-                  line=dict(color=[COLOR.get(a, "#888888") if a != "PLS" else "#DDDDDD" for _, a, _ in pares.index], width=2),
-                  customdata=[", ".join(sorted(v)[:15]) + (f" (+{len(v) - 15})" if len(v) > 15 else "") for v in pares.values],
-                  hovertemplate="%{source.label} → %{target.label}<br>%{value} jugadores<br>%{customdata}<extra></extra>")))
-    fig.update_layout(template="plotly_dark", height=420, margin=dict(l=10, r=10, t=10, b=10),
-                      paper_bgcolor="rgba(0,0,0,0)", font=dict(size=15))
+    pares = d.groupby(["de", "a"])["jugador"].apply(list)
+    asc = "sube" in sentidos
+    orden = sorted(pares.index, key=lambda k: (NIVEL.get(k[0], 9), NIVEL.get(k[1], 9)), reverse=not asc)
+    etiquetas, cnt, colores, quien = [], [], [], []
+    for de, a in orden:
+        v = pares[(de, a)]
+        salto = abs(NIVEL[a] - NIVEL[de]) > 1.01
+        etiquetas.append(f"{LIGAS.get(de, de)} → {LIGAS.get(a, a)}" + ("  (salta ligas)" if salto else ""))
+        cnt.append(len(v))
+        colores.append(COLOR.get(a, "#888"))
+        quien.append(", ".join(sorted(v)[:15]) + (f" (+{len(v) - 15})" if len(v) > 15 else ""))
+    fig = go.Figure(go.Bar(
+        y=etiquetas, x=cnt, orientation="h", marker=dict(color=colores, line=dict(color="white", width=2)),
+        text=cnt, textposition="outside", textfont=dict(size=16), customdata=quien,
+        hovertemplate="%{y}<br>%{x} jugadores<br>%{customdata}<extra></extra>"))
+    fig.update_layout(template="plotly_dark", height=50 * len(etiquetas) + 70, paper_bgcolor="rgba(0,0,0,0)",
+                      plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=40, t=10, b=10),
+                      yaxis=dict(autorange="reversed"), xaxis=dict(title="jugadores", dtick=1))
     return fig
 
 
@@ -333,8 +331,8 @@ def show():
         if fe is not None:
             st.plotly_chart(fe, width="stretch")
         st.subheader("2 · Cómo subieron después")
-        st.caption("Cada cinta va de una liga a otra más alta; su ancho es la cantidad de jugadores. "
-                   "Pasa el mouse para ver los nombres.")
+        st.caption("Cada barra es un cambio de liga y su largo es la cantidad de jugadores. El color es la liga a la "
+                   "que llegaron. Pasa el mouse para ver los nombres.")
         fig = _flujo(tx, ("sube",), "")
         if fig is None:
             st.caption("Con estos filtros nadie subió de liga.")
@@ -351,8 +349,8 @@ def show():
         k1, k2 = st.columns(2)
         k1.metric("Descensos de liga", len(baja))
         k2.metric("Jugadores que descendieron", baja["jugador"].nunique())
-        st.info("**Cómo leerlo:** cada cinta va de una liga a otra más baja y su ancho es la cantidad de jugadores. "
-                "Desde una liga no se vuelve al Ascenso, así que solo cuentan los descensos entre ligas. "
+        st.info("**Cómo leerlo:** cada barra es un descenso de una liga a otra más baja y su largo es la cantidad de "
+                "jugadores. Desde una liga no se vuelve al Ascenso, así que solo cuentan los descensos entre ligas. "
                 "Pasa el mouse para ver los nombres.")
         fig = _flujo(tx, ("baja",), "")
         if fig is None:
