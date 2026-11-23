@@ -198,14 +198,17 @@ def _resumen(_temporadas, _ascensos, firma):
 
 def _transiciones(tr, jugadores):
     """Una fila por cambio entre tramos consecutivos: jugador, de, a, sentido ('entra' | 'sube' | 'baja' | 'sale'),
-    y la temporada/evento donde ocurrió. 'DIR' = entrada por invitación (directo a una liga)."""
+    y la temporada/evento donde ocurrió. Entrada: 'ASC' si el jugador pasó por algún Ascenso en cualquier fecha
+    (aunque haya sido después de su primera liga), 'DIR' = por invitación (nunca jugó un Ascenso)."""
     filas = []
     for j in jugadores:
         t = tr.get(j, [])
         if not t:
             continue
         if t[0]["liga"] != "ASC":
-            filas.append({"jugador": j, "de": "DIR", "a": t[0]["liga"], "sentido": "entra", "cuando": t[0]["temps"][0],
+            # si pasó por algún Ascenso en cualquier fecha, cuenta como entrada por Ascenso; si no, por invitación
+            ev_asc = any(x["liga"] == "ASC" for x in t)
+            filas.append({"jugador": j, "de": "ASC" if ev_asc else "DIR", "a": t[0]["liga"], "sentido": "entra", "cuando": t[0]["temps"][0],
                           "fecha": t[0]["desde"]})
         for a, b in zip(t[:-1], t[1:]):
             filas.append({"jugador": j, "de": a["liga"], "a": b["liga"], "sentido": _sentido(a["liga"], b["liga"]),
