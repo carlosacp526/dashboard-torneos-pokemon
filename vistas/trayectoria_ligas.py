@@ -262,6 +262,112 @@ def _sankey_simple(res):
     return fig
 
 
+def _arbol(res, inicio):
+    """Árbol de ramificaciones de quienes EMPEZARON en `inicio`: raíz -> cómo entraron (Ascenso / invitación) ->
+    cada liga a la que pasaron después, en orden. Si un jugador vuelve a una liga que ya pisó, la rama la vuelve a
+    mostrar (por eso las ramas pueden 'volver'). Un nodo = un recorrido igual; su tamaño = cuántos jugadores."""
+    import math
+    sub = res[res["inicio"] == inicio]
+    nodos = {}                                   # clave -> {"n": jugadores que pasan, "fin": se quedan aquí, "jug": [...]}
+
+    def nodo(k):
+        return nodos.setdefault(k, {"n": 0, "fin": 0, "jug": [], "hoy": []})
+
+    nodo(())
+    for _, r in sub.iterrows():
+        seq = r["seq"][:MAX_ETAPAS + 1]
+        clave = (seq[0],) + tuple(seq[2:])        # seq[1] es la liga de inicio (la raíz)
+        for i in range(0, len(clave) + 1):
+            d = nodo(clave[:i])
+            d["n"] += 1
+            d["jug"].append(r["jugador"])
+        nodos[clave]["fin"] += 1
+        nodos[clave]["hoy"].append(r["jugador"])
+
+    hijos = {}
+    for k in nodos:
+        if k:
+            hijos.setdefault(k[:-1], []).append(k)
+
+    def liga_de(k):
+        return inicio if len(k) <= 1 else k[-1]
+
+    for k in hijos:
+        hijos[k].sort(key=lambda c: (-nodos[c]["n"], NIVEL.get(liga_de(c), 9)))
+
+    pos, cont = {}, [0]
+
+    def poner(k):
+        h = hijos.get(k, [])
+        if not h:
+            pos[k] = (len(k), cont[0])
+            cont[0] += 1
+            return
+        for c in h:
+            poner(c)
+        pos[k] = (len(k), sum(pos[c][1] for c in h) / len(h))
+
+    poner(())
+    hojas = cont[0]
+    prof = max(len(k) for k in nodos)
+
+    fig = go.Figure()
+    for k, h in hijos.items():
+        for c in h:
+            (x0, y0), (x1, y1) = pos[k], pos[c]
+            if len(c) == 1:                         # raíz -> entrada
+                col = _hex_rgba(COLOR[c[0]], 0.8)
+            else:
+                prev = inicio if len(c) == 2 else c[-2]
+                nuevo = c[-1]
+                col = IGUAL if NIVEL[nuevo] == NIVEL[prev] else (SUBE if NIVEL[nuevo] > NIVEL[prev] else BAJA)
+                if "ASC" in (prev, nuevo):
+                    col = "rgba(39,174,96,0.55)" if prev == "ASC" else BAJA
+            ts = [i / 16 for i in range(17)]
+            fig.add_trace(go.Scatter(
+                x=[x0 + (x1 - x0) * t for t in ts], y=[y0 + (y1 - y0) * (1 - math.cos(math.pi * t)) / 2 for t in ts],
+                mode="lines", line=dict(color=col, width=2 + 2.2 * math.sqrt(nodos[c]["n"])), hoverinfo="skip",
+                showlegend=False))
+
+    xs, ys, tam, colr, txt, hov = [], [], [], [], [], []
+    for k, d in nodos.items():
+        x, y = pos[k]
+        lg = liga_de(k)
+        if len(k) == 1:
+            nom = "Entró por Ascenso" if k[0] == "ASC" else "Entró por invitación"
+            colr.append(COLOR[k[0]])
+            etiqueta = ("🪜 Ascenso" if k[0] == "ASC" else "✉️ Invitación")
+        else:
+            nom = f"Empezó en {LIGAS.get(inicio, inicio)}" if not k else _nombre(lg)
+            colr.append(COLOR.get(lg, "#888"))
+            etiqueta = ""
+        xs.append(x); ys.append(y); tam.append(20 + 7 * math.sqrt(d["n"]))
+        txt.append((etiqueta + " " if etiqueta else "") + f"{d['n']}" + (f" ({d['fin']} hoy)" if d["fin"] and k else ""))
+        quien = ", ".join(sorted(d["jug"])[:14]) + (f" (+{len(d['jug']) - 14})" if len(d["jug"]) > 14 else "")
+        hoy = ", ".join(sorted(d["hoy"])[:10]) if d["hoy"] else "—"
+        nl = lambda a: "Ascenso" if a == "ASC" else "Invitación" if a == "DIR" else LIGAS.get(a, a)
+        recorrido = " → ".join([nl(k[0]), LIGAS.get(inicio, inicio)] + [nl(a) for a in k[1:]]) if k else             LIGAS.get(inicio, inicio)
+        hov.append(f"<b>{nom}</b><br>{d['n']} jugadores pasan por aquí<br>Hoy se quedan aquí: {hoy}<br>"
+                   f"Recorrido: {recorrido}<br>Jugadores: {quien}")
+    fig.add_trace(go.Scatter(
+        x=xs, y=ys, mode="markers+text", text=txt, textposition="top center", textfont=dict(size=12),
+        marker=dict(size=tam, color=colr, line=dict(color="rgba(255,255,255,.7)", width=2)),
+        customdata=hov, hovertemplate="%{customdata}<extra></extra>", showlegend=False))
+    for k, (x, y) in pos.items():
+        lg = liga_de(k)
+        if len(k) != 1 and lg != "ASC":
+            uri = _logo_uri(lg)
+            if uri:
+                fig.add_layout_image(source=uri, x=x, y=y, xref="x", yref="y", sizex=0.42, sizey=0.62,
+                                     xanchor="center", yanchor="middle", sizing="contain", layer="above")
+    fig.update_layout(
+        template="plotly_dark", height=int(max(380, 70 * hojas + 90)), margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(visible=False, range=[-0.4, prof + 0.7]),
+        yaxis=dict(visible=False, range=[hojas - 0.4, -0.8]))
+    return fig
+
+
 def _ruta(jugador, tr_j, temporadas):
     t = temporadas[temporadas["jugador"] == jugador].copy()
     t["_o"] = t["fecha"].fillna(pd.Timestamp.max)
@@ -353,7 +459,23 @@ def show():
         st.warning("Ningún jugador cumple esos filtros.")
         return
 
-    t_mapa, t_tabla, t_ruta, t_res = st.tabs(["🌊 Mapa de flujos", "📋 Jugadores", "🛤️ Ruta individual", "📊 Resumen"])
+    t_arbol, t_mapa, t_tabla, t_ruta, t_res = st.tabs(
+        ["🌳 Árboles por liga de inicio", "🌊 Mapa de flujos", "📋 Jugadores", "🛤️ Ruta individual", "📊 Resumen"])
+
+    with t_arbol:
+        st.info("**Cómo leerlo:** de izquierda a derecha. A la izquierda la liga donde empezaron; el primer corte es "
+                "**cómo entraron** (🪜 por Ascenso o ✉️ por invitación, o sea directo); después cada rama es la liga "
+                "a la que pasaron. El número es cuántos jugadores siguen ese camino y entre paréntesis cuántos se "
+                "quedan ahí hoy. 🟢 rama que sube, 🔴 rama que baja. Si un jugador vuelve a una liga donde ya había "
+                "estado, esa liga reaparece más a la derecha: así se ven las ramas que vuelven. Pasa el mouse por un "
+                "nodo para ver los nombres.")
+        _leyenda([k for k in ["ASC", "PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"]
+                  if k in {x for sq in r["seq"] for x in sq}])
+        inicios = [k for k in ["PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"] if k in set(r["inicio"])]
+        tabs_i = st.tabs([f"Empezó en {LIGAS[k]} ({int((r['inicio'] == k).sum())})" for k in inicios])
+        for k, tb in zip(inicios, tabs_i):
+            with tb:
+                st.plotly_chart(_arbol(r, k), width="stretch")
 
     with t_mapa:
         usadas = {k for sq in r["seq"] for k in sq}
