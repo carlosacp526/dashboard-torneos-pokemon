@@ -237,7 +237,9 @@ def _flujo(tx, sentidos, titulo_vacio):
     fig = go.Figure(go.Sankey(
         arrangement="snap",
         node=dict(pad=26, thickness=26, line=dict(color="white", width=2), color=[COLOR.get(k, "#7f8c8d") for k in claves],
-                  label=[{"ASC": "🪜 Torneo de Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves]),
+                  label=[{"ASC": "🪜 Torneo de Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves],
+                  customdata=[f"Llegan: {int(n_a.get(k, 0))} jugadores<br>Salen: {int(n_de.get(k, 0))} jugadores" for k in claves],
+                  hovertemplate="<b>%{label}</b><br>%{customdata}<extra></extra>"),
         link=dict(source=[idx[de] for de, _, _ in pares.index], target=[idx[a] for _, a, _ in pares.index],
                   value=[len(v) for v in pares.values],
                   # cada cinta toma el color de la liga a la que llega y lleva borde propio, para distinguirlas
