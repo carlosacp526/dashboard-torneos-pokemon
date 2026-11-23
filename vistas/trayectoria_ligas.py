@@ -236,10 +236,13 @@ def _flujo(tx, sentidos, titulo_vacio):
     col = {"entra": "rgba(39,174,96,0.5)", "sube": SUBE, "baja": BAJA, "sale": SALE}
     fig = go.Figure(go.Sankey(
         arrangement="snap",
-        node=dict(pad=22, thickness=24, line=dict(color="rgba(0,0,0,0.4)", width=0.5), color=[COLOR.get(k, "#7f8c8d") for k in claves],
+        node=dict(pad=26, thickness=26, line=dict(color="white", width=2), color=[COLOR.get(k, "#7f8c8d") for k in claves],
                   label=[{"ASC": "🪜 Torneo de Ascenso", "DIR": "✉️ Invitación"}.get(k, LIGAS.get(k, k)) for k in claves]),
         link=dict(source=[idx[de] for de, _, _ in pares.index], target=[idx[a] for _, a, _ in pares.index],
-                  value=[len(v) for v in pares.values], color=[col[sn] for _, _, sn in pares.index],
+                  value=[len(v) for v in pares.values],
+                  # cada cinta toma el color de la liga a la que llega y lleva borde propio, para distinguirlas
+                  color=[_hex_rgba(COLOR.get(a, "#888888"), 0.55) for _, a, _ in pares.index],
+                  line=dict(color=[COLOR.get(a, "#888888") if a != "PLS" else "#DDDDDD" for _, a, _ in pares.index], width=2),
                   customdata=[", ".join(sorted(v)[:15]) + (f" (+{len(v) - 15})" if len(v) > 15 else "") for v in pares.values],
                   hovertemplate="%{source.label} → %{target.label}<br>%{value} jugadores<br>%{customdata}<extra></extra>")))
     fig.update_layout(template="plotly_dark", height=420, margin=dict(l=10, r=10, t=10, b=10),
