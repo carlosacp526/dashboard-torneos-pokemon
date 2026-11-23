@@ -6,6 +6,10 @@ Una pausa larga entre temporadas NO corta la carrera: la siguiente temporada sig
 
 Datos: `utils.build_base_liga` + `generar_tabla_temporada` (posición final y zona Ascenso/Descenso reglamentaria de
 cada temporada) y los eventos `ASCENSO` del historial (archivo_preuba1.csv)."""
+import base64
+import os
+from io import BytesIO
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -19,6 +23,52 @@ COLOR = {"ASC": "#27ae60", "DIR": "#7f8c8d", "PJS": "#1B7BD6", "PES": "#95C2EC",
          "PMS": "#9AA0A6", "PCS": "#8e44ad", "PGS": "#C60210", "PLS": "#F5F5F5"}
 SUBE, BAJA, IGUAL = "#2ecc71", "#e74c3c", "rgba(150,150,150,0.45)"
 MAX_ETAPAS = 7
+
+
+AQUI = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOGOS_DIR = os.path.join(AQUI, "logos_ligas")
+
+
+def _logo_path(liga):
+    try:
+        for f in os.listdir(LOGOS_DIR):
+            if f.lower() == f"logo_{liga.lower()}.png":
+                return os.path.join(LOGOS_DIR, f)
+    except OSError:
+        pass
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def _logo_uri(liga, px=96):
+    """Logo de la liga como data-URI reducido (para dibujarlo dentro de los gráficos); None si no hay."""
+    p = _logo_path(liga)
+    if not p:
+        return None
+    try:
+        from PIL import Image
+        im = Image.open(p).convert("RGBA")
+        im.thumbnail((px, px))
+        b = BytesIO()
+        im.save(b, "PNG")
+        return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
+    except Exception:
+        return None
+
+
+def _leyenda(ligas):
+    """Franja con el logo y el nombre de cada liga (los nodos del mapa de flujos no admiten imágenes)."""
+    ligas = [k for k in ligas if k not in ("DIR",)]
+    cols = st.columns(len(ligas))
+    for c, k in zip(cols, ligas):
+        p = _logo_path(k) if k != "ASC" else None
+        with c:
+            if p:
+                st.image(p, width=56)
+            else:
+                st.markdown("<div style='font-size:2.2em;line-height:56px'>🪜</div>" if k == "ASC" else "",
+                            unsafe_allow_html=True)
+            st.caption(f"**{_nombre(k).split(' (')[0]}**")
 
 
 def _nombre(k):
@@ -205,6 +255,11 @@ def _ruta(jugador, tr_j, temporadas):
         customdata=[[p["temp"], p["rank"], p["n"], p["zona"] or ("En curso" if not p["term"] else "—")] for p in pts],
         hovertemplate="<b>%{customdata[0]}</b><br>Puesto %{customdata[1]} de %{customdata[2]}<br>"
                       "Zona: %{customdata[3]}<extra></extra>", showlegend=False))
+    for p in pts:
+        uri = _logo_uri(p["liga"])
+        if uri:
+            fig.add_layout_image(source=uri, x=p["x"], y=p["lvl"], xref="x", yref="y", sizex=0.7, sizey=0.7,
+                                 xanchor="center", yanchor="middle", sizing="contain", layer="above")
     niv = sorted({(NIVEL[k], k) for k in LIGAS if k in NIVEL})
     fig.update_layout(
         template="plotly_dark", height=380, margin=dict(l=10, r=10, t=20, b=10),
@@ -274,6 +329,8 @@ def show():
     t_mapa, t_tabla, t_ruta, t_res = st.tabs(["🌊 Mapa de flujos", "📋 Jugadores", "🛤️ Ruta individual", "📊 Resumen"])
 
     with t_mapa:
+        usadas = {k for sq in r["seq"] for k in sq}
+        _leyenda([k for k in ["ASC", "PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"] if k in usadas])
         fig = _sankey(r)
         if fig is None:
             st.info("Con estos filtros no hay movimientos entre ligas para dibujar.")
