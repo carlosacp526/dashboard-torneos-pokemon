@@ -1276,6 +1276,15 @@ def _detalle(slug):
 
 
 def show():
+    import requests
+    try:
+        _show()
+    except requests.exceptions.RequestException:
+        st.error("No se pudo conectar con la base de datos de torneos. Es posible que esté pausada por "
+                 "inactividad; avisa al organizador e intenta de nuevo en unos minutos.")
+
+
+def _show():
     st.markdown(CSS, unsafe_allow_html=True)
     if DB.backend() == "local":
         st.warning("Modo local de prueba: los torneos se guardan en un archivo del servidor y se pierden al "

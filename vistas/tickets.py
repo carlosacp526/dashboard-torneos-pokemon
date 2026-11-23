@@ -232,6 +232,17 @@ def _tab_organizador():
             st.rerun()
 
 
+def _seguro(fn, *args):
+    """Ejecuta una pestaña; si la base de datos no responde (p. ej. proyecto Supabase pausado)
+    muestra un aviso claro en vez del traceback."""
+    import requests
+    try:
+        fn(*args)
+    except requests.exceptions.RequestException:
+        st.error("No se pudo conectar con la base de datos de tickets. Es posible que esté pausada por "
+                 "inactividad; avisa al organizador e intenta de nuevo en unos minutos.")
+
+
 def show():
     st.header("Tickets")
     st.caption("Reporta un problema de un torneo o liga: pedir o reclamar un WO, un error en un resultado, un agravio de "
@@ -242,8 +253,8 @@ def show():
     jugadores, eventos = _opciones(load_data())
     t1, t2, t3 = st.tabs(["Nuevo ticket", "Consultar mi ticket", "Panel del organizador"])
     with t1:
-        _tab_nuevo(jugadores, eventos)
+        _seguro(_tab_nuevo, jugadores, eventos)
     with t2:
-        _tab_consultar()
+        _seguro(_tab_consultar)
     with t3:
-        _tab_organizador()
+        _seguro(_tab_organizador)
