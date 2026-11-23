@@ -22,6 +22,7 @@ NIVEL = {"ASC": 0, "PJS": 1, "PES": 2, "PSS": 3, "PMS": 4, "PCS": 4.5, "PGS": 5,
 COLOR = {"ASC": "#27ae60", "DIR": "#7f8c8d", "PJS": "#1B7BD6", "PES": "#95C2EC", "PSS": "#E1C233",
          "PMS": "#9AA0A6", "PCS": "#8e44ad", "PGS": "#C60210", "PLS": "#F5F5F5"}
 SUBE, BAJA, IGUAL = "#2ecc71", "#e74c3c", "rgba(150,150,150,0.45)"
+SALE = "#f39c12"       # sale de las ligas (vuelve al Ascenso)
 MAX_ETAPAS = 7
 
 
@@ -167,7 +168,7 @@ def _sentido(a, b):
     if a in ("ASC", "DIR"):
         return "entra"
     if b == "ASC":
-        return "baja"
+        return "sale"          # vuelve al Ascenso: sale del sistema de ligas, no es un descenso de liga
     return "sube" if NIVEL[b] > NIVEL[a] else "baja" if NIVEL[b] < NIVEL[a] else "igual"
 
 
@@ -185,7 +186,7 @@ def _resumen(_temporadas, _ascensos, firma):
         filas.append({
             "jugador": j, "camino": " → ".join(("Ascenso" if k == "ASC" else k) for k in seq if k != "DIR"),
             "seq": seq, "sent": sent, "ligas": len(set(ligas)), "temporadas": len(temps),
-            "ascensos": sent.count("sube"), "descensos": sent.count("baja"),
+            "ascensos": sent.count("sube"), "descensos": sent.count("baja"), "salidas": sent.count("sale"),
             "inicio": ligas[0], "actual": ligas[-1], "via_ascenso": any(x["liga"] == "ASC" for x in t),
             "campeon": bool(temps["campeon"].any()), "titulos": int(temps["campeon"].sum()),
             "primera": temps["fecha"].min(), "ultima_temp": t[-1]["ultima"],
@@ -214,7 +215,7 @@ def _sankey(res):
             e.append(r["jugador"])
     if not enlaces:
         return None
-    col = {"sube": SUBE, "baja": BAJA, "igual": IGUAL, "entra": "rgba(39,174,96,0.45)"}
+    col = {"sube": SUBE, "baja": BAJA, "igual": IGUAL, "entra": "rgba(39,174,96,0.45)", "sale": SALE}
     fig = go.Figure(go.Sankey(
         arrangement="snap",
         node=dict(pad=16, thickness=18, line=dict(color="rgba(0,0,0,0.4)", width=0.5),
@@ -227,7 +228,8 @@ def _sankey(res):
                   color=[col[k[2]] for k in enlaces],
                   customdata=[", ".join(sorted(v)[:12]) + (f" (+{len(v) - 12})" if len(v) > 12 else "")
                               for v in enlaces.values()],
-                  label=[{"sube": "Ascenso", "baja": "Descenso", "igual": "Misma liga", "entra": "Entrada"}[k[2]]
+                  label=[{"sube": "Ascenso", "baja": "Descenso", "igual": "Misma liga", "entra": "Entrada",
+                                           "sale": "Sale de las ligas (vuelve al Ascenso)"}[k[2]]
                          for k in enlaces],
                   hovertemplate="%{label}: %{value} jugadores<br>%{customdata}<extra></extra>")))
     fig.update_layout(template="plotly_dark", height=620, margin=dict(l=10, r=10, t=10, b=10),
@@ -322,11 +324,13 @@ def _arbol(res, inicio):
                 nuevo = c[-1]
                 col = IGUAL if NIVEL[nuevo] == NIVEL[prev] else (SUBE if NIVEL[nuevo] > NIVEL[prev] else BAJA)
                 if "ASC" in (prev, nuevo):
-                    col = "rgba(39,174,96,0.55)" if prev == "ASC" else BAJA
+                    col = "rgba(39,174,96,0.55)" if prev == "ASC" else SALE
             ts = [i / 16 for i in range(17)]
             fig.add_trace(go.Scatter(
                 x=[x0 + (x1 - x0) * t for t in ts], y=[y0 + (y1 - y0) * (1 - math.cos(math.pi * t)) / 2 for t in ts],
-                mode="lines", line=dict(color=col, width=2 + 2.2 * math.sqrt(nodos[c]["n"])), hoverinfo="skip",
+                mode="lines", hoverinfo="skip",
+                line=dict(color=col, width=2 + 2.2 * math.sqrt(nodos[c]["n"]),
+                          dash="dot" if (col == SALE) else "solid"),
                 showlegend=False))
 
     xs, ys, tam, colr, txt, hov = [], [], [], [], [], []
@@ -477,7 +481,7 @@ def show():
         st.info("**Cómo leerlo:** de izquierda a derecha. A la izquierda la liga donde empezaron; el primer corte es "
                 "**cómo entraron** (🪜 por Ascenso o ✉️ por invitación, o sea directo); después cada rama es la liga "
                 "a la que pasaron. El número es cuántos jugadores siguen ese camino y entre paréntesis cuántos se "
-                "quedan ahí hoy. 🟢 rama que sube, 🔴 rama que baja. Si un jugador vuelve a una liga donde ya había "
+                "quedan ahí hoy. 🟢 rama que sube, 🔴 rama que baja de liga, 🟠 punteada = sale de las ligas y vuelve al Ascenso (por ejemplo, un jugador de Junior que no sigue). Si un jugador vuelve a una liga donde ya había "
                 "estado, esa liga reaparece más a la derecha: así se ven las ramas que vuelven. Pasa el mouse por un "
                 "nodo para ver los nombres.")
         _leyenda([k for k in ["ASC", "PJS", "PES", "PSS", "PMS", "PCS", "PGS", "PLS"]
