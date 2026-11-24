@@ -591,7 +591,7 @@ MONOTYPE1_POSICIONES = {
         "Dino agente":     "Top24",
         "Draco axel":     "Top24",
         "EmperorGambit":     "Top24",
-        "kazaheta":     "Top24",
+        "Kazaheta":     "Top24",
         "LABIAMG":     "Top24",
 
         "lexodia":     "Top32",
@@ -1115,7 +1115,7 @@ MONOTYPE1_LIGAS = {
             "Draco axel": 50, "Elin beacil": 50,  "Adpg": 50,
         },
         "DOBLES": {"Aikauwu": 50},
-        "VGC": { "Hydreigon_Chelas": 50},
+        "VGC": { "Hydreigon_chelas": 50},
     },
     "PJS": {
         "SINGLES": {
@@ -1151,6 +1151,42 @@ MONOTYPE1_LIGAS = {
         },
         "VGC": {"Nitr0kill3r": "Campeón","SasoriVzla7": "Top3",
                 "Moirix": "Participante","Alonso26ca": "Participante", "Fabricio19jr": "Participante"
+        },
+
+
+
+
+
+        
+    }
+    ,
+
+     "PSS": {
+            "SINGLES": {"": "Top3","Mr.Shadowdusk": "Participante",
+                        "D'AllFather": "Participante","GatitaGolosa123": "Participante",
+           "": "Participante" },
+            "DOBLES": {
+                       "CaradeCoso": "Top3",  "Tronchi": "Participante","The.Ultracheese": "Participante",
+            },
+            "VGC": {"Fur4nko": "Campeón",
+                    "Kazaheta": "Participante","Dino agente": "Participante", 
+                    "": "Participante"
+            },
+        },
+    
+    
+
+    
+    "PMS": {
+        "SINGLES": {"Arnau": "Top3","Akaru": "Top3",
+                    "Adpg": "Participante","Elin beacil": "Participante",
+       "Luigillanos": "Participante" },
+        "DOBLES": {
+                   "Angello77": "Campeón",  "Haseo": "Participante"
+        },
+        "VGC": {"Ricomam": "Participante", "ZapeohDev":  "Participante",
+                "Yabadaba": "Participante", 
+                "LABIAMG": "Participante","Roy Kasoy": "Participante", "A25": "Participante"
         },
     },
 }
