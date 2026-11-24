@@ -1162,15 +1162,15 @@ MONOTYPE1_LIGAS = {
     ,
 
      "PSS": {
-            "SINGLES": {"": "Top3","Mr.Shadowdusk": "Participante",
+            "SINGLES": {"Mr.Shadowdusk": "Participante",
                         "D'AllFather": "Participante","GatitaGolosa123": "Participante",
-           "": "Participante" },
+           "Yabadaba": "Participante"},
             "DOBLES": {
                        "CaradeCoso": "Top3",  "Tronchi": "Participante","The.Ultracheese": "Participante",
             },
             "VGC": {"Fur4nko": "Campeón",
                     "Kazaheta": "Participante","Dino agente": "Participante", 
-                    "": "Participante"
+                    "Angelowos": "Participante" ,"Chonarthas": "Top3",
             },
         },
     
@@ -1184,8 +1184,8 @@ MONOTYPE1_LIGAS = {
         "DOBLES": {
                    "Angello77": "Campeón",  "Haseo": "Participante"
         },
-        "VGC": {"Ricomam": "Participante", "ZapeohDev":  "Participante",
-                "Yabadaba": "Participante", 
+        "VGC": {"Ricomam": "Participante", "ZapeohDev":  "Participante"
+               , 
                 "LABIAMG": "Participante","Roy Kasoy": "Participante", "A25": "Participante"
         },
     },
